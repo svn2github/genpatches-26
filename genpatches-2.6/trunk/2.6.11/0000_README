@@ -104,6 +104,10 @@ Patch:	1110_aio-hugepage.patch
 From:	http://bugs.gentoo.org/87913
 Desc:	Fix potential 64bit AIO DoS
 
+Patch:	1115_sysret.patch
+From:	http://bugs.gentoo.org/95644
+Desc:	AMD K8 bug workaround
+
 Patch:	1150_sunrpc-nfsacl.patch
 From:	http://bugs.gentoo.org/74070
 Desc:	Fix security problem in sunrpc nfsacl protocol extension.
