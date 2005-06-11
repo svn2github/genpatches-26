@@ -140,6 +140,10 @@ Patch:	1915_mov-asm.patch
 From:	http://bugs.gentoo.org/94763
 Desc:	Fix compilation with new binutils
 
+Patch:	2700_i8042-resume.patch
+From:	http://bugs.gentoo.org/95572
+Desc:	Fix unusable keyboard on resume
+
 Patch:	2900_alps-tapping.patch
 From:	http://bugs.gentoo.org/84657
 Desc:	Fix ALPS touchpad tapping. Already in 2.6.12 tree
