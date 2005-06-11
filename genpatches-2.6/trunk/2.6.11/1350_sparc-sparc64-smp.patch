@@ -1,0 +1,82 @@
+From sparclinux-owner@vger.kernel.org Tue May  3 17:17:19 2005
+Return-Path: <sparclinux-owner@vger.kernel.org>
+X-Original-To: jeremy@localhost
+Delivered-To: jeremy@localhost.outersquare.org
+Received: from localhost (localhost [127.0.0.1]) by cid.outersquare.org
+	(Postfix) with ESMTP id 77758280B9 for <jeremy@localhost>; Tue,  3 May 2005
+	17:17:19 -0700 (PDT)
+Envelope-to: eradicator@gentoo.org
+Delivery-date: Wed, 04 May 2005 00:16:16 +0000
+Received: from dev.gentoo.org [134.68.220.30] by localhost with IMAP
+	(fetchmail-6.2.5) for jeremy@localhost (single-drop); Tue, 03 May 2005
+	17:17:19 -0700 (PDT)
+Received: from vger.kernel.org ([12.107.209.244]) by smtp.gentoo.org with
+	esmtp (Exim 4.43) id 1DT7Ym-0001eg-Id; Wed, 04 May 2005 00:16:16 +0000
+Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand id
+	S261941AbVEDAQO (ORCPT <rfc822;geoman@gentoo.org> + 4 others); Tue, 3 May
+	2005 20:16:14 -0400
+Received: (majordomo@vger.kernel.org) by vger.kernel.org id S261943AbVEDAQO
+	(ORCPT <rfc822;sparclinux-outgoing>); Tue, 3 May 2005 20:16:14 -0400
+Received: from dsl027-180-174.sfo1.dsl.speakeasy.net ([216.27.180.174]:8598
+	"EHLO cheetah.davemloft.net") by vger.kernel.org with ESMTP id
+	S261941AbVEDAQM (ORCPT <rfc822;sparclinux@vger.kernel.org>); Tue, 3 May
+	2005 20:16:12 -0400
+Received: from localhost ([127.0.0.1] helo=cheetah.davemloft.net
+	ident=davem) by cheetah.davemloft.net with smtp (Exim 3.36 #1 (Debian)) id
+	1DT7O1-0003u7-00; Tue, 03 May 2005 17:05:09 -0700
+Date:	Tue, 3 May 2005 17:05:09 -0700
+From: "David S. Miller" <davem@davemloft.net>
+To: sparclinux@vger.kernel.org
+Cc: debian-sparc@lists.debian.org, gentoo-sparc@lists.gentoo.org
+Subject: [PATCH] 2.6.x SMP UltraSPARC instability
+Message-Id: <20050503170509.5fa93b26.davem@davemloft.net>
+X-Mailer: Sylpheed version 1.0.4 (GTK+ 1.2.10; sparc-unknown-linux-gnu)
+X-Face:
+		"_;p5u5aPsO,_Vsx"^v-pEq09'CU4&Dc1$fQExov$62l60cgCc%FnIwD=.UF^a>?5'9Kn[;433QFVV9M..2eN.@4ZWPGbdi<=?[:T>y?SD(R*-3It"Vj:)"dP
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Sender: sparclinux-owner@vger.kernel.org
+Precedence: bulk
+X-Mailing-List:	sparclinux@vger.kernel.org
+X-VirusScan: Clean
+X-Spam-Checker-Version: SpamAssassin 3.0.2-gr1 (2004-11-16) on 
+	cid.outersquare.org
+X-Spam-Level: 
+X-Spam-Status: No, score=-2.6 required=6.4 tests=AWL,BAYES_00 autolearn=ham
+	 version=3.0.2-gr1
+X-Evolution-Source: imap://jeremy@cid.outersquare.org/
+Content-Transfer-Encoding: 8bit
+
+
+Can folks seeing problems on SMP sparc64 boxes with 2.6.x
+give this patch a try?
+
+--- 1/arch/sparc64/kernel/irq.c.~1~	2005-04-29 05:51:44.000000000 -0700
++++ 2/arch/sparc64/kernel/irq.c	2005-04-29 05:52:10.000000000 -0700
+@@ -756,7 +756,7 @@
+ 		clear_softint(clr_mask);
+ 	}
+ #else
+-	int should_forward = 1;
++	int should_forward = 0;
+ 
+ 	clear_softint(1 << irq);
+ #endif
+@@ -1007,10 +1007,10 @@
+ 	}
+ 	upa_writel(tid | IMAP_VALID, imap);
+ 
+-	while (!cpu_online(goal_cpu)) {
++	do {
+ 		if (++goal_cpu >= NR_CPUS)
+ 			goal_cpu = 0;
+-	}
++	} while (!cpu_online(goal_cpu));
+ 
+ 	return goal_cpu;
+ }
+-
+To unsubscribe from this list: send the line "unsubscribe sparclinux" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
