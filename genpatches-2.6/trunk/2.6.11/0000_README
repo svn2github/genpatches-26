@@ -88,6 +88,14 @@ Patch:	1100_ptrace-root.patch
 From:	http://bugs.gentoo.org/95649
 Desc:	Fix potential local root in x86_64 ptrace
 
+Patch:	1101_ptrace-canonical.patch
+From:	http://bugs.gentoo.org/95644
+Desc:	x86_64 ptrace security fix
+
+Patch:	1102_ptrace-check-segment.patch
+From:	http://bugs.gentoo.org/95644
+Desc:	x86_64 ptrace security fix
+
 Patch:	1105_mmap-range.patch
 From:	http://bugs.gentoo.org/95645
 Desc:	Fix mmap ranging problem
