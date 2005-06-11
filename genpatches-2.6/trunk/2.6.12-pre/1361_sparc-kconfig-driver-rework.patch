@@ -1,50 +1,7 @@
-diff -Naur linux-2.6.10-vanilla/drivers/char/agp/Kconfig linux-2.6.10/drivers/char/agp/Kconfig
---- linux-2.6.10-vanilla/drivers/char/agp/Kconfig	2004-12-24 13:34:58.000000000 -0800
-+++ linux-2.6.10/drivers/char/agp/Kconfig	2004-12-25 03:07:36.000000000 -0800
-@@ -1,6 +1,7 @@
- config AGP
- 	tristate "/dev/agpgart (AGP Support)" if !GART_IOMMU && !M68K && !ARM
- 	default y if GART_IOMMU
-+	depends on PCI
- 	---help---
- 	  AGP (Accelerated Graphics Port) is a bus system mainly used to
- 	  connect graphics cards to the rest of the system.
-diff -Naur linux-2.6.10-vanilla/drivers/char/drm/Kconfig linux-2.6.10/drivers/char/drm/Kconfig
---- linux-2.6.10-vanilla/drivers/char/drm/Kconfig	2004-12-24 13:35:25.000000000 -0800
-+++ linux-2.6.10/drivers/char/drm/Kconfig	2004-12-25 03:07:36.000000000 -0800
-@@ -17,14 +17,14 @@
- 
- config DRM_TDFX
- 	tristate "3dfx Banshee/Voodoo3+"
--	depends on DRM
-+	depends on DRM && PCI
- 	help
- 	  Choose this option if you have a 3dfx Banshee or Voodoo3 (or later),
- 	  graphics card.  If M is selected, the module will be called tdfx.
- 
- config DRM_GAMMA
- 	tristate "3dlabs GMX 2000"
--	depends on DRM && BROKEN
-+	depends on DRM && PCI && BROKEN
- 	help
- 	  This is the old gamma driver, please tell me if it might actually
- 	  work.
-@@ -95,3 +95,11 @@
-           chipset. If M is selected the module will be called sis. AGP
-           support is required for this driver to work.
- 
-+config DRM_FFB
-+	tristate "Creator/Creator3D"
-+	depends on DRM && SPARC64
-+	help
-+	  Choose this option if you have one of Sun's Creator3D-based graphics
-+	  and frame buffer cards.  Product page at
-+	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
-+
-diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/Kconfig
---- linux-2.6.10-vanilla/drivers/char/Kconfig	2004-12-24 13:33:49.000000000 -0800
-+++ linux-2.6.10/drivers/char/Kconfig	2004-12-25 03:08:16.000000000 -0800
-@@ -80,7 +80,7 @@
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/char/Kconfig linux-2.6.12-rc4-gentoo/drivers/char/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/drivers/char/Kconfig	2005-05-07 12:21:17.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/drivers/char/Kconfig	2005-05-07 13:08:35.000000000 -0700
+@@ -80,7 +80,7 @@ config SERIAL_NONSTANDARD
  
  config COMPUTONE
  	tristate "Computone IntelliPort Plus serial support"
@@ -53,7 +10,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	---help---
  	  This driver supports the entire family of Intelliport II/Plus
  	  controllers with the exception of the MicroChannel controllers and
-@@ -95,7 +95,7 @@
+@@ -95,7 +95,7 @@ config COMPUTONE
  
  config ROCKETPORT
  	tristate "Comtrol RocketPort support"
@@ -62,7 +19,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  This driver supports Comtrol RocketPort and RocketModem PCI boards.   
            These boards provide 2, 4, 8, 16, or 32 high-speed serial ports or
-@@ -110,7 +110,7 @@
+@@ -110,7 +110,7 @@ config ROCKETPORT
  
  config CYCLADES
  	tristate "Cyclades async mux support"
@@ -71,7 +28,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	---help---
  	  This driver supports Cyclades Z and Y multiserial boards.
  	  You would need something like this to connect more than two modems to
-@@ -138,7 +138,7 @@
+@@ -138,7 +138,7 @@ config CYZ_INTR
  
  config DIGIEPCA
  	tristate "Digiboard Intelligent Async Support"
@@ -80,16 +37,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	---help---
  	  This is a driver for Digi International's Xx, Xeve, and Xem series
  	  of cards which provide multiple serial ports. You would need
-@@ -157,7 +157,7 @@
- 
- config DIGI
- 	tristate "Digiboard PC/Xx Support"
--	depends on SERIAL_NONSTANDARD && DIGIEPCA=n && BROKEN_ON_SMP
-+	depends on SERIAL_NONSTANDARD && DIGIEPCA=n && BROKEN_ON_SMP && (PCI || ISA)
- 	help
- 	  This is a driver for the Digiboard PC/Xe, PC/Xi, and PC/Xeve cards
- 	  that give you many serial ports. You would need something like this
-@@ -183,7 +183,7 @@
+@@ -166,7 +166,7 @@ config ESPSERIAL
  
  config MOXA_INTELLIO
  	tristate "Moxa Intellio support"
@@ -98,7 +46,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  Say Y here if you have a Moxa Intellio multiport serial card.
  
-@@ -192,7 +192,7 @@
+@@ -175,7 +175,7 @@ config MOXA_INTELLIO
  
  config MOXA_SMARTIO
  	tristate "Moxa SmartIO support"
@@ -107,7 +55,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  Say Y here if you have a Moxa SmartIO multiport serial card.
  
-@@ -225,7 +225,7 @@
+@@ -208,7 +208,7 @@ config SYNCLINK
  
  config SYNCLINKMP
  	tristate "SyncLink Multiport support"
@@ -116,7 +64,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  Enable support for the SyncLink Multiport (2 or 4 ports)
  	  serial adapter, running asynchronous and HDLC communications up
-@@ -251,7 +251,7 @@
+@@ -234,7 +234,7 @@ config N_HDLC
  
  config RISCOM8
  	tristate "SDL RISCom/8 card support"
@@ -125,25 +73,25 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  This is a driver for the SDL Communications RISCom/8 multiport card,
  	  which gives you many serial ports. You would need something like
-@@ -264,7 +264,7 @@
+@@ -247,7 +247,7 @@ config RISCOM8
  
  config SPECIALIX
  	tristate "Specialix IO8+ card support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
  	help
  	  This is a driver for the Specialix IO8+ multiport card (both the
  	  ISA and the PCI version) which gives you many serial ports. You
-@@ -288,7 +288,7 @@
+@@ -271,7 +271,7 @@ config SPECIALIX_RTSCTS
  
  config SX
  	tristate "Specialix SX (and SI) card support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
  	help
  	  This is a driver for the SX and SI multiport serial cards.
  	  Please read the file <file:Documentation/sx.txt> for details.
-@@ -299,7 +299,7 @@
+@@ -282,7 +282,7 @@ config SX
  
  config RIO
  	tristate "Specialix RIO system support"
@@ -152,7 +100,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  This is a driver for the Specialix RIO, a smart serial card which
  	  drives an outboard box that can support up to 128 ports.  Product
-@@ -308,7 +308,7 @@
+@@ -291,7 +291,7 @@ config RIO
  
  config RIO_OLDPCI
  	bool "Support really old RIO/PCI cards"
@@ -161,7 +109,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  Older RIO PCI cards need some initialization-time configuration to
  	  determine the IRQ and some control addresses.  If you have a RIO and
-@@ -316,7 +316,7 @@
+@@ -299,7 +299,7 @@ config RIO_OLDPCI
  
  config STALDRV
  	bool "Stallion multiport serial support"
@@ -170,7 +118,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  Stallion cards give you many serial ports.  You would need something
  	  like this to connect more than two modems to your Linux box, for
-@@ -378,6 +378,13 @@
+@@ -345,6 +345,13 @@ config AU1000_SERIAL_CONSOLE
  	  If you have an Alchemy AU1000 processor (MIPS based) and you want
  	  to use a console on a serial port, say Y.  Otherwise, say N.
  
@@ -184,7 +132,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  config QTRONIX_KEYBOARD
  	bool "Enable Qtronix 990P Keyboard Support"
  	depends on IT8712
-@@ -706,7 +713,8 @@
+@@ -687,7 +694,8 @@ config NVRAM
  
  config RTC
  	tristate "Enhanced Real Time Clock Support"
@@ -194,7 +142,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	---help---
  	  If you say Y here and create a character special file /dev/rtc with
  	  major number 10 and minor number 135 using mknod ("man mknod"), you
-@@ -752,9 +760,20 @@
+@@ -733,9 +741,20 @@ config SGI_IP27_RTC
  	  via the file /proc/rtc and its behaviour is set by various ioctls on
  	  /dev/rtc.
  
@@ -216,7 +164,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	---help---
  	  If you say Y here and create a character special file /dev/rtc with
  	  major number 10 and minor number 135 using mknod ("man mknod"), you
-@@ -807,6 +826,7 @@
+@@ -792,6 +811,7 @@ config COBALT_LCD
  
  config DTLK
  	tristate "Double Talk PC internal speech card support"
@@ -224,9 +172,9 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  	help
  	  This driver is for the DoubleTalk PC, a speech synthesizer
  	  manufactured by RC Systems (<http://www.rcsys.com/>).  It is also
-@@ -855,6 +875,30 @@
- 	  To compile this driver as a module, choose M here: the
- 	  module will be called sonypi.
+@@ -844,6 +864,30 @@ config TANBAC_TB0219
+ 	tristate "TANBAC TB0219 base board support"
+ 	depends TANBAC_TB0229
  
 +config ENVCTRL
 +	tristate "SUNW,envctrl support"
@@ -255,10 +203,54 @@ diff -Naur linux-2.6.10-vanilla/drivers/char/Kconfig linux-2.6.10/drivers/char/K
  
  menu "Ftape, the floppy tape device driver"
  
-diff -Naur linux-2.6.10-vanilla/drivers/sbus/char/Kconfig linux-2.6.10/drivers/sbus/char/Kconfig
---- linux-2.6.10-vanilla/drivers/sbus/char/Kconfig	2004-12-24 13:35:28.000000000 -0800
-+++ linux-2.6.10/drivers/sbus/char/Kconfig	2004-12-25 03:07:36.000000000 -0800
-@@ -13,15 +13,6 @@
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/char/agp/Kconfig linux-2.6.12-rc4-gentoo/drivers/char/agp/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/drivers/char/agp/Kconfig	2005-05-07 12:21:17.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/drivers/char/agp/Kconfig	2005-05-07 13:08:47.000000000 -0700
+@@ -2,6 +2,7 @@ config AGP
+ 	tristate "/dev/agpgart (AGP Support)" if !GART_IOMMU
+ 	depends on ALPHA || IA64 || PPC || X86
+ 	default y if GART_IOMMU
++	depends on PCI
+ 	---help---
+ 	  AGP (Accelerated Graphics Port) is a bus system mainly used to
+ 	  connect graphics cards to the rest of the system.
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/char/drm/Kconfig linux-2.6.12-rc4-gentoo/drivers/char/drm/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/drivers/char/drm/Kconfig	2005-05-07 12:21:17.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/drivers/char/drm/Kconfig	2005-05-07 13:08:47.000000000 -0700
+@@ -25,7 +25,7 @@ config DRM_TDFX
+ 
+ config DRM_GAMMA
+ 	tristate "3dlabs GMX 2000"
+-	depends on DRM && BROKEN
++	depends on DRM && PCI && BROKEN
+ 	help
+ 	  This is the old gamma driver, please tell me if it might actually
+ 	  work.
+@@ -96,3 +96,11 @@ config DRM_SIS
+           chipset. If M is selected the module will be called sis. AGP
+           support is required for this driver to work.
+ 
++config DRM_FFB
++	tristate "Creator/Creator3D"
++	depends on DRM && SPARC64
++	help
++	  Choose this option if you have one of Sun's Creator3D-based graphics
++	  and frame buffer cards.  Product page at
++	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
++
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/sbus/Makefile linux-2.6.12-rc4-gentoo/drivers/sbus/Makefile
+--- linux-2.6.12-rc4-gentoo.orig/drivers/sbus/Makefile	2005-03-01 23:38:26.000000000 -0800
++++ linux-2.6.12-rc4-gentoo/drivers/sbus/Makefile	2005-05-07 13:08:47.000000000 -0700
+@@ -6,4 +6,4 @@ ifneq ($(ARCH),m68k)
+ obj-y    := sbus.o dvma.o
+ endif
+ 
+-obj-$(CONFIG_SBUSCHAR) += char/
++obj-y += char/
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/sbus/char/Kconfig linux-2.6.12-rc4-gentoo/drivers/sbus/char/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/drivers/sbus/char/Kconfig	2005-03-01 23:38:26.000000000 -0800
++++ linux-2.6.12-rc4-gentoo/drivers/sbus/char/Kconfig	2005-05-07 13:08:47.000000000 -0700
+@@ -13,15 +13,6 @@ config SUN_OPENPROMIO
  
  	  If unsure, say Y.
  
@@ -274,7 +266,7 @@ diff -Naur linux-2.6.10-vanilla/drivers/sbus/char/Kconfig linux-2.6.10/drivers/s
  config OBP_FLASH
  	tristate "OBP Flash Device support"
  	depends on SPARC64
-@@ -69,25 +60,16 @@
+@@ -69,25 +60,16 @@ config SUN_JSFLASH
  	  If you say Y here, you will be able to boot from your JavaStation's
  	  Flash memory.
  
@@ -310,37 +302,38 @@ diff -Naur linux-2.6.10-vanilla/drivers/sbus/char/Kconfig linux-2.6.10/drivers/s
  
  endmenu
  
-diff -Naur linux-2.6.10-vanilla/drivers/sbus/Makefile linux-2.6.10/drivers/sbus/Makefile
---- linux-2.6.10-vanilla/drivers/sbus/Makefile	2004-12-24 13:35:29.000000000 -0800
-+++ linux-2.6.10/drivers/sbus/Makefile	2004-12-25 03:07:36.000000000 -0800
-@@ -6,4 +6,4 @@
- obj-y    := sbus.o dvma.o
- endif
- 
--obj-$(CONFIG_SBUSCHAR) += char/
-+obj-y += char/
-diff -Naur linux-2.6.10-vanilla/drivers/video/Kconfig linux-2.6.10/drivers/video/Kconfig
---- linux-2.6.10-vanilla/drivers/video/Kconfig	2004-12-24 13:33:49.000000000 -0800
-+++ linux-2.6.10/drivers/video/Kconfig	2004-12-25 03:07:36.000000000 -0800
-@@ -397,25 +397,6 @@
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/drivers/video/Kconfig linux-2.6.12-rc4-gentoo/drivers/video/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/drivers/video/Kconfig	2005-05-07 12:21:47.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/drivers/video/Kconfig	2005-05-07 13:08:48.000000000 -0700
+@@ -561,35 +561,6 @@ config FB_SUN3
  	bool "Sun3 framebuffer support"
- 	depends on FB && (SUN3 || SUN3X) && BROKEN
+ 	depends on (FB = y) && (SUN3 || SUN3X) && BROKEN
  
 -config FB_BW2
 -	bool "BWtwo support"
--	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	select FB_CFB_FILLRECT
+-	select FB_CFB_COPYAREA
+-	select FB_CFB_IMAGEBLIT
+-	select FB_SOFT_CURSOR
 -	help
 -	  This is the frame buffer device driver for the BWtwo frame buffer.
 -
 -config FB_CG3
 -	bool "CGthree support"
--	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	select FB_CFB_COPYAREA
+-	select FB_CFB_IMAGEBLIT
+-	select FB_SOFT_CURSOR
 -	help
 -	  This is the frame buffer device driver for the CGthree frame buffer.
 -
 -config FB_CG6
 -	bool "CGsix (GX,TurboGX) support"
--	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	select FB_CFB_COPYAREA
+-	select FB_CFB_IMAGEBLIT
+-	select FB_SOFT_CURSOR
 -	help
 -	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
 -	  frame buffer.
@@ -348,25 +341,35 @@ diff -Naur linux-2.6.10-vanilla/drivers/video/Kconfig linux-2.6.10/drivers/video
  config FB_PVR2
  	tristate "NEC PowerVR 2 display support"
  	depends on FB && SH_DREAMCAST
-@@ -952,6 +933,25 @@
+@@ -1253,6 +1224,35 @@ config FB_FFB
  	  This is the frame buffer device driver for the Creator, Creator3D,
  	  and Elite3D graphics boards.
  
 +config FB_BW2
 +	bool "BWtwo support"
-+	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	select FB_CFB_FILLRECT
++	select FB_CFB_COPYAREA
++	select FB_CFB_IMAGEBLIT
++	select FB_SOFT_CURSOR
 +	help
 +	  This is the frame buffer device driver for the BWtwo frame buffer.
 +
 +config FB_CG3
 +	bool "CGthree support"
-+	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	select FB_CFB_COPYAREA
++	select FB_CFB_IMAGEBLIT
++	select FB_SOFT_CURSOR
 +	help
 +	  This is the frame buffer device driver for the CGthree frame buffer.
 +
 +config FB_CG6
 +	bool "CGsix (GX,TurboGX) support"
-+	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	select FB_CFB_COPYAREA
++	select FB_CFB_IMAGEBLIT
++	select FB_SOFT_CURSOR
 +	help
 +	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
 +	  frame buffer.
@@ -374,10 +377,10 @@ diff -Naur linux-2.6.10-vanilla/drivers/video/Kconfig linux-2.6.10/drivers/video
  config FB_TCX
  	bool "TCX (SS4/SS5 only) support"
  	depends on FB_SBUS
-diff -Naur linux-2.6.10-vanilla/fs/Kconfig linux-2.6.10/fs/Kconfig
---- linux-2.6.10-vanilla/fs/Kconfig	2004-12-24 13:34:58.000000000 -0800
-+++ linux-2.6.10/fs/Kconfig	2004-12-25 03:07:36.000000000 -0800
-@@ -972,6 +972,20 @@
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/fs/Kconfig linux-2.6.12-rc4-gentoo/fs/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/fs/Kconfig	2005-05-07 12:21:50.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/fs/Kconfig	2005-05-07 13:08:48.000000000 -0700
+@@ -867,6 +867,20 @@ config RAMFS
  	  To compile this as a module, choose M here: the module will be called
  	  ramfs.
  

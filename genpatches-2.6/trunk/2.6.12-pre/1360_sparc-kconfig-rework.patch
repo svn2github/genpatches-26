@@ -1,6 +1,6 @@
-diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arch/sparc/Kconfig
---- linux-2.6.11-gentoo/arch/sparc/Kconfig	2005-03-01 23:37:30.000000000 -0800
-+++ linux-2.6.11-gentoo-sparc/arch/sparc/Kconfig	2005-03-02 14:17:36.000000000 -0800
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/arch/sparc/Kconfig linux-2.6.12-rc4-gentoo/arch/sparc/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/arch/sparc/Kconfig	2005-05-07 12:57:44.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/arch/sparc/Kconfig	2005-05-07 12:55:03.000000000 -0700
 @@ -5,15 +5,25 @@
  
  mainmenu "Linux/SPARC Kernel Configuration"
@@ -322,15 +322,15 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arc
 +	  Then your kernel will automatically call out to a user mode "policy
 +	  agent" (/sbin/hotplug) to load modules and set up software needed
 +	  to use devices as you hotplug them.
++
++source "drivers/pcmcia/Kconfig"
  
 -	  To compile the /proc/openprom support as a module, choose M here: the
 -	  module will be called openpromfs.
-+source "drivers/pcmcia/Kconfig"
++source "drivers/pci/hotplug/Kconfig"
  
 -	  Only choose N if you know in advance that you will not need to modify
 -	  OpenPROM settings on the running system.
-+source "drivers/pci/hotplug/Kconfig"
-+
 +endmenu
 +
 +menu "Executable file formats"
@@ -346,10 +346,10 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arc
 -	  <http://www.ultralinux.org/faq.html> for more information.  If you
 -	  want to run SunOS binaries on an Ultra you must also say Y to
 -	  "Kernel support for 32-bit a.out binaries" above.
--
--source "drivers/parport/Kconfig"
 +	  <http://www.ultralinux.org/faq.html> for more information.
  
+-source "drivers/parport/Kconfig"
+-
 -config PRINTER
 -	tristate "Parallel printer support"
 -	depends on PARPORT
@@ -359,8 +359,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arc
 -	  printer has 9 or 25 holes ["female"], then it's serial), say Y.
 -	  Also read the Printing-HOWTO, available from
 -	  <http://www.tldp.org/docs.html#howto>.
-+endmenu
- 
+-
 -	  It is possible to share one parallel port among several devices
 -	  (e.g. printer and ZIP drive) and it is safe to compile the
 -	  corresponding drivers into the kernel.  If you want to compile this
@@ -372,26 +371,27 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arc
 -	  or see the documentation of your boot loader (silo) about how to pass
 -	  options to the kernel at boot time.)  The syntax of the "lp" command
 -	  line option can be found in <file:drivers/char/lp.c>.
++endmenu
+ 
+-	  If you have more than 8 printers, you need to increase the LP_NO
+-	  macro in lp.c and the PARPORT_MAX macro in parport.h.
 +# Unfortunately too many of the menu items don't really have proper
 +# dependencies, so ridiculous things show up.  Later we should just be able
 +# to do
 +#source "drivers/Kconfig"
  
--	  If you have more than 8 printers, you need to increase the LP_NO
--	  macro in lp.c and the PARPORT_MAX macro in parport.h.
--
 -endmenu
 +menu "Device Drivers"
  
  source "drivers/base/Kconfig"
  
 -source "drivers/video/Kconfig"
-+
  
- source "drivers/mtd/Kconfig"
+-source "drivers/mtd/Kconfig"
  
 -source "drivers/serial/Kconfig"
--
++source "drivers/mtd/Kconfig"
+ 
 -if !SUN4
 -source "drivers/sbus/char/Kconfig"
 -endif
@@ -488,9 +488,9 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc/Kconfig linux-2.6.11-gentoo-sparc/arc
  
  source "lib/Kconfig"
 +
-diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/arch/sparc64/Kconfig
---- linux-2.6.11-gentoo/arch/sparc64/Kconfig	2005-03-01 23:38:25.000000000 -0800
-+++ linux-2.6.11-gentoo-sparc/arch/sparc64/Kconfig	2005-03-02 14:15:47.000000000 -0800
+diff -Naurp linux-2.6.12-rc4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.12-rc4-gentoo/arch/sparc64/Kconfig
+--- linux-2.6.12-rc4-gentoo.orig/arch/sparc64/Kconfig	2005-05-07 12:57:44.000000000 -0700
++++ linux-2.6.12-rc4-gentoo/arch/sparc64/Kconfig	2005-05-07 12:56:21.000000000 -0700
 @@ -5,6 +5,17 @@
  
  mainmenu "Linux/UltraSPARC Kernel Configuration"
@@ -520,7 +520,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  config TIME_INTERPOLATION
  	bool
  	default y
-@@ -23,75 +38,7 @@ config SYSVIPC_COMPAT
+@@ -50,76 +65,7 @@ config SYSVIPC_COMPAT
  	depends on COMPAT && SYSVIPC
  	default y
  
@@ -592,12 +592,13 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
 -
 -config HW_CONSOLE
 -	bool
+-	depends on VT
 -	default y
 +menu "Processor type and features"
  
  config SMP
  	bool "Symmetric multi-processing support"
-@@ -166,25 +113,6 @@ config US2E_FREQ
+@@ -186,25 +132,6 @@ config US2E_FREQ
  
  	  If in doubt, say N.
  
@@ -623,7 +624,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  config GENERIC_CALIBRATE_DELAY
  	bool
  	default y
-@@ -205,7 +133,27 @@ config HUGETLB_PAGE_SIZE_64K
+@@ -227,7 +154,27 @@ config HUGETLB_PAGE_SIZE_64K
  
  endchoice
  
@@ -652,7 +653,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  	bool
  	default y
  
-@@ -252,40 +200,6 @@ config MCA
+@@ -274,40 +221,6 @@ config MCA
  	  <file:Documentation/mca.txt> (and especially the web page given
  	  there) before attempting to build an MCA bus kernel.
  
@@ -693,7 +694,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  config PCI
  	bool "PCI support"
  	help
-@@ -303,44 +217,31 @@ config PCI_DOMAINS
+@@ -325,44 +238,31 @@ config PCI_DOMAINS
  	bool
  	default PCI
  
@@ -759,7 +760,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  
  config SPARC32_COMPAT
  	bool "Kernel support for Linux/Sparc 32bit binary compatibility"
-@@ -373,17 +274,14 @@ config BINFMT_AOUT32
+@@ -395,17 +295,14 @@ config BINFMT_AOUT32
  	  If you want to run SunOS binaries (see SunOS binary emulation below)
  	  or other a.out binaries, say Y. If unsure, say N.
  
@@ -780,7 +781,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  
  config SOLARIS_EMUL
  	tristate "Solaris binary emulation (EXPERIMENTAL)"
-@@ -395,57 +293,6 @@ config SOLARIS_EMUL
+@@ -417,57 +314,6 @@ config SOLARIS_EMUL
  	  To compile this code as a module, choose M here: the
  	  module will be called solaris.
  
@@ -838,7 +839,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  config CMDLINE_BOOL
  	bool "Default bootloader kernel arguments"
  
-@@ -464,19 +311,24 @@ config CMDLINE
+@@ -486,19 +332,24 @@ config CMDLINE
  
  endmenu
  
@@ -868,7 +869,7 @@ diff -Naurp linux-2.6.11-gentoo/arch/sparc64/Kconfig linux-2.6.11-gentoo-sparc/a
  
  source "drivers/scsi/Kconfig"
  
-@@ -496,107 +348,25 @@ source "drivers/isdn/Kconfig"
+@@ -518,107 +369,25 @@ source "drivers/isdn/Kconfig"
  
  source "drivers/telephony/Kconfig"
  
