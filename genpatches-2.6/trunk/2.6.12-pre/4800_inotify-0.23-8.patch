@@ -24,32 +24,35 @@ notification:
 Inotify is currently used by Beagle (a desktop search infrastructure),
 Gamin (a FAM replacement), and other projects.
 
+See Documentation/filesystems/inotify.txt.
 
 Signed-off-by: Robert Love <rml@novell.com>
 
- Documentation/filesystems/inotify.txt |   81 ++
+ Documentation/filesystems/inotify.txt |  123 ++++
  fs/Kconfig                            |   13 
  fs/Makefile                           |    1 
  fs/attr.c                             |   33 -
  fs/compat.c                           |   12 
  fs/file_table.c                       |    3 
  fs/inode.c                            |    6 
- fs/inotify.c                          |  961 ++++++++++++++++++++++++++++++++++
+ fs/inotify.c                          |  981 ++++++++++++++++++++++++++++++++++
  fs/namei.c                            |   30 -
+ fs/nfsd/vfs.c                         |    6 
  fs/open.c                             |    4 
  fs/read_write.c                       |   15 
+ fs/sysfs/file.c                       |    7 
  fs/xattr.c                            |    5 
  include/linux/fs.h                    |    6 
- include/linux/fsnotify.h              |  230 ++++++++
- include/linux/inotify.h               |  111 +++
+ include/linux/fsnotify.h              |  257 ++++++++
+ include/linux/inotify.h               |  124 ++++
  include/linux/sched.h                 |    4 
  kernel/user.c                         |    4 
- 17 files changed, 1463 insertions(+), 56 deletions(-)
+ 19 files changed, 1570 insertions(+), 64 deletions(-)
 
-diff -urN linux-2.6.12-rc3/Documentation/filesystems/inotify.txt linux/Documentation/filesystems/inotify.txt
---- linux-2.6.12-rc3/Documentation/filesystems/inotify.txt	1969-12-31 19:00:00.000000000 -0500
-+++ linux/Documentation/filesystems/inotify.txt	2005-04-21 00:56:28.000000000 -0400
-@@ -0,0 +1,81 @@
+diff -urN linux-2.6.12-rc6/Documentation/filesystems/inotify.txt linux/Documentation/filesystems/inotify.txt
+--- linux-2.6.12-rc6/Documentation/filesystems/inotify.txt	1969-12-31 19:00:00.000000000 -0500
++++ linux/Documentation/filesystems/inotify.txt	2005-06-07 15:49:02.000000000 -0400
+@@ -0,0 +1,123 @@
 +				    inotify
 +	     a powerful yet simple file change notification system
 +
@@ -131,9 +134,51 @@ diff -urN linux-2.6.12-rc3/Documentation/filesystems/inotify.txt linux/Documenta
 +off of each associated device and each associated inode.
 +
 +See fs/inotify.c for the locking and lifetime rules.
-diff -urN linux-2.6.12-rc3/fs/attr.c linux/fs/attr.c
---- linux-2.6.12-rc3/fs/attr.c	2005-04-20 22:47:05.000000000 -0400
-+++ linux/fs/attr.c	2005-04-21 00:56:28.000000000 -0400
++
++
++(iii) Rationale
++
++Q: What is the design decision behind not tying the watch to the
++open fd of the watched object?
++
++A: Watches are associated with an open inotify device, not an
++open file.  This solves the primary problem with dnotify:
++keeping the file open pins the file and thus, worse, pins the
++mount.  Dnotify is therefore infeasible for use on a desktop
++system with removable media as the media cannot be unmounted.
++
++Q: What is the design decision behind using an-fd-per-device as
++opposed to an fd-per-watch?
++
++A: An fd-per-watch quickly consumes more file descriptors than
++are allowed, more fd's than are feasible to manage, and more
++fd's than are ideally select()-able.  Yes, root can bump the
++per-process fd limit and yes, users can use epoll, but requiring
++both is silly and an extraneous requirement.  A watch consumes
++less memory than an open file, separating the number spaces is
++thus sensible.  The current design is what user-space developers
++want: Users open the device, once, and add n watches, requiring
++but one fd and no twiddling with fd limits.
++Opening /dev/inotify two thousand times is silly.  If we can
++implement user-space's preferences cleanly--and we can, the idr
++layer makes stuff like this trivial--then we should.
++
++Q: Why a device node?
++
++A: The second biggest problem with dnotify is that the user
++interface sucks ass.  Signals are a terrible, terrible interface
++for file notification.  Or for anything, for that matter.  The
++idea solution, from all perspectives, is a file descriptor based
++one that allows basic file I/O and poll/select.  Obtaining the
++fd and managing the watches could of been done either via a
++device file or a family of new system calls.  We decided to
++implement a device file because adding three or four new system
++calls that mirrored open, close, and ioctl seemed silly.  A
++character device makes sense from user-space and was easy to
++implement inside of the kernel.
+diff -urN linux-2.6.12-rc6/fs/attr.c linux/fs/attr.c
+--- linux-2.6.12-rc6/fs/attr.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/attr.c	2005-06-07 15:49:02.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/mm.h>
  #include <linux/string.h>
@@ -190,9 +235,9 @@ diff -urN linux-2.6.12-rc3/fs/attr.c linux/fs/attr.c
  	return error;
  }
  
-diff -urN linux-2.6.12-rc3/fs/compat.c linux/fs/compat.c
---- linux-2.6.12-rc3/fs/compat.c	2005-04-20 22:47:06.000000000 -0400
-+++ linux/fs/compat.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/compat.c linux/fs/compat.c
+--- linux-2.6.12-rc6/fs/compat.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/compat.c	2005-06-07 15:49:02.000000000 -0400
 @@ -37,7 +37,7 @@
  #include <linux/ctype.h>
  #include <linux/module.h>
@@ -219,9 +264,9 @@ diff -urN linux-2.6.12-rc3/fs/compat.c linux/fs/compat.c
  	return ret;
  }
  
-diff -urN linux-2.6.12-rc3/fs/file_table.c linux/fs/file_table.c
---- linux-2.6.12-rc3/fs/file_table.c	2005-03-02 02:37:47.000000000 -0500
-+++ linux/fs/file_table.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/file_table.c linux/fs/file_table.c
+--- linux-2.6.12-rc6/fs/file_table.c	2005-03-02 02:37:47.000000000 -0500
++++ linux/fs/file_table.c	2005-06-07 15:49:02.000000000 -0400
 @@ -16,6 +16,7 @@
  #include <linux/eventpoll.h>
  #include <linux/mount.h>
@@ -239,9 +284,9 @@ diff -urN linux-2.6.12-rc3/fs/file_table.c linux/fs/file_table.c
  	/*
  	 * The function eventpoll_release() should be the first called
  	 * in the file cleanup chain.
-diff -urN linux-2.6.12-rc3/fs/inode.c linux/fs/inode.c
---- linux-2.6.12-rc3/fs/inode.c	2005-04-20 22:47:06.000000000 -0400
-+++ linux/fs/inode.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/inode.c linux/fs/inode.c
+--- linux-2.6.12-rc6/fs/inode.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/inode.c	2005-06-07 15:49:02.000000000 -0400
 @@ -21,6 +21,7 @@
  #include <linux/pagemap.h>
  #include <linux/cdev.h>
@@ -250,7 +295,7 @@ diff -urN linux-2.6.12-rc3/fs/inode.c linux/fs/inode.c
  
  /*
   * This is needed for the following functions:
-@@ -129,6 +130,10 @@
+@@ -128,6 +129,10 @@
  #ifdef CONFIG_QUOTA
  		memset(&inode->i_dquot, 0, sizeof(inode->i_dquot));
  #endif
@@ -261,7 +306,7 @@ diff -urN linux-2.6.12-rc3/fs/inode.c linux/fs/inode.c
  		inode->i_pipe = NULL;
  		inode->i_bdev = NULL;
  		inode->i_cdev = NULL;
-@@ -355,6 +360,7 @@
+@@ -346,6 +351,7 @@
  
  	down(&iprune_sem);
  	spin_lock(&inode_lock);
@@ -269,10 +314,10 @@ diff -urN linux-2.6.12-rc3/fs/inode.c linux/fs/inode.c
  	busy = invalidate_list(&sb->s_inodes, &throw_away);
  	spin_unlock(&inode_lock);
  
-diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
---- linux-2.6.12-rc3/fs/inotify.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux/fs/inotify.c	2005-04-21 02:42:40.000000000 -0400
-@@ -0,0 +1,961 @@
+diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
+--- linux-2.6.12-rc6/fs/inotify.c	1969-12-31 19:00:00.000000000 -0500
++++ linux/fs/inotify.c	2005-06-07 15:49:02.000000000 -0400
+@@ -0,0 +1,981 @@
 +/*
 + * fs/inotify.c - inode-based file event notifications
 + *
@@ -325,7 +370,7 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 + * Lock ordering:
 + *
 + * dentry->d_lock (used to keep d_move() away from dentry->d_parent)
-+ * iprune_sem (synchronize versus shrink_icache_memory())
++ * iprune_sem (synchronize shrink_icache_memory())
 + * 	inode_lock (protects the super_block->s_inodes list)
 + * 	inode->inotify_sem (protects inode->inotify_watches and watches->i_list)
 + * 		inotify_dev->sem (protects inotify_device and watches->d_list)
@@ -355,7 +400,7 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +struct inotify_device {
 +	wait_queue_head_t 	wq;		/* wait queue for i/o */
 +	struct idr		idr;		/* idr mapping wd -> watch */
-+	struct semaphore	sem;		/* protects this bad boy */	
++	struct semaphore	sem;		/* protects this bad boy */
 +	struct list_head 	events;		/* list of queued events */
 +	struct list_head	watches;	/* list of watches */
 +	atomic_t		count;		/* reference count */
@@ -526,16 +571,16 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +			if (len % event_size == 0)
 +				rem = 0;
 +		}
-+		len += rem;
 +
-+		kevent->name = kmalloc(len, GFP_KERNEL);
++		kevent->name = kmalloc(len + rem, GFP_KERNEL);
 +		if (unlikely(!kevent->name)) {
 +			kmem_cache_free(event_cachep, kevent);
 +			return NULL;
 +		}
-+		memset(kevent->name, 0, len);
-+		strncpy(kevent->name, name, strlen(name));
-+		kevent->event.len = len;
++		memcpy(kevent->name, name, len);
++		if (rem)
++			memset(kevent->name + len, 0, rem);		
++		kevent->event.len = len + rem;
 +	} else {
 +		kevent->event.len = 0;
 +		kevent->name = NULL;
@@ -568,9 +613,8 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +
 +	/* coalescing: drop this event if it is a dupe of the previous */
 +	last = inotify_dev_get_event(dev);
-+	if (dev->event_count && last->event.mask == mask &&
-+			last->event.cookie == cookie &&
-+			last->event.wd == watch->wd) {
++	if (last && last->event.mask == mask && last->event.wd == watch->wd &&
++			last->event.cookie == cookie) {
 +		const char *lastname = last->name;
 +
 +		if (!name && !lastname)
@@ -636,7 +680,7 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 + * Callers must hold dev->sem.  This function can sleep.
 + */
 +static int inotify_dev_get_wd(struct inotify_device *dev,
-+			     struct inotify_watch *watch)
++			      struct inotify_watch *watch)
 +{
 +	int ret;
 +
@@ -776,15 +820,20 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +void inotify_inode_queue_event(struct inode *inode, u32 mask, u32 cookie,
 +			       const char *name)
 +{
-+	struct inotify_watch *watch;
++	struct inotify_watch *watch, *next;
 +
 +	down(&inode->inotify_sem);
-+	list_for_each_entry(watch, &inode->inotify_watches, i_list) {
-+		if (watch->mask & mask) {
++	list_for_each_entry_safe(watch, next, &inode->inotify_watches, i_list) {
++		u32 watch_mask = watch->mask;
++		if (watch_mask & mask) {
 +			struct inotify_device *dev = watch->dev;
++			get_inotify_watch(watch);
 +			down(&dev->sem);
 +			inotify_dev_queue_event(dev, watch, mask, cookie, name);
++			if (watch_mask & IN_ONESHOT)
++				remove_watch_no_event(watch, dev);
 +			up(&dev->sem);
++			put_inotify_watch(watch);
 +		}
 +	}
 +	up(&inode->inotify_sem);
@@ -844,6 +893,9 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +		struct inotify_watch *watch, *next_w;
 +		struct list_head *watches;
 +
++		/* In case the remove_watch() drops a reference */
++		__iget(inode);
++
 +		/*
 +		 * We can safely drop inode_lock here because the per-sb list
 +		 * of inodes must not change during unmount and iprune_sem
@@ -862,6 +914,7 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +			up(&dev->sem);
 +		}
 +		up(&inode->inotify_sem);
++		iput(inode);		
 +
 +		spin_lock(&inode_lock);
 +	}
@@ -1004,7 +1057,6 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +	INIT_LIST_HEAD(&dev->watches);
 +	init_waitqueue_head(&dev->wq);
 +	sema_init(&dev->sem, 1);
-+
 +	dev->event_count = 0;
 +	dev->queue_size = 0;
 +	dev->max_events = max_queued_events;
@@ -1012,9 +1064,11 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +	atomic_set(&dev->count, 0);
 +
 +	get_inotify_dev(dev);
-+	atomic_inc(&current->user->inotify_devs);
++	atomic_inc(&user->inotify_devs);
 +
 +	file->private_data = dev;
++
++	nonseekable_open(inode, file);
 +
 +	return 0;
 +out_err:
@@ -1068,8 +1122,7 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +	return 0;
 +}
 +
-+static int inotify_add_watch(struct inotify_device *dev,
-+			     int fd, u32 mask)
++static int inotify_add_watch(struct inotify_device *dev, int fd, u32 mask)
 +{
 +	struct inotify_watch *watch, *old;
 +	struct inode *inode;
@@ -1083,6 +1136,13 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +
 +	down(&inode->inotify_sem);
 +	down(&dev->sem);
++
++	/* don't let user-space set invalid bits: we don't want flags set */
++	mask &= IN_ALL_EVENTS;
++	if (!mask) {
++		ret = -EINVAL;
++		goto out;
++	}
 +
 +	/*
 +	 * Handle the case of re-adding a watch on an (inode,dev) pair that we
@@ -1132,12 +1192,17 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +		return -EINVAL;
 +	}
 +	get_inotify_watch(watch);
++	inode = watch->inode;
 +	up(&dev->sem);
 +
-+	inode = watch->inode;
 +	down(&inode->inotify_sem);
 +	down(&dev->sem);
-+	remove_watch(watch, dev);
++
++	/* make sure that we did not race */
++	watch = idr_find(&dev->idr, wd);
++	if (likely(watch))
++		remove_watch(watch, dev);
++
 +	up(&dev->sem);
 +	up(&inode->inotify_sem);
 +	put_inotify_watch(watch);
@@ -1210,9 +1275,9 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +	if (unlikely(ret))
 +		panic("inotify: misc_register returned %d\n", ret);
 +
-+	max_queued_events = 512;
-+	max_user_devices = 64;
-+	max_user_watches = 16384;
++	max_queued_events = 8192;
++	max_user_devices = 128;
++	max_user_watches = 8192;
 +
 +	class = inotify_device.class;
 +	class_device_create_file(class, &class_device_attr_max_queued_events);
@@ -1234,9 +1299,9 @@ diff -urN linux-2.6.12-rc3/fs/inotify.c linux/fs/inotify.c
 +}
 +
 +module_init(inotify_init);
-diff -urN linux-2.6.12-rc3/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.12-rc3/fs/Kconfig	2005-04-20 22:47:06.000000000 -0400
-+++ linux/fs/Kconfig	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.12-rc6/fs/Kconfig	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/Kconfig	2005-06-07 15:49:02.000000000 -0400
 @@ -339,6 +339,19 @@
  	  If you don't know whether you need it, then you don't need it:
  	  answer N.
@@ -1257,9 +1322,9 @@ diff -urN linux-2.6.12-rc3/fs/Kconfig linux/fs/Kconfig
  config QUOTA
  	bool "Quota support"
  	help
-diff -urN linux-2.6.12-rc3/fs/Makefile linux/fs/Makefile
---- linux-2.6.12-rc3/fs/Makefile	2005-03-02 02:38:10.000000000 -0500
-+++ linux/fs/Makefile	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/Makefile linux/fs/Makefile
+--- linux-2.6.12-rc6/fs/Makefile	2005-03-02 02:38:10.000000000 -0500
++++ linux/fs/Makefile	2005-06-07 15:49:02.000000000 -0400
 @@ -11,6 +11,7 @@
  		attr.o bad_inode.o file.o filesystems.o namespace.o aio.o \
  		seq_file.o xattr.o libfs.o fs-writeback.o mpage.o direct-io.o \
@@ -1268,9 +1333,9 @@ diff -urN linux-2.6.12-rc3/fs/Makefile linux/fs/Makefile
  obj-$(CONFIG_EPOLL)		+= eventpoll.o
  obj-$(CONFIG_COMPAT)		+= compat.o
  
-diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
---- linux-2.6.12-rc3/fs/namei.c	2005-04-20 22:47:06.000000000 -0400
-+++ linux/fs/namei.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/namei.c linux/fs/namei.c
+--- linux-2.6.12-rc6/fs/namei.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/namei.c	2005-06-07 15:49:02.000000000 -0400
 @@ -21,7 +21,7 @@
  #include <linux/namei.h>
  #include <linux/quotaops.h>
@@ -1280,7 +1345,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  #include <linux/smp_lock.h>
  #include <linux/personality.h>
  #include <linux/security.h>
-@@ -1292,7 +1292,7 @@
+@@ -1296,7 +1296,7 @@
  	DQUOT_INIT(dir);
  	error = dir->i_op->create(dir, dentry, mode, nd);
  	if (!error) {
@@ -1289,7 +1354,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		security_inode_post_create(dir, dentry, mode);
  	}
  	return error;
-@@ -1597,7 +1597,7 @@
+@@ -1602,7 +1602,7 @@
  	DQUOT_INIT(dir);
  	error = dir->i_op->mknod(dir, dentry, mode, dev);
  	if (!error) {
@@ -1298,7 +1363,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		security_inode_post_mknod(dir, dentry, mode, dev);
  	}
  	return error;
-@@ -1670,7 +1670,7 @@
+@@ -1675,7 +1675,7 @@
  	DQUOT_INIT(dir);
  	error = dir->i_op->mkdir(dir, dentry, mode);
  	if (!error) {
@@ -1307,7 +1372,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		security_inode_post_mkdir(dir,dentry, mode);
  	}
  	return error;
-@@ -1761,7 +1761,7 @@
+@@ -1766,7 +1766,7 @@
  	}
  	up(&dentry->d_inode->i_sem);
  	if (!error) {
@@ -1316,7 +1381,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		d_delete(dentry);
  	}
  	dput(dentry);
-@@ -1834,9 +1834,10 @@
+@@ -1839,9 +1839,10 @@
  
  	/* We don't d_delete() NFS sillyrenamed files--they still exist. */
  	if (!error && !(dentry->d_flags & DCACHE_NFSFS_RENAMED)) {
@@ -1328,7 +1393,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  	return error;
  }
  
-@@ -1910,7 +1911,7 @@
+@@ -1915,7 +1916,7 @@
  	DQUOT_INIT(dir);
  	error = dir->i_op->symlink(dir, dentry, oldname);
  	if (!error) {
@@ -1337,7 +1402,7 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		security_inode_post_symlink(dir, dentry, oldname);
  	}
  	return error;
-@@ -1983,7 +1984,7 @@
+@@ -1988,7 +1989,7 @@
  	error = dir->i_op->link(old_dentry, dir, new_dentry);
  	up(&old_dentry->d_inode->i_sem);
  	if (!error) {
@@ -1346,19 +1411,19 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
  		security_inode_post_link(old_dentry, dir, new_dentry);
  	}
  	return error;
-@@ -2147,6 +2148,7 @@
+@@ -2152,6 +2153,7 @@
  {
  	int error;
  	int is_dir = S_ISDIR(old_dentry->d_inode->i_mode);
-+	char *old_name;
++	const char *old_name;
  
  	if (old_dentry->d_inode == new_dentry->d_inode)
   		return 0;
-@@ -2168,18 +2170,18 @@
+@@ -2173,18 +2175,18 @@
  	DQUOT_INIT(old_dir);
  	DQUOT_INIT(new_dir);
  
-+	old_name = fsnotify_oldname_init(old_dentry);
++	old_name = fsnotify_oldname_init(old_dentry->d_name.name);
 +
  	if (is_dir)
  		error = vfs_rename_dir(old_dir,old_dentry,new_dir,new_dentry);
@@ -1372,16 +1437,46 @@ diff -urN linux-2.6.12-rc3/fs/namei.c linux/fs/namei.c
 -			inode_dir_notify(new_dir, DN_CREATE);
 -		}
 +		const char *new_name = old_dentry->d_name.name;
-+		fsnotify_move(old_dir, new_dir, old_name, new_name);
++		fsnotify_move(old_dir, new_dir, old_name, new_name, is_dir);
  	}
 +	fsnotify_oldname_free(old_name);
 +
  	return error;
  }
  
-diff -urN linux-2.6.12-rc3/fs/open.c linux/fs/open.c
---- linux-2.6.12-rc3/fs/open.c	2005-03-02 02:37:47.000000000 -0500
-+++ linux/fs/open.c	2005-04-21 01:17:27.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/nfsd/vfs.c linux/fs/nfsd/vfs.c
+--- linux-2.6.12-rc6/fs/nfsd/vfs.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/nfsd/vfs.c	2005-06-07 15:49:02.000000000 -0400
+@@ -45,7 +45,7 @@
+ #endif /* CONFIG_NFSD_V3 */
+ #include <linux/nfsd/nfsfh.h>
+ #include <linux/quotaops.h>
+-#include <linux/dnotify.h>
++#include <linux/fsnotify.h>
+ #ifdef CONFIG_NFSD_V4
+ #include <linux/posix_acl.h>
+ #include <linux/posix_acl_xattr.h>
+@@ -861,7 +861,7 @@
+ 		nfsdstats.io_read += err;
+ 		*count = err;
+ 		err = 0;
+-		dnotify_parent(file->f_dentry, DN_ACCESS);
++		fsnotify_access(file->f_dentry);
+ 	} else 
+ 		err = nfserrno(err);
+ out:
+@@ -917,7 +917,7 @@
+ 	set_fs(oldfs);
+ 	if (err >= 0) {
+ 		nfsdstats.io_write += cnt;
+-		dnotify_parent(file->f_dentry, DN_MODIFY);
++		fsnotify_modify(file->f_dentry);
+ 	}
+ 
+ 	/* clear setuid/setgid flag after write */
+diff -urN linux-2.6.12-rc6/fs/open.c linux/fs/open.c
+--- linux-2.6.12-rc6/fs/open.c	2005-03-02 02:37:47.000000000 -0500
++++ linux/fs/open.c	2005-06-07 15:49:02.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/file.h>
  #include <linux/smp_lock.h>
@@ -1403,9 +1498,9 @@ diff -urN linux-2.6.12-rc3/fs/open.c linux/fs/open.c
  			fd_install(fd, f);
  		}
  out:
-diff -urN linux-2.6.12-rc3/fs/read_write.c linux/fs/read_write.c
---- linux-2.6.12-rc3/fs/read_write.c	2005-04-20 22:47:06.000000000 -0400
-+++ linux/fs/read_write.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/read_write.c linux/fs/read_write.c
+--- linux-2.6.12-rc6/fs/read_write.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/read_write.c	2005-06-07 15:49:02.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/file.h>
  #include <linux/uio.h>
@@ -1449,9 +1544,40 @@ diff -urN linux-2.6.12-rc3/fs/read_write.c linux/fs/read_write.c
  	return ret;
  Efault:
  	ret = -EFAULT;
-diff -urN linux-2.6.12-rc3/fs/xattr.c linux/fs/xattr.c
---- linux-2.6.12-rc3/fs/xattr.c	2005-03-02 02:38:07.000000000 -0500
-+++ linux/fs/xattr.c	2005-04-21 01:24:24.000000000 -0400
+diff -urN linux-2.6.12-rc6/fs/sysfs/file.c linux/fs/sysfs/file.c
+--- linux-2.6.12-rc6/fs/sysfs/file.c	2005-06-07 15:47:52.000000000 -0400
++++ linux/fs/sysfs/file.c	2005-06-07 15:49:02.000000000 -0400
+@@ -3,7 +3,7 @@
+  */
+ 
+ #include <linux/module.h>
+-#include <linux/dnotify.h>
++#include <linux/fsnotify.h>
+ #include <linux/kobject.h>
+ #include <asm/uaccess.h>
+ #include <asm/semaphore.h>
+@@ -389,9 +389,6 @@
+  * sysfs_update_file - update the modified timestamp on an object attribute.
+  * @kobj: object we're acting for.
+  * @attr: attribute descriptor.
+- *
+- * Also call dnotify for the dentry, which lots of userspace programs
+- * use.
+  */
+ int sysfs_update_file(struct kobject * kobj, const struct attribute * attr)
+ {
+@@ -406,7 +403,7 @@
+ 		if (victim->d_inode && 
+ 		    (victim->d_parent->d_inode == dir->d_inode)) {
+ 			victim->d_inode->i_mtime = CURRENT_TIME;
+-			dnotify_parent(victim, DN_MODIFY);
++			fsnotify_modify(victim);
+ 
+ 			/**
+ 			 * Drop reference from initial sysfs_get_dentry().
+diff -urN linux-2.6.12-rc6/fs/xattr.c linux/fs/xattr.c
+--- linux-2.6.12-rc6/fs/xattr.c	2005-03-02 02:38:07.000000000 -0500
++++ linux/fs/xattr.c	2005-06-07 15:49:02.000000000 -0400
 @@ -16,6 +16,7 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -1472,9 +1598,9 @@ diff -urN linux-2.6.12-rc3/fs/xattr.c linux/fs/xattr.c
  out:
  		up(&d->d_inode->i_sem);
  	}
-diff -urN linux-2.6.12-rc3/include/linux/fs.h linux/include/linux/fs.h
---- linux-2.6.12-rc3/include/linux/fs.h	2005-04-20 22:47:07.000000000 -0400
-+++ linux/include/linux/fs.h	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
+--- linux-2.6.12-rc6/include/linux/fs.h	2005-06-07 15:47:53.000000000 -0400
++++ linux/include/linux/fs.h	2005-06-07 15:49:02.000000000 -0400
 @@ -471,6 +471,11 @@
  	struct dnotify_struct	*i_dnotify; /* for directory notifications */
  #endif
@@ -1487,7 +1613,7 @@ diff -urN linux-2.6.12-rc3/include/linux/fs.h linux/include/linux/fs.h
  	unsigned long		i_state;
  	unsigned long		dirtied_when;	/* jiffies of first dirtying */
  
-@@ -1365,7 +1370,6 @@
+@@ -1369,7 +1374,6 @@
  extern int do_remount_sb(struct super_block *sb, int flags,
  			 void *data, int force);
  extern sector_t bmap(struct inode *, sector_t);
@@ -1495,15 +1621,15 @@ diff -urN linux-2.6.12-rc3/include/linux/fs.h linux/include/linux/fs.h
  extern int notify_change(struct dentry *, struct iattr *);
  extern int permission(struct inode *, int, struct nameidata *);
  extern int generic_permission(struct inode *, int,
-diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify.h
---- linux-2.6.12-rc3/include/linux/fsnotify.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux/include/linux/fsnotify.h	2005-04-21 01:23:06.000000000 -0400
-@@ -0,0 +1,230 @@
+diff -urN linux-2.6.12-rc6/include/linux/fsnotify.h linux/include/linux/fsnotify.h
+--- linux-2.6.12-rc6/include/linux/fsnotify.h	1969-12-31 19:00:00.000000000 -0500
++++ linux/include/linux/fsnotify.h	2005-06-07 15:49:02.000000000 -0400
+@@ -0,0 +1,257 @@
 +#ifndef _LINUX_FS_NOTIFY_H
 +#define _LINUX_FS_NOTIFY_H
 +
 +/*
-+ * include/linux/fs_notify.h - generic hooks for filesystem notification, to
++ * include/linux/fsnotify.h - generic hooks for filesystem notification, to
 + * reduce in-source duplication from both dnotify and inotify.
 + *
 + * We don't compile any of this away in some complicated menagerie of ifdefs.
@@ -1521,9 +1647,10 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + * fsnotify_move - file old_name at old_dir was moved to new_name at new_dir
 + */
 +static inline void fsnotify_move(struct inode *old_dir, struct inode *new_dir,
-+				 const char *old_name, const char *new_name)
++				 const char *old_name, const char *new_name,
++				 int isdir)
 +{
-+	u32 cookie;
++	u32 cookie = inotify_get_cookie();
 +
 +	if (old_dir == new_dir)
 +		inode_dir_notify(old_dir, DN_RENAME);
@@ -1532,10 +1659,10 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +		inode_dir_notify(new_dir, DN_CREATE);
 +	}
 +
-+	cookie = inotify_get_cookie();
-+
-+	inotify_inode_queue_event(old_dir, IN_MOVED_FROM, cookie, old_name);
-+	inotify_inode_queue_event(new_dir, IN_MOVED_TO, cookie, new_name);
++	if (isdir)
++		isdir = IN_ISDIR;
++	inotify_inode_queue_event(old_dir, IN_MOVED_FROM|isdir,cookie,old_name);
++	inotify_inode_queue_event(new_dir, IN_MOVED_TO|isdir, cookie, new_name);
 +}
 +
 +/*
@@ -1546,7 +1673,7 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +	struct inode *inode = dentry->d_inode;
 +
 +	inode_dir_notify(dir, DN_DELETE);
-+	inotify_inode_queue_event(dir, IN_DELETE_FILE, 0, dentry->d_name.name);
++	inotify_inode_queue_event(dir, IN_DELETE, 0, dentry->d_name.name);
 +	inotify_inode_queue_event(inode, IN_DELETE_SELF, 0, NULL);
 +
 +	inotify_inode_is_dead(inode);
@@ -1559,19 +1686,18 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +				  struct inode *dir)
 +{
 +	inode_dir_notify(dir, DN_DELETE);
-+	inotify_inode_queue_event(dir, IN_DELETE_SUBDIR,0,dentry->d_name.name);
-+	inotify_inode_queue_event(inode, IN_DELETE_SELF, 0, NULL);
-+
++	inotify_inode_queue_event(dir,IN_DELETE|IN_ISDIR,0,dentry->d_name.name);
++	inotify_inode_queue_event(inode, IN_DELETE_SELF | IN_ISDIR, 0, NULL);
 +	inotify_inode_is_dead(inode);
 +}
 +
 +/*
-+ * fsnotify_create - filename was linked in
++ * fsnotify_create - 'name' was linked in
 + */
-+static inline void fsnotify_create(struct inode *inode, const char *filename)
++static inline void fsnotify_create(struct inode *inode, const char *name)
 +{
 +	inode_dir_notify(inode, DN_CREATE);
-+	inotify_inode_queue_event(inode, IN_CREATE_FILE, 0, filename);
++	inotify_inode_queue_event(inode, IN_CREATE, 0, name);
 +}
 +
 +/*
@@ -1580,7 +1706,7 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +static inline void fsnotify_mkdir(struct inode *inode, const char *name)
 +{
 +	inode_dir_notify(inode, DN_CREATE);
-+	inotify_inode_queue_event(inode, IN_CREATE_SUBDIR, 0, name);
++	inotify_inode_queue_event(inode, IN_CREATE | IN_ISDIR, 0, name);
 +}
 +
 +/*
@@ -1588,10 +1714,15 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + */
 +static inline void fsnotify_access(struct dentry *dentry)
 +{
++	struct inode *inode = dentry->d_inode;
++	u32 mask = IN_ACCESS;
++
++	if (S_ISDIR(inode->i_mode))
++		mask |= IN_ISDIR;
++
 +	dnotify_parent(dentry, DN_ACCESS);
-+	inotify_dentry_parent_queue_event(dentry, IN_ACCESS, 0,
-+					  dentry->d_name.name);
-+	inotify_inode_queue_event(dentry->d_inode, IN_ACCESS, 0, NULL);
++	inotify_dentry_parent_queue_event(dentry, mask, 0, dentry->d_name.name);
++	inotify_inode_queue_event(inode, mask, 0, NULL);
 +}
 +
 +/*
@@ -1599,10 +1730,15 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + */
 +static inline void fsnotify_modify(struct dentry *dentry)
 +{
++	struct inode *inode = dentry->d_inode;
++	u32 mask = IN_MODIFY;
++
++	if (S_ISDIR(inode->i_mode))
++		mask |= IN_ISDIR;
++
 +	dnotify_parent(dentry, DN_MODIFY);
-+	inotify_dentry_parent_queue_event(dentry, IN_MODIFY, 0,
-+					  dentry->d_name.name);
-+	inotify_inode_queue_event(dentry->d_inode, IN_MODIFY, 0, NULL);
++	inotify_dentry_parent_queue_event(dentry, mask, 0, dentry->d_name.name);
++	inotify_inode_queue_event(inode, mask, 0, NULL);
 +}
 +
 +/*
@@ -1610,9 +1746,14 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + */
 +static inline void fsnotify_open(struct dentry *dentry)
 +{
-+	inotify_inode_queue_event(dentry->d_inode, IN_OPEN, 0, NULL);
-+	inotify_dentry_parent_queue_event(dentry, IN_OPEN, 0,
-+					  dentry->d_name.name);
++	struct inode *inode = dentry->d_inode;
++	u32 mask = IN_OPEN;
++
++	if (S_ISDIR(inode->i_mode))
++		mask |= IN_ISDIR;
++
++	inotify_inode_queue_event(inode, mask, 0, NULL);
++	inotify_dentry_parent_queue_event(dentry, mask, 0, dentry->d_name.name);
 +}
 +
 +/*
@@ -1622,12 +1763,14 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +{
 +	struct dentry *dentry = file->f_dentry;
 +	struct inode *inode = dentry->d_inode;
-+	const char *filename = dentry->d_name.name;
++	const char *name = dentry->d_name.name;
 +	mode_t mode = file->f_mode;
-+	u32 mask;
++	u32 mask = (mode & FMODE_WRITE) ? IN_CLOSE_WRITE : IN_CLOSE_NOWRITE;
 +
-+	mask = (mode & FMODE_WRITE) ? IN_CLOSE_WRITE : IN_CLOSE_NOWRITE;
-+	inotify_dentry_parent_queue_event(dentry, mask, 0, filename);
++	if (S_ISDIR(inode->i_mode))
++		mask |= IN_ISDIR;
++
++	inotify_dentry_parent_queue_event(dentry, mask, 0, name);
 +	inotify_inode_queue_event(inode, mask, 0, NULL);
 +}
 +
@@ -1636,9 +1779,14 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + */
 +static inline void fsnotify_xattr(struct dentry *dentry)
 +{
-+	inotify_dentry_parent_queue_event(dentry, IN_ATTRIB, 0,
-+					  dentry->d_name.name);
-+	inotify_inode_queue_event(dentry->d_inode, IN_ATTRIB, 0, NULL);
++	struct inode *inode = dentry->d_inode;
++	u32 mask = IN_ATTRIB;
++
++	if (S_ISDIR(inode->i_mode))
++		mask |= IN_ISDIR;
++
++	inotify_dentry_parent_queue_event(dentry, mask, 0, dentry->d_name.name);
++	inotify_inode_queue_event(inode, mask, 0, NULL);
 +}
 +
 +/*
@@ -1647,6 +1795,7 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 + */
 +static inline void fsnotify_change(struct dentry *dentry, unsigned int ia_valid)
 +{
++	struct inode *inode = dentry->d_inode;
 +	int dn_mask = 0;
 +	u32 in_mask = 0;
 +
@@ -1682,7 +1831,9 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +	if (dn_mask)
 +		dnotify_parent(dentry, dn_mask);
 +	if (in_mask) {
-+		inotify_inode_queue_event(dentry->d_inode, in_mask, 0, NULL);
++		if (S_ISDIR(inode->i_mode))
++			in_mask |= IN_ISDIR;
++		inotify_inode_queue_event(inode, in_mask, 0, NULL);
 +		inotify_dentry_parent_queue_event(dentry, in_mask, 0,
 +						  dentry->d_name.name);
 +	}
@@ -1693,16 +1844,18 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +/*
 + * fsnotify_oldname_init - save off the old filename before we change it
 + *
-+ * this could be kstrdup if only we could add that to lib/string.c
++ * XXX: This could be kstrdup if only we could add that to lib/string.c
 + */
-+static inline char *fsnotify_oldname_init(struct dentry *old_dentry)
++static inline const char *fsnotify_oldname_init(const char *name)
 +{
-+	char *old_name;
++	size_t len;
++	char *buf;
 +
-+	old_name = kmalloc(strlen(old_dentry->d_name.name) + 1, GFP_KERNEL);
-+	if (old_name)
-+		strcpy(old_name, old_dentry->d_name.name);
-+	return old_name;
++	len = strlen(name) + 1;
++	buf = kmalloc(len, GFP_KERNEL);
++	if (likely(buf))
++		memcpy(buf, name, len);
++	return buf;
 +}
 +
 +/*
@@ -1715,7 +1868,7 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +
 +#else	/* CONFIG_INOTIFY */
 +
-+static inline char *fsnotify_oldname_init(struct dentry *old_dentry)
++static inline const char *fsnotify_oldname_init(const char *name)
 +{
 +	return NULL;
 +}
@@ -1729,10 +1882,10 @@ diff -urN linux-2.6.12-rc3/include/linux/fsnotify.h linux/include/linux/fsnotify
 +#endif	/* __KERNEL__ */
 +
 +#endif	/* _LINUX_FS_NOTIFY_H */
-diff -urN linux-2.6.12-rc3/include/linux/inotify.h linux/include/linux/inotify.h
---- linux-2.6.12-rc3/include/linux/inotify.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux/include/linux/inotify.h	2005-04-21 00:56:28.000000000 -0400
-@@ -0,0 +1,111 @@
+diff -urN linux-2.6.12-rc6/include/linux/inotify.h linux/include/linux/inotify.h
+--- linux-2.6.12-rc6/include/linux/inotify.h	1969-12-31 19:00:00.000000000 -0500
++++ linux/include/linux/inotify.h	2005-06-07 15:49:02.000000000 -0400
+@@ -0,0 +1,124 @@
 +/*
 + * Inode based directory notification for Linux
 + *
@@ -1768,27 +1921,40 @@ diff -urN linux-2.6.12-rc3/include/linux/inotify.h linux/include/linux/inotify.h
 +	__u32		mask;		/* event mask */
 +};
 +
-+/* the following are legal, implemented events */
++/* the following are legal, implemented events that user-space can watch for */
 +#define IN_ACCESS		0x00000001	/* File was accessed */
 +#define IN_MODIFY		0x00000002	/* File was modified */
-+#define IN_ATTRIB		0x00000004	/* File changed attributes */
++#define IN_ATTRIB		0x00000004	/* Metadata changed */
 +#define IN_CLOSE_WRITE		0x00000008	/* Writtable file was closed */
 +#define IN_CLOSE_NOWRITE	0x00000010	/* Unwrittable file closed */
 +#define IN_OPEN			0x00000020	/* File was opened */
 +#define IN_MOVED_FROM		0x00000040	/* File was moved from X */
 +#define IN_MOVED_TO		0x00000080	/* File was moved to Y */
-+#define IN_DELETE_SUBDIR	0x00000100	/* Subdir was deleted */
-+#define IN_DELETE_FILE		0x00000200	/* Subfile was deleted */
-+#define IN_CREATE_SUBDIR	0x00000400	/* Subdir was created */
-+#define IN_CREATE_FILE		0x00000800	/* Subfile was created */
-+#define IN_DELETE_SELF		0x00001000	/* Self was deleted */
++#define IN_CREATE		0x00000100	/* Subfile was created */
++#define IN_DELETE		0x00000200	/* Subfile was deleted */
++#define IN_DELETE_SELF		0x00000400	/* Self was deleted */
++
++/* the following are legal events.  they are sent as needed to any watch */
 +#define IN_UNMOUNT		0x00002000	/* Backing fs was unmounted */
 +#define IN_Q_OVERFLOW		0x00004000	/* Event queued overflowed */
 +#define IN_IGNORED		0x00008000	/* File was ignored */
 +
++/* helper events */
++#define IN_CLOSE		(IN_CLOSE_WRITE | IN_CLOSE_NOWRITE) /* close */
++#define IN_MOVE			(IN_MOVED_FROM | IN_MOVED_TO) /* moves */
++
 +/* special flags */
-+#define IN_ALL_EVENTS		0xffffffff	/* All the events */
-+#define IN_CLOSE		(IN_CLOSE_WRITE | IN_CLOSE_NOWRITE)
++#define IN_ISDIR		0x40000000	/* event occurred against dir */
++#define IN_ONESHOT		0x80000000	/* only send event once */
++
++/*
++ * All of the events - we build the list by hand so that we can add flags in
++ * the future and not break backward compatibility.  Apps will get only the
++ * events that they originally wanted.  Be sure to add new events here!
++ */
++#define IN_ALL_EVENTS	(IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRITE | \
++			 IN_CLOSE_NOWRITE | IN_OPEN | IN_MOVED_FROM | \
++			 IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF)
 +
 +#define INOTIFY_IOCTL_MAGIC	'Q'
 +#define INOTIFY_IOCTL_MAXNR	2
@@ -1844,9 +2010,9 @@ diff -urN linux-2.6.12-rc3/include/linux/inotify.h linux/include/linux/inotify.h
 +#endif	/* __KERNEL __ */
 +
 +#endif	/* _LINUX_INOTIFY_H */
-diff -urN linux-2.6.12-rc3/include/linux/sched.h linux/include/linux/sched.h
---- linux-2.6.12-rc3/include/linux/sched.h	2005-04-20 22:47:07.000000000 -0400
-+++ linux/include/linux/sched.h	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/include/linux/sched.h linux/include/linux/sched.h
+--- linux-2.6.12-rc6/include/linux/sched.h	2005-06-07 15:47:53.000000000 -0400
++++ linux/include/linux/sched.h	2005-06-07 15:49:02.000000000 -0400
 @@ -404,6 +404,10 @@
  	atomic_t processes;	/* How many processes does this user have? */
  	atomic_t files;		/* How many open files does this user have? */
@@ -1858,9 +2024,9 @@ diff -urN linux-2.6.12-rc3/include/linux/sched.h linux/include/linux/sched.h
  	/* protected by mq_lock	*/
  	unsigned long mq_bytes;	/* How many bytes can be allocated to mqueue? */
  	unsigned long locked_shm; /* How many pages of mlocked shm ? */
-diff -urN linux-2.6.12-rc3/kernel/user.c linux/kernel/user.c
---- linux-2.6.12-rc3/kernel/user.c	2005-04-20 22:47:08.000000000 -0400
-+++ linux/kernel/user.c	2005-04-21 00:56:28.000000000 -0400
+diff -urN linux-2.6.12-rc6/kernel/user.c linux/kernel/user.c
+--- linux-2.6.12-rc6/kernel/user.c	2005-06-07 15:47:53.000000000 -0400
++++ linux/kernel/user.c	2005-06-07 15:49:02.000000000 -0400
 @@ -120,6 +120,10 @@
  		atomic_set(&new->processes, 0);
  		atomic_set(&new->files, 0);
