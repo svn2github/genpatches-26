@@ -40,77 +40,13 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_linux-2.6.11.1.patch
-From:	http://kernel.org/pub/linux/kernel/people/gregkh/v2.6.11/patch-2.6.11.1.gz
-Desc:	Linux 2.6.11.1 - Fixes for Dell keyboards and PPC compilation
-
-Patch:	1001_linux-2.6.11.2.patch
-From:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-2.6.11.2.gz
-Desc:	Linux 2.6.11.2 - Fix an epoll security hole
-
-Patch:	1002_linux-2.6.11.3.patch
-From:	http://kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.2-3.gz
-Desc:	Linux 2.6.11.3 - Various fixes
-
-Patch:	1003_linux-2.6.11.4.patch
-From:	http://kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.3-4.gz
-Desc:	Linux 2.6.11.4 - 2 security fixes
-
-Patch:	1004_linux-2.6.11.5.patch
-From:	http://kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.4-5.gz
-Desc:	Linux 2.6.11.5 - several misc fixes
-
-Patch:	1005_linux-2.6.11.6.patch
-From:	http://kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.5-6.gz
-Desc:	Linux 2.6.11.6 - several fixes including security fixes
-
-Patch:	1006_linux-2.6.11.7.patch
-From:	http://kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.6-7.gz
-Desc:	Linux 2.6.11.7 - misc fixes
-
-Patch:	1007_linux-2.6.11.8.patch
-From:	http://www.kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.7-8.gz
-Desc:	Linux 2.6.11.8 - misc fixes
-
-Patch:	1008_linux-2.6.11.9.patch
-From:	http://www.kernel.org/pub/linux/kernel/v2.6/incr/patch-2.6.11.8-9.gz
-Desc:	Linux 2.6.11.9 - ELF security fix
-
-Patch:	1009_linux-2.6.11.10.patch
-From:	http://www.kernel.org/pub/linux/kernel/v2.6/
-Desc:	Linux 2.6.11.10 - pktcdvd and raw security fixes
-
-Patch:	1010_linux-2.6.11.11.patch
-From:	http://www.kernel.org/pub/linux/kernel/v2.6/
-Desc:	Linux 2.6.11.11 - misc fixes
-
-Patch:	1110_aio-hugepage.patch
-From:	http://bugs.gentoo.org/87913
-Desc:	Fix potential 64bit AIO DoS
-
 Patch:	1150_sunrpc-nfsacl.patch
 From:	http://bugs.gentoo.org/74070
 Desc:	Fix security problem in sunrpc nfsacl protocol extension.
 
-Patch:	1315_alpha-sysctl-uac.patch
-From:	
-Desc:	enable control of the unaligned access control policy from sysctl
-
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
-
-Patch:	1342_sparc-stopa.patch
-From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314190710206&w=2
-Desc:	Display a more user friendly panic message
-
-Patch:	1344_sparc-sunsab.patch
-From:	Jurij Smakov <jurij@wooyd.org>
-Desc:	Fix garbage characters with sunsab serial console
-
-Patch:	1350_sparc-sparc64-smp.patch
-From:	David S. Miller <davem@davemloft.net>
-Desc:	Fix sparc64 smp
 
 Patch:	1360_sparc-kconfig-rework.patch
 From:	eradicator@gentoo.org
@@ -128,38 +64,6 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1900_lowmem-reserve-oops.patch
-From:	2.6.11-mm1
-Desc:	Fix a divide-by-zero oops
-
-Patch:	1905_install-docs.patch
-From:	2.6.12-rc3
-Desc:	Fix generation of kernel manpages
-
-Patch:	1910_install-docs-2.patch
-From:	2.6.12-rc3
-Desc:	Fix generation of kernel manpages
-
-Patch:	1915_mov-asm.patch
-From:	http://bugs.gentoo.org/94763
-Desc:	Fix compilation with new binutils
-
-Patch:	2900_alps-tapping.patch
-From:	http://bugs.gentoo.org/84657
-Desc:	Fix ALPS touchpad tapping. Already in 2.6.12 tree
-
-Patch:	2905_procfs-hardlinks.patch
-From:	http://bugs.gentoo.org/86031
-Desc:	Fix hardlink count in /proc/<pid> directories
-
-Patch:	2910_procfs-task-hardlinks.patch
-From:	http://bugs.gentoo.org/86031
-Desc:	Fix hardlink count in /proc/<pid>/task directories
-
-Patch:	2915_fb-scrollback.patch
-From:	http://bugs.gentoo.org/88883
-Desc:	Fix disappearing symbol on framebuffer scrollback
-
 Patch:	4100_skge-0.6.patch
 From:	http://users.tpg.com.au/sigm/patches/skge-netdev-2.6.11-mm4.patch
 Desc:	New driver for SysKonnect gigabit ethernet.
@@ -171,6 +75,10 @@ Desc:	Add a note suggesting users try skge
 Patch:	4300_via-vt6410.patch
 From:	ide-dev-2.6
 Desc:	Add support for VIA VT6410 IDE into vt82xx driver
+
+Patch:	4305_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
 
 Patch:	4315_promise-pdc2027x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
@@ -193,7 +101,7 @@ From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems. This will become increasingly
 	popular for the livecd's
 
-Patch:	4800_inotify-0.22-3.patch
+Patch:	4800_inotify-0.23-8.patch
 From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify
 Desc:	Kernel-based file update monitoring, for GNOME and friends.
 
@@ -204,4 +112,8 @@ Desc:	Speech synthesizer to provide console access for blind/hard-of-sight users
 Patch:	4901_speakup-parport.patch
 From:	http://bugs.gentoo.org/88467
 Desc:	Speakup + parallel port collision fix
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
 
