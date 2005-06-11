@@ -1,0 +1,12 @@
+diff -ruN linux-2.6.10.orig/drivers/input/joystick/sidewinder.c linux-2.6.10/drivers/input/joystick/sidewinder.c
+--- linux-2.6.10.orig/drivers/input/joystick/sidewinder.c	2005-01-01 23:06:57.580682749 -0800
++++ linux-2.6.10/drivers/input/joystick/sidewinder.c	2005-01-01 23:08:38.938770296 -0800
+@@ -45,7 +45,7 @@
+  * as well as break everything.
+  */
+ 
+-#define SW_DEBUG
++/* #define SW_DEBUG */		/* Enable lots of debugging output */
+ 
+ #define SW_START	400	/* The time we wait for the first bit [400 us] */
+ #define SW_STROBE	45	/* Max time per bit [45 us] */

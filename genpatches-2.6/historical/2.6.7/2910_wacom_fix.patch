@@ -1,0 +1,138 @@
+From dtor_core@ameritech.net Sun Jun 27 23:21:25 2004
+Return-Path: <dtor_core@ameritech.net>
+X-Original-To: jeremy@localhost
+Delivered-To: jeremy@localhost.outersquare.org
+Received: from localhost (localhost [127.0.0.1]) by cid.outersquare.org
+	(Postfix) with ESMTP id 2FD462805E for <jeremy@localhost>; Sun, 27 Jun 2004
+	23:21:25 -0700 (PDT)
+Envelope-to: eradicator@gentoo.org
+Delivery-date: Mon, 28 Jun 2004 06:21:11 +0000
+Received: from dev.gentoo.org [156.56.111.197] by localhost with IMAP
+	(fetchmail-6.2.5) for jeremy@localhost (single-drop); Sun, 27 Jun 2004
+	23:21:25 -0700 (PDT)
+Received: from smtp802.mail.sc5.yahoo.com ([66.163.168.181]) by
+	smtp.gentoo.org with smtp (Exim 4.34) id 1BepVv-0001VZ-6j for
+	eradicator@gentoo.org; Mon, 28 Jun 2004 06:21:11 +0000
+Received: from unknown (HELO core-wl.prvt.inr.net)
+	(dtor?core@ameritech.net@68.72.45.79 with plain) by
+	smtp802.mail.sc5.yahoo.com with SMTP; 28 Jun 2004 06:21:10 -0000
+From: Dmitry Torokhov <dtor_core@ameritech.net>
+To: Jeremy Huddleston <eradicator@gentoo.org>
+Subject: Re: Problem with wacom tablets post 2.6.7-rc2
+Date: Mon, 28 Jun 2004 01:21:02 -0500
+User-Agent: KMail/1.6.2
+References: <1088114194.11595.16.camel@cid.outersquare.org>
+	 <200406241904.14368.dtor_core@ameritech.net>
+	 <1088128675.11622.0.camel@cid.outersquare.org>
+In-Reply-To: <1088128675.11622.0.camel@cid.outersquare.org>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Message-Id: <200406280121.09800.dtor_core@ameritech.net>
+X-VirusScan: Clean
+X-Spam-Checker-Version: SpamAssassin 2.63 (2004-01-11) on
+	cid.outersquare.org
+X-Spam-Level: 
+X-Spam-Status: No, hits=-4.9 required=7.0 tests=BAYES_00 autolearn=ham 
+	version=2.63
+X-Evolution-Source: imap://jeremy@cid.outersquare.org/
+Content-Transfer-Encoding: 8bit
+
+On Thursday 24 June 2004 08:57 pm, Jeremy Huddleston wrote:
+> 
+> works great.  Thanks.
+> 
+> --Jeremy
+> 
+
+Hi,
+
+Could you please try an alternative patch? I am especially interested in
+behavior when you have more than one pointing device, let's say tablet
+and a mouse.
+
+Thank you in advance!
+
+-- 
+Dmitry
+
+===== drivers/input/mousedev.c 1.40 vs edited =====
+--- 1.40/drivers/input/mousedev.c	2004-06-11 16:04:02 -05:00
++++ edited/drivers/input/mousedev.c	2004-06-28 01:10:14 -05:00
+@@ -104,6 +104,9 @@
+ static struct mousedev *mousedev_table[MOUSEDEV_MINORS];
+ static struct mousedev mousedev_mix;
+ 
++static int last_x, last_y;
++static spinlock_t last_pos_lock = SPIN_LOCK_UNLOCKED;
++
+ #define fx(i)  (mousedev->old_x[(mousedev->pkt_count - (i)) & 03])
+ #define fy(i)  (mousedev->old_y[(mousedev->pkt_count - (i)) & 03])
+ 
+@@ -128,21 +131,24 @@
+ 
+ static void mousedev_abs_event(struct input_dev *dev, struct mousedev *mousedev, unsigned int code, int value)
+ {
++	unsigned long flags;
+ 	int size;
+ 
+ 	switch (code) {
+ 		case ABS_X:
+ 			size = dev->absmax[ABS_X] - dev->absmin[ABS_X];
+ 			if (size == 0) size = xres;
+-			mousedev->packet.dx = (value * xres - mousedev->old_x[0]) / size;
+-			mousedev->old_x[0] = mousedev->packet.dx * size;
++			spin_lock_irqsave(&last_pos_lock, flags);
++			mousedev->packet.dx = (value - dev->absmin[ABS_X]) * xres / size  - last_x;
++			spin_unlock_irqrestore(&last_pos_lock, flags);
+ 			break;
+ 
+ 		case ABS_Y:
+ 			size = dev->absmax[ABS_Y] - dev->absmin[ABS_Y];
+ 			if (size == 0) size = yres;
+-			mousedev->packet.dy = (value * yres - mousedev->old_y[0]) / size;
+-			mousedev->old_y[0] = mousedev->packet.dy * size;
++			spin_lock_irqsave(&last_pos_lock, flags);
++			mousedev->packet.dy = -((value - dev->absmin[ABS_Y]) * yres / size - last_y);
++			spin_unlock_irqrestore(&last_pos_lock, flags);
+ 			break;
+ 	}
+ }
+@@ -188,6 +194,18 @@
+ 	}
+ }
+ 
++static void mousedev_adjust_lastpos(struct mousedev_motion *packet)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&last_pos_lock, flags);
++	last_x += packet->dx;
++	last_x = last_x < 0 ?  0 : (last_x < xres ? last_x : xres);
++	last_y -= packet->dy;
++	last_y = last_y < 0 ?  0 : (last_y < yres ? last_y : yres);
++	spin_unlock_irqrestore(&last_pos_lock, flags);
++}
++
+ static void mousedev_notify_readers(struct mousedev *mousedev, struct mousedev_motion *packet)
+ {
+ 	struct mousedev_list *list;
+@@ -288,6 +306,7 @@
+ 				mousedev_notify_readers(mousedev, &mousedev->packet);
+ 				mousedev_notify_readers(&mousedev_mix, &mousedev->packet);
+ 
++				mousedev_adjust_lastpos(&mousedev->packet);
+ 				memset(&mousedev->packet, 0, sizeof(struct mousedev_motion));
+ 			}
+ 			break;
+@@ -669,6 +688,9 @@
+ 
+ static int __init mousedev_init(void)
+ {
++	last_x = xres / 2;
++	last_y = yres / 2;
++
+ 	input_register_handler(&mousedev_handler);
+ 
+ 	memset(&mousedev_mix, 0, sizeof(struct mousedev));
+

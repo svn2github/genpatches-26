@@ -1,0 +1,493 @@
+From http://dev.gentoo.org/~wesolows
+
+Major rework of the sparc and sparc64 Kconfigs to more closely match the
+structure and layout of x86.  It also adds a large number of dependencies
+to drivers so they will only appear when the system configuration is
+compatible with the devices they service.
+
+-------------------------------------------------------------------------------
+
+diff -urN linux-2.6.7-42/drivers/char/Kconfig linux-2.6.7-62/drivers/char/Kconfig
+--- linux-2.6.7-42/drivers/char/Kconfig	2004-07-03 21:44:36.000000000 -0700
++++ linux-2.6.7-62/drivers/char/Kconfig	2004-07-03 21:46:52.744195685 -0700
+@@ -80,7 +80,7 @@
+ 
+ config COMPUTONE
+ 	tristate "Computone IntelliPort Plus serial support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	---help---
+ 	  This driver supports the entire family of Intelliport II/Plus
+ 	  controllers with the exception of the MicroChannel controllers and
+@@ -95,7 +95,7 @@
+ 
+ config ROCKETPORT
+ 	tristate "Comtrol RocketPort support"
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+ 	help
+ 	  This driver supports Comtrol RocketPort and RocketModem PCI boards.   
+           These boards provide 2, 4, 8, 16, or 32 high-speed serial ports or
+@@ -110,7 +110,7 @@
+ 
+ config CYCLADES
+ 	tristate "Cyclades async mux support"
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+ 	---help---
+ 	  This driver supports Cyclades Z and Y multiserial boards.
+ 	  You would need something like this to connect more than two modems to
+@@ -138,7 +138,7 @@
+ 
+ config DIGIEPCA
+ 	tristate "Digiboard Intelligent Async Support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	---help---
+ 	  This is a driver for Digi International's Xx, Xeve, and Xem series
+ 	  of cards which provide multiple serial ports. You would need
+@@ -157,7 +157,7 @@
+ 
+ config DIGI
+ 	tristate "Digiboard PC/Xx Support"
+-	depends on SERIAL_NONSTANDARD && DIGIEPCA=n && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && DIGIEPCA=n && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  This is a driver for the Digiboard PC/Xe, PC/Xi, and PC/Xeve cards
+ 	  that give you many serial ports. You would need something like this
+@@ -183,7 +183,7 @@
+ 
+ config MOXA_INTELLIO
+ 	tristate "Moxa Intellio support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  Say Y here if you have a Moxa Intellio multiport serial card.
+ 
+@@ -192,7 +192,7 @@
+ 
+ config MOXA_SMARTIO
+ 	tristate "Moxa SmartIO support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  Say Y here if you have a Moxa SmartIO multiport serial card.
+ 
+@@ -203,7 +203,7 @@
+ 
+ config ISI
+ 	tristate "Multi-Tech multiport card support (EXPERIMENTAL)"
+-	depends on SERIAL_NONSTANDARD && EXPERIMENTAL && BROKEN_ON_SMP && m
++	depends on SERIAL_NONSTANDARD && EXPERIMENTAL && BROKEN_ON_SMP && m && (PCI || ISA)
+ 	help
+ 	  This is a driver for the Multi-Tech cards which provide several
+ 	  serial ports.  The driver is experimental and can currently only be
+@@ -212,7 +212,7 @@
+ 
+ config SYNCLINK
+ 	tristate "Microgate SyncLink card support"
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+ 	help
+ 	  Provides support for the SyncLink ISA and PCI multiprotocol serial
+ 	  adapters. These adapters support asynchronous and HDLC bit
+@@ -225,7 +225,7 @@
+ 
+ config SYNCLINKMP
+ 	tristate "SyncLink Multiport support"
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+ 	help
+ 	  Enable support for the SyncLink Multiport (2 or 4 ports)
+ 	  serial adapter, running asynchronous and HDLC communications up
+@@ -251,7 +251,7 @@
+ 
+ config RISCOM8
+ 	tristate "SDL RISCom/8 card support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  This is a driver for the SDL Communications RISCom/8 multiport card,
+ 	  which gives you many serial ports. You would need something like
+@@ -264,7 +264,7 @@
+ 
+ config SPECIALIX
+ 	tristate "Specialix IO8+ card support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  This is a driver for the Specialix IO8+ multiport card (both the
+ 	  ISA and the PCI version) which gives you many serial ports. You
+@@ -288,7 +288,7 @@
+ 
+ config SX
+ 	tristate "Specialix SX (and SI) card support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  This is a driver for the SX and SI multiport serial cards.
+ 	  Please read the file <file:Documentation/sx.txt> for details.
+@@ -299,7 +299,7 @@
+ 
+ config RIO
+ 	tristate "Specialix RIO system support"
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+ 	help
+ 	  This is a driver for the Specialix RIO, a smart serial card which
+ 	  drives an outboard box that can support up to 128 ports.  Product
+@@ -308,7 +308,7 @@
+ 
+ config RIO_OLDPCI
+ 	bool "Support really old RIO/PCI cards"
+-	depends on RIO
++	depends on RIO && PCI
+ 	help
+ 	  Older RIO PCI cards need some initialization-time configuration to
+ 	  determine the IRQ and some control addresses.  If you have a RIO and
+@@ -316,7 +316,7 @@
+ 
+ config STALDRV
+ 	bool "Stallion multiport serial support"
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+ 	help
+ 	  Stallion cards give you many serial ports.  You would need something
+ 	  like this to connect more than two modems to your Linux box, for
+@@ -394,6 +394,13 @@
+ 	  If you have an Alchemy AU1000 processor (MIPS based) and you want
+ 	  to use a console on a serial port, say Y.  Otherwise, say N.
+ 
++config SUN_AURORA
++	tristate "Aurora Multiboard 1600se (EXPERIMENTAL)"
++	depends on SERIAL_NONSTANDARD && EXPERIMENTAL && SBUS && !SUN4
++	help
++	  The Aurora Multiboard is a multi-port high-speed serial controller.
++	  If you have one of these, say Y.
++
+ config QTRONIX_KEYBOARD
+ 	bool "Enable Qtronix 990P Keyboard Support"
+ 	depends on IT8712
+@@ -740,7 +747,8 @@
+ 
+ config RTC
+ 	tristate "Enhanced Real Time Clock Support"
+-	depends on !PPC32 && !PARISC && !IA64 && !X86_PC9800 && !M68K
++	depends on !PPC32 && !PARISC && !IA64 && !X86_PC9800 && (!SPARC32 || PCI) && (!SPARC64 || PCI)
++	default y if SPARC64
+ 	---help---
+ 	  If you say Y here and create a character special file /dev/rtc with
+ 	  major number 10 and minor number 135 using mknod ("man mknod"), you
+@@ -766,7 +774,7 @@
+ 
+ config GEN_RTC
+ 	tristate "Generic /dev/rtc emulation"
+-	depends on RTC!=y && !IA64
++	depends on RTC!=y && !IA64 && SUN_MOSTEK_RTC!=y
+ 	---help---
+ 	  If you say Y here and create a character special file /dev/rtc with
+ 	  major number 10 and minor number 135 using mknod ("man mknod"), you
+@@ -802,6 +810,17 @@
+ 	  major number 10 and minor number 135 using mknod ("man mknod"), you
+ 	  will get access to the real time clock (or hardware clock) built
+ 
++config SUN_MOSTEK_RTC
++	tristate "Mostek real time clock support"
++	depends on (SPARC32 || SPARC64)
++	default y
++	help
++	  The Mostek RTC chip is used on all known Sun computers except
++	  some JavaStations. For a JavaStation you need to say Y both here
++	  and to "Enhanced Real Time Clock Support".
++
++	  Say Y here unless you are building a special purpose kernel.
++
+ config H8
+ 	bool "Tadpole ANA H8 Support (OBSOLETE)"
+ 	depends on OBSOLETE && ALPHA_BOOK1
+@@ -814,6 +833,7 @@
+ 
+ config DTLK
+ 	tristate "Double Talk PC internal speech card support"
++	depends on ISA
+ 	help
+ 	  This driver is for the DoubleTalk PC, a speech synthesizer
+ 	  manufactured by RC Systems (<http://www.rcsys.com/>).  It is also
+@@ -861,6 +881,30 @@
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called sonypi.
+ 
++config ENVCTRL
++	tristate "SUNW,envctrl support"
++	depends on PCI && SPARC64
++	help
++	  Kernel support for temperature and fan monitoring on Sun SME
++	  machines.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called envctrl.
++
++config DISPLAY7SEG
++	tristate "Sun CPCI 7-Segment Display support"
++	depends on PCI && SPARC64
++	---help---
++	  This is the driver for the 7-segment display and LED present on
++	  Sun Microsystems CompactPCI models CP1400 and CP1500.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called display7seg.
++
++	  If you do not have a CompactPCI model CP1400 or CP1500, or
++	  another UltraSPARC-IIi-cEngine boardset with a 7-segment display,
++	  you should say N to this option.
++
+ 
+ menu "Ftape, the floppy tape device driver"
+ 
+diff -urN linux-2.6.7-42/drivers/char/agp/Kconfig linux-2.6.7-62/drivers/char/agp/Kconfig
+--- linux-2.6.7-42/drivers/char/agp/Kconfig	2004-07-03 21:44:36.000000000 -0700
++++ linux-2.6.7-62/drivers/char/agp/Kconfig	2004-07-03 21:46:52.744195685 -0700
+@@ -1,6 +1,7 @@
+ config AGP
+ 	tristate "/dev/agpgart (AGP Support)" if !GART_IOMMU && !M68K
+ 	default y if GART_IOMMU
++	depends on PCI
+ 	---help---
+ 	  AGP (Accelerated Graphics Port) is a bus system mainly used to
+ 	  connect graphics cards to the rest of the system.
+diff -urN linux-2.6.7-42/drivers/char/drm/Kconfig linux-2.6.7-62/drivers/char/drm/Kconfig
+--- linux-2.6.7-42/drivers/char/drm/Kconfig	2004-07-03 21:44:36.000000000 -0700
++++ linux-2.6.7-62/drivers/char/drm/Kconfig	2004-07-03 21:46:52.753196072 -0700
+@@ -17,21 +17,21 @@
+ 
+ config DRM_TDFX
+ 	tristate "3dfx Banshee/Voodoo3+"
+-	depends on DRM
++	depends on DRM && PCI
+ 	help
+ 	  Choose this option if you have a 3dfx Banshee or Voodoo3 (or later),
+ 	  graphics card.  If M is selected, the module will be called tdfx.
+ 
+ config DRM_GAMMA
+ 	tristate "3dlabs GMX 2000"
+-	depends on DRM
++	depends on DRM && PCI
+ 	help
+ 	  This is the old gamma driver, please tell me if it might actually
+ 	  work.
+ 
+ config DRM_R128
+ 	tristate "ATI Rage 128"
+-	depends on DRM
++	depends on DRM && PCI
+ 	help
+ 	  Choose this option if you have an ATI Rage 128 graphics card.  If M
+ 	  is selected, the module will be called r128.  AGP support for
+@@ -39,7 +39,7 @@
+ 
+ config DRM_RADEON
+ 	tristate "ATI Radeon"
+-	depends on DRM
++	depends on DRM && PCI
+ 	help
+ 	  Choose this option if you have an ATI Radeon graphics card.  There
+ 	  are both PCI and AGP versions.  You don't need to choose this to
+@@ -80,3 +80,11 @@
+           chipset. If M is selected the module will be called sis. AGP
+           support is required for this driver to work.
+ 
++config DRM_FFB
++	tristate "Creator/Creator3D"
++	depends on DRM && SPARC64
++	help
++	  Choose this option if you have one of Sun's Creator3D-based graphics
++	  and frame buffer cards.  Product page at
++	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
++
+diff -urN linux-2.6.7-42/drivers/parport/Kconfig linux-2.6.7-62/drivers/parport/Kconfig
+--- linux-2.6.7-42/drivers/parport/Kconfig	2004-07-03 21:44:36.000000000 -0700
++++ linux-2.6.7-62/drivers/parport/Kconfig	2004-07-03 21:46:52.753196072 -0700
+@@ -34,7 +34,7 @@
+ 
+ config PARPORT_PC
+ 	tristate "PC-style hardware"
+-	depends on PARPORT && (!SPARC64 || PCI)
++	depends on PARPORT && (!SPARC64 && !SPARC32 || PCI)
+ 	---help---
+ 	  You should say Y here if you have a PC-style parallel port. All
+ 	  IBM PC compatible computers and some Alphas have PC-style
+diff -urN linux-2.6.7-42/drivers/sbus/Makefile linux-2.6.7-62/drivers/sbus/Makefile
+--- linux-2.6.7-42/drivers/sbus/Makefile	2004-07-03 21:44:35.000000000 -0700
++++ linux-2.6.7-62/drivers/sbus/Makefile	2004-07-03 21:46:52.753196072 -0700
+@@ -6,4 +6,4 @@
+ obj-y    := sbus.o dvma.o
+ endif
+ 
+-obj-$(CONFIG_SBUSCHAR) += char/
++obj-y += char/
+diff -urN linux-2.6.7-42/drivers/sbus/char/Kconfig linux-2.6.7-62/drivers/sbus/char/Kconfig
+--- linux-2.6.7-42/drivers/sbus/char/Kconfig	2004-07-03 21:44:35.000000000 -0700
++++ linux-2.6.7-62/drivers/sbus/char/Kconfig	2004-07-03 21:46:52.754196115 -0700
+@@ -13,15 +13,6 @@
+ 
+ 	  If unsure, say Y.
+ 
+-config SUN_MOSTEK_RTC
+-	tristate "Mostek real time clock support"
+-	help
+-	  The Mostek RTC chip is used on all known Sun computers except
+-	  some JavaStations. For a JavaStation you need to say Y both here
+-	  and to "Enhanced Real Time Clock Support".
+-
+-	  Say Y here unless you are building a special purpose kernel.
+-
+ config OBP_FLASH
+ 	tristate "OBP Flash Device support"
+ 	depends on SPARC64
+@@ -46,13 +37,6 @@
+ 	  based on the Phillips SAA9051, can handle NTSC and PAL/SECAM and
+ 	  SVIDEO signals.
+ 
+-config SUN_AURORA
+-	tristate "Aurora Multiboard 1600se (EXPERIMENTAL)"
+-	depends on EXPERIMENTAL
+-	help
+-	  The Aurora Multiboard is a multi-port high-speed serial controller.
+-	  If you have one of these, say Y.
+-
+ config TADPOLE_TS102_UCTRL
+ 	tristate "Tadpole TS102 Microcontroller support (EXPERIMENTAL)"
+ 	depends on EXPERIMENTAL && SPARC32
+@@ -69,25 +53,16 @@
+ 	  If you say Y here, you will be able to boot from your JavaStation's
+ 	  Flash memory.
+ 
+-# XXX Why don't we do "source drivers/char/Config.in" somewhere?
+-# no shit
+-config APM_RTC_IS_GMT
+-	bool
+-	depends on EXPERIMENTAL && SPARC32 && PCI
+-	default y
+-	help
+-	  Say Y here if your RTC (Real Time Clock a.k.a. hardware clock)
+-	  stores the time in GMT (Greenwich Mean Time). Say N if your RTC
+-	  stores localtime.
+-
+-	  It is in fact recommended to store GMT in your RTC, because then you
+-	  don't have to worry about daylight savings time changes. The only
+-	  reason not to use GMT in your RTC is if you also run a broken OS
+-	  that doesn't understand GMT.
+-
+-config RTC
+-	tristate "PC-style Real Time Clock Support"
+-	depends on PCI && EXPERIMENTAL && SPARC32
++config BBC_I2C
++	tristate "UltraSPARC-III bootbus i2c controller driver"
++	depends on SPARC64 && PCI
++	help
++	  The BBC devices on the UltraSPARC III have two I2C controllers.  The
++	  first I2C controller connects mainly to configuration PROMs (NVRAM,
++	  CPU configuration, DIMM types, etc.).  The second I2C controller
++	  connects to environmental control devices such as fans and
++	  temperature sensors.  The second controller also connects to the
++	  smartcard reader, if present.  Say Y to enable support for these.
+ 
+ endmenu
+ 
+diff -urN linux-2.6.7-42/drivers/scsi/Kconfig linux-2.6.7-62/drivers/scsi/Kconfig
+--- linux-2.6.7-42/drivers/scsi/Kconfig	2004-07-03 21:44:31.000000000 -0700
++++ linux-2.6.7-62/drivers/scsi/Kconfig	2004-07-03 21:46:52.756196201 -0700
+@@ -309,7 +309,7 @@
+ 
+ config SCSI_AIC7XXX_OLD
+ 	tristate "Adaptec AIC7xxx support (old driver)"
+-	depends on SCSI
++	depends on SCSI && (ISA || EISA || PCI)
+ 	help
+ 	  WARNING This driver is an older aic7xxx driver and is no longer
+ 	  under active development.  Adaptec, Inc. is writing a new driver to
+@@ -578,7 +578,7 @@
+ 
+ config SCSI_EATA_PIO
+ 	tristate "EATA-PIO (old DPT PM2001, PM2012A) support"
+-	depends on SCSI
++	depends on SCSI && (ISA || EISA || PCI)
+ 	---help---
+ 	  This driver supports all EATA-PIO protocol compliant SCSI Host
+ 	  Adapters like the DPT PM2001 and the PM2012A.  EATA-DMA compliant
+diff -urN linux-2.6.7-42/drivers/video/Kconfig linux-2.6.7-62/drivers/video/Kconfig
+--- linux-2.6.7-42/drivers/video/Kconfig	2004-07-03 21:44:35.000000000 -0700
++++ linux-2.6.7-62/drivers/video/Kconfig	2004-07-03 21:46:52.757196244 -0700
+@@ -355,25 +355,6 @@
+ 	bool "Sun3 framebuffer support"
+ 	depends on FB && (SUN3 || SUN3X) && BROKEN
+ 
+-config FB_BW2
+-	bool "BWtwo support"
+-	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	help
+-	  This is the frame buffer device driver for the BWtwo frame buffer.
+-
+-config FB_CG3
+-	bool "CGthree support"
+-	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	help
+-	  This is the frame buffer device driver for the CGthree frame buffer.
+-
+-config FB_CG6
+-	bool "CGsix (GX,TurboGX) support"
+-	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
+-	help
+-	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
+-	  frame buffer.
+-
+ config FB_PVR2
+ 	tristate "NEC PowerVR 2 display support"
+ 	depends on FB && SH_DREAMCAST
+@@ -837,6 +818,25 @@
+ 	  This is the frame buffer device driver for the Creator, Creator3D,
+ 	  and Elite3D graphics boards.
+ 
++config FB_BW2
++	bool "BWtwo support"
++	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	help
++	  This is the frame buffer device driver for the BWtwo frame buffer.
++
++config FB_CG3
++	bool "CGthree support"
++	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	help
++	  This is the frame buffer device driver for the CGthree frame buffer.
++
++config FB_CG6
++	bool "CGsix (GX,TurboGX) support"
++	depends on FB && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	help
++	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
++	  frame buffer.
++
+ config FB_TCX
+ 	bool "TCX (SS4/SS5 only) support"
+ 	depends on FB_SBUS
+diff -urN linux-2.6.7-42/fs/Kconfig linux-2.6.7-62/fs/Kconfig
+--- linux-2.6.7-42/fs/Kconfig	2004-07-03 21:44:22.000000000 -0700
++++ linux-2.6.7-62/fs/Kconfig	2004-07-03 21:46:52.773196932 -0700
+@@ -946,6 +946,17 @@
+ 	  To compile this as a module, choose M here: the module will be called
+ 	  ramfs.
+ 
++config SUN_OPENPROMFS
++	depends on SPARC32 || SPARC64
++	tristate "OpenPROM file system"
++	help
++	  If you say Y, the OpenPROM device tree will be available as a
++	  virtual file system, which you can mount to /proc/openprom by "mount
++	  -t openpromfs none /proc/openprom".
++
++	  To compile the /proc/openprom support as a module, choose M here: the
++	  module will be called openpromfs.  If unsure, choose M.
++
+ endmenu
+ 
+ menu "Miscellaneous filesystems"

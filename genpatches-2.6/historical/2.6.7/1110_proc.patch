@@ -1,0 +1,43 @@
+Date: Fri, 2 Jul 2004 16:08:35 -0700
+From: Chris Wright <chrisw@osdl.org>
+Subject: [PATCH] check attr updates in /proc
+
+Any proc entry with default proc_file_inode_operations allow unauthorized
+attribute updates.  This is very dangerous for proc entries that rely
+solely on file permissions for open/read/write.
+
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+
+===== fs/proc/generic.c 1.30 vs edited =====
+--- 1.30/fs/proc/generic.c	2004-06-22 08:13:10 -07:00
++++ edited/fs/proc/generic.c	2004-07-02 15:47:55 -07:00
+@@ -231,14 +231,21 @@
+ static int proc_notify_change(struct dentry *dentry, struct iattr *iattr)
+ {
+ 	struct inode *inode = dentry->d_inode;
+-	int error = inode_setattr(inode, iattr);
+-	if (!error) {
+-		struct proc_dir_entry *de = PDE(inode);
+-		de->uid = inode->i_uid;
+-		de->gid = inode->i_gid;
+-		de->mode = inode->i_mode;
+-	}
++	struct proc_dir_entry *de = PDE(inode);
++	int error;
+ 
++	error = inode_change_ok(inode, iattr);
++	if (error)
++		goto out;
++
++	error = inode_setattr(inode, iattr);
++	if (error)
++		goto out;
++	
++	de->uid = inode->i_uid;
++	de->gid = inode->i_gid;
++	de->mode = inode->i_mode;
++out:
+ 	return error;
+ }
+ 
+

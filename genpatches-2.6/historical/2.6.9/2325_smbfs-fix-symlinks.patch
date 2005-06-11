@@ -1,0 +1,66 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/19 15:02:14-08:00 haroldo.gamal@infolink.com.br 
+#   [PATCH] smbfs: Bug #3758 - Broken symlinks on smbfs
+#   
+#   The patches attached here fixes the BUG #3758 - "Broken symlinks on smbfs
+#   with 2.6.10-rc[12]".  There are two patches, one to be applied over version
+#   2.6.9 and the other over 2.6.10-rc2.
+#   
+#   The old utilities (and the old driver) uses uid=0, gid=0, dmask=0 and
+#   fmask=0 to flag the lack of this parameters on the mount command line.
+#   When the user do not specify the uid, gid, fmask or dmask, the current
+#   driver will assign gid=root, gid=root, dmask=755, fmask=755.  This behavior
+#   is similar to the old 2.x samba versions.
+#   
+#   To make the driver see the permissions and ownership assigned on the
+#   server, "smbmount" and "smbmnt" utilities must be patched.  The patches is
+#   already available on the attached patches at Bug #3330 or Samba Bug #999.
+#   
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/smbfs/inode.c
+#   2004/11/18 23:03:16-08:00 haroldo.gamal@infolink.com.br +4 -4
+#   smbfs: Bug #3758 - Broken symlinks on smbfs
+# 
+# fs/smbfs/proc.c
+#   2004/11/18 23:03:16-08:00 haroldo.gamal@infolink.com.br +3 -2
+#   smbfs: Bug #3758 - Broken symlinks on smbfs
+# 
+diff -Nru a/fs/smbfs/inode.c b/fs/smbfs/inode.c
+--- a/fs/smbfs/inode.c	2004-11-21 06:12:28 -08:00
++++ b/fs/smbfs/inode.c	2004-11-21 06:12:28 -08:00
+@@ -574,10 +574,10 @@
+ 		mnt->flags = (oldmnt->file_mode >> 9) | SMB_MOUNT_UID |
+ 			SMB_MOUNT_GID | SMB_MOUNT_FMODE | SMB_MOUNT_DMODE;
+ 	} else {
+-		mnt->file_mode = mnt->dir_mode = S_IRWXU | S_IRGRP | S_IXGRP |
+-						S_IROTH | S_IXOTH | S_IFREG;
+-		mnt->dir_mode = mnt->dir_mode = S_IRWXU | S_IRGRP | S_IXGRP |
+-						S_IROTH | S_IXOTH | S_IFDIR;
++		mnt->file_mode = S_IRWXU | S_IRGRP | S_IXGRP |
++				S_IROTH | S_IXOTH | S_IFREG;
++		mnt->dir_mode = S_IRWXU | S_IRGRP | S_IXGRP |
++				S_IROTH | S_IXOTH | S_IFDIR;
+ 		if (parse_options(mnt, raw_data))
+ 			goto out_bad_option;
+ 	}
+diff -Nru a/fs/smbfs/proc.c b/fs/smbfs/proc.c
+--- a/fs/smbfs/proc.c	2004-11-21 06:12:28 -08:00
++++ b/fs/smbfs/proc.c	2004-11-21 06:12:28 -08:00
+@@ -2138,10 +2138,11 @@
+ 
+ 	if ( (server->mnt->flags & SMB_MOUNT_DMODE) &&
+ 	     (S_ISDIR(fattr->f_mode)) )
+-		fattr->f_mode = (server->mnt->dir_mode & (S_IRWXU | S_IRWXG | S_IRWXO)) | S_IFDIR;
++		fattr->f_mode = (server->mnt->dir_mode & S_IRWXUGO) | S_IFDIR;
+ 	else if ( (server->mnt->flags & SMB_MOUNT_FMODE) &&
+ 	          !(S_ISDIR(fattr->f_mode)) )
+-		fattr->f_mode = (server->mnt->file_mode & (S_IRWXU | S_IRWXG | S_IRWXO)) | S_IFREG;
++		fattr->f_mode = (server->mnt->file_mode & S_IRWXUGO) |
++				(fattr->f_mode & S_IFMT);
+ 
+ }
+ 

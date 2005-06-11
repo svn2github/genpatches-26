@@ -1,0 +1,178 @@
+README
+------------------------------------------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+------------------------------------------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+------------------------------------------------------------------------------------------------------------
+Patch:	1305_x86_64-2.6.5-rc3.patch
+from:	http://linux.mainstreetsoftworks.com/kernel_patches/ <- maintained by brad_mssw
+	ftp://ftp.x86-64.org/pub/linux/v2.6/
+	ftp://ftp.suse.com/pub/people/ak/x86-64/
+desc:	Patches specific to the x86-64 architecture, mostly bug fixes or driver updates
+
+Patch:	1310_k8_cardbus_io.patch
+from:	
+desc:	Patch to prevent emachines amd64 laptops from hanging when unplugging power cord, or closing lid
+
+Patch:	1315_alpha-sysctl-uac.patch
+from:	
+desc:	enable control of the unaligned access control policy from sysctl
+
+Patch:	1905_move-__this_module-to-modpost.patch
+From:	-mm
+Desc:	move the __this_module struct back into the modpost code. 
+
+Patch:	2110_bcm5700_broadcom_gigabit_drvr_11272003.patch
+from:	http://www.broadcom.com/drivers/downloaddrivers.php
+desc:	Official driver from broadcom, in patch version.  The tg3 driver should be used if possible, but this exists as a last resort.
+
+Patch:	2115_fa311-mac-address-fix.patch
+from:	-mm broken-out
+desc:	fix for netgear fa311 MAC address. without this fix the MAC is byteswapped and has an incorrect vendor ID (and therefore broken card ID too)
+
+Patch:	2120_ipw2100-0.40-2.6.5.patch
+from:	http://ipw2100.sourceforge.net/
+desc:	Intel Centrino (Intel PRO/Wireless 2100) mini-PCI adapter drivers.
+
+Patch:	2125_bluez-2.6.5-mh3.patch
+from:	http://www.bluez.org/patches.html
+desc:	bluez bk snapshot.
+
+Patch:	2320_adaptec_dpt_i2o.patch
+from:	mark_salyzyn@adaptec.com
+desc:	Patch to fix and enable adaptec SCSI RAID adapters on 2.6 kernels such as the 2100S.
+
+Patch:	2325_3ware-cmds_per_lun.patch
+from:	-mm broken-out patches
+desc:	Patch to update 3ware module to support cmds_per_lun param.
+
+Patch:	2710_amd76x-acpi.patch
+from:	
+desc:	Power Management for AMD760MP & AMD760MPX SMP chipsets
+
+Patch:	3105_sched-sd1.patch
+from:	http://ck.kolivas.org/patches/2.6/
+desc:	SMT Staircase schedular - Patch to allow better support for SMT and SMP/HT. for more please see Cons website.
+	NOTE-FIXME: this is currently dropped due to problems with staircase/2.6.5 and the possible move to Nick Piggins implementation.
+
+Patch:	3110_low-latency-cond_resched.patch
+from:	-mm
+desc:	low latency patch to fix 90% of latency issues. should be used with pre-empt disabled.
+
+Patch:	3115_np-smt-v30e-2.6.5.patch
+from:	
+desc:	Nick Piggins SMT schedular support.
+
+Patch:	3305_am9-2.6.4.patch
+from:	http://ck.kolivas.org/patches/2.6/
+desc:	Patch to enable autoregulate swappiness by Con Kolivas
+
+Patch:	3307_am9-menuoption-2.6.5.patch
+from:	
+desc:	Patch to make am9 a menu option as opposed to always-on
+
+Patch:	3110_low-latency-cond_resched.patch
+from:	-mm/kerneltrap
+desc:	low-latency patch which outperforms pre-empt.
+
+Patch:	4105_lirc_infrared-2.6.5-rc2.patch
+from:	http://flameeyes.web.ctonet.it/downloads.html#lirc
+desc:	Apply lirc infrared patch for 2.6 kernels
+
+Patch:	4505_bootsplash-3.1.4-2.6.5-rc2.patch
+from:	http://www.bootsplash.org
+desc:	Bootsplash (mask boot messages with pretty graphics and progress bars, also does background images, etc as seen on livecds)
+
+Patch:	4705_squashfs-1.3r3.patch
+from:	http://squashfs.sourceforge.net/
+desc:	driver to support squashfs filesystems. This will become increasingly popular for the livecd's
+
+Patch:	4710_lufs-0.9.7-2.6.0-test9.patch
+from:	http://lufs.sourceforge.net/lufs/
+	http://sourceforge.net/project/showfiles.php?group_id=57332
+desc:	LUFS is a hybrid userspace file system framework supporting an indefinite number of file systems transparently for any application.
+	It consists of a kernel module and an userspace daemon. Basically it delegates most of the VFS calls to a specialized daemon which handles them.
+
+Patch:	4715_supermount-2.0.4-2.6.6_rc1.patch
+from:	http://supermount-ng.sourceforge.net/
+desc:	Supermount.  pseudo-filesystem which manages filesystems on removable media like floppy disks and CD-ROMs.
+	It frees you from need to manually mount and unmount media.s
+
+Patch:	4720_gcloop-2.6-20040314.patch
+from:	http://dev.gentoo.org/~lu_zero/gcloop/
+desc:	Compressed loopback device support. Mainly used on LiveCDs
+
+Patch:	4725_reiser3-xattr-acl-quotas-2.6.6-rc2.patch
+from:	ftp://ftp.suse.com/pub/people/mason/patches/reiserfs/2.6.6-rc2/
+desc:	fully working xattr/ACL/quotas support, block allocator changes and several fixes.
+
+Patch:	4905_speakup_accessibility.patch
+from:	http://www.linux-speakup.org/ftp/ Using this utility: http://linux-speakup.org/ftp/checkout
+desc:	Provided by dmwaters@gentoo.org. the speakup synthesizer to give better accessiblity for blind or hard of sight users.
+
+
+
+Future Patches
+------------------------------------------------------------------------------------------------------------
+http://swsusp.sourceforge.net/index.html
+	- ??
+
+420_evms-extrapatches-2.2.1.patch
+		- Extra patches for device-mapper and evms additional features
+		- including snapshotting and brr
+		- available from: http://evms.sourceforge.net/patches/2.2.1/kernel/2.6.0/
+	
+Dropped
+------------------------------------------------------------------------------------------------------------		
+kernel tree has been synced up
+227_alsa_cvs_20040220_2.6.3.patch
+		- Patch to update in-kernel alsa sound driver to
+		- 1.0.2c+cvs
+		- available from:
+		- ftp://ftp.alsa-project.org/pub/driver/ or CVS
+		- To create patch against latest kernel extract driver source and:
+		- cd alsa-kernel
+		- cp -Rpv Documentation/* /usr/src/linux/Documentation/sound/alsa/
+		- rm -rf /usr/src/linux/include/sound/*
+		- cp -Rpv include/* /usr/src/linux/include/sound/
+		- rm -rf scripts oss Documentation include
+		- mv /usr/src/linux/sound/oss /usr/src/linux/oss-save
+		- rm -rf /usr/src/linux/sound/*
+		- cp -Rpv * /usr/src/linux/sound/
+		- mv /usr/src/linux/oss-save /usr/src/linux/sound/oss
+		- Then diff against unchanged branch, and there you go.

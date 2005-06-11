@@ -1,0 +1,23 @@
+ChangeSet 1.2263
+Fix for kswapd going into infinite loop
+Already in 2.6.10 tree
+
+diff -Nru a/mm/vmscan.c b/mm/vmscan.c
+--- a/mm/vmscan.c	2004-10-28 12:57:30 -07:00
++++ b/mm/vmscan.c	2004-10-28 12:57:30 -07:00
+@@ -574,7 +574,6 @@
+ 			nr_taken++;
+ 		}
+ 		zone->nr_inactive -= nr_taken;
+-		zone->pages_scanned += nr_taken;
+ 		spin_unlock_irq(&zone->lru_lock);
+ 
+ 		if (nr_taken == 0)
+@@ -675,6 +674,7 @@
+ 		}
+ 		pgscanned++;
+ 	}
++	zone->pages_scanned += pgscanned;
+ 	zone->nr_active -= pgmoved;
+ 	spin_unlock_irq(&zone->lru_lock);
+

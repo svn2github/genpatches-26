@@ -1,0 +1,50 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 13:54:13-08:00 chrisw@osdl.org 
+#   [PATCH] track capabilities in default dummy security module code
+#   
+#   Switch dummy logic around to set cap_* bits during exec and set*uid based
+#   on basic uid check.  Then check cap_* bits during capable() (rather than
+#   doing basic uid check).  This ensures that capability bits are properly
+#   initialized in case the capability module is later loaded.
+#   
+#   Signed-off-by: Chris Wright <chrisw@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# security/dummy.c
+#   2005/01/04 13:14:10-08:00 chrisw@osdl.org +3 -4
+#   track capabilities in default dummy security module code
+# 
+diff -Nru a/security/dummy.c b/security/dummy.c
+--- a/security/dummy.c	2005-01-07 08:15:44 -08:00
++++ b/security/dummy.c	2005-01-07 08:15:44 -08:00
+@@ -74,11 +74,8 @@
+ 
+ static int dummy_capable (struct task_struct *tsk, int cap)
+ {
+-	if (cap_is_fs_cap (cap) ? tsk->fsuid == 0 : tsk->euid == 0)
+-		/* capability granted */
++	if (cap_raised (tsk->cap_effective, cap))
+ 		return 0;
+-
+-	/* capability denied */
+ 	return -EPERM;
+ }
+ 
+@@ -183,6 +180,7 @@
+ 
+ static void dummy_bprm_free_security (struct linux_binprm *bprm)
+ {
++	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ 	return;
+ }
+ 
+@@ -558,6 +556,7 @@
+ 
+ static int dummy_task_post_setuid (uid_t id0, uid_t id1, uid_t id2, int flags)
+ {
++	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ 	return 0;
+ }
+ 

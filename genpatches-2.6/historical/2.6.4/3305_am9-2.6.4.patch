@@ -1,0 +1,92 @@
+--- linux-2.6.4/mm/vmscan.c	2004-02-18 21:09:41.000000000 +1100
++++ linux-2.6.4-ck1/mm/vmscan.c	2004-03-11 22:18:35.267730038 +1100
+@@ -41,6 +41,7 @@
+  * From 0 .. 100.  Higher means more swappy.
+  */
+ int vm_swappiness = 60;
++int auto_swappiness = 1;
+ static long total_memory;
+ 
+ #ifdef ARCH_HAS_PREFETCH
+@@ -635,6 +636,41 @@ refill_inactive_zone(struct zone *zone, 
+ 	 */
+ 	mapped_ratio = (ps->nr_mapped * 100) / total_memory;
+ 
++	if (auto_swappiness) {
++#ifdef CONFIG_SWAP
++		int app_percent;
++		struct sysinfo i;
++		
++		si_swapinfo(&i);
++			
++		if (likely(i.totalswap)) {
++			int swap_centile;
++	
++			/*
++			 * app_percent is the percentage of physical ram used
++			 * by application pages.
++			 */
++			si_meminfo(&i);
++			app_percent = 100 - ((i.freeram + get_page_cache_size() -
++				swapper_space.nrpages) / (i.totalram / 100));
++	
++			/*
++			 * swap_centile is the percentage of the last (sizeof physical
++			 * ram) of swap free.
++			 */
++			swap_centile = i.freeswap / 
++				(min(i.totalswap, i.totalram) / 100);
++	
++			/*
++			 * Autoregulate vm_swappiness to be equal to the lowest of
++			 * app_percent and swap_centile. -ck
++			 */
++			vm_swappiness = min(app_percent, swap_centile);
++		} else 
++			vm_swappiness = 0;
++#endif
++	}
++	
+ 	/*
+ 	 * Now decide how much we really want to unmap some pages.  The mapped
+ 	 * ratio is downgraded - just because there's a lot of mapped memory
+--- linux-2.6.4/include/linux/swap.h	2004-02-04 22:06:06.000000000 +1100
++++ linux-2.6.4-ck1/include/linux/swap.h	2004-03-11 22:17:56.487779080 +1100
+@@ -176,6 +176,7 @@ extern void swap_setup(void);
+ extern int try_to_free_pages(struct zone **, unsigned int, unsigned int);
+ extern int shrink_all_memory(int);
+ extern int vm_swappiness;
++extern int auto_swappiness;
+ 
+ /* linux/mm/rmap.c */
+ #ifdef CONFIG_MMU
+--- linux-2.6.4/include/linux/sysctl.h	2004-03-11 21:26:35.000000000 +1100
++++ linux-2.6.4-ck1/include/linux/sysctl.h	2004-03-11 22:15:46.547046694 +1100
+@@ -158,6 +158,7 @@ enum
+ 	VM_SWAPPINESS=19,	/* Tendency to steal mapped memory */
+ 	VM_LOWER_ZONE_PROTECTION=20,/* Amount of protection of lower zones */
+ 	VM_MIN_FREE_KBYTES=21,	/* Minimum free kilobytes to maintain */
++	VM_AUTO_SWAPPINESS=22,	/* Make vm_swappiness autoregulated */
+ };
+ 
+ 
+--- linux-2.6.4/kernel/sysctl.c	2004-03-11 21:26:35.000000000 +1100
++++ linux-2.6.4-ck1/kernel/sysctl.c	2004-03-11 22:15:46.548046538 +1100
+@@ -706,6 +706,17 @@ static ctl_table vm_table[] = {
+ 		.extra1		= &zero,
+ 		.extra2		= &one_hundred,
+ 	},
++	{
++		.ctl_name	= VM_AUTO_SWAPPINESS,
++		.procname	= "autoswappiness",
++		.data		= &auto_swappiness,
++		.maxlen		= sizeof(auto_swappiness),
++		.mode		= 0644,
++		.proc_handler	= &proc_dointvec_minmax,
++		.strategy	= &sysctl_intvec,
++		.extra1		= &zero,
++		.extra2		= &one_hundred,
++	},
+ #ifdef CONFIG_HUGETLB_PAGE
+ 	 {
+ 		.ctl_name	= VM_HUGETLB_PAGES,

@@ -1,0 +1,45 @@
+Date: 19 Jun 2004 17:04:50 -04:00
+From: herbert@gondor.apana.org.au
+Subject: [PATCH] Re: linux-2.6.7 Equalizer Load-balancer.  eql.c. local non-privileged DoS
+
+Vitaly V. Bursov <vitalyvb@ukr.net> wrote:
+>
+> there are multiple vulns in drivers/net/eql.c
+>
+> if there is no such device, dev_get_by_name returns NULL and everything dies.
+> Exploiting this is trivial.
+
+Thanks for the report.  This patch should fix them.
+
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+
+Cheers,
+--
+Visit Openswan at http://www.openswan.org/
+Email:  Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--
+===== drivers/net/eql.c 1.13 vs edited =====
+
+diff -Nru a/drivers/net/eql.c b/drivers/net/eql.c
+--- a/drivers/net/eql.c	2004-07-22 18:17:16 -04:00
++++ b/drivers/net/eql.c	2004-07-22 18:17:16 -04:00
+@@ -499,6 +499,8 @@
+ 		return -ENODEV;
+ 
+ 	ret = -EINVAL;
++	if (!slave_dev)
++		return ret;
+ 
+ 	spin_lock_bh(&eql->queue.lock);
+ 	if (eql_is_slave(slave_dev)) {
+@@ -534,6 +536,8 @@
+ 		return -ENODEV;
+ 
+ 	ret = -EINVAL;
++	if (!slave_dev)
++		return ret;
+ 
+ 	eql = dev->priv;
+ 	spin_lock_bh(&eql->queue.lock);

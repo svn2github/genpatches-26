@@ -1,0 +1,89 @@
+diff -Naur linux-2.6.7-alsa-1.0.7.ioctl32/include/sound/core.h linux-2.6.7-alsa-1.0.7.ioctl32.compat/include/sound/core.h
+--- linux-2.6.7-alsa-1.0.7.ioctl32/include/sound/core.h	2004-10-27 00:53:01.000000000 -0700
++++ linux-2.6.7-alsa-1.0.7.ioctl32.compat/include/sound/core.h	2004-11-24 12:25:51.000000000 -0800
+@@ -27,6 +27,18 @@
+ #include <linux/rwsem.h>		/* struct rw_semaphore */
+ #include <linux/workqueue.h>		/* struct workqueue_struct */
+ 
++#include <linux/compiler.h>
++#ifndef __iomem
++#define __iomem
++#endif
++
++#include <linux/moduleparam.h>
++#undef module_param_array
++/* we assumme nump is always NULL so we can use a dummy variable */
++#define module_param_array(name, type, nump, perm) \
++        static int boot_devs_##name; \
++        module_param_array_named(name, name, type, boot_devs_##name, perm)
++
+ /* Typedef's */
+ typedef struct timespec snd_timestamp_t;
+ typedef struct sndrv_interval snd_interval_t;
+@@ -305,7 +317,9 @@
+ #define vmalloc_nocheck(size) vmalloc(size)
+ #define kfree_nocheck(obj) kfree(obj)
+ #define vfree_nocheck(obj) vfree(obj)
++#define kcalloc(n, size, flags) snd_kcalloc(n, size, flags)
+ #endif
++void *snd_kcalloc(size_t n, size_t size, int flags);
+ char *snd_kmalloc_strdup(const char *string, int flags);
+ int copy_to_user_fromio(void __user *dst, const void __iomem *src, size_t count);
+ int copy_from_user_toio(void __iomem *dst, const void __user *src, size_t count);
+diff -Naur linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/memalloc.c linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/memalloc.c
+--- linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/memalloc.c	2004-10-23 09:10:24.000000000 -0700
++++ linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/memalloc.c	2004-11-24 12:25:51.000000000 -0800
+@@ -46,6 +46,13 @@
+ #define SNDRV_CARDS	8
+ #endif
+ 
++#include <linux/moduleparam.h>
++#undef module_param_array
++/* we assumme nump is always NULL so we can use a dummy variable */
++#define module_param_array(name, type, nump, perm) \
++        static int boot_devs_##name; \
++        module_param_array_named(name, name, type, boot_devs_##name, perm)
++
+ /* FIXME: so far only some PCI devices have the preallocation table */
+ #ifdef CONFIG_PCI
+ static int enable[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] = 1};
+diff -Naur linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/memory.c linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/memory.c
+--- linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/memory.c	2004-09-16 11:40:23.000000000 -0700
++++ linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/memory.c	2004-11-24 12:25:51.000000000 -0800
+@@ -223,6 +223,25 @@
+ #define _snd_kmalloc kmalloc
+ 
+ #endif /* CONFIG_SND_DEBUG_MEMORY */
++/**
++ * snd_kcalloc - memory allocation and zero-clear
++ * @size: the size to allocate in bytes
++ * @flags: allocation conditions, GFP_XXX
++ *
++ * Allocates a memory chunk via kmalloc() and initializes it to zero.
++ *
++ * Returns the pointer, or NULL if no enoguh memory.
++ */
++void *snd_kcalloc(size_t n, size_t size, int flags)
++{
++	void *ret = NULL;
++	if (n != 0 && size > INT_MAX / n)
++		return ret;
++	ret = kmalloc(n * size, flags);
++	if (ret)
++		memset(ret, 0, n * size);
++	return ret;
++}
+ 
+ /**
+  * snd_kmalloc_strdup - copy the string
+diff -Naur linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/sound.c linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/sound.c
+--- linux-2.6.7-alsa-1.0.7.ioctl32/sound/core/sound.c	2004-10-27 00:53:00.000000000 -0700
++++ linux-2.6.7-alsa-1.0.7.ioctl32.compat/sound/core/sound.c	2004-11-24 12:25:52.000000000 -0800
+@@ -407,6 +407,7 @@
+ EXPORT_SYMBOL(snd_hidden_vmalloc);
+ EXPORT_SYMBOL(snd_hidden_vfree);
+ #endif
++EXPORT_SYMBOL(snd_kcalloc);
+ EXPORT_SYMBOL(snd_kmalloc_strdup);
+ EXPORT_SYMBOL(copy_to_user_fromio);
+ EXPORT_SYMBOL(copy_from_user_toio);

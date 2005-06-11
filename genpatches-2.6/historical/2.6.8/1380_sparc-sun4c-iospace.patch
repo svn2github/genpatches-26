@@ -1,0 +1,23 @@
+From http://dev.gentoo.org/~wesolows
+
+This patch increases the sun4/sun4c IO space from 3MB to 6MB, with a
+corresponding decrease in vmalloc space.  This will accomodate devices
+which wish to map large areas, such as TGX+/XGX+ framebuffers.
+
+-------------------------------------------------------------------------------
+
+===== include/asm-sparc/vaddrs.h 1.5 vs edited =====
+--- 1.5/include/asm-sparc/vaddrs.h	Mon Jan  5 20:26:21 2004
++++ edited/include/asm-sparc/vaddrs.h	Sun May  9 08:30:01 2004
+@@ -33,9 +33,9 @@
+ 
+ #define SUN4M_IOBASE_VADDR	0xfd000000 /* Base for mapping pages */
+ #define IOBASE_VADDR		0xfe000000
+-#define IOBASE_END		0xfe300000
++#define IOBASE_END		0xfe600000
+ 
+-#define VMALLOC_START		0xfe300000
++#define VMALLOC_START		0xfe600000
+ 
+ /* XXX Alter this when I get around to fixing sun4c - Anton */
+ #define VMALLOC_END		0xffc00000

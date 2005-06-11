@@ -1,0 +1,14 @@
+Increment the dm-multipath version number.
+From evms-2.5.0/kernel/2.6/dm-multipath.patch
+
+--- diff/drivers/md/dm-mpath.c	2004-12-13 13:45:21.807458256 -0600
++++ source/drivers/md/dm-mpath.c	2004-12-13 13:45:12.943805736 -0600
+@@ -1221,7 +1221,7 @@
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 0, 3},
++	.version = {1, 0, 4},
+ 	.module = THIS_MODULE,
+ 	.ctr = multipath_ctr,
+ 	.dtr = multipath_dtr,

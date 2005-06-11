@@ -1,0 +1,111 @@
+A change between 2.6.7-rc1-bk6 and 2.6.7-rc2 can results in a system
+lockdown.  One situation in which this can be triggered is when we are a
+nfs client, and the nfs server shuts down (or on the server, you simply
+issue an 'ifconfig eth1 down').  I have tracked this down to a bug in
+dev_ifconf() in fs/compat_ioctl.c
+
+The attached patch will revert this function to it's pre-2.6.7-rc2
+state.  This is not meant to be the suggested fix, but it is a
+workaround for now for anyone who is in need of it, and hopefully now
+that I've narrowed down the problem, someone else might be willing/able
+to fix it since it's past 3am here, and I don't have much experience
+with the fs/ section of the kernel...
+
+Thanks.
+
+	Jeremy Huddleston <eradicator@gentoo.org>
+
+
+--- linux-2.6.7-gentoo-r15/fs/compat_ioctl.c	2004-11-27 16:45:45.000000000 -0800
++++ linux-2.6.7-gentoo-r16/fs/compat_ioctl.c	2004-11-28 02:58:44.413067699 -0800
+@@ -495,11 +495,11 @@ static int dev_ifconf(unsigned int fd, u
+ {
+ 	struct ifconf32 ifc32;
+ 	struct ifconf ifc;
+-	struct ifconf __user *uifc;
+ 	struct ifreq32 __user *ifr32;
+-	struct ifreq __user *ifr;
++	struct ifreq *ifr;
++	mm_segment_t old_fs;
+ 	unsigned int i, j;
+-	int err;
++	int err = 0;
+ 
+ 	if (copy_from_user(&ifc32, compat_ptr(arg), sizeof(struct ifconf32)))
+ 		return -EFAULT;
+@@ -508,37 +508,46 @@ static int dev_ifconf(unsigned int fd, u
+ 		ifc32.ifc_len = 0;
+ 		ifc.ifc_len = 0;
+ 		ifc.ifc_req = NULL;
+-		uifc = compat_alloc_user_space(sizeof(struct ifconf));
+ 	} else {
+ 		size_t len =((ifc32.ifc_len / sizeof (struct ifreq32)) + 1) *
+ 			sizeof (struct ifreq);
+-		uifc = compat_alloc_user_space(sizeof(struct ifconf) + len);
+ 		ifc.ifc_len = len;
+-		ifr = ifc.ifc_req = (void __user *)(uifc + 1);
++
++		/* NOTE: Using compat_alloc_user_space() and calling sys_ioctl()
++		 * without first entering KERNEL_DS for some reason causes a
++		 * lockup on sparc64 -Jeremy Huddleston <eradicator@gentoo.org>
++		 */
++		ifc.ifc_buf = kmalloc (len, GFP_KERNEL);
++		if (!ifc.ifc_buf)
++			return -ENOMEM;
++
++		ifr = ifc.ifc_req;
+ 		ifr32 = compat_ptr(ifc32.ifcbuf);
+ 		for (i = 0; i < ifc32.ifc_len; i += sizeof (struct ifreq32)) {
+-			if (copy_in_user(ifr, ifr32, sizeof(struct ifreq32)))
+-				return -EFAULT;
++			if (copy_from_user(ifr, ifr32, sizeof(struct ifreq32))) {
++				err = -EFAULT;
++				goto __dev_ifconf_exit;
++			}
+ 			ifr++;
+ 			ifr32++; 
+ 		}
+ 	}
+-	if (copy_to_user(uifc, &ifc, sizeof(struct ifconf)))
+-		return -EFAULT;
+ 
+-	err = sys_ioctl (fd, SIOCGIFCONF, (unsigned long)uifc);	
+-	if (err)
+-		return err;
++	old_fs = get_fs(); set_fs (KERNEL_DS);
++	err = sys_ioctl (fd, SIOCGIFCONF, (unsigned long)&ifc);	
++	set_fs (old_fs);
+ 
+-	if (copy_from_user(&ifc, uifc, sizeof(struct ifconf))) 
+-		return -EFAULT;
++	if(err)
++		goto __dev_ifconf_exit;
+ 
+ 	ifr = ifc.ifc_req;
+ 	ifr32 = compat_ptr(ifc32.ifcbuf);
+ 	for (i = 0, j = 0; i < ifc32.ifc_len && j < ifc.ifc_len;
+ 	     i += sizeof (struct ifreq32), j += sizeof (struct ifreq)) {
+-		if (copy_in_user(ifr32, ifr, sizeof (struct ifreq32)))
+-			return -EFAULT;
++		if (copy_to_user(ifr32, ifr, sizeof (struct ifreq32))) {
++			err = -EFAULT;
++			goto __dev_ifconf_exit;
++		}
+ 		ifr32++;
+ 		ifr++;
+ 	}
+@@ -557,9 +566,12 @@ static int dev_ifconf(unsigned int fd, u
+ 			ifc32.ifc_len = i - sizeof (struct ifreq32);
+ 	}
+ 	if (copy_to_user(compat_ptr(arg), &ifc32, sizeof(struct ifconf32)))
+-		return -EFAULT;
++		err = -EFAULT;
+ 
+-	return 0;
++	__dev_ifconf_exit:
++	if(ifc.ifc_buf != NULL)
++		kfree (ifc.ifc_buf);
++	return err;
+ }
+ 
+ static int ethtool_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)

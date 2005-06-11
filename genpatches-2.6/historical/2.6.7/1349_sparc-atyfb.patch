@@ -1,0 +1,16 @@
+Fix a missing cast in the atyfb driver
+http://marc.theaimsgroup.com/?l=linux-sparc&m=109865179011827&w=2
+
+--- linux-2.6.10-rc1-bk2/drivers/video/aty/atyfb_base.c.orig	2004-10-24 09:51:36.000000000 -0600
++++ linux-2.6.10-rc1-bk2/drivers/video/aty/atyfb_base.c	2004-10-24 12:51:05.000000000 -0600
+@@ -2288,7 +2288,7 @@
+ 			default_par->mmap_map[1].voff =
+ 			    default_par->mmap_map[0].voff +
+ 			    info->fix.smem_len;
+-			default_par->mmap_map[1].poff =
++			default_par->mmap_map[1].poff = (unsigned long)
+ 			    default_par->ati_regbase & PAGE_MASK;
+ 			default_par->mmap_map[1].size = PAGE_SIZE;
+ 			default_par->mmap_map[1].prot_mask = _PAGE_CACHE;
+
+

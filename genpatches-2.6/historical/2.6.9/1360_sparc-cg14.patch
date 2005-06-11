@@ -1,0 +1,95 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/11 14:39:50-08:00 breuerr@mc.net 
+#   [CG14]: Fix NULL sbus_dev handling and colormap setup.
+#   
+#   Signed-off-by: David S. Miller <davem@davemloft.net>
+# 
+# drivers/video/cg14.c
+#   2004/11/11 14:39:22-08:00 breuerr@mc.net +20 -7
+#   [CG14]: Fix NULL sbus_dev handling and colormap setup.
+# 
+diff -Nru a/drivers/video/cg14.c b/drivers/video/cg14.c
+--- a/drivers/video/cg14.c	2004-12-15 00:30:35 -08:00
++++ b/drivers/video/cg14.c	2004-12-15 00:30:35 -08:00
+@@ -255,6 +255,9 @@
+ 	if (regno >= 256)
+ 		return 1;
+ 
++	red >>= 8;
++	green >>= 8;
++	blue >>= 8;
+ 	val = (red | (green << 8) | (blue << 16));
+ 
+ 	spin_lock_irqsave(&par->lock, flags);
+@@ -322,7 +325,8 @@
+ 			break;
+ 
+ 		case MDI_16_PIX:
+-			cur_mode |= 0x20;
++			cur_mode |= (CG14_MCR_PIXMODE_16 <<
++				     CG14_MCR_PIXMODE_SHIFT);
+ 			break;
+ 
+ 		case MDI_8_PIX:
+@@ -341,7 +345,7 @@
+ 
+ 	default:
+ 		ret = sbusfb_ioctl_helper(cmd, arg, info,
+-					  FBTYPE_MDICOLOR, 24, par->fbsize);
++					  FBTYPE_MDICOLOR, 8, par->fbsize);
+ 		break;
+ 	};
+ 
+@@ -355,11 +359,16 @@
+ static void cg14_init_fix(struct fb_info *info, int linebytes)
+ {
+ 	struct cg14_par *par = (struct cg14_par *)info->par;
++	const char *name;
++
++	name = "cgfourteen";
++	if (par->sdev)
++		name = par->sdev->prom_name;
+ 
+-	strlcpy(info->fix.id, par->sdev->prom_name, sizeof(info->fix.id));
++	strlcpy(info->fix.id, name, sizeof(info->fix.id));
+ 
+ 	info->fix.type = FB_TYPE_PACKED_PIXELS;
+-	info->fix.visual = FB_VISUAL_TRUECOLOR;
++	info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
+ 
+ 	info->fix.line_length = linebytes;
+ 
+@@ -484,8 +493,11 @@
+ 	spin_lock_init(&all->par.lock);
+ 
+ 	sbusfb_fill_var(&all->info.var, node, 8);
++	all->info.var.red.length = 8;
++	all->info.var.green.length = 8;
++	all->info.var.blue.length = 8;
+ 
+-	linebytes = prom_getintdefault(sdev->prom_node, "linebytes",
++	linebytes = prom_getintdefault(node, "linebytes",
+ 				       all->info.var.xres);
+ 	all->par.fbsize = PAGE_ALIGN(linebytes * all->info.var.yres);
+ 
+@@ -561,6 +573,7 @@
+ 		kfree(all);
+ 		return;
+ 	}
++	fb_set_cmap(&all->info.cmap, &all->info);
+ 
+ 	cg14_init_fix(&all->info, linebytes);
+ 
+@@ -573,8 +586,8 @@
+ 
+ 	list_add(&all->list, &cg14_list);
+ 
+-	printk("cg14: cgfourteen at %lx:%lx\n",
+-	       all->par.physbase, all->par.iospace);
++	printk("cg14: cgfourteen at %lx:%lx, %dMB\n",
++	       all->par.iospace, all->par.physbase, all->par.ramsize >> 20);
+ 
+ }
+ 

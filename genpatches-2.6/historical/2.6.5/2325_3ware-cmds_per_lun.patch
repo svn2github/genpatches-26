@@ -1,0 +1,114 @@
+
+From: Adam Radford <adam@nmt.edu>
+
+
+
+---
+
+ 25-akpm/drivers/scsi/3w-xxxx.c |   33 +++++++++++++++++----------------
+ 25-akpm/drivers/scsi/3w-xxxx.h |    2 +-
+ 2 files changed, 18 insertions(+), 17 deletions(-)
+
+diff -puN drivers/scsi/3w-xxxx.c~3ware-update drivers/scsi/3w-xxxx.c
+--- 25/drivers/scsi/3w-xxxx.c~3ware-update	Mon Mar  8 16:15:57 2004
++++ 25-akpm/drivers/scsi/3w-xxxx.c	Mon Mar  8 16:15:57 2004
+@@ -6,7 +6,7 @@
+    		     Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+                      Brad Strand <linux@3ware.com>
+ 
+-   Copyright (C) 1999-2003 3ware Inc.
++   Copyright (C) 1999-2004 3ware Inc.
+ 
+    Kernel compatiblity By: 	Andre Hedrick <andre@suse.com>
+    Non-Copyright (C) 2000	Andre Hedrick <andre@suse.com>
+@@ -179,6 +179,8 @@
+    1.02.00.036 - Increase character ioctl timeout to 60 seconds.
+    1.02.00.037 - Fix tw_ioctl() to handle all non-data ATA passthru cmds
+                  for 'smartmontools' support.
++   1.26.00.038 - Roll driver minor version to 26 to denote kernel 2.6.
++                 Add support for cmds_per_lun module parameter.
+ */
+ 
+ #include <linux/module.h>
+@@ -205,6 +207,7 @@ MODULE_LICENSE("GPL");
+ #include <linux/reboot.h>
+ #include <linux/spinlock.h>
+ #include <linux/interrupt.h>
++#include <linux/moduleparam.h>
+ 
+ #include <asm/errno.h>
+ #include <asm/io.h>
+@@ -242,10 +245,15 @@ static struct file_operations tw_fops = 
+ };
+ 
+ /* Globals */
+-char *tw_driver_version="1.02.00.037";
++char *tw_driver_version="1.26.00.038";
+ TW_Device_Extension *tw_device_extension_list[TW_MAX_SLOT];
+ int tw_device_extension_count = 0;
+ static int twe_major = -1;
++static int cmds_per_lun;
++
++/* Module parameters */
++module_param(cmds_per_lun, int, 0);
++MODULE_PARM_DESC(cmds_per_lun, "Maximum commands per LUN");
+ 
+ /* Functions */
+ 
+@@ -1141,14 +1149,6 @@ int tw_findcards(Scsi_Host_Template *tw_
+ 			/* Set card status as online */
+ 			tw_dev->online = 1;
+ 
+-#ifdef CONFIG_3W_XXXX_CMD_PER_LUN
+-			tw_host->cmd_per_lun = CONFIG_3W_XXXX_CMD_PER_LUN;
+-			if (tw_host->cmd_per_lun > TW_MAX_CMDS_PER_LUN)
+-				tw_host->cmd_per_lun = TW_MAX_CMDS_PER_LUN;
+-#else
+-			/* Use SHT cmd_per_lun here */
+-			tw_host->cmd_per_lun = TW_MAX_CMDS_PER_LUN;
+-#endif
+ 			tw_dev->free_head = TW_Q_START;
+ 			tw_dev->free_tail = TW_Q_START;
+ 			tw_dev->free_wrap = TW_Q_LENGTH - 1;
+@@ -3386,13 +3386,13 @@ int tw_slave_configure(Scsi_Device *SDpt
+ 
+ 	dprintk(KERN_WARNING "3w-xxxx: tw_slave_configure()\n");
+ 
+-#ifdef CONFIG_3W_XXXX_CMD_PER_LUN
+-	max_cmds = CONFIG_3W_XXXX_CMD_PER_LUN;
+-	if (max_cmds > TW_MAX_CMDS_PER_LUN)
++	if (cmds_per_lun) {
++		max_cmds = cmds_per_lun;
++		if (max_cmds > TW_MAX_CMDS_PER_LUN)
++			max_cmds = TW_MAX_CMDS_PER_LUN;
++	} else {
+ 		max_cmds = TW_MAX_CMDS_PER_LUN;
+-#else
+-	max_cmds = TW_MAX_CMDS_PER_LUN;
+-#endif
++	}
+ 	scsi_adjust_queue_depth(SDptr, MSG_ORDERED_TAG, max_cmds);
+ 
+ 	return 0;
+@@ -3488,6 +3488,7 @@ static Scsi_Host_Template driver_templat
+ 	.eh_abort_handler	= tw_scsi_eh_abort,
+ 	.eh_host_reset_handler	= tw_scsi_eh_reset,
+ 	.bios_param		= tw_scsi_biosparam,
++	.slave_configure	= tw_slave_configure,
+ 	.can_queue		= TW_Q_LENGTH-2,
+ 	.this_id		= -1,
+ 	.sg_tablesize		= TW_MAX_SGL_LENGTH,
+diff -puN drivers/scsi/3w-xxxx.h~3ware-update drivers/scsi/3w-xxxx.h
+--- 25/drivers/scsi/3w-xxxx.h~3ware-update	Mon Mar  8 16:15:57 2004
++++ 25-akpm/drivers/scsi/3w-xxxx.h	Mon Mar  8 16:15:57 2004
+@@ -6,7 +6,7 @@
+    		     Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+                      Brad Strand <linux@3ware.com>
+ 
+-   Copyright (C) 1999-2003 3ware Inc.
++   Copyright (C) 1999-2004 3ware Inc.
+ 
+    Kernel compatiblity By:	Andre Hedrick <andre@suse.com>
+    Non-Copyright (C) 2000	Andre Hedrick <andre@suse.com>
+
+_

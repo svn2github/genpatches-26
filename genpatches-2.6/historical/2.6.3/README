@@ -1,0 +1,263 @@
+100 - 199 BugFix Stable Patches
+200 - 299 Drivers Stable
+          200-224 Network
+          225-299 Other
+300 - 399 Drivers Unstable
+          300-324 Network
+          325-399 Other
+400 - 499 Testing Patches
+
+
+
+
+Individual Patch Descriptions:
+------------------------------------------------------------------------------------------------------------
+
+120_e1000_interrupt-assertion-revert.patch
+	- Patch to revert the interrupt assertion patch which wormed its way into 2.6.3-r1
+	- this breaks e1000 for many people.
+
+---
+125_x86_64_2.6.3-1.patch
+		- Patches specific to the x86-64 architecture
+		- available from:
+		- ftp://ftp.x86-64.org/pub/linux/v2.6/
+		- or
+		- ftp://ftp.suse.com/pub/people/ak/x86-64/
+---
+125a_x86_64_nvidia_noapic.patch
+		- x86_64 2.6.3-1 patch reenabled ioapic on nforce3
+		- chipset motherboards.  This is really still broken
+		- though, disable it!
+---
+200_r8169-8110S-12172003.patch
+		- RealTek 8169/8110S patches. Ported from RealTek's official
+		- v1.6 2.4 kernel drivers to 2.6 by Brad House
+		- available in 2.4 kernel form from:
+		- http://www.realtek.com.tw/downloads/downloads1-3.aspx?sort=description&Keyword=8110S
+---
+201_prism54_wlan_01242004.patch
+		- WLAN driver for Prism54 cards such as the Netgear WG511, DLink Air Plus
+		- Xtreme G A1, or the 3com OfficeConnect 11g.
+		- available from:
+		- http://www.prism54.org/pub/linux/snapshot/kernel/v2.6/
+---
+202_bcm5700_broadcom_gigabit_drvr_11272003.patch
+		- Official driver from broadcom, in patch version.  The tg3 driver
+		- should be used if possible, but this exists as a last resort.
+		- available from:
+		- http://www.broadcom.com/drivers/downloaddrivers.php
+---
+227_alsa_cvs_20040220_2.6.3.patch
+		- Patch to update in-kernel alsa sound driver to
+		- 1.0.2c+cvs
+		- available from:
+		- ftp://ftp.alsa-project.org/pub/driver/ or CVS
+		- To create patch against latest kernel extract driver source and:
+		- cd alsa-kernel
+		- cp -Rpv Documentation/* /usr/src/linux/Documentation/sound/alsa/
+		- rm -rf /usr/src/linux/include/sound/*
+		- cp -Rpv include/* /usr/src/linux/include/sound/
+		- rm -rf scripts oss Documentation include
+		- mv /usr/src/linux/sound/oss /usr/src/linux/oss-save
+		- rm -rf /usr/src/linux/sound/*
+		- cp -Rpv * /usr/src/linux/sound/
+		- mv /usr/src/linux/oss-save /usr/src/linux/sound/oss
+		- Then diff against unchanged branch, and there you go.
+		
+---
+300_squashfs-1.3r3.patch
+		- driver to support squashfs filesystems.
+		- This will become increasingly popular for the livecd's
+		- Availabel from: http://squashfs.sourceforge.net/
+		
+---
+400_bootsplash-3.1.3-2.6.3-r5.patch
+		- Bootsplash (mask boot messages with pretty graphics and
+		- progress bars, also does background images, etc as seen
+		- on livecds)
+		- available from:
+		- http://www.bootsplash.org
+		
+		- This is an updated patch from our very own Spock.
+---
+401_supermount-2.0.4.patch
+		- Supermount.  pseudo-filesystem which manages filesystems
+		- on removable media like floppy disks and CD-ROMs. 
+		- It frees you from need to manually mount and unmount media.
+		- available from:
+		- http://supermount-ng.sourceforge.net/
+403_speakup_accessibility.patch
+		- Provided by dmwaters@gentoo.org, she pulled the CVS from
+		- http://www.linux-speakup.org/ftp/
+		- Using this utility: http://linux-speakup.org/ftp/checkout
+		- 12/??/2003
+---
+405_lirc_infrared-2.6.2_rc1-01242004.patch
+		- Apply lirc infrared patch for 2.6 kernels
+		- Patches from here : http://flameeyes.web.ctonet.it/downloads.html#lirc
+
+---
+410_libata_enable_sil.patch
+		- Quick patch to remove && BROKEN from Kconfig.
+		- Still not recommended to use this driver, but with
+		- patch above it's said to be somewhat usable.
+---
+415_gcloop-2.6-20040118.patch
+		- Compressed loopback device support. Mainly used on 
+		- LiveCDs.
+		- Available from: http://dev.gentoo.org/~lu_zero/gcloop/
+---
+420_adaptec_dpt_i2o.patch
+		- Patch to fix and enable adaptec SCSI RAID adapters on
+		- 2.6 kernels such as the 2100S.  
+		- Source from:
+		- mark_salyzyn@adaptec.com
+
+---
+425_am8-2.6.4_rc1.patch
+		- Patch to enable autoregulate swappiness by Con Kolivas
+		- http://ck.kolivas.org/patches/2.6/
+---
+451_powernow_k8_buggy_bios.patch
+		- Patch for buggy bioses where the pstates for powernow-k8
+		- from the bios report the max frequency as being lower than
+		- the current frequency.  This overwrites the last frequency
+		- in the powernow table with the current frequency (max).
+---
+452_k8_cardbus_io.patch
+		- Patch to prevent emachines amd64 laptops from hanging when
+		- unplugging power cord, or closing lid.
+---
+460_amd64_dvb_saa7146.patch
+		- Patch for dvb saa7146 on amd64
+		- Just int/long type issues
+---
+465_cfq-4.patch
+		- Patch that improves I/O performance, etc...
+		- From  
+		- http://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.3/2.6.3-mm3/broken-out/cfq-4.patch
+---
+470_adaptive-lazy-readahead.patch
+		- Adjusts page readahead based on most recent behaviour. gives big benefits to I/O on sequential file reads and absolutely minute impact
+		- on random reads
+		- From:
+		- http://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.3/2.6.3-mm3/broken-out/adaptive-lazy-readahead.patch
+
+
+Future Patches
+------------------------------------------------------------------------------------------------------------
+http://swsusp.sourceforge.net/index.html
+	- ??
+---
+420_evms-extrapatches-2.2.1.patch
+		- Extra patches for device-mapper and evms additional features
+		- including snapshotting and brr
+		- available from: http://evms.sourceforge.net/patches/2.2.1/kernel/2.6.0/
+
+
+
+
+
+
+
+
+
+Patches not included ...
+------------------------------------------------------------------------------------------------------------
+committed mainline as of 2.6.1rc2
+100_mremap-CAN-2003-0985.patch
+		- Security vulnerability fix
+---
+committed mainline as of 2.6.1rc2
+126_agpgart_patches_diff_dj_x8664-3.patch
+		- AGPGART patches from David Jones tree, diffed after applying
+		- the x86-64.org big patchset which has the nForce3 agp support.
+		- available from:
+		- http://linux-dj.bkbits.net:8080/agpgart
+
+---
+been committed as of 2.6.1rc1 to mainline
+404_usb_rollup_gregkh.patch
+		- Apply the last set of patches from greg kh that did not
+		- make it into 2.6.0 final. (rollup patch)
+		- Find his patches here : ftp://ftp.kernel.org/pub/linux/kernel/people/gregkh/usb/2.6/
+---
+committed as of 2.6.2_rc1 mainline
+151_libata_siliconimage_3112_4_fixes.patch
+		- Some fixes for the sata_sil driver, and 3114 additions
+		- From: http://marc.theaimsgroup.com/?l=linux-kernel&m=107338181210727&w=2
+---
+committed as of 2.6.2_rc1 mainline
+152_libata_siliconimage_3512_dep151.patch
+		- PCI ID update for 3512 cards, which are pretty much identical
+		- to 3112's.  This patch requires the 151 update to be applied first.
+		- Originally posted: http://marc.theaimsgroup.com/?l=linux-kernel&m=107391903306032&w=2
+
+---
+doesn't quite apply smoothly ... may not be ready for 2.6 anyhow
+406_pax-linux-2.6.0-12302003-2245.patch
+		- Apply pageexec (PaX) patches for 2.6 kernels
+		- this is a major part of grsecurity
+		- Patch updates can be retrieved from:
+		- http://pax.grsecurity.net/
+
+
+---
+applied to 2.6.2_rc1 already
+402_i2cisa_remove_dep.path
+		- Quick patch mainly meant for AMD64 to allow i2c drivers for
+		- sensors to work since there is no ISA for amd64, this dep
+		- is odd.  It does work just fine without ISA.
+---
+already all applied to 2.6.1_rc1
+225_libata_additional_patches_01022004.patch
+		- Cleanups and fixes PDC20621 (Promise HW Raid ATA [SX4000])
+		- available from:
+		- ftp://ftp.kernel.org/pub/linux/kernel/people/jgarzik/libata/
+---
+already all applied to 2.6.2_rc1
+226_ieee1394_updates_01042003.patch
+		- Patch to FireWire to hopefully fix the problems that
+		- drobbins has seen with 2.6.0
+		- available from:
+		- http://www.linux1394.org/viewcvs/ieee1394/trunk.tar.gz?view=tar
+---
+merged as of 2.6.2_rc1
+300_NVIDIA_forcedeth_v20.patch
+		- Reverse Engineered nForce/2/3 nvnet driver
+		- available from:
+		- http://www.hailfinger.org/carldani/linux/patches/forcedeth/
+		
+		committed mainline as of 2.6.2_rc2.
+
+---
+merged as of 2.6.2rc2
+101_keyboard-scancode-fixes.patch
+		- Patches for sparc keyboard scancodes
+		- From:
+		- ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.1/2.6.1-mm4/broken-out/keyboard-scancode-fixes.patch
+
+---
+
+didn't seem to work right, kernel panics, etc....
+
+402_sched_HT_ingo_upfix.patch
+		- Scheduler patches to make it HyperThread aware which should
+		- help performance on systems with HT capabilities.
+		- This is the same patch as provided in Fedora Core 1's
+		- kernel.
+		- available from:
+		- http://people.redhat.com/mingo/O(1)-scheduler/
+		
+---
+included as of 2.6.2
+408_acpi-20031203-2.6.1.patch
+		- Latest acpi release available from acpi.sourceforge.net
+		- This patch was obtained from:
+		- ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/
+		- based off that tree
+		
+---
+kernel has now caught up
+227_alsa-1.0.2c-2.6.3_rc1.patch

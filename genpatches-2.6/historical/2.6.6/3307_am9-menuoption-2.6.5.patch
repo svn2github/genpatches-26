@@ -1,0 +1,50 @@
+--- linux-2.6.5-mm1/init/Kconfig	2004-04-06 21:42:31.141510992 +0100
++++ linux-2.6.5-mm1-custom/init/Kconfig	2004-04-06 21:44:42.061608112 +0100
+@@ -75,6 +75,31 @@
+ 	  used to provide more virtual memory than the actual RAM present
+ 	  in your computer.  If unsure say Y.
+ 
++config VM_AUTOREGULATE_SWAPPINESS
++	bool "Autoregulate swappiness"
++	depends on SWAP
++	---help---
++	  This has the effect of preventing applications from being swapped
++	  out if the ram is filling up with cached data. Conversely, if many
++	  applications are in ram the swappiness increases which means the
++	  application currently in use gets to stay in physical ram while
++	  other less used applications are swapped out.
++
++	  For desktop enthusiasts this means if you are copying large files
++	  around like ISO images or leave your machine unattended for a while
++	  it will not swap out your applications. Conversely if the machine
++	  has a lot of applications currently loaded it will give the currently
++	  running applications preference and swap out the less used ones.
++
++	  Swappiness is a kernel "knob" (located in /proc/sys/vm/swappiness)
++	  used to tweak how much the kernel favors swap over RAM; high
++	  swappiness means the kernel will swap out a lot, and low swappiness
++	  means the kernel will try not to use swap space.
++
++	  You can turn this on and off at runtime via /proc/sys/vm/autoswappiness
++
++	  If unsure, say Y.
++
+ config SYSVIPC
+ 	bool "System V IPC"
+ 	---help---
+--- linux-2.6.5-mm1/mm/vmscan.c	2004-04-06 22:08:40.825882696 +0100
++++ linux-2.6.5-mm1-custom/mm/vmscan.c	2004-04-06 22:09:26.409952864 +0100
+@@ -43,7 +43,13 @@
+  * From 0 .. 100.  Higher means more swappy.
+  */
+ int vm_swappiness = 60;
++
++#ifdef CONFIG_VM_AUTOREGULATE_SWAPPINESS
+ int auto_swappiness = 1;
++#else
++int auto_swappiness = 0;
++#endif
++
+ static long total_memory;
+ 
+ #define lru_to_page(_head) (list_entry((_head)->prev, struct page, lru))

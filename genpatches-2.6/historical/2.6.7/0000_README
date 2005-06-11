@@ -1,0 +1,217 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+Patch:	1100_ip_tables.patch
+from:	http://thread.gmane.org/gmane.comp.security.bugtraq/12272
+Desc:	Fix iptables DoS
+
+Patch:	1105_CAN-2004-0497.patch
+From:	Chris Wright
+Desc:	fix CAN-2004-0497
+
+Patch:	1110_proc.patch
+From:	Chris Wright
+Desc:	another proc security fix.
+
+Patch:	1115_net_eql.patch
+From:	Herbert Xu <herbert@gondor.apana.org.au>
+Desc:	net/eql.c oops fix.
+
+Patch:	1120-CAN-2004-0415.patch
+From:	Alan Cox, Al Viro, and others
+Desc:	icky fix for CAN-2004-0415.  This is going to be a mess...
+
+Patch:	1125-proc_pid_cmdline-race-fix.patch
+From:	Roger Luethi <rl@hellgate.ch>
+Desc:	Fixes bug 59905
+
+Patch:	1130_nfs-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=62524
+Desc:	NFS security fix
+
+Patch:	1135_netfilter-dos-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=68375
+Desc:	netfilter security fix
+
+Patch:	1140_CAN-2004-0814.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=68421
+Desc:	Local DoS fix
+
+Patch:	1145_smbfs-dos.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=65877
+Desc:	smbfs DoS fix
+
+Patch:	1150_elf-bin-vuln-fix.patch
+from:	http://bugs.gentoo.org/70681
+desc:	Fix ELF binary vulnerability
+
+Patch:	1155_af-unix-fix.patch
+From:	http://bugs.gentoo.org/72317
+Desc:	Fix serialization security problem in AF_UNIX layer
+
+Patch:	1160_vma-fix.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	Fix VMA memory overlap security issue
+
+Patch:	1161_vma-fix-2.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	Fix VMA memory overlap security issue even more
+
+Patch:	1165_aout-fix.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	a.out binary security fix
+
+Patch:	1310_k8_cardbus_io.patch
+from:	
+desc:	Patch to prevent emachines amd64 laptops from hanging when unplugging
+	power cord, or closing lid
+
+Patch:	1315_alpha-sysctl-uac.patch
+from:	
+desc:	enable control of the unaligned access control policy from sysctl
+
+Patch:	1320_x86_64-2.6.7-2.patch
+from:	ftp://ftp.x86-64.org/pub/linux/v2.6/x86_64-2.6.7-2.bz2
+desc:	x86-64 patch for 2.6.7, version 2
+
+Patch:	1321_x86_64-noiommu.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=55155
+desc:	fixes bug 55155
+
+Patch:	1325_iptables-headers.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=55501
+desc:	fixes bug 55501, and is already included in mainline tree.  To be
+	removed from this package once 2.6.8 is out.
+
+Patch:	1340_sparc-obp64-naming.patch
+	1342_sparc-stopa.patch
+	1345_sparc-sys32_syslog.patch
+	1347_sparc-udelay.patch
+	1349_sparc-atyfb.patch
+	1351_sparc-sunsu.patch
+	1362_sparc-kconfig-rework.patch
+	1363_sparc-kconfig-driver-rework.patch
+	1380_sparc-sun4c-iospace.patch
+	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball and elsewhere
+Desc:	see individual patches for details, fixes various sparc issues.
+
+Patch:	1900_ulogd_timestamp.patch
+From:	bk changeset 1.181.1.23 and bug #56729
+Desc:	Fixes bug #56729.  Is in mainline and will be dropped once 2.6.8 is out.
+
+Patch:	2100_nfs-lock-workaround.patch
+From:	eradicator@gentoo.org
+desc:	Workaround for a NFS lockup
+
+Patch:	2115_fa311-mac-address-fix.patch
+from:	-mm broken-out
+desc:	fix for netgear fa311 MAC address. without this fix the MAC is
+	byteswapped and has an incorrect vendor ID (and therefore broken card
+	ID too)
+
+Patch:	2700_ppc-pegasos-2.6.6.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=54684
+desc:	Allow pegasos PCI hardware to work properly.
+
+Patch:	2900_sparc-signal_h.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	Sparc signal.h bugfix.  Is already in 2.6.8 tree.
+
+Patch:	2905_mouse_click_fix.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	mouseclick bugfix.  Is already in 2.6.8 tree.
+
+Patch:	2910_wacom_fix.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	wacom bugfix.  Is already in 2.6.8 tree.
+
+Patch:	4500_alsa-1.0.7.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=72006
+Desc:	ALSA update so that SPARCs can use ALSA
+
+Patch:	4501_alsa-ioctl32.patch
+From:	eradicator@gentoo.org
+Desc:	ALSA ioctl32 fix
+
+Patch:	4502_alsa-ioctl32-compat.patch
+From:	eradicator@gentoo.org
+Desc:	Make the ioctl32 work on older kernels
+
+Patch:	4503_alsa-audigy2.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=72433
+Desc:	Fixes a bug where audigy2 cards don't get recognized as supporting 7.1 sound
+
+Patch:	4505_bootsplash-3.1.4-sp-0.1-2.6.7.patch
+from:	http://www.bootsplash.org
+desc:	Bootsplash (mask boot messages with pretty graphics and progress bars,
+	also does background images, etc as seen on livecds)
+
+Patch:	4705_squashfs-2.0.patch
+from:	http://squashfs.sourceforge.net/
+	http://dev.gentoo.org/~wolf31o2/workspace/4705_squashfs-2.0.patch
+desc:	driver to support squashfs filesystems. This will become increasingly
+	popular for the livecd's
+
+Patch:  4715_supermount-2.0.4-2.6.7.patch
+from:   http://supermount-ng.sourceforge.net/
+desc:   Supermount.  pseudo-filesystem which manages filesystems on removable
+	media like floppy disks and CD-ROMs.  It frees you from need to
+	manually mount and unmount media.
+
+Patch:	4905_speakup-20040618.patch
+from:	http://www.linux-speakup.org/ftp/ Using the utility from
+	http://linux-speakup.org/ftp/checkout
+desc:	Provided by dmwaters@gentoo.org. the speakup synthesizer to give better
+	accessiblity for blind or hard of sight users.
+
+
+
+Future Patches
+--------------------------------------------------------------------------
+None, I want to have less patches :)
+
+	
+Dropped
+--------------------------------------------------------------------------
+Lots of things that can be built outside of the kernel tree on their own.
+
+

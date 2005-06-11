@@ -1,0 +1,12 @@
+diff -Naur linux-2.6.8.orig/sound/pci/emu10k1/emu10k1_main.c linux-2.6.8/sound/pci/emu10k1/emu10k1_main.c
+--- linux-2.6.8.orig/sound/pci/emu10k1/emu10k1_main.c	2004-11-28 05:09:06.088490295 -0800
++++ linux-2.6.8/sound/pci/emu10k1/emu10k1_main.c	2004-11-28 05:09:38.194118491 -0800
+@@ -684,7 +684,7 @@
+ 		emu->no_ac97 = 1;	
+ 	}
+ 	
+-	if (emu->revision == 4 && emu->model == 0x2002) {
++	if (emu->revision == 4 && (emu->model == 0x2001 || emu->model == 0x2002)) {
+ 		/* Audigy 2 ZS */
+ 		snd_printdd(KERN_INFO "Audigy2 ZS is detected. setting 7.1 mode.\n");
+ 		emu->spk71 = 1;

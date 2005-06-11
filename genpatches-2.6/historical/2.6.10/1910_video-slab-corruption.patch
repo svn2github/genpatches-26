@@ -1,0 +1,34 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/02 11:45:13-08:00 torvalds@evo.osdl.org 
+#   acpi video device enumeration: fix incorrect device list allocation
+#   
+#   It didn't allocate space for the final terminating entry,
+#   which caused it to overwrite the next slab entry, which in turn
+#   sometimes ended up being a slab array cache pointer. End result:
+#   total slab cache corruption at a random time afterwards. Very
+#   nasty.
+# 
+# drivers/acpi/video.c
+#   2005/01/02 11:45:03-08:00 torvalds@evo.osdl.org +1 -1
+#   acpi video device enumeration: fix incorrect device list allocation
+#   
+#   It didn't allocate space for the final terminating entry,
+#   which caused it to overwrite the next slab entry, which in turn
+#   sometimes ended up being a slab array cache pointer. End result:
+#   total slab cache corruption at a random time afterwards. Very
+#   nasty.
+# 
+diff -Nru a/drivers/acpi/video.c b/drivers/acpi/video.c
+--- a/drivers/acpi/video.c	2005-01-04 18:35:02 -08:00
++++ b/drivers/acpi/video.c	2005-01-04 18:35:02 -08:00
+@@ -1524,7 +1524,7 @@
+ 		dod->package.count));
+ 
+ 	active_device_list= kmalloc(
+- 		dod->package.count*sizeof(struct acpi_video_enumerated_device),
++ 		(1+dod->package.count)*sizeof(struct acpi_video_enumerated_device),
+ 	       	GFP_KERNEL);
+ 
+ 	if (!active_device_list) {

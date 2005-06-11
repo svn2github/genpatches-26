@@ -1,0 +1,28 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/11 07:40:07-08:00 chrisw@osdl.org 
+#   [PATCH] acct_stack_growth nitpicks
+#   
+#   - allow CAP_IPC_LOCK to override mlock rlimit during stack expansion as
+#     in all other cases
+#   
+#   Signed-off-by: Chris Wright <chrisw@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# mm/mmap.c
+#   2005/01/10 19:34:05-08:00 chrisw@osdl.org +1 -1
+#   acct_stack_growth nitpicks
+# 
+diff -Nru a/mm/mmap.c b/mm/mmap.c
+--- a/mm/mmap.c	2005-01-14 14:03:20 -08:00
++++ b/mm/mmap.c	2005-01-14 14:03:20 -08:00
+@@ -1359,7 +1359,7 @@
+ 		unsigned long limit;
+ 		locked = mm->locked_vm + grow;
+ 		limit = rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
+-		if (locked > limit)
++		if (locked > limit && !capable(CAP_IPC_LOCK))
+ 			return -ENOMEM;
+ 	}
+ 

@@ -1,0 +1,13 @@
+Index: linux-2.6.8.1-ck/drivers/block/scsi_ioctl.c
+===================================================================
+--- linux-2.6.8.1-ck.orig/drivers/block/scsi_ioctl.c	2004-08-19 19:58:28.041430003 +1000
++++ linux-2.6.8.1-ck/drivers/block/scsi_ioctl.c	2004-08-19 19:59:01.705207615 +1000
+@@ -193,8 +193,6 @@ static int sg_io(struct file *file, requ
+ 		return -EINVAL;
+ 	if (copy_from_user(cmd, hdr->cmdp, hdr->cmd_len))
+ 		return -EFAULT;
+-	if (verify_command(file, cmd))
+-		return -EPERM;
+ 
+ 	/*
+ 	 * we'll do that later

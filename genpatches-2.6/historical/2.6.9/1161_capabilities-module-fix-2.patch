@@ -1,0 +1,39 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 15:59:03-08:00 chrisw@osdl.org 
+#   [PATCH] fix up dummy security module code merge
+#   
+#   OK, somehow I managed to botch this one.  It happens to work fine, but I
+#   should have been more careful with forward porting this 1+ year old patch.
+#   The exec-time calc should go in bprm_apply_creds, not bprm_free_security.
+#   
+#   Thanks to Stephen for spotting my mistake.
+#   
+#   Signed-off-by: Chris Wright <chrisw@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# security/dummy.c
+#   2005/01/04 14:45:31-08:00 chrisw@osdl.org +2 -1
+#   fix up dummy security module code merge
+# 
+diff -Nru a/security/dummy.c b/security/dummy.c
+--- a/security/dummy.c	2005-01-04 16:41:40 -08:00
++++ b/security/dummy.c	2005-01-04 16:41:40 -08:00
+@@ -180,7 +180,6 @@
+ 
+ static void dummy_bprm_free_security (struct linux_binprm *bprm)
+ {
+-	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ 	return;
+ }
+ 
+@@ -197,6 +196,8 @@
+ 
+ 	current->suid = current->euid = current->fsuid = bprm->e_uid;
+ 	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++
++	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ }
+ 
+ static int dummy_bprm_set_security (struct linux_binprm *bprm)

@@ -1,0 +1,78 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/03 10:07:16-06:00 axboe@suse.de 
+#   [PATCH] gdth buggy page mapping
+#   
+#   Just tripped over a bug report for the SUSE kernel where gdth would
+#   crash on a 32G opteron, turned out that the gdth_internal_copy() sg
+#   handling was really buggy. After fixing this I wanted to do the same for
+#   mainline, but I can see that a vain attempt was already made to fix it.
+#   Unfortunately it wasn't complete, and on top of that there's room for
+#   improvement.
+#   
+#   The current code is buggy on highmem, as page_address() will not yield a
+#   valid kernel address causing a NULL pointer dereference. The current
+#   code also doesn't unmap the sg list if it sees a NULL sl->page. In fact,
+#   the whole sg mapping looks really strange, why on earth would you be
+#   mapping the sglist for dma when you are only going to copy from it?
+#   
+#   This patch corrects both errors - correctly maps in the page, and kills
+#   the pci_map_sg/pci_unmap_sg calls completely. If someone could test
+#   this, that would be great.
+#   
+#   Signed-off-by: Jens Axboe <axboe@suse.de>
+#   Signed-off-by: James Bottomley <James.Bottomley@SteelEye.com>
+# 
+# drivers/scsi/gdth.c
+#   2004/11/23 13:13:04-06:00 axboe@suse.de +9 -9
+#   gdth buggy page mapping
+# 
+diff -Nru a/drivers/scsi/gdth.c b/drivers/scsi/gdth.c
+--- a/drivers/scsi/gdth.c	2005-01-22 21:28:53 -08:00
++++ b/drivers/scsi/gdth.c	2005-01-22 21:28:53 -08:00
+@@ -2708,7 +2708,6 @@
+     ushort cpsum,cpnow;
+     struct scatterlist *sl;
+     gdth_ha_str *ha;
+-    int sgcnt;
+     char *address;
+ 
+     cpcount = count<=(ushort)scp->bufflen ? count:(ushort)scp->bufflen;
+@@ -2717,9 +2716,9 @@
+     if (scp->use_sg) {
+         sl = (struct scatterlist *)scp->request_buffer;
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,13)
+-        sgcnt = pci_map_sg(ha->pdev,sl,scp->use_sg,PCI_DMA_FROMDEVICE);
+-        for (i=0,cpsum=0; i<sgcnt; ++i,++sl) {
+-            cpnow = (ushort)sg_dma_len(sl);
++        for (i=0,cpsum=0; i<scp->use_sg; ++i,++sl) {
++	    unsigned long flags;
++            cpnow = (ushort)sl->length;
+             TRACE(("copy_internal() now %d sum %d count %d %d\n",
+                           cpnow,cpsum,cpcount,(ushort)scp->bufflen));
+             if (cpsum+cpnow > cpcount) 
+@@ -2730,17 +2729,18 @@
+                        hanum);
+                 return;
+             }
+-            address = (char *)(page_address(sl->page) + sl->offset);
++	    local_irq_save(flags);
++	    address = kmap_atomic(sl->page, KM_BIO_SRC_IRQ) + sl->offset;
+             memcpy(address,buffer,cpnow);
++	    flush_dcache_page(sl->page);
++	    kunmap_atomic(address, KM_BIO_SRC_IRQ);
++	    local_irq_restore(flags);
+             if (cpsum == cpcount)
+                 break;
+             buffer += cpnow;
+         }
+-        pci_unmap_sg(ha->pdev,scp->request_buffer,
+-                     scp->use_sg,PCI_DMA_FROMDEVICE);
+ #else
+-        sgcnt = scp->use_sg;
+-        for (i=0,cpsum=0; i<sgcnt; ++i,++sl) {
++        for (i=0,cpsum=0; i<scp->use_sg; ++i,++sl) {
+             cpnow = (ushort)sl->length;
+             TRACE(("copy_internal() now %d sum %d count %d %d\n",
+                           cpnow,cpsum,cpcount,(ushort)scp->bufflen));

@@ -1,0 +1,15 @@
+From http://bugs.gentoo.org/show_bug.cgi?id=55155
+
+--- linux-2.6.7-gentoo-r6/arch/x86_64/kernel/pci-nommu.c.noiommu	2004-06-25 03:09:10.000000000 +0100
++++ linux-2.6.7-gentoo-r6/arch/x86_64/kernel/pci-nommu.c	2004-06-25 04:20:52.000000000 +0100
+@@ -4,8 +4,8 @@
+ #include <linux/string.h>
+ #include <asm/proto.h>
+ 
+-int iommu_merge = 0;
+-EXPORT_SYMBOL(iommu_merge);
++int iommu_bio_merge = 0;
++EXPORT_SYMBOL(iommu_bio_merge);
+ 
+ dma_addr_t bad_dma_address;
+ EXPORT_SYMBOL(bad_dma_address);

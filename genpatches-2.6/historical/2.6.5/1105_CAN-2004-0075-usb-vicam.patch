@@ -1,0 +1,25 @@
+diff -urN linux-2.4.25-pre4/drivers/usb/media/vicam.c linux-2.4.25-pre5/drivers/usb/media/vicam.c
+--- linux-2.4.25-pre4/drivers/usb/media/vicam.c	2003-11-28 10:26:20.000000000 -0800
++++ linux-2.4.25-pre5/drivers/usb/media/vicam.c	2004-01-15 12:10:23.000000000 -0800
+@@ -653,12 +653,18 @@
+ 	case VIDIOCSWIN:
+ 		{
+ 
+-			struct video_window *vw = (struct video_window *) arg;
+-			DBG("VIDIOCSWIN %d x %d\n", vw->width, vw->height);
++			struct video_window vw;
+ 
+-			if ( vw->width != 320 || vw->height != 240 )
++			if (copy_from_user(&vw, arg, sizeof(vw))) {
+ 				retval = -EFAULT;
++				break;
++			}
++
++			DBG("VIDIOCSWIN %d x %d\n", vw->width, vw->height);
+ 			
++			if ( vw.width != 320 || vw.height != 240 )
++				retval = -EFAULT;
++
+ 			break;
+ 		}
+ 

@@ -1,0 +1,17 @@
+Temporary workaround fix to allow nv_sata to work
+Patch won't be merged upstream (fix is required elsewhere) but this is a
+safe workaround according to nvidia!
+http://bugzilla.kernel.org/show_bug.cgi?id=3352
+
+
+--- linux-2.6.8-gentoo-r8/drivers/scsi/sata_nv.c.orig	2004-10-13 16:51:16.857132392 +0100
++++ linux-2.6.8-gentoo-r8/drivers/scsi/sata_nv.c	2004-10-13 16:52:12.466678456 +0100
+@@ -334,7 +334,7 @@ static int nv_init_one (struct pci_dev *
+ 	probe_ent->pdev = pdev;
+ 	probe_ent->sht = &nv_sht;
+ 	probe_ent->host_flags = ATA_FLAG_SATA |
+-				ATA_FLAG_SATA_RESET |
++			/*	ATA_FLAG_SATA_RESET | */
+ 				ATA_FLAG_SRST |
+ 				ATA_FLAG_NO_LEGACY;
+ 

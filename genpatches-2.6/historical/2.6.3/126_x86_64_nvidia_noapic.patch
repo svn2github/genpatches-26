@@ -1,0 +1,12 @@
+diff -ruN linux-2.6.3/arch/x86_64/kernel/io_apic.c linux-2.6.3-nv_noioapic/arch/x86_64/kernel/io_apic.c
+--- linux-2.6.3/arch/x86_64/kernel/io_apic.c	2004-02-21 14:46:52.016892664 -0500
++++ linux-2.6.3-nv_noioapic/arch/x86_64/kernel/io_apic.c	2004-02-21 14:46:07.643638424 -0500
+@@ -245,7 +245,7 @@
+ 							 PCI_VENDOR_ID);
+ 				vendor &= 0xffff;
+ 				switch (vendor) { 
+-//				case PCI_VENDOR_ID_NVIDIA: 
++				case PCI_VENDOR_ID_NVIDIA: 
+ 				case PCI_VENDOR_ID_VIA:
+ 					printk(KERN_INFO 
+      "PCI bridge %02x:%02x from %x found. Setting \"noapic\". Overwrite with \"apic\"\n",

@@ -1,0 +1,16 @@
+Patch from http://thread.gmane.org/gmane.comp.security.bugtraq/12272
+to fix ip_tables DoS.
+
+Patch against 2.6.7
+
+--- 1.17/net/ipv4/netfilter/ip_tables.c	2004-06-07 12:55:28 -07:00
++++ edited/net/ipv4/netfilter/ip_tables.c	2004-06-30 14:23:37 -07:00
+@@ -1458,7 +1458,7 @@
+ 		int *hotdrop)
+ {
+ 	/* tcp.doff is only 4 bits, ie. max 15 * 4 bytes */
+-	char opt[60 - sizeof(struct tcphdr)];
++	u_int8_t opt[60 - sizeof(struct tcphdr)];
+ 	unsigned int i;
+ 
+ 	duprintf("tcp_match: finding option\n");

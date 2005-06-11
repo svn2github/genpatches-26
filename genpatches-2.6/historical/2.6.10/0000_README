@@ -1,0 +1,305 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+Patch:	1100_drm-dos-fix.patch
+From:	http://bugs.gentoo.org/74464
+Desc:	Fix possible DoS in i810 DRM drivers. Already in 2.6.11 tree
+
+Patch:	1105_capabilities-module-fix.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.1974
+Desc:	Fix security issue if capabilities is built as module. Already in 2.6.11 tree
+
+Patch:	1106_capabilities-module-fix-2.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.1978
+Desc:	Fix security issue if capabilities is built as module. Already in 2.6.11 tree
+
+Patch:	1110_smbfs-dos-fix.patch
+From:	http://bugs.gentoo.org/65877
+Desc:	smbfs DoS fix. New version from Chuck Eggbert.
+
+Patch:	1115_sys-uselib-fix-1.patch
+From:	http://bugs.gentoo.org/77025
+Desc:	Fix for uselib privelage escalation security issue. Updated to upstream version. Already in 2.6.11 tree.
+
+Patch:	1116_sys-uselib-fix-2.patch
+From:	http://bugs.gentoo.org/77025
+Desc:	Fix for uselib privelage escalation security issue. Updated to upstream version. Already in 2.6.11 tree
+
+Patch:	1120_moxa-overflow.patch
+From:	http://bugs.gentoo.org/77094
+Desc:	Fix an overflow in the moxa serial driver
+
+Patch:	1125_random-poolsize-overflow.patch
+From:	http://bugs.gentoo.org/77094
+Desc:	Fix an overflow in the random poolsize handler. Fixed in 2.6.11 tree
+
+Patch:	1130_rlimit-memlock-dos.patch
+From:	http://bugs.gentoo.org/77094
+Desc:	Fix a problem with memory locking and a potential DoS. New fix, already in 2.6.11 tree.
+
+Patch:	1131_rlimit-memlock-dos-2.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.2273.7.5
+Desc:	Fix for the rlimit memlock security fix
+
+Patch:	1135_scsi-ioctl-overflox.patch
+From:	http://bugs.gentoo.org/77094
+Desc:	Fix an overflow/leak in the SCSI layer. Already in 2.6.11 tree
+
+Patch:	1140_stack-resize.patch
+From:	http://bugs.gentoo.org/77666
+Desc:	Fix SMP security problem with two threads expanding stack simultaneously. Already in 2.6.11 tree.
+
+Patch:	1145_nfs-directio.patch
+From:	http://bugs.gentoo.org/77923
+Desc:	Fix security vulnerablity in NFS direct-io. Already in 2.6.11 tree
+
+Patch:	1150_sunrpc-nfsacl.patch
+From:	http://bugs.gentoo.org/74070
+Desc:	Fix security problem in sunrpc nfsacl protocol extension.
+
+Patch:	1155_ntfs-dos.patch
+From:	http://bugs.gentoo.org/81106
+Desc:	Fix potential NTFS DoS through printk
+
+Patch:	1160_procfs-overflow.patch
+From:	http://bugs.gentoo.org/82141
+Desc:	Fix heap overflow in /proc
+
+Patch:	1165_tty-memory.patch
+From:	http://bugs.gentoo.org/82141
+Desc:	Fix possible kernel memory access problem
+
+Patch:	1170_atm-usermem.patch
+From:	http://bugs.gentoo.org/82141
+Desc:	Fix suspicious codepath in ATM layer
+
+Patch:	1175_reiserfs-64bit.patch
+From:	http://bugs.gentoo.org/82141
+Desc:	Fix reiserfs on 64bit systems
+
+Patch:	1180_nls-ascii-overflow.patch
+From:	http://bugs.gentoo.org/79847
+Desc:	Incorrect table size leaves possibility for DoS
+
+Patch:	1185_tty-process.patch
+From:	http://bugs.gentoo.org/79847
+Desc:	Use the existing "tty_sem" to protect against the process tty changes
+
+Patch:	1190_netfilter-fragment.patch
+From:	http://bugs.gentoo.org/81195
+Desc:	Fix fragment queue security issue
+
+Patch:	1195_ip-checksum.patch
+From:	http://bugs.gentoo.org/81195
+Desc:	Fix packet checksum security issue
+
+Patch:	1315_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
+
+Patch:	1300_uml-stack-corruption.patch
+From:	2.6.10-as3
+Desc:	Fix a stack corruption crash in usermode linux
+
+Patch:	1305_amd64-suspend.patch
+From:	2.6.10-as3
+Desc:	Fix suspending some devices on x86-64
+
+Patch:	1340_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1342_sparc-stopa.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314190710206&w=2
+Desc:	Display a more user friendly panic message
+
+Patch:	1351_sparc32-wli.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110378389507603&w=2
+Desc:	sparc32 fixes that didn't quite make it in time for 2.6.10. Mostly in 2.6.11 tree
+
+Patch:	1362_sparc-kconfig-rework.patch
+From:	Jeremy Huddleston <eradicator@gentoo.org>
+Desc:	Kconfig updates for sparc
+
+Patch:	1363_sparc-kconfig-driver-rework.patch
+From:	Jeremy Huddleston <eradicator@gentoo.org>
+Desc:	Kconfig updates for sparc
+
+Patch:	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	1900_kswapd-pages-scanned-fix.patch
+From:	http://bugs.gentoo.org/69076
+Desc:	Another kswapd fix. Already in 2.6.11 tree.
+
+Patch:	1905_vmscan-writeback.patch
+From:	http://bugs.gentoo.org/77764
+Desc:	Fixes OOM-killer strangeness. Already in 2.6.11 tree.
+
+Patch:	1910_video-slab-corruption.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.1938.477.42
+Desc:	Fix nasty ACPI Video enumeration corruption issue. Already in 2.6.11 tree.
+
+Patch:	1915_cdrw-filter-warnings.patch
+From:	http://bugs.gentoo.org/79237
+Desc:	Should fix problems for those who can only write 1 CD/DVD on each bootup. Already in 2.6.11 tree.
+
+Patch:	2100_iptables-conntrack.patch
+From:	http://bugs.gentoo.org/76572
+Desc:	Fix broken RST handling in ip_conntrack. Already in 2.6.11 tree
+
+Patch:	2105_iptables-ecn-corruption.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.1938.477.17
+Desc:	Fix packet corruption in ipt_ECN. Already in 2.6.11 tree
+
+Patch:	2300_scsi-mem-corruption.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.2328
+Desc:	Fix SCSI segment count corruption. Already in 2.6.11 tree.
+
+Patch:	2305_rootdelay-boot-param.patch
+From:	http://bugs.gentoo.org/76445
+Desc:	Boot parameter to control delay before mounting root device. In -mm tree.
+
+Patch:	2310_seagate-blacklist.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.1966.1.175
+Desc:	Add another seagate drive to the blacklist to allow it to work. Already in 2.6.11 tree
+
+Patch:	2315_aacraid-redundancy.patch
+From:	http://bugs.gentoo.org/79789
+Desc:	A fixup to the aacraid driver
+
+Patch:	2320_scsi-gdth-pagemap.patch
+From:	2.6.10-as3
+Desc:	A fixup to the GDTH scsi driver
+
+Patch:	2500_vesafb-tng-0.9-rc6.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	2505_alsa-vx-corruption.patch
+From:	2.6.10-as3
+Desc:	Fix memory corruption in the VX audio driver
+
+Patch:	2550_alsa-ioctl32.patch
+From:	https://bugtrack.alsa-project.org/alsa-bug/view.php?id=167
+Desc:	Fixed snd-ioctl32 to not lockup sparc due to bad user memory usage
+
+Patch:	2700_ppc-pegasos-2.6.6.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=54684
+Desc:	Allow pegasos PCI hardware to work properly.
+
+Patch:	2705_sleep-fast-clock.patch
+From:	http://bugs.gentoo.org/78815
+Desc:	Stop the clock running at double speed during ACPI sleep
+
+Patch:	2900_sidewinder-debug.patch
+From:	Michael Marineau <marineam@gentoo.org>
+Desc:	Prevent lots of messages from being logged. In 2.6.10-ac tree
+
+Patch:	4300_evms-dm-bbr.patch
+From:	http://evms.sourceforge.net/ (evms-2.5.0)
+Desc:	Allows EVMS users to use Bad Block Relocation (BBR) - required for some LiveCD users
+	http://bugs.gentoo.org/63091
+
+Patch:	4305_dm-multipath.patch
+From:	ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/2.6.10-rc1/2.6.10-rc1-udm2/00011.patch
+Desc:	Multipath device mapper support. Required for DM-BBR.
+
+Patch:	4306_dm-mp-version.patch
+From:	http://evms.sourceforge.net/ (evms-2.5.0)
+Desc:	Increment multipath version to maintain compatibility with new dm-bbr
+
+Patch:	4307_dm-mp-hw.patch
+From:	ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/2.6.10-rc1/2.6.10-rc1-udm2/00013.patch
+Desc:	Multipath hardware support. Required for multipath device mapper support (patch 4305)
+
+Patch:	4310_ich7-ide-support.patch
+From:	http://linux.bkbits.net:8080/linux-2.6/cset@1.2034.118.11
+Desc:	Add support for ICH7 IDE controllers. Already in 2.6.11 tree
+
+Patch:	4311_ich7-sata-support.patch
+From:	Jason Gaston <jason.d.gaston@intel.com>
+Desc:	Add support for ICH7 SATA controllers. In SATA dev tree.
+
+Patch:	4315_promise-pdc2027x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2027x PATA controllers
+
+Patch:	4320_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4325_uli-5281.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for ULI 5281 controllers. Already in 2.6.11 tree.
+
+Patch:	4330_via-vt6421-sata-1.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for VIA VT6421 SATA
+
+Patch:	4331_via-vt6421-sata-2.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for VIA VT6421 SATA
+
+Patch:	4335_ati-sata-sil.patch
+From:	Jeff Garzik's libata-2.6 tree
+Desc:	Adds support for ATI IXP300/IXP400 SATA controllers
+
+Patch:	4500_fbsplash-0.9.1-r1.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4705_squashfs-2.1.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems. This will become increasingly
+	popular for the livecd's
+
+Patch:	4800_inotify-0.17.patch
+From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify/v2.6/0.17/inotify-0.17-rml-2.6.10-1.patch
+Desc:	inotify patch to make the gnome team happy.  Is in the -mm tree.
+
+Patch:	4905_speakup-20041020.patch
+From:	http://www.linux-speakup.org/ftp/ Using the utility from http://linux-speakup.org/ftp/checkout
+Desc:	Provided by dmwaters@gentoo.org. the speakup synthesizer to give better
+	accessiblity for blind or hard of sight users.
+	Now supports amd64/ppc thanks to eradicator@gentoo.org
+

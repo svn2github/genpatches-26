@@ -1,0 +1,25 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/02/02 17:42:38-08:00 guninski@guninski.com 
+#   [PATCH] Fix signed compare in fs/proc/generic.c::proc_file_read()
+#   
+#   Acked-by: Marcelo Tosatti <marcelo.tosatti@cyclades.com>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/proc/generic.c
+#   2005/01/30 07:58:00-08:00 guninski@guninski.com +1 -1
+#   Fix signed compare in fs/proc/generic.c::proc_file_read()
+# 
+diff -Nru a/fs/proc/generic.c b/fs/proc/generic.c
+--- a/fs/proc/generic.c	2005-02-18 04:38:35 -08:00
++++ b/fs/proc/generic.c	2005-02-18 04:38:35 -08:00
+@@ -60,7 +60,7 @@
+ 		return -ENOMEM;
+ 
+ 	while ((nbytes > 0) && !eof) {
+-		count = min_t(ssize_t, PROC_BLOCK_SIZE, nbytes);
++		count = min_t(size_t, PROC_BLOCK_SIZE, nbytes);
+ 
+ 		start = NULL;
+ 		if (dp->get_info) {

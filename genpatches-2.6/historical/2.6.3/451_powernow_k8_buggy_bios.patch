@@ -1,0 +1,162 @@
+diff -ruN linux-2.6.3.old/arch/i386/kernel/cpu/cpufreq/powernow-k8.c linux-2.6.3/arch/i386/kernel/cpu/cpufreq/powernow-k8.c
+--- linux-2.6.3.old/arch/i386/kernel/cpu/cpufreq/powernow-k8.c	2004-02-17 22:58:15.000000000 -0500
++++ linux-2.6.3/arch/i386/kernel/cpu/cpufreq/powernow-k8.c	2004-02-21 13:14:53.485858088 -0500
+@@ -513,15 +513,7 @@
+ 			       j);
+ 			return -ENODEV;
+ 		}
+-		if (pst[j].vid < maxvid + rvo) {	/* vid + rvo >= maxvid */
+-			printk(KERN_ERR PFX
+-			       "BIOS error - maxvid exceeded with pstate %d\n",
+-			       j);
+-			return -ENODEV;
+-		}
+-		if ((pst[j].fid > MAX_FID)
+-		    || (pst[j].fid & 1)
+-		    || (pst[j].fid < HI_FID_TABLE_BOTTOM)){
++		if (j != 0 && (pst[j].fid > MAX_FID || (pst[j].fid & 1) || pst[j].fid < HI_FID_TABLE_BOTTOM)) {
+ 			printk(KERN_ERR PFX "fid %d invalid : 0x%x\n", j, pst[j].fid);
+ 			return -EINVAL;
+ 		}
+@@ -539,6 +531,61 @@
+ 	return 0;
+ }
+ 
++/* Use current frequency if greater than BIOS value. */
++static inline int
++fid_check_max(struct pst_s *pst, int cur, int max)
++{
++	unsigned int j;
++	int ret=max;
++
++	for (j = 0; j < numps; j++) {
++		if (ret < pst[j].fid) {
++			ret = pst[j].fid;
++		}
++	}
++	if (max < ret) {
++		printk(KERN_WARNING BFX "max speed fid listed as 0x%02x, "
++			"should be at least 0x%02x, as listed as max in pst.\n",
++			max, ret);
++	}
++	if (ret < cur) {
++		printk(KERN_WARNING BFX "max speed fid listed as 0x%02x, "
++		       "should be at least 0x%02x. Using current speed.\n", 
++		       ret, cur);
++		ret = cur;
++	}
++
++	return ret;
++}
++
++/* Use current voltage if greater than BIOS value. */
++static inline int
++vid_check_max(struct pst_s *pst, int cur, int max)
++{
++	unsigned int j;
++	int ret=max;
++
++	for (j = 0; j < numps; j++) {
++		if (ret < pst[j].vid) {
++			ret = pst[j].vid;
++			
++		}
++	}
++	if (max < ret) {
++		printk(KERN_WARNING BFX "max voltage vid listed as 0x%02x, "
++			"should be at least 0x%02x, as listed as max in pst.\n",
++			max, ret);
++	}
++	if (ret < cur) {
++		printk(KERN_WARNING BFX "max voltage vid listed as 0x%02x, "
++		       "should be at least 0x%02x. Using current vid.\n", 
++		       ret, cur);
++		ret = cur;
++	}
++
++	return ret;
++}
++
+ /* Find and validate the PSB/PST table in BIOS. */
+ static inline int
+ find_psb_table(void)
+@@ -548,6 +595,7 @@
+ 	unsigned int i, j;
+ 	u32 mvs;
+ 	u8 maxvid;
++	u8 maxfid;
+ 
+ 	for (i = 0xc0000; i < 0xffff0; i += 0x10) {
+ 		/* Scan BIOS looking for the signature. */
+@@ -588,18 +636,18 @@
+ 
+ 		dprintk(KERN_DEBUG PFX "numpst: 0x%x\n", psb->numpst);
+ 		if (psb->numpst != 1) {
+-			printk(KERN_ERR BFX "numpst must be 1\n");
+-			return -ENODEV;
++			printk(KERN_WARNING BFX "numpst listed as %i "
++			       "should be 1. Using 1.\n", psb->numpst);
+ 		}
+ 
+ 		dprintk(KERN_DEBUG PFX "cpuid: 0x%x\n", psb->cpuid);
+ 
+ 		plllock = psb->plllocktime;
+-		printk(KERN_INFO PFX "pll lock time: 0x%x, ", plllock);
++		printk(KERN_INFO PFX "pll lock time: 0x%x\n", plllock);
+ 
+-		maxvid = psb->maxvid;
+-		printk("maxfid 0x%x (%d MHz), maxvid 0x%x\n", 
+-		       psb->maxfid, find_freq_from_fid(psb->maxfid), maxvid);
++		if (query_current_values_with_pending_wait()) {
++			return -EIO;
++		}
+ 
+ 		numps = psb->numpstates;
+ 		if (numps < 2) {
+@@ -626,6 +674,12 @@
+ 		}
+ 
+ 		pst = (struct pst_s *) (psb + 1);
++
++		maxvid = vid_check_max(pst, currvid, psb->maxvid); 
++		maxfid = fid_check_max(pst, currfid, psb->maxfid);
++		printk("maxfid 0x%x (%d MHz), maxvid 0x%x\n", 
++		       maxfid, find_freq_from_fid(maxfid), maxvid);
++
+ 		if (check_pst_table(pst, maxvid))
+ 			return -EINVAL;
+ 
+@@ -636,20 +690,23 @@
+ 		}
+ 
+ 		for (j = 0; j < numps; j++) {
+-			printk(KERN_INFO PFX "   %d : fid 0x%x (%d MHz), vid 0x%x\n", j,
+-			       pst[j].fid, find_freq_from_fid(pst[j].fid), pst[j].vid);
+-			powernow_table[j].index = pst[j].fid; /* lower 8 bits */
+-			powernow_table[j].index |= (pst[j].vid << 8); /* upper 8 bits */
+-			powernow_table[j].frequency = find_freq_from_fid(pst[j].fid);
++			if ((j-1) == numps && (maxfid != pst[j].fid || maxvid != pst[j].vid)) {
++				printk(KERN_INFO PFX "   %d : fid 0x%x (%d MHz), vid 0x%x : Reset to max, buggy bios\n", j,
++			       		pst[j].fid, find_freq_from_fid(pst[j].fid), pst[j].vid);
++				powernow_table[j].index = maxfid; /* lower 8 bits */
++				powernow_table[j].index |= (maxvid << 8); /* upper 8 bits */
++				powernow_table[j].frequency = find_freq_from_fid(maxfid);
++			} else { 
++				printk(KERN_INFO PFX "   %d : fid 0x%x (%d MHz), vid 0x%x\n", j,
++			       		pst[j].fid, find_freq_from_fid(pst[j].fid), pst[j].vid);
++				powernow_table[j].index = pst[j].fid; /* lower 8 bits */
++				powernow_table[j].index |= (pst[j].vid << 8); /* upper 8 bits */
++				powernow_table[j].frequency = find_freq_from_fid(pst[j].fid);
++			}
+ 		}
+ 		powernow_table[numps].frequency = CPUFREQ_TABLE_END;
+ 		powernow_table[numps].index = 0;
+ 
+-		if (query_current_values_with_pending_wait()) {
+-			kfree(powernow_table);
+-			return -EIO;
+-		}
+-
+ 		printk(KERN_INFO PFX "currfid 0x%x (%d MHz), currvid 0x%x\n",
+ 		       currfid, find_freq_from_fid(currfid), currvid);
+ 

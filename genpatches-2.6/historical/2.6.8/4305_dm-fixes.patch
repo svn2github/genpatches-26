@@ -1,0 +1,2234 @@
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-bio-record.h linux-dsd/drivers/md/dm-bio-record.h
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-bio-record.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/md/dm-bio-record.h	2004-10-01 17:09:00.660807896 +0100
+@@ -0,0 +1,45 @@
++/*
++ * Copyright (C) 2004 Red Hat UK Ltd.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_BIO_RECORD_H
++#define DM_BIO_RECORD_H
++
++#include <linux/bio.h>
++
++/*
++ * There are lots of mutable fields in the bio struct that get
++ * changed by the lower levels of the block layer.  Some targets,
++ * such as multipath, may wish to resubmit a bio on error.  The
++ * functions in this file help the target record and restore the
++ * original bio state.
++ */
++struct dm_bio_details {
++	sector_t bi_sector;
++	struct block_device *bi_bdev;
++	unsigned int bi_size;
++	unsigned short bi_idx;
++	unsigned long bi_flags;
++};
++
++static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
++{
++	bd->bi_sector = bio->bi_sector;
++	bd->bi_bdev = bio->bi_bdev;
++	bd->bi_size = bio->bi_size;
++	bd->bi_idx = bio->bi_idx;
++	bd->bi_flags = bio->bi_flags;
++}
++
++static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
++{
++	bio->bi_sector = bd->bi_sector;
++	bio->bi_bdev = bd->bi_bdev;
++	bio->bi_size = bd->bi_size;
++	bio->bi_idx = bd->bi_idx;
++	bio->bi_flags = bd->bi_flags;
++}
++
++#endif
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm.c linux-dsd/drivers/md/dm.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm.c	2004-10-01 17:09:00.667806832 +0100
+@@ -15,15 +15,13 @@
+ #include <linux/buffer_head.h>
+ #include <linux/mempool.h>
+ #include <linux/slab.h>
++#include <linux/idr.h>
+ 
+ static const char *_name = DM_NAME;
+ 
+ static unsigned int major = 0;
+ static unsigned int _major = 0;
+ 
+-static int realloc_minor_bits(unsigned long requested_minor);
+-static void free_minor_bits(void);
+-
+ /*
+  * One of these is allocated per bio.
+  */
+@@ -113,19 +111,11 @@ static int __init local_init(void)
+ 		return -ENOMEM;
+ 	}
+ 
+-	r = realloc_minor_bits(1024);
+-	if (r < 0) {
+-		kmem_cache_destroy(_tio_cache);
+-		kmem_cache_destroy(_io_cache);
+-		return r;
+-	}
+-
+ 	_major = major;
+ 	r = register_blkdev(_major, _name);
+ 	if (r < 0) {
+ 		kmem_cache_destroy(_tio_cache);
+ 		kmem_cache_destroy(_io_cache);
+-		free_minor_bits();
+ 		return r;
+ 	}
+ 
+@@ -139,7 +129,6 @@ static void local_exit(void)
+ {
+ 	kmem_cache_destroy(_tio_cache);
+ 	kmem_cache_destroy(_io_cache);
+-	free_minor_bits();
+ 
+ 	if (unregister_blkdev(_major, _name) < 0)
+ 		DMERR("devfs_unregister_blkdev failed");
+@@ -624,59 +613,15 @@ static int dm_any_congested(void *conges
+ }
+ 
+ /*-----------------------------------------------------------------
+- * A bitset is used to keep track of allocated minor numbers.
++ * An IDR is used to keep track of allocated minor numbers.
+  *---------------------------------------------------------------*/
+ static DECLARE_MUTEX(_minor_lock);
+-static unsigned long *_minor_bits = NULL;
+-static unsigned long _max_minors = 0;
+-
+-#define MINORS_SIZE(minors) ((minors / BITS_PER_LONG) * sizeof(unsigned long))
+-
+-static int realloc_minor_bits(unsigned long requested_minor)
+-{
+-	unsigned long max_minors;
+-	unsigned long *minor_bits, *tmp;
+-
+-	if (requested_minor < _max_minors)
+-		return -EINVAL;
+-
+-	/* Round up the requested minor to the next power-of-2. */
+-	max_minors = 1 << fls(requested_minor - 1);
+-	if (max_minors > (1 << MINORBITS))
+-		return -EINVAL;
+-
+-	minor_bits = kmalloc(MINORS_SIZE(max_minors), GFP_KERNEL);
+-	if (!minor_bits)
+-		return -ENOMEM;
+-	memset(minor_bits, 0, MINORS_SIZE(max_minors));
+-
+-	/* Copy the existing bit-set to the new one. */
+-	if (_minor_bits)
+-		memcpy(minor_bits, _minor_bits, MINORS_SIZE(_max_minors));
+-
+-	tmp = _minor_bits;
+-	_minor_bits = minor_bits;
+-	_max_minors = max_minors;
+-	if (tmp)
+-		kfree(tmp);
+-
+-	return 0;
+-}
+-
+-static void free_minor_bits(void)
+-{
+-	down(&_minor_lock);
+-	kfree(_minor_bits);
+-	_minor_bits = NULL;
+-	_max_minors = 0;
+-	up(&_minor_lock);
+-}
++static DEFINE_IDR(_minor_idr);
+ 
+ static void free_minor(unsigned int minor)
+ {
+ 	down(&_minor_lock);
+-	if (minor < _max_minors)
+-		clear_bit(minor, _minor_bits);
++	idr_remove(&_minor_idr, minor);
+ 	up(&_minor_lock);
+ }
+ 
+@@ -685,24 +630,37 @@ static void free_minor(unsigned int mino
+  */
+ static int specific_minor(unsigned int minor)
+ {
+-	int r = 0;
++	int r, m;
+ 
+-	if (minor > (1 << MINORBITS))
++	if (minor >= (1 << MINORBITS))
+ 		return -EINVAL;
+ 
+ 	down(&_minor_lock);
+-	if (minor >= _max_minors) {
+-		r = realloc_minor_bits(minor);
+-		if (r) {
+-			up(&_minor_lock);
+-			return r;
+-		}
++
++	if (idr_find(&_minor_idr, minor)) {
++		r = -EBUSY;
++		goto out;
++	}
++
++	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
++	if (!r) {
++		r = -ENOMEM;
++		goto out;
++	}
++
++	r = idr_get_new_above(&_minor_idr, specific_minor, minor, &m);
++	if (r) {
++		goto out;
+ 	}
+ 
+-	if (test_and_set_bit(minor, _minor_bits))
++	if (m != minor) {
++		idr_remove(&_minor_idr, m);
+ 		r = -EBUSY;
+-	up(&_minor_lock);
++		goto out;
++	}
+ 
++out:
++	up(&_minor_lock);
+ 	return r;
+ }
+ 
+@@ -712,21 +670,29 @@ static int next_free_minor(unsigned int 
+ 	unsigned int m;
+ 
+ 	down(&_minor_lock);
+-	m = find_first_zero_bit(_minor_bits, _max_minors);
+-	if (m >= _max_minors) {
+-		r = realloc_minor_bits(_max_minors * 2);
+-		if (r) {
+-			up(&_minor_lock);
+-			return r;
+-		}
+-		m = find_first_zero_bit(_minor_bits, _max_minors);
++
++	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
++	if (!r) {
++		r = -ENOMEM;
++		goto out;
++	}
++
++	r = idr_get_new(&_minor_idr, next_free_minor, &m);
++	if (r) {
++		goto out;
++	}
++
++	if (m >= (1 << MINORBITS)) {
++		idr_remove(&_minor_idr, m);
++		r = -ENOSPC;
++		goto out;
+ 	}
+ 
+-	set_bit(m, _minor_bits);
+ 	*minor = m;
+-	up(&_minor_lock);
+ 
+-	return 0;
++out:
++	up(&_minor_lock);
++	return r;
+ }
+ 
+ static struct block_device_operations dm_blk_dops;
+@@ -1145,6 +1111,15 @@ int dm_suspended(struct mapped_device *m
+ 	return test_bit(DMF_SUSPENDED, &md->flags);
+ }
+ 
++inline union map_info *dm_get_mapinfo(struct bio *bio)
++{
++	if (bio && bio->bi_private)
++		return &((struct target_io *)bio->bi_private)->info;
++	return NULL;
++}
++
++EXPORT_SYMBOL(dm_get_mapinfo);
++
+ static struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-flakey.c linux-dsd/drivers/md/dm-flakey.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-flakey.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/md/dm-flakey.c	2004-10-01 17:09:00.659808048 +0100
+@@ -0,0 +1,158 @@
++/*
++ * Copyright (C) 2003 Sistina Software (UK) Limited.
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm.h"
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/blkdev.h>
++#include <linux/bio.h>
++#include <linux/slab.h>
++
++typedef typeof(jiffies) jiffy_t;
++
++/*
++ * Flakey: Used for testing only, simulates intermittent,
++ * catastrophic device failure.
++ */
++struct flakey {
++	struct dm_dev *dev;
++	jiffy_t start_time;
++	sector_t start;
++	unsigned up_interval;
++	unsigned down_interval;
++};
++
++/*
++ * Construct a flakey mapping: <dev_path> <offset> <up interval> <down interval>
++ */
++static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++{
++	struct flakey *f;
++
++	if (argc != 4) {
++		ti->error = "dm-flakey: Invalid argument count";
++		return -EINVAL;
++	}
++
++	f = kmalloc(sizeof(*f), GFP_KERNEL);
++	if (!f) {
++		ti->error = "dm-flakey: Cannot allocate linear context";
++		return -ENOMEM;
++	}
++	f->start_time = jiffies;
++
++	if (sscanf(argv[1], SECTOR_FORMAT, &f->start) != 1) {
++		ti->error = "dm-flakey: Invalid device sector";
++		goto bad;
++	}
++
++	if (sscanf(argv[2], "%u", &f->up_interval) != 1) {
++		ti->error = "dm-flakey: Invalid up interval";
++		goto bad;
++	}
++
++	if (sscanf(argv[3], "%u", &f->down_interval) != 1) {
++		ti->error = "dm-flakey: Invalid down interval";
++		goto bad;
++	}
++
++	if (dm_get_device(ti, argv[0], f->start, ti->len,
++			  dm_table_get_mode(ti->table), &f->dev)) {
++		ti->error = "dm-flakey: Device lookup failed";
++		goto bad;
++	}
++
++	ti->private = f;
++	return 0;
++
++ bad:
++	kfree(f);
++	return -EINVAL;
++}
++
++static void flakey_dtr(struct dm_target *ti)
++{
++	struct flakey *f = (struct flakey *) ti->private;
++
++	dm_put_device(ti, f->dev);
++	kfree(f);
++}
++
++static int flakey_map(struct dm_target *ti, struct bio *bio,
++		      union map_info *map_context)
++{
++	struct flakey *f = (struct flakey *) ti->private;
++	unsigned elapsed;
++
++	/* are we alive ? */
++	elapsed = (jiffies - f->start_time) / HZ;
++	elapsed %= (f->up_interval + f->down_interval);
++	if (elapsed >= f->up_interval)
++		return -EIO;
++
++	else {
++		bio->bi_bdev = f->dev->bdev;
++		bio->bi_sector = f->start + (bio->bi_sector - ti->begin);
++	}
++
++	return 1;
++}
++
++static int flakey_status(struct dm_target *ti, status_type_t type,
++			 char *result, unsigned int maxlen)
++{
++	struct flakey *f = (struct flakey *) ti->private;
++	char buffer[32];
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		result[0] = '\0';
++		break;
++
++	case STATUSTYPE_TABLE:
++		format_dev_t(buffer, f->dev->bdev->bd_dev);
++		snprintf(result, maxlen, "%s " SECTOR_FORMAT, buffer, f->start);
++		break;
++	}
++	return 0;
++}
++
++static struct target_type flakey_target = {
++	.name   = "flakey",
++	.version= {1, 0, 1},
++	.module = THIS_MODULE,
++	.ctr    = flakey_ctr,
++	.dtr    = flakey_dtr,
++	.map    = flakey_map,
++	.status = flakey_status,
++};
++
++int __init dm_flakey_init(void)
++{
++	int r = dm_register_target(&flakey_target);
++
++	if (r < 0)
++		DMERR("flakey: register failed %d", r);
++
++	return r;
++}
++
++void __exit dm_flakey_exit(void)
++{
++	int r = dm_unregister_target(&flakey_target);
++
++	if (r < 0)
++		DMERR("flakey: unregister failed %d", r);
++}
++
++/* Module hooks */
++module_init(dm_flakey_init);
++module_exit(dm_flakey_exit);
++
++MODULE_DESCRIPTION(DM_NAME " flakey target");
++MODULE_AUTHOR("Joe Thornber <thornber@sistina.com>");
++MODULE_LICENSE("GPL");
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm.h linux-dsd/drivers/md/dm.h
+--- linux-2.6.8-gentoo-r5/drivers/md/dm.h	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm.h	2004-10-01 17:09:00.746794824 +0100
+@@ -19,6 +19,9 @@
+ #define DMERR(f, x...) printk(KERN_ERR DM_NAME ": " f "\n" , ## x)
+ #define DMINFO(f, x...) printk(KERN_INFO DM_NAME ": " f "\n" , ## x)
+ 
++#define DMEMIT(x...) sz += ((sz >= maxlen) ? \
++			  0 : scnprintf(result + sz, maxlen - sz, x))
++
+ /*
+  * FIXME: I think this should be with the definition of sector_t
+  * in types.h.
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-ioctl.c linux-dsd/drivers/md/dm-ioctl.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-ioctl.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-ioctl.c	2004-10-01 17:09:00.688803640 +0100
+@@ -1097,6 +1097,59 @@ static int table_status(struct dm_ioctl 
+ 	return r;
+ }
+ 
++/*
++ * Pass a message to the target that's at the supplied device offset.
++ */
++static int target_message(struct dm_ioctl *param, size_t param_size)
++{
++	int r;
++	struct mapped_device *md;
++	struct dm_table *table;
++	struct dm_target *ti;
++	struct dm_target_msg *tmsg = (void *) param + param->data_start;
++
++	md = find_device(param);
++	if (!md)
++		return -ENXIO;
++
++	r = __dev_status(md, param);
++	if (r)
++		goto out;
++
++	if (tmsg < (struct dm_target_msg *) (param + 1) ||
++	    invalid_str(tmsg->message, (void *) param + param_size)) {
++		DMWARN("Invalid target message parameters.");
++		r = -EINVAL;
++		goto out;
++	}
++
++	table = dm_get_table(md);
++	if (!table)
++		goto out;
++
++	if (tmsg->sector >= dm_table_get_size(table)) {
++		DMWARN("Target message sector outside device.");
++		r = -EINVAL;
++		goto out_table;
++	}
++
++	ti = dm_table_find_target(table, tmsg->sector);
++	if (ti->type->message)
++		r = ti->type->message(ti, tmsg->message);
++	else {
++		DMWARN("Target type does not support messages");
++		r = -EINVAL;
++	}
++
++ out_table:
++	dm_table_put(table);
++
++ out:
++	param->data_size = 0;
++	dm_put(md);
++	return r;
++}
++
+ /*-----------------------------------------------------------------
+  * Implementation of open/close/ioctl on the special char
+  * device.
+@@ -1123,7 +1176,9 @@ static ioctl_fn lookup_ioctl(unsigned in
+ 		{DM_TABLE_DEPS_CMD, table_deps},
+ 		{DM_TABLE_STATUS_CMD, table_status},
+ 
+-		{DM_LIST_VERSIONS_CMD, list_versions}
++		{DM_LIST_VERSIONS_CMD, list_versions},
++
++		{DM_TARGET_MSG_CMD, target_message}
+ 	};
+ 
+ 	return (cmd >= ARRAY_SIZE(_ioctls)) ? NULL : _ioctls[cmd].fn;
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-log.c linux-dsd/drivers/md/dm-log.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-log.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-log.c	2004-10-01 17:09:00.752793912 +0100
+@@ -140,6 +140,13 @@ struct log_c {
+ 
+ 	int sync_search;
+ 
++	/* Resync flag */
++	enum sync {
++		DEFAULTSYNC,	/* Synchronize if necessary */
++		NOSYNC,		/* Devices known to be already in sync */
++		FORCESYNC,	/* Force a sync to happen */
++	} sync;
++
+ 	/*
+ 	 * Disk log fields
+ 	 */
+@@ -205,7 +212,8 @@ static int read_header(struct log_c *log
+ 
+ 	header_from_disk(&log->header, log->disk_header);
+ 
+-	if (log->header.magic != MIRROR_MAGIC) {
++	/* New log required? */
++	if (log->sync != DEFAULTSYNC || log->header.magic != MIRROR_MAGIC) {
+ 		log->header.magic = MIRROR_MAGIC;
+ 		log->header.version = MIRROR_DISK_VERSION;
+ 		log->header.nr_regions = 0;
+@@ -273,22 +281,38 @@ static int write_bits(struct log_c *log)
+ }
+ 
+ /*----------------------------------------------------------------
+- * constructor/destructor
++ * core log constructor/destructor
++ *
++ * argv contains region_size followed optionally by [no]sync
+  *--------------------------------------------------------------*/
+ #define BYTE_SHIFT 3
+ static int core_ctr(struct dirty_log *log, struct dm_target *ti,
+ 		    unsigned int argc, char **argv)
+ {
++	enum sync sync = DEFAULTSYNC;
++
+ 	struct log_c *lc;
+ 	sector_t region_size;
+ 	unsigned int region_count;
+ 	size_t bitset_size;
+ 
+-	if (argc != 1) {
+-		DMWARN("wrong number of arguments to log_c");
++	if (argc < 1 || argc > 2) {
++		DMWARN("wrong number of arguments to mirror log");
+ 		return -EINVAL;
+ 	}
+ 
++	if (argc > 1) {
++		if (!strcmp(argv[1], "sync"))
++			sync = FORCESYNC;
++		else if (!strcmp(argv[1], "nosync"))
++			sync = NOSYNC;
++		else {
++			DMWARN("unrecognised sync argument to mirror log: %s",
++			       argv[1]);
++			return -EINVAL;
++		}
++	}
++
+ 	if (sscanf(argv[0], SECTOR_FORMAT, &region_size) != 1) {
+ 		DMWARN("invalid region size string");
+ 		return -EINVAL;
+@@ -306,6 +330,7 @@ static int core_ctr(struct dirty_log *lo
+ 	lc->touched = 0;
+ 	lc->region_size = region_size;
+ 	lc->region_count = region_count;
++	lc->sync = sync;
+ 
+ 	/*
+ 	 * Work out how many words we need to hold the bitset.
+@@ -330,8 +355,8 @@ static int core_ctr(struct dirty_log *lo
+ 		kfree(lc);
+ 		return -ENOMEM;
+ 	}
+-	memset(lc->sync_bits, 0, bitset_size);
+-        lc->sync_count = 0;
++	memset(lc->sync_bits, (sync == NOSYNC) ? -1 : 0, bitset_size);
++	lc->sync_count = (sync == NOSYNC) ? region_count : 0;
+ 
+ 	lc->recovering_bits = vmalloc(bitset_size);
+ 	if (!lc->recovering_bits) {
+@@ -356,6 +381,11 @@ static void core_dtr(struct dirty_log *l
+ 	kfree(lc);
+ }
+ 
++/*----------------------------------------------------------------
++ * disk log constructor/destructor
++ *
++ * argv contains log_device region_size followed optionally by [no]sync
++ *--------------------------------------------------------------*/
+ static int disk_ctr(struct dirty_log *log, struct dm_target *ti,
+ 		    unsigned int argc, char **argv)
+ {
+@@ -364,8 +394,8 @@ static int disk_ctr(struct dirty_log *lo
+ 	struct log_c *lc;
+ 	struct dm_dev *dev;
+ 
+-	if (argc != 2) {
+-		DMWARN("wrong number of arguments to log_d");
++	if (argc < 2 || argc > 3) {
++		DMWARN("wrong number of arguments to disk mirror log");
+ 		return -EINVAL;
+ 	}
+ 
+@@ -452,10 +482,15 @@ static int disk_resume(struct dirty_log 
+ 	if (r)
+ 		return r;
+ 
+-	/* zero any new bits if the mirror has grown */
+-	for (i = lc->header.nr_regions; i < lc->region_count; i++)
+-		/* FIXME: amazingly inefficient */
+-		log_clear_bit(lc, lc->clean_bits, i);
++	/* set or clear any new bits */
++	if (lc->sync == NOSYNC)
++		for (i = lc->header.nr_regions; i < lc->region_count; i++)
++			/* FIXME: amazingly inefficient */
++			log_set_bit(lc, lc->clean_bits, i);
++	else
++		for (i = lc->header.nr_regions; i < lc->region_count; i++)
++			/* FIXME: amazingly inefficient */
++			log_clear_bit(lc, lc->clean_bits, i);
+ 
+ 	/* copy clean across to sync */
+ 	memcpy(lc->sync_bits, lc->clean_bits, size);
+@@ -566,6 +601,51 @@ static region_t core_get_sync_count(stru
+         return lc->sync_count;
+ }
+ 
++#define	DMEMIT_SYNC \
++	if (lc->sync != DEFAULTSYNC) \
++		DMEMIT("%ssync ", lc->sync == NOSYNC ? "no" : "")
++
++static int core_status(struct dirty_log *log, status_type_t status,
++		       char *result, unsigned int maxlen)
++{
++	int sz = 0;
++	struct log_c *lc = log->context;
++
++	switch(status) {
++	case STATUSTYPE_INFO:
++		break;
++
++	case STATUSTYPE_TABLE:
++		DMEMIT("%s %u " SECTOR_FORMAT " ", log->type->name,
++		       lc->sync == DEFAULTSYNC ? 1 : 2, lc->region_size);
++		DMEMIT_SYNC;
++	}
++
++	return sz;
++}
++
++static int disk_status(struct dirty_log *log, status_type_t status,
++		       char *result, unsigned int maxlen)
++{
++	int sz = 0;
++	char buffer[16];
++	struct log_c *lc = log->context;
++	
++	switch(status) {
++	case STATUSTYPE_INFO:
++		break;
++
++	case STATUSTYPE_TABLE:
++		format_dev_t(buffer, lc->log_dev->bdev->bd_dev);
++		DMEMIT("%s %u %s " SECTOR_FORMAT " ", log->type->name,
++		       lc->sync == DEFAULTSYNC ? 2 : 3, buffer,
++		       lc->region_size);
++		DMEMIT_SYNC;
++	}
++
++	return sz;
++}
++
+ static struct dirty_log_type _core_type = {
+ 	.name = "core",
+ 	.module = THIS_MODULE,
+@@ -579,7 +659,8 @@ static struct dirty_log_type _core_type 
+ 	.clear_region = core_clear_region,
+ 	.get_resync_work = core_get_resync_work,
+ 	.complete_resync_work = core_complete_resync_work,
+-        .get_sync_count = core_get_sync_count
++	.get_sync_count = core_get_sync_count,
++	.status = core_status,
+ };
+ 
+ static struct dirty_log_type _disk_type = {
+@@ -597,7 +678,8 @@ static struct dirty_log_type _disk_type 
+ 	.clear_region = core_clear_region,
+ 	.get_resync_work = core_get_resync_work,
+ 	.complete_resync_work = core_complete_resync_work,
+-        .get_sync_count = core_get_sync_count
++	.get_sync_count = core_get_sync_count,
++	.status = disk_status,
+ };
+ 
+ int __init dm_dirty_log_init(void)
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-log.h linux-dsd/drivers/md/dm-log.h
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-log.h	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-log.h	2004-10-01 17:09:00.752793912 +0100
+@@ -101,6 +101,12 @@ struct dirty_log_type {
+ 	 * Returns the number of regions that are in sync.
+          */
+         region_t (*get_sync_count)(struct dirty_log *log);
++
++	/*
++	 * Support function for mirror status requests.
++	 */
++	int (*status)(struct dirty_log *log, status_type_t status_type,
++		      char *result, unsigned int maxlen);
+ };
+ 
+ int dm_register_dirty_log_type(struct dirty_log_type *type);
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-mpath.c linux-dsd/drivers/md/dm-mpath.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-mpath.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/md/dm-mpath.c	2004-10-01 17:09:00.736796344 +0100
+@@ -0,0 +1,738 @@
++/*
++ * Copyright (C) 2003 Sistina Software Limited.
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm.h"
++#include "dm-path-selector.h"
++#include "dm-bio-list.h"
++#include "dm-bio-record.h"
++
++#include <linux/ctype.h>
++#include <linux/init.h>
++#include <linux/mempool.h>
++#include <linux/module.h>
++#include <linux/pagemap.h>
++#include <linux/slab.h>
++#include <linux/time.h>
++#include <linux/workqueue.h>
++#include <linux/completion.h>
++#include <asm/atomic.h>
++
++/* Path properties */
++struct path {
++	struct list_head list;
++
++	struct dm_dev *dev;
++	struct priority_group *pg;
++};
++
++inline struct block_device *dm_path_to_bdev(struct path *path)
++{
++	return path->dev->bdev;
++}
++
++struct priority_group {
++	struct list_head list;
++
++	struct multipath *m;
++	struct path_selector ps;
++
++	unsigned nr_paths;
++	struct list_head paths;
++};
++
++#define ps_to_pg(__ps) container_of((__ps), struct priority_group, ps)
++
++/* Multipath context */
++struct multipath {
++	struct list_head list;
++	struct dm_target *ti;
++
++	spinlock_t lock;
++
++	unsigned nr_priority_groups;
++	struct list_head priority_groups;
++	int initializing_pg;
++	struct completion init_pg_wait;
++	struct priority_group *current_pg;
++
++	struct work_struct dispatch_failed;
++	struct bio_list failed_ios;
++
++	struct work_struct trigger_event;
++
++	/*
++	 * We must use a mempool of mp_io structs so that we
++	 * can resubmit bios on error.
++	 */
++	mempool_t *mpio_pool;
++};
++
++struct mpath_io {
++	struct path *path;
++	union map_info info;
++	struct dm_bio_details details;
++};
++
++#define MIN_IOS 256
++static kmem_cache_t *_mpio_cache;
++
++static void dispatch_failed_ios(void *data);
++static void trigger_event(void *data);
++
++static struct path *alloc_path(void)
++{
++	struct path *path = kmalloc(sizeof(*path), GFP_KERNEL);
++
++	if (path)
++		memset(path, 0, sizeof(*path));
++	return path;
++}
++
++static inline void free_path(struct path *p)
++{
++	kfree(p);
++}
++
++static struct priority_group *alloc_priority_group(void)
++{
++	struct priority_group *pg;
++
++	pg = kmalloc(sizeof(*pg), GFP_KERNEL);
++	if (!pg)
++		return NULL;
++
++	memset(pg, 0, sizeof(*pg));
++	INIT_LIST_HEAD(&pg->paths);
++
++	return pg;
++}
++
++static void free_paths(struct list_head *paths, struct dm_target *ti)
++{
++	struct path *path, *tmp;
++
++	list_for_each_entry_safe (path, tmp, paths, list) {
++		list_del(&path->list);
++		dm_put_device(ti, path->dev);
++		free_path(path);
++	}
++}
++
++static void free_priority_group(struct priority_group *pg,
++				struct dm_target *ti)
++{
++	struct path_selector *ps = &pg->ps;
++
++	if (ps->type) {
++		ps->type->dtr(ps);
++		dm_put_path_selector(ps->type);
++	}
++
++	free_paths(&pg->paths, ti);
++	kfree(pg);
++}
++
++static struct multipath *alloc_multipath(void)
++{
++	struct multipath *m;
++
++	m = kmalloc(sizeof(*m), GFP_KERNEL);
++	if (m) {
++		memset(m, 0, sizeof(*m));
++		INIT_LIST_HEAD(&m->priority_groups);
++		init_completion(&m->init_pg_wait);
++		m->initializing_pg = 0;
++		m->lock = SPIN_LOCK_UNLOCKED;
++		INIT_WORK(&m->dispatch_failed, dispatch_failed_ios, m);
++		INIT_WORK(&m->trigger_event, trigger_event, m);
++		m->mpio_pool = mempool_create(MIN_IOS, mempool_alloc_slab,
++					      mempool_free_slab, _mpio_cache);
++		if (!m->mpio_pool) {
++			kfree(m);
++			return NULL;
++		}
++	}
++
++	return m;
++}
++
++static void free_multipath(struct multipath *m)
++{
++	struct priority_group *pg, *tmp;
++
++	list_for_each_entry_safe (pg, tmp, &m->priority_groups, list) {
++		list_del(&pg->list);
++		free_priority_group(pg, m->ti);
++	}
++
++	mempool_destroy(m->mpio_pool);
++	kfree(m);
++}
++
++static void __ps_init_complete(struct multipath *m,
++			       struct priority_group *pg)
++{
++	m->initializing_pg = 0;
++	m->current_pg = pg;
++	complete_all(&m->init_pg_wait);
++	schedule_work(&m->dispatch_failed);
++}
++
++void dm_ps_init_complete(struct path_selector *ps)
++{
++	unsigned long flags;
++	struct priority_group *pg = ps_to_pg(ps);
++	struct multipath *m = pg->m;
++
++	spin_lock_irqsave(&m->lock, flags);
++	__ps_init_complete(m, pg);
++	spin_unlock_irqrestore(&m->lock, flags);
++}
++
++EXPORT_SYMBOL(dm_ps_init_complete);
++
++static int select_group(struct multipath *m, struct mpath_io *mpio,
++			struct bio *bio)
++{
++	struct priority_group *pg = NULL;
++	int err;
++
++	m->current_pg = NULL;
++	m->initializing_pg = 1;
++	init_completion(&m->init_pg_wait);
++
++	list_for_each_entry (pg, &m->priority_groups, list) {
++
++		if (pg->ps.type->init) {
++			spin_unlock_irq(&m->lock);
++			err = pg->ps.type->init(&pg->ps);
++			spin_lock_irq(&m->lock);
++
++			if (err == DM_PS_INITIALIZING)
++				return DM_PS_INITIALIZING;
++			else if (err == DM_PS_FAILED)
++				continue;
++		}
++
++		mpio->path = pg->ps.type->select_path(&pg->ps, bio,
++						      &mpio->info);
++		if (mpio->path)
++			break;
++	}
++
++	__ps_init_complete(m, mpio->path ? pg : NULL);
++	return mpio->path ? DM_PS_SUCCESS : DM_PS_FAILED;
++}
++  
++static int select_path1(struct multipath *m, struct mpath_io *mpio,
++		       struct bio *bio, int wait)
++{
++	mpio->path = NULL;
++
++ retest:
++	/*
++	 * completion event, current_pg, initializing_pg and
++	 * in the case of wait=0 adding to the failed_ios list for
++	 * resubmission are protected under the m->lock to avoid races.
++	 */
++	if (unlikely(m->initializing_pg)) {
++		if (!wait)
++			return -EWOULDBLOCK;
++
++		spin_unlock_irq(&m->lock);
++		wait_for_completion(&m->init_pg_wait);
++		spin_lock_irq(&m->lock);
++		goto retest;
++	}
++
++	if (m->current_pg) {
++		struct path_selector *ps = &m->current_pg->ps;
++
++		mpio->path = ps->type->select_path(ps, bio, &mpio->info);
++		if (!mpio->path &&
++		    (select_group(m, mpio, bio) == DM_PS_INITIALIZING))
++			/*
++			 * while the lock was dropped the
++			 * initialization might have completed.
++			 */
++			goto retest;
++	}
++
++	return mpio->path ? 0 : -EIO;
++}
++
++static int map_io(struct multipath *m, struct mpath_io *mpio,
++		  struct bio *bio, int wait)
++{
++	int err;
++
++	spin_lock_irq(&m->lock);
++	err = select_path1(m, mpio, bio, wait);
++	if (err == -EWOULDBLOCK)
++		/*
++		 * when the ps init is completed it will
++		 * remap and submit this bio
++		 */
++		bio_list_add(&m->failed_ios, bio);
++	spin_unlock_irq(&m->lock);
++
++	if (err)
++		return err;
++
++	bio->bi_bdev = mpio->path->dev->bdev;
++	return 0;
++}
++
++static void dispatch_failed_ios(void *data)
++{
++	struct multipath *m = (struct multipath *) data;
++
++	unsigned long flags;
++	struct bio *bio = NULL, *next;
++
++	spin_lock_irqsave(&m->lock, flags);
++	bio = bio_list_get(&m->failed_ios);
++	spin_unlock_irqrestore(&m->lock, flags);
++
++	while (bio) {
++		int err;
++		struct mpath_io *mpio;
++		union map_info *info;
++
++		next = bio->bi_next;
++		bio->bi_next = NULL;
++
++		info = dm_get_mapinfo(bio);
++		mpio = info->ptr;
++
++		/*
++		 * For -EWOULDBLOCK the bio could not be mapped
++		 * due to a ps initialization. The bio has been
++		 * requeued, and the work will be processed when
++		 * the initialization is completed.
++		 */
++		err = map_io(m, mpio, bio, 0);
++		if (!err)
++			generic_make_request(bio);
++		else if (err != -EWOULDBLOCK)
++			/* no paths left */
++			bio_endio(bio, bio->bi_size, -EIO);
++
++		bio = next;
++	}
++}
++
++static void trigger_event(void *data)
++{
++	struct multipath *m = (struct multipath *) data;
++	dm_table_event(m->ti->table);
++}
++
++/*-----------------------------------------------------------------
++ * Constructor/argument parsing:
++ * <num priority groups> [<selector>
++ * <num paths> <num selector args> [<path> [<arg>]* ]+ ]+
++ *---------------------------------------------------------------*/
++struct param {
++	unsigned min;
++	unsigned max;
++	char *error;
++};
++
++#define ESTR(s) ("dm-multipath: " s)
++
++static int read_param(struct param *param, char *str, unsigned *v, char **error)
++{
++	if (!str ||
++	    (sscanf(str, "%u", v) != 1) ||
++	    (*v < param->min) ||
++	    (*v > param->max)) {
++		*error = param->error;
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++struct arg_set {
++	unsigned argc;
++	char **argv;
++};
++
++static char *shift(struct arg_set *as)
++{
++	char *r;
++
++	if (as->argc) {
++		as->argc--;
++		r = *as->argv;
++		as->argv++;
++		return r;
++	}
++
++	return NULL;
++}
++
++static void consume(struct arg_set *as, unsigned n)
++{
++	BUG_ON (as->argc < n);
++	as->argc -= n;
++	as->argv += n;
++}
++
++static struct path *parse_path(struct arg_set *as, struct path_selector *ps,
++			       struct dm_target *ti)
++{
++	int r;
++	struct path *p;
++
++	/* we need at least a path arg */
++	if (as->argc < 1) {
++		ti->error = ESTR("no device given");
++		return NULL;
++	}
++
++	p = alloc_path();
++	if (!p)
++		return NULL;
++
++	r = dm_get_device(ti, shift(as), ti->begin, ti->len,
++			  dm_table_get_mode(ti->table), &p->dev);
++	if (r) {
++		ti->error = ESTR("error getting device");
++		goto bad;
++	}
++
++	r = ps->type->add_path(ps, p, as->argc, as->argv, &ti->error);
++	if (r) {
++		dm_put_device(ti, p->dev);
++		goto bad;
++	}
++
++	return p;
++
++ bad:
++	free_path(p);
++	return NULL;
++}
++
++static struct priority_group *parse_priority_group(struct arg_set *as,
++						   struct multipath *m,
++						   struct dm_target *ti)
++{
++	static struct param _params[] = {
++		{1, 1024, ESTR("invalid number of paths")},
++		{0, 1024, ESTR("invalid number of selector args")}
++	};
++
++	int r;
++	unsigned i, nr_selector_args, nr_params;
++	struct priority_group *pg;
++	struct path_selector_type *pst;
++
++	if (as->argc < 2) {
++		as->argc = 0;
++		ti->error = ESTR("not enough priority group aruments");
++		return NULL;
++	}
++
++	pg = alloc_priority_group();
++	if (!pg) {
++		ti->error = ESTR("couldn't allocate priority group");
++		return NULL;
++	}
++	pg->m = m;
++
++	pst = dm_get_path_selector(shift(as));
++	if (!pst) {
++		ti->error = ESTR("unknown path selector type");
++		goto bad;
++	}
++
++	r = pst->ctr(&pg->ps);
++	if (r) {
++		dm_put_path_selector(pst);
++		goto bad;
++	}
++	pg->ps.type = pst;
++
++	/*
++	 * read the paths
++	 */
++	r = read_param(_params, shift(as), &pg->nr_paths, &ti->error);
++	if (r)
++		goto bad;
++
++	r = read_param(_params + 1, shift(as), &nr_selector_args, &ti->error);
++	if (r)
++		goto bad;
++
++	nr_params = 1 + nr_selector_args;
++	for (i = 0; i < pg->nr_paths; i++) {
++		struct path *path;
++		struct arg_set path_args;
++
++		if (as->argc < nr_params)
++			goto bad;
++
++		path_args.argc = nr_params;
++		path_args.argv = as->argv;
++
++		path = parse_path(&path_args, &pg->ps, ti);
++		if (!path)
++			goto bad;
++
++		path->pg = pg;
++		list_add_tail(&path->list, &pg->paths);
++		consume(as, nr_params);
++	}
++
++	return pg;
++
++ bad:
++	free_priority_group(pg, ti);
++	return NULL;
++}
++
++static int multipath_ctr(struct dm_target *ti, unsigned int argc,
++			 char **argv)
++{
++	/* target parameters */
++	static struct param _params[] = {
++		{1, 1024, ESTR("invalid number of priority groups")},
++	};
++
++	int r;
++	struct multipath *m;
++	struct arg_set as;
++
++	as.argc = argc;
++	as.argv = argv;
++
++	m = alloc_multipath();
++	if (!m) {
++		ti->error = ESTR("can't allocate multipath");
++		return -EINVAL;
++	}
++
++	r = read_param(_params, shift(&as), &m->nr_priority_groups, &ti->error);
++	if (r)
++		goto bad;
++
++	/* parse the priority groups */
++	while (as.argc) {
++		struct priority_group *pg;
++		pg = parse_priority_group(&as, m, ti);
++		if (!pg)
++			goto bad;
++
++		list_add_tail(&pg->list, &m->priority_groups);
++	}
++	m->current_pg = list_entry(m->priority_groups.next,
++				   struct priority_group, list);
++	ti->private = m;
++	m->ti = ti;
++
++	return 0;
++
++ bad:
++	free_multipath(m);
++	return -EINVAL;
++}
++
++static void multipath_dtr(struct dm_target *ti)
++{
++	struct multipath *m = (struct multipath *) ti->private;
++	free_multipath(m);
++}
++
++static int multipath_map(struct dm_target *ti, struct bio *bio,
++			 union map_info *info)
++{
++	int r;
++	struct mpath_io *mpio;
++	struct multipath *m = (struct multipath *) ti->private;
++
++	mpio = mempool_alloc(m->mpio_pool, GFP_NOIO);
++	dm_bio_record(&mpio->details, bio);
++
++	bio->bi_rw |= (1 << BIO_RW_FAILFAST);
++	r = map_io(m, mpio, bio, 1);
++	if (unlikely(r)) {
++		mempool_free(mpio, m->mpio_pool);
++		return r;
++	}
++
++	info->ptr = mpio;
++	return 1;
++}
++
++static int do_end_io(struct multipath *m, struct bio *bio,
++		     int error, struct mpath_io *mpio)
++{
++	struct path_selector *ps = &mpio->path->pg->ps;
++
++	ps->type->end_io(ps, bio, error, &mpio->info);
++	if (error) {
++
++		dm_bio_restore(&mpio->details, bio);
++
++		/* queue for the daemon to resubmit or fail */
++		spin_lock(&m->lock);
++		bio_list_add(&m->failed_ios, bio);
++		/*
++		 * If a ps is initializing we do not queue the work
++		 * becuase when the ps initialization has completed
++		 * it will queue the dispatch function to be run.
++		 */
++		if (!m->initializing_pg)
++			schedule_work(&m->dispatch_failed);
++		spin_unlock(&m->lock);
++
++		return 1;	/* io not complete */
++	}
++
++	return 0;
++}
++
++static int multipath_end_io(struct dm_target *ti, struct bio *bio,
++			    int error, union map_info *info)
++{
++	struct multipath *m = (struct multipath *) ti->private;
++	struct mpath_io *io = (struct mpath_io *) info->ptr;
++	int r;
++
++	/*
++	 * If we report to dm that we are going to retry the
++	 * bio, but that fails due to a pst->init failure
++	 * calling bio_endio from dm-mpath.c will end up
++	 * calling dm-mpath's endio fn, so this test catches
++	 * that case.
++	 */
++	if (io->path)
++		r = do_end_io(m, bio, error, io);
++	else
++		r = -EIO;
++
++	if (r <= 0)
++		mempool_free(io, m->mpio_pool);
++
++	return r;
++}
++
++/*
++ * Info string has the following format:
++ * num_groups [num_paths num_selector_args [path_dev A|F fail_count [selector_args]* ]+ ]+
++ *
++ * Table string has the following format (identical to the constructor string):
++ * num_groups [priority selector-name num_paths num_selector_args [path_dev [selector_args]* ]+ ]+
++ */
++static int multipath_status(struct dm_target *ti, status_type_t type,
++			    char *result, unsigned int maxlen)
++{
++	int sz = 0;
++	struct multipath *m = (struct multipath *) ti->private;
++	struct priority_group *pg;
++	struct path *p;
++	char buffer[32];
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		DMEMIT("%u ", m->nr_priority_groups);
++
++		list_for_each_entry(pg, &m->priority_groups, list) {
++			DMEMIT("%u %u ", pg->nr_paths, pg->ps.type->info_args);
++
++			list_for_each_entry(p, &pg->paths, list) {
++				format_dev_t(buffer, p->dev->bdev->bd_dev);
++				DMEMIT("%s ", buffer);
++				sz += pg->ps.type->status(&pg->ps, p, type,
++						     result + sz, maxlen - sz);
++			}
++		}
++		break;
++
++	case STATUSTYPE_TABLE:
++		DMEMIT("%u ", m->nr_priority_groups);
++
++		list_for_each_entry(pg, &m->priority_groups, list) {
++			DMEMIT("%s %u %u ", pg->ps.type->name,
++			       pg->nr_paths, pg->ps.type->table_args);
++
++			list_for_each_entry(p, &pg->paths, list) {
++				format_dev_t(buffer, p->dev->bdev->bd_dev);
++				DMEMIT("%s ", buffer);
++				sz += pg->ps.type->status(&pg->ps, p, type,
++						     result + sz, maxlen - sz);
++
++			}
++		}
++		break;
++	}
++
++	return 0;
++}
++
++/*-----------------------------------------------------------------
++ * Module setup
++ *---------------------------------------------------------------*/
++static struct target_type multipath_target = {
++	.name = "multipath",
++	.version = {1, 0, 2},
++	.module = THIS_MODULE,
++	.ctr = multipath_ctr,
++	.dtr = multipath_dtr,
++	.map = multipath_map,
++	.end_io = multipath_end_io,
++	.status = multipath_status,
++};
++
++static int __init dm_multipath_init(void)
++{
++	int r;
++
++	/* allocate a slab for the dm_ios */
++	_mpio_cache = kmem_cache_create("dm_mpath", sizeof(struct mpath_io),
++					0, 0, NULL, NULL);
++	if (!_mpio_cache)
++		return -ENOMEM;
++
++	r = dm_register_target(&multipath_target);
++	if (r < 0) {
++		DMERR("%s: register failed %d", multipath_target.name, r);
++		kmem_cache_destroy(_mpio_cache);
++		return -EINVAL;
++	}
++
++	r = dm_register_path_selectors();
++	if (r && r != -EEXIST) {
++		dm_unregister_target(&multipath_target);
++		kmem_cache_destroy(_mpio_cache);
++		return r;
++	}
++
++	DMINFO("dm_multipath v0.2.0");
++	return r;
++}
++
++static void __exit dm_multipath_exit(void)
++{
++	int r;
++
++	dm_unregister_path_selectors();
++	r = dm_unregister_target(&multipath_target);
++	if (r < 0)
++		DMERR("%s: target unregister failed %d",
++		      multipath_target.name, r);
++	kmem_cache_destroy(_mpio_cache);
++}
++
++module_init(dm_multipath_init);
++module_exit(dm_multipath_exit);
++
++MODULE_DESCRIPTION(DM_NAME " multipath target");
++MODULE_AUTHOR("Sistina software <dm@uk.sistina.com>");
++MODULE_LICENSE("GPL");
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-path-selector.c linux-dsd/drivers/md/dm-path-selector.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-path-selector.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/md/dm-path-selector.c	2004-10-01 17:09:00.665807136 +0100
+@@ -0,0 +1,368 @@
++/*
++ * Copyright (C) 2003 Sistina Software.
++ *
++ * Module Author: Heinz Mauelshagen
++ *
++ * This file is released under the GPL.
++ *
++ * Path selector housekeeping (register/unregister/...)
++ */
++
++#include "dm.h"
++#include "dm-path-selector.h"
++
++#include <linux/slab.h>
++
++struct ps_internal {
++	struct path_selector_type pst;
++
++	struct list_head list;
++	long use;
++};
++
++#define pst_to_psi(__pst) container_of((__pst), struct ps_internal, pst)
++
++static LIST_HEAD(_path_selectors);
++static DECLARE_MUTEX(_lock);
++
++struct path_selector_type *__find_path_selector_type(const char *name)
++{
++	struct ps_internal *li;
++
++	list_for_each_entry (li, &_path_selectors, list) {
++		if (!strcmp(name, li->pst.name))
++			return &li->pst;
++	}
++
++	return NULL;
++}
++
++struct path_selector_type *dm_get_path_selector(const char *name)
++{
++	struct path_selector_type *pst;
++
++	if (!name)
++		return NULL;
++
++	down(&_lock);
++	pst = __find_path_selector_type(name);
++	if (pst) {
++		struct ps_internal *psi = pst_to_psi(pst);
++
++		if (psi->use == 0 && !try_module_get(pst->module))
++			psi = NULL;
++		else
++			psi->use++;
++	}
++	up(&_lock);
++
++	return pst;
++}
++
++void dm_put_path_selector(struct path_selector_type *pst)
++{
++	struct ps_internal *psi;
++
++	down(&_lock);
++	pst = __find_path_selector_type(pst->name);
++	if (!pst)
++		return;
++
++	psi = pst_to_psi(pst);
++	if (--psi->use == 0)
++		module_put(psi->pst.module);
++
++	if (psi->use < 0)
++		BUG();
++	up(&_lock);
++}
++
++static struct ps_internal *_alloc_path_selector(struct path_selector_type *pt)
++{
++	struct ps_internal *psi = kmalloc(sizeof(*psi), GFP_KERNEL);
++
++	if (psi) {
++		memset(psi, 0, sizeof(*psi));
++		memcpy(&psi->pst, pt, sizeof(*pt));
++	}
++
++	return psi;
++}
++
++int dm_register_path_selector(struct path_selector_type *pst)
++{
++	int r = 0;
++	struct ps_internal *psi = _alloc_path_selector(pst);
++
++	if (!psi)
++		return -ENOMEM;
++
++	down(&_lock);
++	if (__find_path_selector_type(pst->name)) {
++		kfree(psi);
++		r = -EEXIST;
++	} else
++		list_add(&psi->list, &_path_selectors);
++
++	up(&_lock);
++
++	return r;
++}
++
++EXPORT_SYMBOL(dm_register_path_selector);
++
++int dm_unregister_path_selector(struct path_selector_type *pst)
++{
++	struct ps_internal *psi;
++
++	down(&_lock);
++	pst = __find_path_selector_type(pst->name);
++	if (!pst) {
++		up(&_lock);
++		return -EINVAL;
++	}
++
++	psi = pst_to_psi(pst);
++	if (psi->use) {
++		up(&_lock);
++		return -ETXTBSY;
++	}
++
++	list_del(&psi->list);
++	up(&_lock);
++
++	kfree(psi);
++
++	return 0;
++}
++
++EXPORT_SYMBOL(dm_unregister_path_selector);
++
++/*-----------------------------------------------------------------
++ * Path handling code, paths are held in lists
++ *---------------------------------------------------------------*/
++
++/* FIXME: get rid of this */
++#define RR_FAIL_COUNT	1
++
++struct path_info {
++	struct list_head list;
++	struct path *path;
++	unsigned fail_count;
++};
++
++static struct path_info *path_lookup(struct list_head *head, struct path *p)
++{
++	struct path_info *pi;
++
++	list_for_each_entry (pi, head, list)
++		if (pi->path == p)
++			return pi;
++
++	return NULL;
++}
++
++/*-----------------------------------------------------------------
++ * Round robin selector
++ *---------------------------------------------------------------*/
++
++#define RR_MIN_IO		1000
++
++struct selector {
++	spinlock_t lock;
++
++	struct path_info *current_path;
++	unsigned current_count;
++
++	struct list_head valid_paths;
++	struct list_head invalid_paths;
++};
++
++static struct selector *alloc_selector(void)
++{
++	struct selector *s = kmalloc(sizeof(*s), GFP_KERNEL);
++
++	if (s) {
++		memset(s, 0, sizeof(*s));
++		INIT_LIST_HEAD(&s->valid_paths);
++		INIT_LIST_HEAD(&s->invalid_paths);
++		s->lock = SPIN_LOCK_UNLOCKED;
++	}
++
++	return s;
++}
++
++/* Path selector constructor */
++static int rr_ctr(struct path_selector *ps)
++{
++	struct selector *s;
++
++	s = alloc_selector();
++	if (!s)
++		return -ENOMEM;
++
++	ps->context = s;
++	return 0;
++}
++
++static void free_paths(struct list_head *paths)
++{
++	struct path_info *pi, *next;
++
++	list_for_each_entry_safe (pi, next, paths, list) {
++		list_del(&pi->list);
++		kfree(pi);
++	}
++}
++
++/* Path selector destructor */
++static void rr_dtr(struct path_selector *ps)
++{
++	struct selector *s = (struct selector *) ps->context;
++	free_paths(&s->valid_paths);
++	free_paths(&s->invalid_paths);
++	kfree(s);
++}
++
++/* Path add context */
++static int rr_add_path(struct path_selector *ps, struct path *path,
++		       int argc, char **argv, char **error)
++{
++	struct selector *s = (struct selector *) ps->context;
++	struct path_info *pi;
++
++	/* parse the path arguments */
++	if (argc != 0) {
++		*error = "round-robin ps: incorrect number of arguments";
++		return -EINVAL;
++	}
++
++	/* allocate the path */
++	pi = kmalloc(sizeof(*pi), GFP_KERNEL);
++	if (!pi) {
++		*error = "round-robin ps: Error allocating path context";
++		return -ENOMEM;
++	}
++
++	pi->fail_count = 0;
++	pi->path = path;
++
++	spin_lock(&s->lock);
++	list_add(&pi->list, &s->valid_paths);
++	spin_unlock(&s->lock);
++
++	return 0;
++}
++
++static void rr_end_io(struct path_selector *ps, struct bio *bio, int error,
++		      union map_info *info)
++{
++	unsigned long flags;
++	struct selector *s = (struct selector *) ps->context;
++	struct path_info *pi = (struct path_info *)info->ptr;
++
++	if (likely(!error))
++		return;
++
++	spin_lock_irqsave(&s->lock, flags);
++
++	if (++pi->fail_count == RR_FAIL_COUNT) {
++		list_move(&pi->list, &s->invalid_paths);
++
++		if (pi == s->current_path)
++			s->current_path = NULL;
++	}
++
++	spin_unlock_irqrestore(&s->lock, flags);
++}
++
++/* Path selector */
++static struct path *rr_select_path(struct path_selector *ps, struct bio *bio,
++				   union map_info *info)
++{
++	unsigned long flags;
++	struct selector *s = (struct selector *) ps->context;
++	struct path_info *pi = NULL;
++
++	spin_lock_irqsave(&s->lock, flags);
++
++	/* Do we need to select a new path? */
++	if (s->current_path && s->current_count-- > 0) {
++		pi = s->current_path;
++		goto done;
++	}
++
++	if (!list_empty(&s->valid_paths)) {
++		pi = list_entry(s->valid_paths.next, struct path_info, list);
++		list_move_tail(&pi->list, &s->valid_paths);
++
++		s->current_path = pi;
++		s->current_count = RR_MIN_IO;
++	}
++
++ done:
++	spin_unlock_irqrestore(&s->lock, flags);
++
++	info->ptr = pi;
++	return pi ? pi->path : NULL;
++}
++
++/* Path status */
++static int rr_status(struct path_selector *ps, struct path *path,
++		     status_type_t type, char *result, unsigned int maxlen)
++{
++	unsigned long flags;
++	struct path_info *pi;
++	int failed = 0;
++	struct selector *s = (struct selector *) ps->context;
++	int sz = 0;
++
++	if (type == STATUSTYPE_TABLE)
++		return 0;
++
++	spin_lock_irqsave(&s->lock, flags);
++
++	/*
++	 * Is status called often for testing or something?
++	 * If so maybe a ps's info should be allocated w/ path
++	 * so a simple container_of can be used.
++	 */
++	pi = path_lookup(&s->valid_paths, path);
++	if (!pi) {
++		failed = 1;
++		pi = path_lookup(&s->invalid_paths, path);
++	}
++
++	sz = scnprintf(result, maxlen, "%s %u ", failed ? "F" : "A",
++		       pi->fail_count);
++
++	spin_unlock_irqrestore(&s->lock, flags);
++
++	return sz;
++}
++
++static struct path_selector_type rr_ps = {
++	.name = "round-robin",
++	.module = THIS_MODULE,
++	.table_args = 0,
++	.info_args = 0,
++	.ctr = rr_ctr,
++	.dtr = rr_dtr,
++	.add_path = rr_add_path,
++	.end_io = rr_end_io,
++	.select_path = rr_select_path,
++	.status = rr_status,
++};
++
++/*
++ * (Un)register all path selectors (FIXME: remove this after tests)
++ */
++int dm_register_path_selectors(void)
++{
++	return dm_register_path_selector(&rr_ps);
++}
++
++void dm_unregister_path_selectors(void)
++{
++	dm_unregister_path_selector(&rr_ps);
++}
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-path-selector.h linux-dsd/drivers/md/dm-path-selector.h
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-path-selector.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/md/dm-path-selector.h	2004-10-01 17:09:00.665807136 +0100
+@@ -0,0 +1,122 @@
++/*
++ * Copyright (C) 2003 Sistina Software.
++ *
++ * Module Author: Heinz Mauelshagen
++ *
++ * This file is released under the GPL.
++ *
++ * Path-Selector interface/registration/unregistration definitions
++ *
++ */
++
++#ifndef	DM_PATH_SELECTOR_H
++#define	DM_PATH_SELECTOR_H
++
++#include <linux/device-mapper.h>
++
++struct path;
++
++struct block_device *dm_path_to_bdev(struct path *path);
++
++/*
++ * We provide an abstraction for the code that chooses which path
++ * to send some io down.
++ */
++struct path_selector_type;
++struct path_selector {
++	struct path_selector_type *type;
++	void *context;
++};
++
++/*
++ * Constructs a path selector object, takes custom arguments
++ */
++typedef int (*ps_ctr_fn) (struct path_selector *ps);
++typedef void (*ps_dtr_fn) (struct path_selector *ps);
++
++/*
++ * Allows the ps to initialize itself. It should return one
++ * of the following return values. iif DM_PS_INITIALIZING is
++ * returned the path-selector must call dm_ps_init_complete
++ * when the initializtion has completed.
++ */
++enum {
++	DM_PS_SUCCESS,
++	DM_PS_FAILED,
++	DM_PS_INITIALIZING,
++};
++
++void dm_ps_init_complete(struct path_selector *ps);
++
++typedef int (*ps_init_fn) (struct path_selector *ps);
++
++/*
++ * Add an opaque path object, along with some selector specific
++ * path args (eg, path priority).
++ */
++typedef	int (*ps_add_path_fn) (struct path_selector *ps,
++			       struct path *path,
++			       int argc, char **argv, char **error);
++
++/*
++ * Chooses a path for this io, if no paths are available then
++ * NULL will be returned. The selector may set the map_info
++ * object if it wishes, this will be fed back into the endio fn.
++ *
++ * Must ensure that _any_ dynamically allocated selection context is
++ * reused or reallocated because an endio call (which needs to free it)
++ * might happen after a couple of select calls.
++ */
++typedef	struct path *(*ps_select_path_fn) (struct path_selector *ps,
++					   struct bio *bio,
++					   union map_info *info);
++typedef void (*ps_end_io) (struct path_selector *ps, struct bio *bio,
++			   int error, union map_info *info);
++
++/*
++ * Table content based on parameters added in ps_add_path_fn
++ * or path selector status
++ */
++typedef	int (*ps_status_fn) (struct path_selector *ps,
++			     struct path *path,
++			     status_type_t type,
++			     char *result, unsigned int maxlen);
++
++/* Information about a path selector type */
++struct path_selector_type {
++	char *name;
++	struct module *module;
++
++	unsigned int table_args;
++	unsigned int info_args;
++	ps_ctr_fn ctr;
++	ps_dtr_fn dtr;
++	ps_init_fn init;
++
++	ps_add_path_fn add_path;
++	ps_select_path_fn select_path;
++	ps_end_io end_io;
++	ps_status_fn status;
++};
++
++/*
++ * FIXME: Factor out registration code.
++ */
++
++/* Register a path selector */
++int dm_register_path_selector(struct path_selector_type *type);
++
++/* Unregister a path selector */
++int dm_unregister_path_selector(struct path_selector_type *type);
++
++/* Returns a registered path selector type */
++struct path_selector_type *dm_get_path_selector(const char *name);
++
++/* Releases a path selector  */
++void dm_put_path_selector(struct path_selector_type *pst);
++
++/* FIXME: remove these */
++int dm_register_path_selectors(void);
++void dm_unregister_path_selectors(void);
++
++#endif
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-raid1.c linux-dsd/drivers/md/dm-raid1.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-raid1.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-raid1.c	2004-10-01 17:09:00.753793760 +0100
+@@ -1009,8 +1009,8 @@ static struct dirty_log *create_dirty_lo
+  * log_type #log_params <log_params>
+  * #mirrors [mirror_path offset]{2,}
+  *
+- * For now, #log_params = 1, log_type = "core"
+- *
++ * log_type is "core" or "disk"
++ * #log_params is between 1 and 3
+  */
+ #define DM_IO_PAGES 64
+ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -1182,35 +1182,30 @@ static int mirror_status(struct dm_targe
+ 			 char *result, unsigned int maxlen)
+ {
+ 	char buffer[32];
+-	unsigned int m, sz = 0;
++	unsigned int m, sz;
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+ 
+-#define EMIT(x...) sz += ((sz >= maxlen) ? \
+-			  0 : scnprintf(result + sz, maxlen - sz, x))
++	sz = ms->rh.log->type->status(ms->rh.log, type, result, maxlen);
+ 
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+-		EMIT("%d ", ms->nr_mirrors);
+-
++		DMEMIT("%d ", ms->nr_mirrors);
+ 		for (m = 0; m < ms->nr_mirrors; m++) {
+ 			format_dev_t(buffer, ms->mirror[m].dev->bdev->bd_dev);
+-			EMIT("%s ", buffer);
++			DMEMIT("%s ", buffer);
+ 		}
+ 
+-		EMIT(SECTOR_FORMAT "/" SECTOR_FORMAT,
+-		     ms->rh.log->type->get_sync_count(ms->rh.log),
+-		     ms->nr_regions);
++		DMEMIT(SECTOR_FORMAT "/" SECTOR_FORMAT,
++		       ms->rh.log->type->get_sync_count(ms->rh.log),
++		       ms->nr_regions);
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		EMIT("%s 1 " SECTOR_FORMAT " %d ",
+-		     ms->rh.log->type->name, ms->rh.region_size,
+-		     ms->nr_mirrors);
+-
++		DMEMIT("%d ", ms->nr_mirrors);
+ 		for (m = 0; m < ms->nr_mirrors; m++) {
+ 			format_dev_t(buffer, ms->mirror[m].dev->bdev->bd_dev);
+-			EMIT("%s " SECTOR_FORMAT " ",
+-			     buffer, ms->mirror[m].offset);
++			DMEMIT("%s " SECTOR_FORMAT " ",
++			       buffer, ms->mirror[m].offset);
+ 		}
+ 	}
+ 
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-stripe.c linux-dsd/drivers/md/dm-stripe.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-stripe.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-stripe.c	2004-10-01 17:09:00.737796192 +0100
+@@ -191,20 +191,17 @@ static int stripe_status(struct dm_targe
+ 	unsigned int i;
+ 	char buffer[32];
+ 
+-#define EMIT(x...) sz += ((sz >= maxlen) ? \
+-			  0 : scnprintf(result + sz, maxlen - sz, x))
+-
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+ 		result[0] = '\0';
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		EMIT("%d " SECTOR_FORMAT, sc->stripes, sc->chunk_mask + 1);
++		DMEMIT("%d " SECTOR_FORMAT, sc->stripes, sc->chunk_mask + 1);
+ 		for (i = 0; i < sc->stripes; i++) {
+ 			format_dev_t(buffer, sc->stripe[i].dev->bdev->bd_dev);
+-			EMIT(" %s " SECTOR_FORMAT, buffer,
+-			     sc->stripe[i].physical_start);
++			DMEMIT(" %s " SECTOR_FORMAT, buffer,
++			       sc->stripe[i].physical_start);
+ 		}
+ 		break;
+ 	}
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/dm-zero.c linux-dsd/drivers/md/dm-zero.c
+--- linux-2.6.8-gentoo-r5/drivers/md/dm-zero.c	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/dm-zero.c	2004-10-01 17:09:00.688803640 +0100
+@@ -64,12 +64,19 @@ static int zero_map(struct dm_target *ti
+ 	return 0;
+ }
+ 
++static int zero_message(struct dm_target *ti, char *message)
++{
++	DMERR("dm-zero message received: %s", message);
++	return 0;
++}
++
+ static struct target_type zero_target = {
+ 	.name   = "zero",
+ 	.version = {1, 0, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = zero_ctr,
+ 	.map    = zero_map,
++	.message = zero_message,
+ };
+ 
+ int __init dm_zero_init(void)
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/Kconfig linux-dsd/drivers/md/Kconfig
+--- linux-2.6.8-gentoo-r5/drivers/md/Kconfig	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/Kconfig	2004-10-01 17:09:00.660807896 +0100
+@@ -211,5 +211,17 @@ config BLK_DEV_DM_BBR
+ 
+ 	  If unsure, say N.
+ 
++config DM_MULTIPATH
++	tristate "Multipath target (EXPERIMENTAL)"
++	depends on BLK_DEV_DM && EXPERIMENTAL
++	---help---
++	  Allow volume managers to support multipath hardware.
++
++config DM_FLAKEY
++       tristate "Flakey target (EXPERIMENTAL)"
++       depends on BLK_DEV_DM && EXPERIMENTAL
++       ---help---
++         A debug only target that intermittently fails io.
++ 
+ endmenu
+ 
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/drivers/md/Makefile linux-dsd/drivers/md/Makefile
+--- linux-2.6.8-gentoo-r5/drivers/md/Makefile	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/drivers/md/Makefile	2004-10-01 17:09:00.660807896 +0100
+@@ -4,6 +4,7 @@
+ 
+ dm-mod-objs	:= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
+ 		   dm-ioctl.o dm-io.o kcopyd.o
++dm-multipath-objs := dm-path-selector.o dm-mpath.o
+ dm-snapshot-objs := dm-snap.o dm-exception-store.o
+ dm-mirror-objs	:= dm-log.o dm-raid1.o
+ raid6-objs	:= raid6main.o raid6algos.o raid6recov.o raid6tables.o \
+@@ -26,8 +27,10 @@ obj-$(CONFIG_MD_MULTIPATH)	+= multipath.
+ obj-$(CONFIG_BLK_DEV_MD)	+= md.o
+ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
++obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
++obj-$(CONFIG_DM_FLAKEY)		+= dm-flakey.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+ obj-$(CONFIG_BLK_DEV_DM_BBR)	+= dm-bbr.o
+ 
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/include/linux/compat_ioctl.h linux-dsd/include/linux/compat_ioctl.h
+--- linux-2.6.8-gentoo-r5/include/linux/compat_ioctl.h	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/include/linux/compat_ioctl.h	2004-10-01 17:09:00.703801360 +0100
+@@ -138,6 +138,7 @@ COMPATIBLE_IOCTL(DM_TABLE_CLEAR_32)
+ COMPATIBLE_IOCTL(DM_TABLE_DEPS_32)
+ COMPATIBLE_IOCTL(DM_TABLE_STATUS_32)
+ COMPATIBLE_IOCTL(DM_LIST_VERSIONS_32)
++COMPATIBLE_IOCTL(DM_TARGET_MSG_32)
+ COMPATIBLE_IOCTL(DM_VERSION)
+ COMPATIBLE_IOCTL(DM_REMOVE_ALL)
+ COMPATIBLE_IOCTL(DM_LIST_DEVICES)
+@@ -152,6 +153,7 @@ COMPATIBLE_IOCTL(DM_TABLE_CLEAR)
+ COMPATIBLE_IOCTL(DM_TABLE_DEPS)
+ COMPATIBLE_IOCTL(DM_TABLE_STATUS)
+ COMPATIBLE_IOCTL(DM_LIST_VERSIONS)
++COMPATIBLE_IOCTL(DM_TARGET_MSG)
+ /* Big K */
+ COMPATIBLE_IOCTL(PIO_FONT)
+ COMPATIBLE_IOCTL(GIO_FONT)
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/include/linux/device-mapper.h linux-dsd/include/linux/device-mapper.h
+--- linux-2.6.8-gentoo-r5/include/linux/device-mapper.h	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/include/linux/device-mapper.h	2004-10-01 17:09:00.703801360 +0100
+@@ -18,6 +18,8 @@ union map_info {
+ 	unsigned long long ll;
+ };
+ 
++inline union map_info *dm_get_mapinfo(struct bio *bio);
++
+ /*
+  * In the constructor the target parameter will already have the
+  * table, type, begin and len fields filled in.
+@@ -57,6 +59,8 @@ typedef void (*dm_resume_fn) (struct dm_
+ typedef int (*dm_status_fn) (struct dm_target *ti, status_type_t status_type,
+ 			     char *result, unsigned int maxlen);
+ 
++typedef int (*dm_message_fn) (struct dm_target *ti, char *message);
++
+ void dm_error(const char *message);
+ 
+ /*
+@@ -82,6 +86,7 @@ struct target_type {
+ 	dm_suspend_fn suspend;
+ 	dm_resume_fn resume;
+ 	dm_status_fn status;
++	dm_message_fn message;
+ };
+ 
+ struct io_restrictions {
+diff -X dontdiff -urNp linux-2.6.8-gentoo-r5/include/linux/dm-ioctl.h linux-dsd/include/linux/dm-ioctl.h
+--- linux-2.6.8-gentoo-r5/include/linux/dm-ioctl.h	2004-09-29 23:18:29.000000000 +0100
++++ linux-dsd/include/linux/dm-ioctl.h	2004-10-01 17:09:00.709800448 +0100
+@@ -76,6 +76,9 @@
+  *
+  * DM_TABLE_STATUS:
+  * Return the targets status for the 'active' table.
++ *
++ * DM_TARGET_MSG:
++ * Pass a message string to the target at a specific offset of a device.
+  */
+ 
+ /*
+@@ -179,6 +182,15 @@ struct dm_target_versions {
+ };
+ 
+ /*
++ * Used to pass message to a target
++ */
++struct dm_target_msg {
++	uint64_t sector;	/* Device sector */
++
++	char message[0];
++};
++
++/*
+  * If you change this make sure you make the corresponding change
+  * to dm-ioctl.c:lookup_ioctl()
+  */
+@@ -204,6 +216,7 @@ enum {
+ 
+ 	/* Added later */
+ 	DM_LIST_VERSIONS_CMD,
++	DM_TARGET_MSG_CMD,
+ };
+ 
+ /*
+@@ -232,6 +245,7 @@ typedef char ioctl_struct[308];
+ #define DM_TABLE_DEPS_32    _IOWR(DM_IOCTL, DM_TABLE_DEPS_CMD, ioctl_struct)
+ #define DM_TABLE_STATUS_32  _IOWR(DM_IOCTL, DM_TABLE_STATUS_CMD, ioctl_struct)
+ #define DM_LIST_VERSIONS_32 _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, ioctl_struct)
++#define DM_TARGET_MSG_32    _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, ioctl_struct)
+ #endif
+ 
+ #define DM_IOCTL 0xfd
+@@ -254,10 +268,12 @@ typedef char ioctl_struct[308];
+ 
+ #define DM_LIST_VERSIONS _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, struct dm_ioctl)
+ 
++#define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
++
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	1
++#define DM_VERSION_MINOR	2
+ #define DM_VERSION_PATCHLEVEL	0
+-#define DM_VERSION_EXTRA	"-ioctl (2003-12-10)"
++#define DM_VERSION_EXTRA	"-ioctl (2004-06-08)"
+ 
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */

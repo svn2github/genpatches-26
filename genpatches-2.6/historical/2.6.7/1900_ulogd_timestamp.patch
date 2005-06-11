@@ -1,0 +1,29 @@
+Fixes http://bugs.gentoo.org/show_bug.cgi?id=56729
+
+From: gandalf@netfilter.org
+Subject: [NETFILTER]: Add timestamping to ipt_ULOG
+
+After Andi's timestamp optimizations we don't have any timestamps on the
+packets unless someone requested them. Here's a patch for 2.6 to
+explicitly timestamp the packets before we log them.
+
+Harald approved it some time ago, he's pretty busy so I'm sending it
+instead.
+
+Signed-off-by: Martin Josefsson <gandalf@netfilter.org>
+Signed-off-by: David S. Miller <davem@redhat.com>
+
+diff -Nru a/net/ipv4/netfilter/ipt_ULOG.c b/net/ipv4/netfilter/ipt_ULOG.c
+--- a/net/ipv4/netfilter/ipt_ULOG.c	2004-07-13 16:25:43 -07:00
++++ b/net/ipv4/netfilter/ipt_ULOG.c	2004-07-13 16:25:43 -07:00
+@@ -217,6 +217,10 @@
+ 
+ 	pm = NLMSG_DATA(nlh);
+ 
++	/* We might not have a timestamp, get one */
++	if (skb->stamp.tv_sec == 0)
++		do_gettimeofday((struct timeval *)&skb->stamp);
++
+ 	/* copy hook, prefix, timestamp, payload, etc. */
+ 	pm->data_len = copy_len;
+ 	pm->timestamp_sec = skb->stamp.tv_sec;

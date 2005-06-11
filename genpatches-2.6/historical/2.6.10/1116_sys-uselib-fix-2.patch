@@ -1,0 +1,323 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 08:12:09-08:00 marcelo.tosatti@cyclades.com 
+#   [PATCH] do_brk() needs mmap_sem write-locked
+#   
+#   It seems to be general consensus that its safer to require all do_brk() callers
+#   to grab mmap_sem, and have do_brk to warn otherwise. This is what the following
+#   patch does.
+#   
+#   Similar version has been changed to in v2.4.
+#   
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# arch/mips/kernel/irixelf.c
+#   2005/01/11 17:35:36-08:00 marcelo.tosatti@cyclades.com +10 -1
+#   do_brk() needs mmap_sem write-locked
+# 
+# arch/sparc64/kernel/binfmt_aout32.c
+#   2005/01/11 17:37:28-08:00 marcelo.tosatti@cyclades.com +12 -0
+#   do_brk() needs mmap_sem write-locked
+# 
+# arch/x86_64/ia32/ia32_aout.c
+#   2005/01/11 17:34:26-08:00 marcelo.tosatti@cyclades.com +11 -1
+#   do_brk() needs mmap_sem write-locked
+# 
+# fs/binfmt_aout.c
+#   2005/01/11 17:31:51-08:00 marcelo.tosatti@cyclades.com +14 -3
+#   do_brk() needs mmap_sem write-locked
+# 
+# fs/binfmt_elf.c
+#   2005/01/11 18:07:01-08:00 marcelo.tosatti@cyclades.com +11 -1
+#   do_brk() needs mmap_sem write-locked
+# 
+# mm/mmap.c
+#   2005/01/11 17:43:11-08:00 marcelo.tosatti@cyclades.com +6 -0
+#   do_brk() needs mmap_sem write-locked
+# 
+diff -Nru a/arch/mips/kernel/irixelf.c b/arch/mips/kernel/irixelf.c
+--- a/arch/mips/kernel/irixelf.c	2005-01-13 11:40:42 -08:00
++++ b/arch/mips/kernel/irixelf.c	2005-01-13 11:40:42 -08:00
+@@ -127,7 +127,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ 
+@@ -375,7 +377,9 @@
+ 
+ 	/* Map the last of the bss segment */
+ 	if (last_bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(len, (last_bss - len));
++		up_write(&current->mm->mmap_sem);
+ 	}
+ 	kfree(elf_phdata);
+ 
+@@ -562,7 +566,9 @@
+ 	unsigned long v;
+ 	struct prda *pp;
+ 
++	down_write(&current->mm->mmap_sem);
+ 	v =  do_brk (PRDA_ADDRESS, PAGE_SIZE);
++	up_write(&current->mm->mmap_sem);
+ 
+ 	if (v < 0)
+ 		return;
+@@ -852,8 +858,11 @@
+ 
+ 	len = (elf_phdata->p_filesz + elf_phdata->p_vaddr+ 0xfff) & 0xfffff000;
+ 	bss = elf_phdata->p_memsz + elf_phdata->p_vaddr;
+-	if (bss > len)
++	if (bss > len) {
++	  down_write(&current->mm->mmap_sem);
+ 	  do_brk(len, bss-len);
++	  up_write(&current->mm->mmap_sem);
++	}
+ 	kfree(elf_phdata);
+ 	return 0;
+ }
+diff -Nru a/arch/sparc64/kernel/binfmt_aout32.c b/arch/sparc64/kernel/binfmt_aout32.c
+--- a/arch/sparc64/kernel/binfmt_aout32.c	2005-01-13 11:40:42 -08:00
++++ b/arch/sparc64/kernel/binfmt_aout32.c	2005-01-13 11:40:42 -08:00
+@@ -49,7 +49,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ /*
+@@ -246,10 +248,14 @@
+ 	if (N_MAGIC(ex) == NMAGIC) {
+ 		loff_t pos = fd_offset;
+ 		/* Fuck me plenty... */
++		down_write(&current->mm->mmap_sem);	
+ 		error = do_brk(N_TXTADDR(ex), ex.a_text);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
+ 			  ex.a_text, &pos);
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(N_DATADDR(ex), ex.a_data);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_DATADDR(ex),
+ 			  ex.a_data, &pos);
+ 		goto beyond_if;
+@@ -257,8 +263,10 @@
+ 
+ 	if (N_MAGIC(ex) == OMAGIC) {
+ 		loff_t pos = fd_offset;
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(N_TXTADDR(ex) & PAGE_MASK,
+ 			ex.a_text+ex.a_data + PAGE_SIZE - 1);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
+ 			  ex.a_text+ex.a_data, &pos);
+ 	} else {
+@@ -272,7 +280,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(0, ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,
+ 				  (char __user *)N_TXTADDR(ex),
+ 				  ex.a_text+ex.a_data, &pos);
+@@ -389,7 +399,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -Nru a/arch/x86_64/ia32/ia32_aout.c b/arch/x86_64/ia32/ia32_aout.c
+--- a/arch/x86_64/ia32/ia32_aout.c	2005-01-13 11:40:42 -08:00
++++ b/arch/x86_64/ia32/ia32_aout.c	2005-01-13 11:40:42 -08:00
+@@ -115,7 +115,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ #if CORE_DUMP
+@@ -325,7 +327,10 @@
+ 		pos = 32;
+ 		map_size = ex.a_text+ex.a_data;
+ 
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(text_addr & PAGE_MASK, map_size);
++		up_write(&current->mm->mmap_sem);
++
+ 		if (error != (text_addr & PAGE_MASK)) {
+ 			send_sig(SIGKILL, current, 0);
+ 			return error;
+@@ -361,7 +366,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,(char *)N_TXTADDR(ex),
+ 					ex.a_text+ex.a_data, &pos);
+ 			flush_icache_range((unsigned long) N_TXTADDR(ex),
+@@ -469,8 +476,9 @@
+ 			error_time = jiffies;
+ 		}
+ #endif
+-
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
++		up_write(&current->mm->mmap_sem);
+ 		
+ 		file->f_op->read(file, (char *)start_addr,
+ 			ex.a_text + ex.a_data, &pos);
+@@ -494,7 +502,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -Nru a/fs/binfmt_aout.c b/fs/binfmt_aout.c
+--- a/fs/binfmt_aout.c	2005-01-13 11:40:42 -08:00
++++ b/fs/binfmt_aout.c	2005-01-13 11:40:42 -08:00
+@@ -50,7 +50,10 @@
+ 	start = PAGE_ALIGN(start);
+ 	end = PAGE_ALIGN(end);
+ 	if (end > start) {
+-		unsigned long addr = do_brk(start, end - start);
++		unsigned long addr;
++		down_write(&current->mm->mmap_sem);
++		addr = do_brk(start, end - start);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(addr))
+ 			return addr;
+ 	}
+@@ -323,10 +326,14 @@
+ 		loff_t pos = fd_offset;
+ 		/* Fuck me plenty... */
+ 		/* <AOL></AOL> */
++		down_write(&current->mm->mmap_sem);	
+ 		error = do_brk(N_TXTADDR(ex), ex.a_text);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char *) N_TXTADDR(ex),
+ 			  ex.a_text, &pos);
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(N_DATADDR(ex), ex.a_data);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char *) N_DATADDR(ex),
+ 			  ex.a_data, &pos);
+ 		goto beyond_if;
+@@ -346,8 +353,9 @@
+ 		pos = 32;
+ 		map_size = ex.a_text+ex.a_data;
+ #endif
+-
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(text_addr & PAGE_MASK, map_size);
++		up_write(&current->mm->mmap_sem);
+ 		if (error != (text_addr & PAGE_MASK)) {
+ 			send_sig(SIGKILL, current, 0);
+ 			return error;
+@@ -382,7 +390,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,
+ 					(char __user *)N_TXTADDR(ex),
+ 					ex.a_text+ex.a_data, &pos);
+@@ -487,8 +497,9 @@
+ 			       file->f_dentry->d_name.name);
+ 			error_time = jiffies;
+ 		}
+-
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
++		up_write(&current->mm->mmap_sem);
+ 		
+ 		file->f_op->read(file, (char __user *)start_addr,
+ 			ex.a_text + ex.a_data, &pos);
+diff -Nru a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+--- a/fs/binfmt_elf.c	2005-01-13 11:40:42 -08:00
++++ b/fs/binfmt_elf.c	2005-01-13 11:40:42 -08:00
+@@ -88,7 +88,10 @@
+ 	start = ELF_PAGEALIGN(start);
+ 	end = ELF_PAGEALIGN(end);
+ 	if (end > start) {
+-		unsigned long addr = do_brk(start, end - start);
++		unsigned long addr;
++		down_write(&current->mm->mmap_sem);
++		addr = do_brk(start, end - start);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(addr))
+ 			return addr;
+ 	}
+@@ -409,7 +412,9 @@
+ 
+ 	/* Map the last of the bss segment */
+ 	if (last_bss > elf_bss) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(elf_bss, last_bss - elf_bss);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(error))
+ 			goto out_close;
+ 	}
+@@ -449,7 +454,9 @@
+ 		goto out;
+ 	}
+ 
++	down_write(&current->mm->mmap_sem);	
+ 	do_brk(0, text_data);
++	up_write(&current->mm->mmap_sem);
+ 	if (!interpreter->f_op || !interpreter->f_op->read)
+ 		goto out;
+ 	if (interpreter->f_op->read(interpreter, addr, text_data, &offset) < 0)
+@@ -457,8 +464,11 @@
+ 	flush_icache_range((unsigned long)addr,
+ 	                   (unsigned long)addr + text_data);
+ 
++
++	down_write(&current->mm->mmap_sem);	
+ 	do_brk(ELF_PAGESTART(text_data + ELF_MIN_ALIGN - 1),
+ 		interp_ex->a_bss);
++	up_write(&current->mm->mmap_sem);
+ 	elf_entry = interp_ex->a_entry;
+ 
+ out:
+diff -Nru a/mm/mmap.c b/mm/mmap.c
+--- a/mm/mmap.c	2005-01-13 11:40:42 -08:00
++++ b/mm/mmap.c	2005-01-13 11:40:42 -08:00
+@@ -1903,6 +1903,12 @@
+ 	}
+ 
+ 	/*
++	 * mm->mmap_sem is required to protect against another thread
++	 * changing the mappings in case we sleep.
++	 */
++	WARN_ON(down_read_trylock(&mm->mmap_sem));
++
++	/*
+ 	 * Clear old maps.  this also does some error checking for us
+ 	 */
+  munmap_back:

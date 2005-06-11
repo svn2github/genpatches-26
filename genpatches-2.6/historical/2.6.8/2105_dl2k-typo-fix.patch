@@ -1,0 +1,18 @@
+ChangeSet 1.1832.12.18
+Fix typo causing bad network behaviour in dl2k driver
+Already in 2.6.9 tree
+http://bugs.gentoo.org/65437
+
+diff -Nru a/drivers/net/dl2k.h b/drivers/net/dl2k.h
+--- a/drivers/net/dl2k.h	2004-09-28 14:18:05 -07:00
++++ b/drivers/net/dl2k.h	2004-09-28 14:18:05 -07:00
+@@ -92,7 +92,7 @@
+ 	EepromCtrl = 0x4a,
+ 	ExpromAddr = 0x4c,
+ 	Exprodata = 0x50,
+-	WakeEvent0x51,
++	WakeEvent = 0x51,
+ 	CountDown = 0x54,
+ 	IntStatusAck = 0x5a,
+ 	IntEnable = 0x5c,
+

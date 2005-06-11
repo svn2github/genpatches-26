@@ -1,0 +1,35 @@
+[PATCH] Permit READ_BUFFER_CAPACITY in SG_IO command table
+
+While burning CD's on 2.6.9 with cdrdao, I noticed it complaining repeatedly:
+	ERROR: Read buffer capacity failed.
+
+It tries to read the buffer capacity (MMC command 0x5c) in order to produce a 
+percentage reading of how full the buffer is.
+
+This patch permits the READ_BUFFER_CAPACITY command again. Please apply.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+
+
+diff -X dontdiff -urNp linux-2.6.9-gentoo-r2/drivers/block/scsi_ioctl.c linux-dsd/drivers/block/scsi_ioctl.c
+--- linux-2.6.9-gentoo-r2/drivers/block/scsi_ioctl.c	2004-11-03 21:26:28.000000000 +0000
++++ linux-dsd/drivers/block/scsi_ioctl.c	2004-11-03 22:05:07.635578808 +0000
+@@ -139,6 +139,7 @@ static int verify_command(struct file *f
+ 		safe_for_read(GPCMD_PAUSE_RESUME),
+ 
+ 		/* CD/DVD data reading */
++		safe_for_read(GPCMD_READ_BUFFER_CAPACITY),
+ 		safe_for_read(GPCMD_READ_CD),
+ 		safe_for_read(GPCMD_READ_CD_MSF),
+ 		safe_for_read(GPCMD_READ_DISC_INFO),
+diff -X dontdiff -urNp linux-2.6.9-gentoo-r2/include/linux/cdrom.h linux-dsd/include/linux/cdrom.h
+--- linux-2.6.9-gentoo-r2/include/linux/cdrom.h	2004-11-03 17:08:47.000000000 +0000
++++ linux-dsd/include/linux/cdrom.h	2004-11-03 22:01:15.858814232 +0000
+@@ -452,6 +452,7 @@ struct cdrom_generic_command
+ #define GPCMD_PREVENT_ALLOW_MEDIUM_REMOVAL  0x1e
+ #define GPCMD_READ_10			    0x28
+ #define GPCMD_READ_12			    0xa8
++#define GPCMD_READ_BUFFER_CAPACITY	    0x5c
+ #define GPCMD_READ_CDVD_CAPACITY	    0x25
+ #define GPCMD_READ_CD			    0xbe
+ #define GPCMD_READ_CD_MSF		    0xb9

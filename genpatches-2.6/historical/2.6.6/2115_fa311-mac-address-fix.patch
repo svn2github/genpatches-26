@@ -1,0 +1,34 @@
+
+From: Mathieu LESNIAK <maverick@eskuel.net>
+
+
+This patch corrects a problem with Netgear FA311
+ethernet card (a cheap one). Without it, the MAC address is byte swapped
+ie :
+HWaddr 02:00:07:E3:E9:F5
+instead of :
+HWaddr 00:02:E3:07:F5:E9
+
+(the correct MAC address vendor code for Netgear/LiteOn is 00:02:E3)
+
+
+
+---
+
+ 25-akpm/drivers/net/tulip/tulip_core.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+diff -puN drivers/net/tulip/tulip_core.c~fa311-mac-address-fix drivers/net/tulip/tulip_core.c
+--- 25/drivers/net/tulip/tulip_core.c~fa311-mac-address-fix	2004-03-17 19:30:12.088986056 -0800
++++ 25-akpm/drivers/net/tulip/tulip_core.c	2004-03-17 19:30:12.092985448 -0800
+@@ -1513,7 +1513,7 @@ static int __devinit tulip_init_one (str
+ 		}
+ 	}
+ 	/* Lite-On boards have the address byte-swapped. */
+-	if ((dev->dev_addr[0] == 0xA0  ||  dev->dev_addr[0] == 0xC0)
++	if ((dev->dev_addr[0] == 0xA0  ||  dev->dev_addr[0] == 0xC0 || dev->dev_addr[0] == 0x02)
+ 		&&  dev->dev_addr[1] == 0x00)
+ 		for (i = 0; i < 6; i+=2) {
+ 			char tmp = dev->dev_addr[i];
+
+_

@@ -1,0 +1,226 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+Patch:	1100-nfs-2.6.8.1.patch
+From:	Jeff Garzik <jgarzik@pobox.com>
+Desc:	caused 2.6.8.1 to be released
+
+Patch:	1125-proc_pid_cmdline-race-fix.patch
+From:	Roger Luethi <rl@hellgate.ch>
+Desc:	Fixes bug 59905
+
+Patch:	1130_nfs-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=62524
+Desc:	NFS security fix
+
+Patch:	1135_netfilter-dos-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=68375
+Desc:	netfilter security fix
+
+Patch:	1140_CAN-2004-0814.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=68421
+Desc:	Local DoS fix
+
+Patch:	1145_smbfs-dos.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=65877
+Desc:	smbfs DoS fix
+
+Patch:	1150_elf-bin-vuln-fix.patch
+from:	http://bugs.gentoo.org/70681
+desc:	Fix ELF binary vulnerability
+
+Patch:	1155_af-unix-fix.patch
+From:	http://bugs.gentoo.org/72317
+Desc:	Fix serialization security problem in AF_UNIX layer
+
+Patch:	1160_vma-fix.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	Fix VMA memory overlap security issue
+
+Patch:	1161_vma-fix-2.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	Fix VMA memory overlap security issue even more
+
+Patch:	1165_aout-fix.patch
+From:	http://bugs.gentoo.org/72452
+Desc:	a.out binary security fix
+
+Patch:	1310_k8_cardbus_io.patch
+from:	
+desc:	Patch to prevent emachines amd64 laptops from hanging when unplugging
+	power cord, or closing lid
+
+Patch:	1315_alpha-sysctl-uac.patch
+from:	
+desc:	enable control of the unaligned access control policy from sysctl
+
+Patch:	1321_x86_64-noiommu.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=55155
+desc:	fixes bug 55155
+
+Patch:	1340_sparc-obp64-naming.patch
+	1342_sparc-stopa.patch
+	1343_sparc-et_dyn_base.patch
+	1345_sparc-sys32_syslog.patch
+	1347_sparc-udelay.patch
+	1349_sparc-atyfb.patch
+	1351_sparc-sunsu.patch
+	1353_sparc-sunsab-stopa.patch
+	1355_sparc-smp_bigkernel.patch
+	1357_sparc-sig_syscall.patch
+	1359_sparc-hypersparc_dma.patch
+	1362_sparc-kconfig-rework.patch
+	1363_sparc-kconfig-driver-rework.patch
+	1380_sparc-sun4c-iospace.patch
+	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball and 
+Desc:	see individual patches for details, fixes various sparc issues.
+
+Patch:	2100_nis-lock-workaround.patch
+From:	eradicator@gentoo.org
+desc:	Workaround for a NIS lockup
+
+Patch:	2105_dl2k-typo-fix.patch
+From:	http://bugs.gentoo.org/65437
+Desc:	Fix typo in dl2k network driver, causing intermittant performance. Already in 2.6.9-rc
+
+Patch:	2300_cddvd-cmdfilter-drop.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=60756
+Desc:	Allows to use cdrecord as non-root.
+
+Patch:	2305_fix-audiocd.patch
+From:	http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.8.1/2.6.8.1-mm3/broken-out/bio_uncopy_user-mem-leak.patch
+	http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.8.1/2.6.8.1-mm3/broken-out/bio_uncopy_user-mem-leak-fix.patch
+Desc:	Fix huge memory leak when writing audio CD's, already in 2.6.9-rc
+
+Patch:	2310_new-megaraid-driver.patch
+From:	http://bugs.gentoo.org/62508
+Desc:	Backport new megaraid driver (needed for new devices). Already in 2.6.9-rc
+
+Patch:	2311_megaraid-corruption-fix.patch
+From:	http://marc.theaimsgroup.com/?l=linux-scsi&m=109656423216812&w=2
+Desc:	Fix data corruption in the new megaraid driver. Not yet applied upstream, but critical fix
+
+Patch:	2315_fix-genesys-usb.patch
+From:	http://www.mail-archive.com/linux-usb-devel@lists.sourceforge.net/msg26639.html
+Desc:	USB storage bugfix, already in 2.6.9-rc
+
+Patch:	2320_nvidia-sata-fix.patch
+From:	http://bugzilla.kernel.org/show_bug.cgi?id=3352
+Desc:	Temporary workaround fix for sata_nv driver
+
+Patch:	2500_vesafb-tng-0.9-rc4.patch
+From:	Michal Januszewski <spock@gentoo.org>
+	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	2700_ppc-pegasos-2.6.6.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=54684
+desc:	Allow pegasos PCI hardware to work properly.
+
+Patch:	2705_fix-intel-acpi.patch
+from:	http://bugzilla.kernel.org/show_bug.cgi?id=2941
+desc:	Fix boot problems relating to ACPI, mainly on intel chipsets. Already in 2.6.9 tree.
+
+Patch:	2710_fix-apic.patch
+from:	http://bugzilla.kernel.org/show_bug.cgi?id=3238
+desc:	Fix 2705 for Dell laptops. Already in 2.6.9 tree.
+
+Patch:	2900_sparc-signal_h.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	Sparc signal.h bugfix.
+
+Patch:	2905_mouse_click_fix.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	mouseclick bugfix.  Already in 2.6.9 tree.
+
+Patch:	2910_wacom_fix.patch
+from:	http://bugs.gentoo.org/show_bug.cgi?id=57741
+desc:	wacom bugfix.  Has an alternate fix been merged in 2.6.9-rc?
+
+Patch:	4300_evms-dm-bbr.patch
+From:	http://evms.sourceforge.net/ (evms-2.4.0)
+Desc:	Allows EVMS users to use Bad Block Relocation (BBR) - required for some LiveCD users
+	http://bugs.gentoo.org/63091
+
+Patch:	4305_dm-fixes.patch
+From:	ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/2.6.8.1/2.6.8.1-udm1.tar.bz2
+Desc:	Devicemapper fixes, required for dm-bbr. Some fixes are in upstream 2.6.9-rc, others pending.
+
+Patch:	4501_alsa-ioctl32.patch
+From:	eradicator@gentoo.org
+Desc:	ALSA ioctl32 fix
+
+Patch:	4502_alsa-ioctl32-compat.patch
+From:	eradicator@gentoo.org
+Desc:	Make the ioctl32 work on older kernels
+
+Patch:	4503_alsa-audigy2.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=72433
+Desc:	Fixes a bug where audigy2 cards don't get recognized as supporting 7.1 sound
+
+Patch:	4505_fbsplash-0.9-r8.patch
+From:	Michal Januszewski <spock@gentoo.org>
+	http://dev.gentoo.org/~spock/projects/gensplash/
+Desc:	A successor of bootsplash. Requires userspace support utilities to work.
+
+Patch:	4705_squashfs-2.0r2.patch
+from:	http://squashfs.sourceforge.net/
+desc:	driver to support squashfs filesystems. This will become increasingly
+	popular for the livecd's
+
+Patch:	4800_inotify-0.14.patch
+from:	linux-kernel mailing list
+desc:	inotify patch to make the gnome team happy.  Is in the -mm tree.
+	See the patch for more details.
+
+
+
+Future Patches
+--------------------------------------------------------------------------
+None, I want to have less patches :)
+
+	
+Dropped
+--------------------------------------------------------------------------
+Lots of things that can be built outside of the kernel tree on their own.
+
+

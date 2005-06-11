@@ -1,0 +1,11 @@
+--- a/drivers/char/random.c	2005-01-05 09:41:58 -0500
++++ b/drivers/char/random.c	2005-01-05 09:42:11 -0500
+@@ -1912,7 +1912,7 @@
+ 			     void __user *oldval, size_t __user *oldlenp,
+ 			     void __user *newval, size_t newlen, void **context)
+ {
+-	int	len;
++	size_t	len;
+ 	
+ 	sysctl_poolsize = random_state->poolinfo.POOLBYTES;
+ 

@@ -1,0 +1,458 @@
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/Kconfig linux-2.6.5-rc3/arch/x86_64/Kconfig
+--- linux-2.6.5-rc3.old/arch/x86_64/Kconfig	2004-03-30 12:57:36.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/Kconfig	2004-03-30 13:00:33.973132136 -0500
+@@ -401,6 +401,8 @@
+ 
+ source drivers/Kconfig
+ 
++source "drivers/firmware/Kconfig"
++
+ source fs/Kconfig
+ 
+ source "arch/x86_64/oprofile/Kconfig"
+@@ -480,11 +482,18 @@
+ 
+ config IOMMU_DEBUG
+        depends on GART_IOMMU && DEBUG_KERNEL
+-       bool "Force IOMMU to on" 
++       bool "Enable IOMMU debugging" 
+        help
+-         Force the IOMMU to on even when you have less than 4GB of memory and add 
+-	 debugging code. 
+-	 Can be disabled at boot time with iommu=noforce.
++         Force the IOMMU to on even when you have less than 4GB of
++	 memory and add debugging code. On overflow always panic. And
++	 allow to enable IOMMU leak tracing. Can be disabled at boot
++	 time with iommu=noforce. This will also enable scatter gather
++	 list merging.  Currently not recommended for production
++	 code. When you use it make sure you have a big enough
++	 IOMMU/AGP aperture.  Most of the options enabled by this can
++	 be set more finegrained using the iommu= command line
++	 options. See Documentation/x86_64/boot-options.txt for more
++	 details.
+ 
+ config IOMMU_LEAK
+        bool "IOMMU leak tracing"
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/Makefile linux-2.6.5-rc3/arch/x86_64/Makefile
+--- linux-2.6.5-rc3.old/arch/x86_64/Makefile	2004-03-30 12:57:36.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/Makefile	2004-03-30 13:00:33.974131984 -0500
+@@ -38,7 +38,7 @@
+ LDFLAGS_vmlinux := -e stext
+ 
+ cflags-$(CONFIG_MK8) += $(call check_gcc,-march=k8,)
+-cflags-$(CONFIG_MPSC) += $(call check_gcc,-march=prescott,)
++cflags-$(CONFIG_MPSC) += $(call check_gcc,-march=nocona,)
+ CFLAGS += $(cflags-y)
+ 
+ CFLAGS += -mno-red-zone
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/boot/setup.S linux-2.6.5-rc3/arch/x86_64/boot/setup.S
+--- linux-2.6.5-rc3.old/arch/x86_64/boot/setup.S	2004-03-10 21:55:50.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/boot/setup.S	2004-03-30 13:00:33.974131984 -0500
+@@ -533,6 +533,8 @@
+ 	movw	$0xAA, (0x1ff)			# device present
+ no_psmouse:
+ 
++#include "../../i386/boot/edd.S"
++
+ # Now we want to move to protected mode ...
+ 	cmpw	$0, %cs:realmode_swtch
+ 	jz	rmodeswtch_normal
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/kernel/aperture.c linux-2.6.5-rc3/arch/x86_64/kernel/aperture.c
+--- linux-2.6.5-rc3.old/arch/x86_64/kernel/aperture.c	2004-03-10 21:55:37.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/kernel/aperture.c	2004-03-30 13:00:37.697565936 -0500
+@@ -25,6 +25,8 @@
+ #include <asm/pci-direct.h>
+ 
+ int iommu_aperture;
++int iommu_aperture_disabled __initdata = 0;
++int iommu_aperture_allowed __initdata = 0;
+ 
+ int fallback_aper_order __initdata = 1; /* 64MB */
+ int fallback_aper_force __initdata = 0; 
+@@ -200,6 +202,9 @@
+ 	u64 aper_base; 
+ 	int valid_agp = 0;
+ 
++	if (iommu_aperture_disabled)
++		return;
++
+ 	printk("Checking aperture...\n"); 
+ 
+ 	fix = 0;
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/kernel/io_apic.c linux-2.6.5-rc3/arch/x86_64/kernel/io_apic.c
+--- linux-2.6.5-rc3.old/arch/x86_64/kernel/io_apic.c	2004-03-10 21:55:27.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/kernel/io_apic.c	2004-03-30 13:00:37.698565784 -0500
+@@ -34,6 +34,7 @@
+ #include <asm/io.h>
+ #include <asm/smp.h>
+ #include <asm/desc.h>
++#include <asm/proto.h>
+ 
+ int sis_apic_bug; /* not actually supported, dummy for compile */
+ 
+@@ -211,7 +212,6 @@
+ __setup("noapic", disable_ioapic_setup);
+ __setup("apic", enable_ioapic_setup);
+ 
+-#ifndef CONFIG_SMP
+ #include <asm/pci-direct.h>
+ #include <linux/pci_ids.h>
+ #include <linux/pci.h>
+@@ -220,7 +220,11 @@
+    off. Check for an Nvidia or VIA PCI bridge and turn it off.
+    Use pci direct infrastructure because this runs before the PCI subsystem. 
+ 
+-   Can be overwritten with "apic" */
++   Can be overwritten with "apic" 
++   
++   And another hack to disable the IOMMU on VIA chipsets.
++
++   Kludge-O-Rama. */
+ void __init check_ioapic(void) 
+ { 
+ 	int num,slot,func; 
+@@ -245,12 +249,21 @@
+ 							 PCI_VENDOR_ID);
+ 				vendor &= 0xffff;
+ 				switch (vendor) { 
+-				case PCI_VENDOR_ID_NVIDIA: 
+ 				case PCI_VENDOR_ID_VIA:
++					if (end_pfn >= (0xffffffff>>PAGE_SHIFT) &&
++					    !iommu_aperture_allowed) { 
++						printk(KERN_INFO
++    "Looks like a VIA chipset. Disabling IOMMU. Overwrite with \"iommu=allowed\"\n"); 
++						iommu_aperture_disabled = 1; 
++					} 
++					/* FALL THROUGH */
++				case PCI_VENDOR_ID_NVIDIA:
++#ifndef CONFIG_SMP
+ 					printk(KERN_INFO 
+      "PCI bridge %02x:%02x from %x found. Setting \"noapic\". Overwrite with \"apic\"\n",
+ 					       num,slot,vendor); 
+ 					skip_ioapic_setup = 1;
++#endif
+ 					return;
+ 				} 
+ 
+@@ -263,7 +276,6 @@
+ 		}
+ 	}
+ } 
+-#endif
+ 
+ static int __init ioapic_pirq_setup(char *str)
+ {
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/kernel/mtrr/Makefile linux-2.6.5-rc3/arch/x86_64/kernel/mtrr/Makefile
+--- linux-2.6.5-rc3.old/arch/x86_64/kernel/mtrr/Makefile	2004-03-10 21:55:27.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/kernel/mtrr/Makefile	1969-12-31 19:00:00.000000000 -0500
+@@ -1,28 +0,0 @@
+-#
+-# Reuse the i386 MTRR driver.
+-#
+-
+-obj-y		:= main.o if.o generic.o state.o
+-obj-y		+= amd.o
+-obj-y		+= cyrix.o
+-obj-y		+= centaur.o
+-
+-$(obj)/main.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/main.c $(obj)/main.c
+-$(obj)/if.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/if.c $(obj)/if.c
+-$(obj)/generic.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/generic.c $(obj)/generic.c
+-$(obj)/state.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/state.c $(obj)/state.c
+-$(obj)/amd.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/amd.c $(obj)/amd.c
+-$(obj)/cyrix.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/cyrix.c $(obj)/cyrix.c
+-$(obj)/centaur.c: $(obj)/mtrr.h
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/centaur.c $(obj)/centaur.c
+-$(obj)/mtrr.h:
+-	@ln -sf ../../../i386/kernel/cpu/mtrr/mtrr.h $(obj)/mtrr.h
+-
+-clean-files += main.c if.c generic.c state.c amd.c cyrix.c centaur.c mtrr.h
+-
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/kernel/setup.c linux-2.6.5-rc3/arch/x86_64/kernel/setup.c
+--- linux-2.6.5-rc3.old/arch/x86_64/kernel/setup.c	2004-03-30 12:57:37.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/kernel/setup.c	2004-03-30 13:00:37.703565024 -0500
+@@ -39,6 +39,7 @@
+ #include <linux/pci.h>
+ #include <linux/acpi.h>
+ #include <linux/kallsyms.h>
++#include <linux/edd.h>
+ #include <asm/mtrr.h>
+ #include <asm/uaccess.h>
+ #include <asm/system.h>
+@@ -369,6 +370,30 @@
+ 
+ __setup("noreplacement", noreplacement_setup); 
+ 
++#if defined(CONFIG_EDD) || defined(CONFIG_EDD_MODULE)
++unsigned char eddnr;
++struct edd_info edd[EDDMAXNR];
++unsigned int edd_disk80_sig;
++#ifdef CONFIG_EDD_MODULE
++EXPORT_SYMBOL(eddnr);
++EXPORT_SYMBOL(edd);
++EXPORT_SYMBOL(edd_disk80_sig);
++#endif
++/**
++ * copy_edd() - Copy the BIOS EDD information
++ *              from empty_zero_page into a safe place.
++ *
++ */
++static inline void copy_edd(void)
++{
++     eddnr = EDD_NR;
++     memcpy(edd, EDD_BUF, sizeof(edd));
++     edd_disk80_sig = DISK80_SIGNATURE;
++}
++#else
++#define copy_edd() do {} while (0)
++#endif
++
+ void __init setup_arch(char **cmdline_p)
+ {
+ 	unsigned long low_mem_size;
+@@ -387,6 +412,7 @@
+ 	rd_doload = ((RAMDISK_FLAGS & RAMDISK_LOAD_FLAG) != 0);
+ #endif
+ 	setup_memory_region();
++	copy_edd();
+ 
+ 	if (!MOUNT_ROOT_RDONLY)
+ 		root_mountflags &= ~MS_RDONLY;
+@@ -797,6 +823,9 @@
+ 		c->x86_virt_bits = (eax >> 8) & 0xff;
+ 		c->x86_phys_bits = eax & 0xff;
+ 	}
++
++	if (c->x86 == 15)
++		c->x86_cache_alignment = c->x86_clflush_size * 2;
+ }
+ 
+ void __init get_cpu_vendor(struct cpuinfo_x86 *c)
+@@ -831,6 +860,7 @@
+ 	c->x86_vendor_id[0] = '\0'; /* Unset */
+ 	c->x86_model_id[0] = '\0';  /* Unset */
+ 	c->x86_clflush_size = 64;
++	c->x86_cache_alignment = c->x86_clflush_size;
+ 	memset(&c->x86_capability, 0, sizeof c->x86_capability);
+ 
+ 	/* Get vendor name */
+@@ -1058,6 +1088,7 @@
+ 	if (c->x86_tlbsize > 0) 
+ 		seq_printf(m, "TLB size\t: %d 4K pages\n", c->x86_tlbsize);
+ 	seq_printf(m, "clflush size\t: %d\n", c->x86_clflush_size);
++	seq_printf(m, "cache_alignment\t: %d\n", c->x86_cache_alignment);
+ 
+ 	seq_printf(m, "address sizes\t: %u bits physical, %u bits virtual\n", 
+ 		   c->x86_phys_bits, c->x86_virt_bits);
+diff -ruN linux-2.6.5-rc3.old/arch/x86_64/kernel/x8664_ksyms.c linux-2.6.5-rc3/arch/x86_64/kernel/x8664_ksyms.c
+--- linux-2.6.5-rc3.old/arch/x86_64/kernel/x8664_ksyms.c	2004-03-30 12:57:37.000000000 -0500
++++ linux-2.6.5-rc3/arch/x86_64/kernel/x8664_ksyms.c	2004-03-30 13:00:37.703565024 -0500
+@@ -98,8 +98,10 @@
+ EXPORT_SYMBOL(copy_in_user);
+ EXPORT_SYMBOL(strnlen_user);
+ 
++#ifdef CONFIG_PCI
+ EXPORT_SYMBOL(pci_alloc_consistent);
+ EXPORT_SYMBOL(pci_free_consistent);
++#endif
+ 
+ #ifdef CONFIG_PCI
+ EXPORT_SYMBOL(pcibios_penalize_isa_irq);
+diff -ruN linux-2.6.5-rc3.old/include/asm-generic/dma-mapping.h linux-2.6.5-rc3/include/asm-generic/dma-mapping.h
+--- linux-2.6.5-rc3.old/include/asm-generic/dma-mapping.h	2004-03-30 12:57:38.000000000 -0500
++++ linux-2.6.5-rc3/include/asm-generic/dma-mapping.h	2004-03-30 13:00:40.509138512 -0500
+@@ -7,6 +7,10 @@
+ #ifndef _ASM_GENERIC_DMA_MAPPING_H
+ #define _ASM_GENERIC_DMA_MAPPING_H
+ 
++#include <linux/config.h>
++
++#ifdef CONFIG_PCI
++
+ /* we implement the API below in terms of the existing PCI one,
+  * so include it */
+ #include <linux/pci.h>
+@@ -146,6 +150,119 @@
+ 	return pci_dma_mapping_error(dma_addr);
+ }
+ 
++
++#else
++
++static inline int
++dma_supported(struct device *dev, u64 mask)
++{
++	return 0;
++}
++
++static inline int
++dma_set_mask(struct device *dev, u64 dma_mask)
++{
++	BUG();
++	return 0;
++}
++
++static inline void *
++dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle,
++		   int flag)
++{
++	BUG();
++	return NULL;
++}
++
++static inline void
++dma_free_coherent(struct device *dev, size_t size, void *cpu_addr,
++		    dma_addr_t dma_handle)
++{
++	BUG();
++}
++
++static inline dma_addr_t
++dma_map_single(struct device *dev, void *cpu_addr, size_t size,
++	       enum dma_data_direction direction)
++{
++	BUG();
++	return 0;
++}
++
++static inline void
++dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
++		 enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline dma_addr_t
++dma_map_page(struct device *dev, struct page *page,
++	     unsigned long offset, size_t size,
++	     enum dma_data_direction direction)
++{
++	BUG();
++	return 0;
++}
++
++static inline void
++dma_unmap_page(struct device *dev, dma_addr_t dma_address, size_t size,
++	       enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline int
++dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
++	   enum dma_data_direction direction)
++{
++	BUG();
++	return 0;
++}
++
++static inline void
++dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nhwentries,
++	     enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline void
++dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle, size_t size,
++			enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline void
++dma_sync_single_for_device(struct device *dev, dma_addr_t dma_handle, size_t size,
++			   enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline void
++dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg, int nelems,
++		    enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline void
++dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg, int nelems,
++		       enum dma_data_direction direction)
++{
++	BUG();
++}
++
++static inline int
++dma_error(dma_addr_t dma_addr)
++{
++	return 0;
++}
++
++#endif
++
+ /* Now for the API extensions over the pci_ one */
+ 
+ #define dma_alloc_noncoherent(d, s, h, f) dma_alloc_coherent(d, s, h, f)
+diff -ruN linux-2.6.5-rc3.old/include/asm-x86_64/bootsetup.h linux-2.6.5-rc3/include/asm-x86_64/bootsetup.h
+--- linux-2.6.5-rc3.old/include/asm-x86_64/bootsetup.h	2004-03-10 21:55:37.000000000 -0500
++++ linux-2.6.5-rc3/include/asm-x86_64/bootsetup.h	2004-03-30 13:00:44.793487192 -0500
+@@ -26,6 +26,9 @@
+ #define INITRD_START (*(unsigned int *) (PARAM+0x218))
+ #define INITRD_SIZE (*(unsigned int *) (PARAM+0x21c))
+ #define EDID_INFO (*(struct edid_info *) (PARAM+0x440))
++#define DISK80_SIGNATURE (*(unsigned int*) (PARAM+DISK80_SIG_BUFFER))
++#define EDD_NR     (*(unsigned char *) (PARAM+EDDNR))
++#define EDD_BUF     ((struct edd_info *) (PARAM+EDDBUF))
+ #define COMMAND_LINE saved_command_line
+ #define COMMAND_LINE_SIZE 256
+ 
+diff -ruN linux-2.6.5-rc3.old/include/asm-x86_64/pci.h linux-2.6.5-rc3/include/asm-x86_64/pci.h
+--- linux-2.6.5-rc3.old/include/asm-x86_64/pci.h	2004-03-30 12:57:38.000000000 -0500
++++ linux-2.6.5-rc3/include/asm-x86_64/pci.h	2004-03-30 13:00:44.793487192 -0500
+@@ -357,8 +357,9 @@
+ #endif /* __KERNEL__ */
+ 
+ /* generic pci stuff */
++#ifdef CONFIG_PCI
+ #include <asm-generic/pci.h>
+-
+ #include <linux/dma-mapping.h>
++#endif
+ 
+ #endif /* __x8664_PCI_H */
+diff -ruN linux-2.6.5-rc3.old/include/asm-x86_64/processor.h linux-2.6.5-rc3/include/asm-x86_64/processor.h
+--- linux-2.6.5-rc3.old/include/asm-x86_64/processor.h	2004-03-30 12:57:38.000000000 -0500
++++ linux-2.6.5-rc3/include/asm-x86_64/processor.h	2004-03-30 13:00:44.794487040 -0500
+@@ -59,6 +59,7 @@
+ 	char	x86_model_id[64];
+ 	int 	x86_cache_size;  /* in KB */
+ 	int	x86_clflush_size;
++	int	x86_cache_alignment;
+ 	int	x86_tlbsize;	/* number of 4K pages in DTLB/ITLB combined(in pages)*/
+         __u8    x86_virt_bits, x86_phys_bits;
+         __u32   x86_power; 	
+@@ -453,6 +454,6 @@
+ 	ti->task;					\
+ })
+ 
+-#define cache_line_size() (boot_cpu_data.x86_clflush_size)
++#define cache_line_size() (boot_cpu_data.x86_cache_alignment)
+ 
+ #endif /* __ASM_X86_64_PROCESSOR_H */
+diff -ruN linux-2.6.5-rc3.old/include/asm-x86_64/proto.h linux-2.6.5-rc3/include/asm-x86_64/proto.h
+--- linux-2.6.5-rc3.old/include/asm-x86_64/proto.h	2004-03-30 12:57:38.000000000 -0500
++++ linux-2.6.5-rc3/include/asm-x86_64/proto.h	2004-03-30 13:00:44.794487040 -0500
+@@ -101,6 +101,8 @@
+ extern int fallback_aper_order;
+ extern int fallback_aper_force;
+ extern int iommu_aperture;
++extern int iommu_aperture_disabled;
++extern int iommu_aperture_allowed;
+ 
+ extern void smp_local_timer_interrupt(struct pt_regs * regs);
+ 

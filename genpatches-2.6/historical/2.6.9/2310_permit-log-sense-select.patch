@@ -1,0 +1,37 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/19 15:00:58-08:00 dsd@gentoo.org 
+#   [PATCH] Permit LOG_SENSE and LOG_SELECT in SG_IO command table
+#   
+#   This patch adds LOG_SENSE as a read-ok command.  cdrecord-prodvd uses this.
+#    I also added LOG_SELECT as write-ok as this seems to fit in as well.
+#   
+#   Signed-off-by: Daniel Drake <dsd@gentoo.org>
+#   Acked-by: Jens Axboe <axboe@suse.de>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# drivers/block/scsi_ioctl.c
+#   2004/11/18 23:03:15-08:00 dsd@gentoo.org +2 -0
+#   Permit LOG_SENSE and LOG_SELECT in SG_IO command table
+# 
+diff -Nru a/drivers/block/scsi_ioctl.c b/drivers/block/scsi_ioctl.c
+--- a/drivers/block/scsi_ioctl.c	2004-11-21 06:18:42 -08:00
++++ b/drivers/block/scsi_ioctl.c	2004-11-21 06:18:42 -08:00
+@@ -127,6 +127,7 @@
+ 		safe_for_read(INQUIRY),
+ 		safe_for_read(MODE_SENSE),
+ 		safe_for_read(MODE_SENSE_10),
++		safe_for_read(LOG_SENSE),
+ 		safe_for_read(START_STOP),
+ 		safe_for_read(GPCMD_VERIFY_10),
+ 		safe_for_read(VERIFY_16),
+@@ -169,6 +170,7 @@
+ 		safe_for_write(ERASE),
+ 		safe_for_write(GPCMD_MODE_SELECT_10),
+ 		safe_for_write(MODE_SELECT),
++		safe_for_write(LOG_SELECT),
+ 		safe_for_write(GPCMD_BLANK),
+ 		safe_for_write(GPCMD_CLOSE_TRACK),
+ 		safe_for_write(GPCMD_FLUSH_CACHE),

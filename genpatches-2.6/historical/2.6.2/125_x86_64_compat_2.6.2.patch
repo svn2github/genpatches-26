@@ -1,0 +1,346 @@
+diff -urN linux-2.6.1/include/asm-x86_64/pgtable.h linux-2.6.1-patched/include/asm-x86_64/pgtable.h
+--- linux-2.6.1/include/asm-x86_64/pgtable.h	2004-01-08 23:59:48.000000000 -0700
++++ linux-2.6.1-patched/include/asm-x86_64/pgtable.h	2004-01-29 13:34:53.000000000 -0700
+@@ -36,7 +36,7 @@
+  * ZERO_PAGE is a global shared page that is always zero: used
+  * for zero-mapped memory areas etc..
+  */
+-extern unsigned long empty_zero_page[1024];
++extern unsigned long empty_zero_page[PAGE_SIZE/sizeof(unsigned long)];
+ #define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
+ 
+ #define PML4_SHIFT	39
+--- linux-2.6.2rc2/arch/x86_64/kernel/entry.S	2004-01-26 05:52:30.000000000 +0100
++++ linux-2.6.2rc3-amd64/arch/x86_64/kernel/entry.S	2004-02-04 06:54:44.000000000 +0100
+@@ -436,7 +436,7 @@
+ 	popq  %rdi
+ 	cli	
+ 	subl $1,%gs:pda_irqcount
+-#ifdef CONFIG_KGDB
++#ifdef CONFIG_DEBUG_INFO
+ 	movq RBP(%rdi),%rbp
+ #endif
+ 	leaq ARGOFFSET(%rdi),%rsp
+diff -burpN -X ../KDIFX linux-vanilla-2.6.2-rc1/drivers/char/agp/amd64-agp.c linux-2.6.2rc1-amd64/drivers/char/agp/amd64-agp.c
+--- linux-vanilla-2.6.2-rc1/drivers/char/agp/amd64-agp.c	2004-01-09 09:26:39.000000000 +0100
++++ linux-2.6.2rc1-amd64/drivers/char/agp/amd64-agp.c	2004-01-01 06:56:50.000000000 +0100
+@@ -16,11 +16,7 @@
+ #include "agp.h"
+ 
+ /* Will need to be increased if AMD64 ever goes >8-way. */
+-#ifdef CONFIG_SMP
+ #define MAX_HAMMER_GARTS   8
+-#else
+-#define MAX_HAMMER_GARTS   1
+-#endif
+ 
+ /* PTE bits. */
+ #define GPTE_VALID	1
+@@ -35,6 +31,14 @@
+ #define INVGART		(1<<0)
+ #define GARTPTEERR	(1<<1)
+ 
++/* NVIDIA K8 registers */
++#define NVIDIA_X86_64_0_APBASE		0x10
++#define NVIDIA_X86_64_1_APBASE1		0x50
++#define NVIDIA_X86_64_1_APLIMIT1	0x54
++#define NVIDIA_X86_64_1_APSIZE		0xa8
++#define NVIDIA_X86_64_1_APBASE2		0xd8
++#define NVIDIA_X86_64_1_APLIMIT2	0xdc
++
+ static int nr_garts;
+ static struct pci_dev * hammers[MAX_HAMMER_GARTS];
+ 
+@@ -346,6 +350,10 @@ static __devinit int cache_nbs (struct p
+ 	/* cache pci_devs of northbridges. */
+ 	while ((loop_dev = pci_find_device(PCI_VENDOR_ID_AMD, 0x1103, loop_dev)) 
+ 			!= NULL) {
++		if (i == MAX_HAMMER_GARTS) { 
++			printk(KERN_ERR PFX "Too many northbridges for AGP\n");
++			return -1;
++		}
+ 		if (fix_northbridge(loop_dev, pdev, cap_ptr) < 0) { 
+ 			printk(KERN_ERR PFX "No usable aperture found.\n");
+ #ifdef __x86_64__ 
+@@ -355,29 +363,111 @@ static __devinit int cache_nbs (struct p
+ 			return -1;  
+ 		}
+ 		hammers[i++] = loop_dev;
++	}
+ 		nr_garts = i;
+-#ifdef CONFIG_SMP
+-		if (i > MAX_HAMMER_GARTS) { 
+-			printk(KERN_ERR PFX "Too many northbridges for AGP\n");
+-			return -1;
++	return i == 0 ? -1 : 0;
++}
++
++/* Handle AMD 8151 quirks */
++static void __devinit amd8151_init(struct pci_dev *pdev, struct agp_bridge_data *bridge)
++
++{		
++	char *revstring;
++	u8 rev_id;
++
++	pci_read_config_byte(pdev, PCI_REVISION_ID, &rev_id);
++	switch (rev_id) {
++	case 0x01: revstring="A0"; break;
++	case 0x02: revstring="A1"; break;
++	case 0x11: revstring="B0"; break;
++	case 0x12: revstring="B1"; break;
++	case 0x13: revstring="B2"; break;
++	default:   revstring="??"; break;
+ 		}
+-#else
+-		/* Uniprocessor case, return after finding first bridge.
+-		   (There may be more, but in UP, we don't care). */
+-		return 0;
+-#endif
++
++	printk (KERN_INFO PFX "Detected AMD 8151 AGP Bridge rev %s\n", revstring);
++
++	/*
++	 * Work around errata.
++	 * Chips before B2 stepping incorrectly reporting v3.5
++	 */
++	if (rev_id < 0x13) {
++		printk (KERN_INFO PFX "Correcting AGP revision (reports 3.5, is really 3.0)\n");
++		bridge->major_version = 3;
++		bridge->minor_version = 0;
+ 	}
++}
+ 
+-	return i == 0 ? -1 : 0;
++static struct aper_size_info_32 nforce3_sizes[5] =
++{
++	{512,  131072, 7, 0x00000000 },
++	{256,  65536,  6, 0x00000008 },
++	{128,  32768,  5, 0x0000000C },
++	{64,   16384,  4, 0x0000000E },
++	{32,   8192,   3, 0x0000000F }
++};
++
++/* Handle shadow device of the Nvidia NForce3 */
++/* CHECK-ME original 2.4 version set up some IORRs. Check if that is needed. */
++static int __devinit nforce3_agp_init(struct pci_dev *pdev) 
++{ 
++	u32 tmp, apbase, apbar, aplimit;
++	struct pci_dev *dev1; 
++	int i;
++	unsigned size = amd64_fetch_size(); 
++
++	printk(KERN_INFO PFX "Setting up Nforce3 AGP.\n");
++
++	dev1 = pci_find_slot((unsigned int)pdev->bus->number, PCI_DEVFN(11, 0));
++	if (dev1 == NULL) {
++		printk(KERN_INFO PFX "agpgart: Detected an NVIDIA "
++			"nForce3 chipset, but could not find "
++			"the secondary device.\n");
++		return -ENODEV;
++	}	
++
++	for (i = 0; i < ARRAY_SIZE(nforce3_sizes); i++) 
++		if (nforce3_sizes[i].size == size)
++			break; 
++
++	if (i == ARRAY_SIZE(nforce3_sizes)) {
++		printk(KERN_INFO PFX "No NForce3 size found for %d\n", size); 
++		return -ENODEV; 
++	}
++	
++	pci_read_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, &tmp);
++	tmp &= ~(0xf);
++	tmp |= nforce3_sizes[i].size_value;
++	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APSIZE, tmp);
++
++	/* shadow x86-64 registers into NVIDIA registers */
++	pci_read_config_dword (hammers[0], AMD64_GARTAPERTUREBASE, &apbase);
++
++	/* if x86-64 aperture base is beyond 4G, exit here */
++	if ( (apbase & 0x7fff) >> (32 - 25) )
++		 return -ENODEV;
++
++	apbase = (apbase & 0x7fff) << 25;
++
++	pci_read_config_dword(pdev, NVIDIA_X86_64_0_APBASE, &apbar);
++	apbar &= ~PCI_BASE_ADDRESS_MEM_MASK;
++	apbar |= apbase;
++	pci_write_config_dword(pdev, NVIDIA_X86_64_0_APBASE, apbar);
++
++	aplimit = apbase + (size * 1024 * 1024) - 1;
++	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APBASE1, apbase);
++	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT1, aplimit);
++	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APBASE2, apbase);
++	pci_write_config_dword(dev1, NVIDIA_X86_64_1_APLIMIT2, aplimit);
++
++	return 0;
+ }
+ 
+ static int __devinit agp_amd64_probe(struct pci_dev *pdev,
+ 				     const struct pci_device_id *ent)
+ {
+ 	struct agp_bridge_data *bridge;
+-	u8 rev_id;
+ 	u8 cap_ptr;
+-	char *revstring=NULL;
+ 
+ 	cap_ptr = pci_find_capability(pdev, PCI_CAP_ID_AGP);
+ 	if (!cap_ptr)
+@@ -391,32 +481,7 @@ static int __devinit agp_amd64_probe(str
+ 
+ 	if (pdev->vendor == PCI_VENDOR_ID_AMD &&
+ 	    pdev->device == PCI_DEVICE_ID_AMD_8151_0) {
+-
+-		pci_read_config_byte(pdev, PCI_REVISION_ID, &rev_id);
+-		switch (rev_id) {
+-		case 0x01:	revstring="A0";
+-				break;
+-		case 0x02:	revstring="A1";
+-				break;
+-		case 0x11:	revstring="B0";
+-				break;
+-		case 0x12:	revstring="B1";
+-				break;
+-		case 0x13:	revstring="B2";
+-				break;
+-		default:	revstring="??";
+-				break;
+-		}
+-		printk (KERN_INFO PFX "Detected AMD 8151 AGP Bridge rev %s\n", revstring);
+-		/*
+-		 * Work around errata.
+-		 * Chips before B2 stepping incorrectly reporting v3.5
+-		 */
+-		if (rev_id < 0x13) {
+-			printk (KERN_INFO PFX "Correcting AGP revision (reports 3.5, is really 3.0)\n");
+-			bridge->major_version = 3;
+-			bridge->minor_version = 0;
+-		}
++		amd8151_init(pdev, bridge);
+ 	} else {
+ 		printk(KERN_INFO PFX "Detected AGP bridge %x\n",
+ 			pdev->devfn);
+@@ -434,6 +499,14 @@ static int __devinit agp_amd64_probe(str
+ 		return -ENODEV;
+ 	}
+ 
++	if (pdev->vendor == PCI_VENDOR_ID_NVIDIA) { 
++		int ret = nforce3_agp_init(pdev);
++		if (ret) { 
++			agp_put_bridge(bridge); 
++			return ret;
++		}
++	}
++
+ 	pci_set_drvdata(pdev, bridge);
+ 	return agp_add_bridge(bridge);
+ }
+@@ -478,8 +551,25 @@ static struct pci_device_id agp_amd64_pc
+ 	{
+ 	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
+ 	.class_mask	= ~0,
+-	.vendor		= PCI_VENDOR_ID_SI,
+-	.device		= PCI_DEVICE_ID_SI_755,
++	.vendor		= PCI_VENDOR_ID_VIA,
++	.device		= PCI_DEVICE_ID_VIA_8380_0,
++	.subvendor	= PCI_ANY_ID,
++	.subdevice	= PCI_ANY_ID,
++	},
++	/* NForce3 */
++	{
++	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
++	.class_mask	= ~0,
++	.vendor		= PCI_VENDOR_ID_NVIDIA,
++	.device		= PCI_DEVICE_ID_NVIDIA_NFORCE3,
++	.subvendor	= PCI_ANY_ID,
++	.subdevice	= PCI_ANY_ID,
++	},
++	{
++	.class		= (PCI_CLASS_BRIDGE_HOST << 8),
++	.class_mask	= ~0,
++	.vendor		= PCI_VENDOR_ID_NVIDIA,
++	.device		= PCI_DEVICE_ID_NVIDIA_NFORCE3S,
+ 	.subvendor	= PCI_ANY_ID,
+ 	.subdevice	= PCI_ANY_ID,
+ 	},
+diff -burpN -X ../KDIFX linux-vanilla-2.6.2-rc1/drivers/ide/ide-taskfile.c linux-2.6.2rc1-amd64/drivers/ide/ide-taskfile.c
+--- linux-vanilla-2.6.2-rc1/drivers/ide/ide-taskfile.c	2004-01-21 15:54:56.000000000 +0100
++++ linux-2.6.2rc1-amd64/drivers/ide/ide-taskfile.c	2004-01-21 15:52:42.000000000 +0100
+@@ -142,6 +142,9 @@ ide_startstop_t do_rw_taskfile (ide_driv
+ 	void debug_taskfile(drive, task);
+ #endif /* CONFIG_IDE_TASK_IOCTL_DEBUG */
+ 
++	if (drive->media == ide_cdrom)
++		goto skip1;
++
+ 	/* ALL Command Block Executions SHALL clear nIEN, unless otherwise */
+ 	if (IDE_CONTROL_REG) {
+ 		/* clear nIEN */
+@@ -156,14 +159,26 @@ ide_startstop_t do_rw_taskfile (ide_driv
+ 		hwif->OUTB(hobfile->low_cylinder, IDE_LCYL_REG);
+ 		hwif->OUTB(hobfile->high_cylinder, IDE_HCYL_REG);
+ 	}
+-
++skip1:
+ 	hwif->OUTB(taskfile->feature, IDE_FEATURE_REG);
++
++	if (drive->media == ide_cdrom) {
++		if (IDE_CONTROL_REG)
++			hwif->OUTB(drive->ctl, IDE_CONTROL_REG);
++		SELECT_MASK(drive, 0);
++	}
++
+ 	hwif->OUTB(taskfile->sector_count, IDE_NSECTOR_REG);
++
++	if (drive->media == ide_cdrom)
++		goto skip2;
++
+ 	hwif->OUTB(taskfile->sector_number, IDE_SECTOR_REG);
+ 	hwif->OUTB(taskfile->low_cylinder, IDE_LCYL_REG);
+ 	hwif->OUTB(taskfile->high_cylinder, IDE_HCYL_REG);
+ 
+ 	hwif->OUTB((taskfile->device_head & HIHI) | drive->select.all, IDE_SELECT_REG);
++skip2:
+ #ifdef CONFIG_IDE_TASKFILE_IO
+ 	if (task->handler != NULL) {
+ 		if (task->prehandler != NULL) {
+@@ -192,6 +207,7 @@ ide_startstop_t do_rw_taskfile (ide_driv
+ 		case WIN_WRITEDMA_EXT:
+ 			if (!hwif->ide_dma_write(drive))
+ 				return ide_started;
++			printk(KERN_ERR "%s: DMA WRITE failed!\n", drive->name);
+ 			break;
+ 		case WIN_READDMA_ONCE:
+ 		case WIN_READDMA:
+@@ -199,6 +215,7 @@ ide_startstop_t do_rw_taskfile (ide_driv
+ 		case WIN_IDENTIFY_DMA:
+ 			if (!hwif->ide_dma_read(drive))
+ 				return ide_started;
++			printk(KERN_ERR "%s: DMA READ failed!\n", drive->name);
+ 			break;
+ 		case WIN_READDMA_QUEUED:
+ 		case WIN_READDMA_QUEUED_EXT:
+diff -burpN -X ../KDIFX linux-vanilla-2.6.2-rc1/include/linux/pci_ids.h linux-2.6.2rc1-amd64/include/linux/pci_ids.h
+--- linux-vanilla-2.6.2-rc1/include/linux/pci_ids.h	2004-01-21 15:55:11.000000000 +0100
++++ linux-2.6.2rc1-amd64/include/linux/pci_ids.h	2004-01-21 15:52:45.000000000 +0100
+@@ -1034,6 +1034,8 @@
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE2S_IDE	0x0085
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE2S_SATA	0x008e
+ #define PCI_DEVICE_ID_NVIDIA_ITNT2		0x00A0
++#define PCI_DEVICE_ID_NVIDIA_NFORCE3		0x00d1
++#define PCI_DEVICE_ID_NVIDIA_NFORCE3S  		0x00e1
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE3_IDE	0x00d5
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE3S_SATA	0x00e3
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE3S_IDE	0x00e5
+diff -burpN -X ../KDIFX linux-vanilla-2.6.2-rc1/scripts/kconfig/Makefile linux-2.6.2rc1-amd64/scripts/kconfig/Makefile
+--- linux-vanilla-2.6.2-rc1/scripts/kconfig/Makefile	2003-09-28 10:55:19.000000000 +0200
++++ linux-2.6.2rc1-amd64/scripts/kconfig/Makefile	2004-01-11 08:49:27.000000000 +0100
+@@ -95,7 +95,7 @@ clean-files	:= libkconfig.so lkc_defs.h 
+ HOSTCFLAGS_lex.zconf.o	:= -I$(src)
+ HOSTCFLAGS_zconf.tab.o	:= -I$(src)
+ 
+-HOSTLOADLIBES_qconf	= -L$(QTDIR)/lib -Wl,-rpath,$(QTDIR)/lib -l$(QTLIB) -ldl
++HOSTLOADLIBES_qconf	= -L$(QTDIR)/lib -L$(QTDIR)/lib64 -Wl,-rpath,$(QTDIR)/lib -l$(QTLIB) -ldl
+ HOSTCXXFLAGS_qconf.o	= -I$(QTDIR)/include 
+ 
+ HOSTLOADLIBES_gconf	= `pkg-config gtk+-2.0 gmodule-2.0 libglade-2.0 --libs`

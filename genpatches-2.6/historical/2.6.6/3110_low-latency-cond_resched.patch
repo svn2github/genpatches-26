@@ -1,0 +1,22 @@
+--- linux/fs/super.c-dist	2004-03-09 19:28:58.482270871 +0100
++++ linux/fs/super.c	2004-03-09 19:29:05.000792950 +0100
+
+@@ -356,6 +356,7 @@ void sync_supers(void)
+ {
+ 	struct super_block * sb;
+ restart:
++	cond_resched();
+ 	spin_lock(&sb_lock);
+ 	sb = sb_entry(super_blocks.next);
+ 	while (sb != sb_entry(&super_blocks))
+--- linux/fs/fs-writeback.c-dist	2004-03-09 19:15:25.237752504 +0100
++++ linux/fs/fs-writeback.c	2004-03-09 19:16:37.630330614 +0100
+
+@@ -360,6 +360,7 @@ writeback_inodes(struct writeback_contro
+ 	}
+ 	spin_unlock(&sb_lock);
+ 	spin_unlock(&inode_lock);
++	cond_resched();
+ }
+ 
+ /*

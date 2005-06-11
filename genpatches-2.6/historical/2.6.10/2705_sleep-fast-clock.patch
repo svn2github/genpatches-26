@@ -1,0 +1,35 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/04 21:28:15-08:00 shaohua.li@intel.com 
+#   [PATCH] time runx too fast after S3
+#   
+#   After resume from S3, 'date' shows time run too fast.
+#   
+#   Signed-off-by: Li Shaohua <shaohua.li@intel.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# arch/i386/kernel/time.c
+#   2005/01/04 18:48:13-08:00 shaohua.li@intel.com +3 -2
+#   time runx too fast after S3
+# 
+diff -Nru a/arch/i386/kernel/time.c b/arch/i386/kernel/time.c
+--- a/arch/i386/kernel/time.c	2005-01-24 03:44:08 -08:00
++++ b/arch/i386/kernel/time.c	2005-01-24 03:44:08 -08:00
+@@ -342,12 +342,13 @@
+ 		hpet_reenable();
+ #endif
+ 	sec = get_cmos_time() + clock_cmos_diff;
+-	sleep_length = get_cmos_time() - sleep_start;
++	sleep_length = (get_cmos_time() - sleep_start) * HZ;
+ 	write_seqlock_irqsave(&xtime_lock, flags);
+ 	xtime.tv_sec = sec;
+ 	xtime.tv_nsec = 0;
+ 	write_sequnlock_irqrestore(&xtime_lock, flags);
+-	jiffies += sleep_length * HZ;
++	jiffies += sleep_length;
++	wall_jiffies += sleep_length;
+ 	return 0;
+ }
+ 

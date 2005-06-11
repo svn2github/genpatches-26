@@ -1,0 +1,12 @@
+diff -ruN linux-2.6.1-rc3.old/drivers/scsi/Kconfig linux-2.6.1-rc3/drivers/scsi/Kconfig
+--- linux-2.6.1-rc3.old/drivers/scsi/Kconfig	2004-01-08 10:01:58.000000000 -0500
++++ linux-2.6.1-rc3/drivers/scsi/Kconfig	2004-01-08 10:30:05.672854576 -0500
+@@ -441,7 +441,7 @@
+ 
+ config SCSI_SATA_SIL
+ 	tristate "Silicon Image SATA support"
+-	depends on SCSI_SATA && PCI && BROKEN
++	depends on SCSI_SATA && PCI
+ 	help
+ 	  This option enables support for Silicon Image Serial ATA.
+ 

@@ -1,0 +1,4391 @@
+diff -ruN linux-2.6.5.old/Documentation/scsi/dpti.txt linux-2.6.5/Documentation/scsi/dpti.txt
+--- linux-2.6.5.old/Documentation/scsi/dpti.txt	2004-04-03 22:37:37.000000000 -0500
++++ linux-2.6.5/Documentation/scsi/dpti.txt	2004-04-04 14:06:06.132907280 -0400
+@@ -1,4 +1,4 @@
+- /* TERMS AND CONDITIONS OF USE
++/* TERMS AND CONDITIONS OF USE
+  * 
+  * Redistribution and use in source form, with or without modification, are
+  * permitted provided that redistributions of source code must retain the
+@@ -56,8 +56,13 @@
+  *         FW without having to reboot)
+  *      Changed proc output
+  *
++ * V2.5
++ *   Changes:
++ *	Added 64 bit Scatter Gather when compiled on big memory aaccess
++ *	   architectures.
++ *	Altered driver in support of 2.5+ kernels
++ *
+  * TODO:
+- *      Add 64 bit Scatter Gather when compiled on 64 bit architectures
+  *      Add sparse lun scanning 
+  *      Add code that checks if a device that had been taken offline is
+  *         now online (at the FW level) when test unit ready or inquiry 
+@@ -75,9 +80,25 @@
+  * to the board.  
+  *
+  * The files dpti_ioctl.h dptsig.h osd_defs.h osd_util.h sys_info.h are part of the
+- * interface files for Adaptec's management routines.  These define the structures used
++ * interface files for Adaptecs managment routines.  These define the structures used
+  * in the ioctls.  They are written to be portable.  They are hard to read, but I need
+  * to use them 'as is' or I can miss changes in the interface.
+  *
++ * Cards supported:
++ *	PM2554
++ *	PM2654
++ *	PM2564
++ *	PM3754
++ *	PM3755
++ *	PM3757
++ *	3200S
++ *	3400S
++ *	3210S
++ *	3410S
++ *	2000S
++ *	2005S
++ *	2015S
++ *	2020S
++ *	2400A
+  */
+ 
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt/dpt_osdutil.h linux-2.6.5/drivers/scsi/dpt/dpt_osdutil.h
+--- linux-2.6.5.old/drivers/scsi/dpt/dpt_osdutil.h	2004-04-03 22:38:19.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt/dpt_osdutil.h	1969-12-31 19:00:00.000000000 -0500
+@@ -1,358 +0,0 @@
+-/*	BSDI osd_util.h,v 1.8 1998/06/03 19:14:58 karels Exp	*/
+-
+-/*
+- * Copyright (c) 1996-1999 Distributed Processing Technology Corporation
+- * All rights reserved.
+- *
+- * Redistribution and use in source form, with or without modification, are
+- * permitted provided that redistributions of source code must retain the
+- * above copyright notice, this list of conditions and the following disclaimer.
+- *
+- * This software is provided `as is' by Distributed Processing Technology and
+- * any express or implied warranties, including, but not limited to, the
+- * implied warranties of merchantability and fitness for a particular purpose,
+- * are disclaimed. In no event shall Distributed Processing Technology be
+- * liable for any direct, indirect, incidental, special, exemplary or
+- * consequential damages (including, but not limited to, procurement of
+- * substitute goods or services; loss of use, data, or profits; or business
+- * interruptions) however caused and on any theory of liability, whether in
+- * contract, strict liability, or tort (including negligence or otherwise)
+- * arising in any way out of the use of this driver software, even if advised
+- * of the possibility of such damage.
+- *
+- */
+-
+-#ifndef         __OSD_UTIL_H
+-#define         __OSD_UTIL_H
+-
+-/*File - OSD_UTIL.H
+- ****************************************************************************
+- *
+- *Description:
+- *
+- *      This file contains defines and function prototypes that are
+- *operating system dependent.  The resources defined in this file
+- *are not specific to any particular application.
+- *
+- *Copyright Distributed Processing Technology, Corp.
+- *        140 Candace Dr.
+- *        Maitland, Fl. 32751   USA
+- *        Phone: (407) 830-5522  Fax: (407) 260-5366
+- *        All Rights Reserved
+- *
+- *Author:       Doug Anderson
+- *Date:         1/7/94
+- *
+- *Editors:
+- *
+- *Remarks:
+- *
+- *
+- *****************************************************************************/
+-
+-
+-/*Definitions - Defines & Constants ----------------------------------------- */
+-
+-/*----------------------------- */
+-/* Operating system selections: */
+-/*----------------------------- */
+-
+-/*#define               _DPT_MSDOS      */
+-/*#define               _DPT_WIN_3X     */
+-/*#define               _DPT_WIN_4X     */
+-/*#define               _DPT_WIN_NT     */
+-/*#define               _DPT_NETWARE    */
+-/*#define               _DPT_OS2        */
+-/*#define               _DPT_SCO        */
+-/*#define               _DPT_UNIXWARE   */
+-/*#define               _DPT_SOLARIS    */
+-/*#define               _DPT_NEXTSTEP   */
+-/*#define               _DPT_BANYAN     */
+-
+-/*-------------------------------- */
+-/* Include the OS specific defines */
+-/*-------------------------------- */
+-
+-/*#define       OS_SELECTION    From Above List */
+-/*#define       SEMAPHORE_T     ??? */
+-/*#define       DLL_HANDLE_T    ??? */
+-
+-#if (defined(KERNEL) && (defined(__FreeBSD__) || defined(__bsdi__)))
+-# include        "i386/isa/dpt_osd_defs.h"
+-#else
+-# include        "osd_defs.h"
+-#endif
+-
+-#ifndef DPT_UNALIGNED
+-   #define      DPT_UNALIGNED
+-#endif
+-
+-#ifndef DPT_EXPORT
+-   #define      DPT_EXPORT
+-#endif
+-
+-#ifndef DPT_IMPORT
+-   #define      DPT_IMPORT
+-#endif
+-
+-#ifndef DPT_RUNTIME_IMPORT
+-   #define      DPT_RUNTIME_IMPORT  DPT_IMPORT
+-#endif
+-
+-/*--------------------- */
+-/* OS dependent defines */
+-/*--------------------- */
+-
+-#if defined (_DPT_MSDOS) || defined (_DPT_WIN_3X)
+-   #define      _DPT_16_BIT
+-#else
+-   #define      _DPT_32_BIT
+-#endif
+-
+-#if defined (_DPT_SCO) || defined (_DPT_UNIXWARE) || defined (_DPT_SOLARIS) || defined (_DPT_AIX) || defined (SNI_MIPS) || defined (_DPT_BSDI) || defined (_DPT_FREE_BSD) || defined(_DPT_LINUX)
+-   #define      _DPT_UNIX
+-#endif
+-
+-#if defined (_DPT_WIN_3x) || defined (_DPT_WIN_4X) || defined (_DPT_WIN_NT) \
+-	    || defined (_DPT_OS2)
+-   #define      _DPT_DLL_SUPPORT
+-#endif
+-
+-#if !defined (_DPT_MSDOS) && !defined (_DPT_WIN_3X) && !defined (_DPT_NETWARE)
+-   #define      _DPT_PREEMPTIVE
+-#endif
+-
+-#if !defined (_DPT_MSDOS) && !defined (_DPT_WIN_3X)
+-   #define      _DPT_MULTI_THREADED
+-#endif
+-
+-#if !defined (_DPT_MSDOS)
+-   #define      _DPT_MULTI_TASKING
+-#endif
+-
+-  /* These exist for platforms that   */
+-  /* chunk when accessing mis-aligned */
+-  /* data                             */
+-#if defined (SNI_MIPS) || defined (_DPT_SOLARIS)
+-   #if defined (_DPT_BIG_ENDIAN)
+-	#if !defined (_DPT_STRICT_ALIGN)
+-            #define _DPT_STRICT_ALIGN
+-	#endif
+-   #endif
+-#endif
+-
+-  /* Determine if in C or C++ mode */
+-#ifdef  __cplusplus
+-   #define      _DPT_CPP
+-#else
+-   #define      _DPT_C
+-#endif
+-
+-/*-------------------------------------------------------------------*/
+-/* Under Solaris the compiler refuses to accept code like:           */
+-/*   { {"DPT"}, 0, NULL .... },                                      */
+-/* and complains about the {"DPT"} part by saying "cannot use { }    */
+-/* to initialize char*".                                             */
+-/*                                                                   */
+-/* By defining these ugly macros we can get around this and also     */
+-/* not have to copy and #ifdef large sections of code.  I know that  */
+-/* these macros are *really* ugly, but they should help reduce       */
+-/* maintenance in the long run.                                      */
+-/*                                                                   */
+-/*-------------------------------------------------------------------*/
+-#if !defined (DPTSQO)
+-   #if defined (_DPT_SOLARIS)
+-      #define DPTSQO
+-      #define DPTSQC
+-   #else
+-      #define DPTSQO {
+-      #define DPTSQC }
+-   #endif  /* solaris */
+-#endif  /* DPTSQO */
+-
+-
+-/*---------------------- */
+-/* OS dependent typedefs */
+-/*---------------------- */
+-
+-#if defined (_DPT_MSDOS) || defined (_DPT_SCO)
+-   #define BYTE unsigned char
+-   #define WORD unsigned short
+-#endif
+-
+-#ifndef _DPT_TYPEDEFS
+-   #define _DPT_TYPEDEFS
+-   typedef unsigned char   uCHAR;
+-   typedef unsigned short  uSHORT;
+-   typedef unsigned int    uINT;
+-   typedef unsigned long   uLONG;
+-
+-   typedef union {
+-	 uCHAR        u8[4];
+-	 uSHORT       u16[2];
+-	 uLONG        u32;
+-   } access_U;
+-#endif
+-
+-#if !defined (NULL)
+-   #define      NULL    0
+-#endif
+-
+-
+-/*Prototypes - function ----------------------------------------------------- */
+-
+-#ifdef  __cplusplus
+-   extern "C" {         /* Declare all these functions as "C" functions */
+-#endif
+-
+-/*------------------------ */
+-/* Byte reversal functions */
+-/*------------------------ */
+-
+-  /* Reverses the byte ordering of a 2 byte variable */
+-#if (!defined(osdSwap2))
+- uSHORT       osdSwap2(DPT_UNALIGNED uSHORT *);
+-#endif  // !osdSwap2
+-
+-  /* Reverses the byte ordering of a 4 byte variable and shifts left 8 bits */
+-#if (!defined(osdSwap3))
+- uLONG        osdSwap3(DPT_UNALIGNED uLONG *);
+-#endif  // !osdSwap3
+-
+-
+-#ifdef  _DPT_NETWARE
+-   #include "novpass.h" /* For DPT_Bswapl() prototype */
+-	/* Inline the byte swap */
+-   #ifdef __cplusplus
+-	 inline uLONG osdSwap4(uLONG *inLong) {
+-	 return *inLong = DPT_Bswapl(*inLong);
+-	 }
+-   #else
+-	 #define osdSwap4(inLong)       DPT_Bswapl(inLong)
+-   #endif  // cplusplus
+-#else
+-	/* Reverses the byte ordering of a 4 byte variable */
+-# if (!defined(osdSwap4))
+-   uLONG        osdSwap4(DPT_UNALIGNED uLONG *);
+-# endif  // !osdSwap4
+-
+-  /* The following functions ALWAYS swap regardless of the *
+-   * presence of DPT_BIG_ENDIAN                            */
+-
+-   uSHORT       trueSwap2(DPT_UNALIGNED uSHORT *);
+-   uLONG        trueSwap4(DPT_UNALIGNED uLONG *);
+-
+-#endif  // netware
+-
+-
+-/*-------------------------------------*
+- * Network order swap functions        *
+- *                                     *
+- * These functions/macros will be used *
+- * by the structure insert()/extract() *
+- * functions.                          *
+- *
+- * We will enclose all structure       *
+- * portability modifications inside    *
+- * #ifdefs.  When we are ready, we     *
+- * will #define DPT_PORTABLE to begin  *
+- * using the modifications.            *
+- *-------------------------------------*/
+-uLONG	netSwap4(uLONG val);
+-
+-#if defined (_DPT_BIG_ENDIAN)
+-
+-// for big-endian we need to swap
+-
+-#ifndef NET_SWAP_2
+-#define NET_SWAP_2(x) (((x) >> 8) | ((x) << 8))
+-#endif  // NET_SWAP_2
+-
+-#ifndef NET_SWAP_4
+-#define NET_SWAP_4(x) netSwap4((x))
+-#endif  // NET_SWAP_4
+-
+-#else
+-
+-// for little-endian we don't need to do anything
+-
+-#ifndef NET_SWAP_2
+-#define NET_SWAP_2(x) (x)
+-#endif  // NET_SWAP_2
+-
+-#ifndef NET_SWAP_4
+-#define NET_SWAP_4(x) (x)
+-#endif  // NET_SWAP_4
+-
+-#endif  // big endian
+-
+-
+-
+-/*----------------------------------- */
+-/* Run-time loadable module functions */
+-/*----------------------------------- */
+-
+-  /* Loads the specified run-time loadable DLL */
+-DLL_HANDLE_T    osdLoadModule(uCHAR *);
+-  /* Unloads the specified run-time loadable DLL */
+-uSHORT          osdUnloadModule(DLL_HANDLE_T);
+-  /* Returns a pointer to a function inside a run-time loadable DLL */
+-void *          osdGetFnAddr(DLL_HANDLE_T,uCHAR *);
+-
+-/*--------------------------------------- */
+-/* Mutually exclusive semaphore functions */
+-/*--------------------------------------- */
+-
+-  /* Create a named semaphore */
+-SEMAPHORE_T     osdCreateNamedSemaphore(char *);
+-  /* Create a mutually exlusive semaphore */
+-SEMAPHORE_T     osdCreateSemaphore(void);
+-	/* create an event semaphore */
+-SEMAPHORE_T              osdCreateEventSemaphore(void);
+-	/* create a named event semaphore */
+-SEMAPHORE_T             osdCreateNamedEventSemaphore(char *);
+-
+-  /* Destroy the specified mutually exclusive semaphore object */
+-uSHORT          osdDestroySemaphore(SEMAPHORE_T);
+-  /* Request access to the specified mutually exclusive semaphore */
+-uLONG           osdRequestSemaphore(SEMAPHORE_T,uLONG);
+-  /* Release access to the specified mutually exclusive semaphore */
+-uSHORT          osdReleaseSemaphore(SEMAPHORE_T);
+-	/* wait for a event to happen */
+-uLONG                            osdWaitForEventSemaphore(SEMAPHORE_T, uLONG);
+-	/* signal an event */
+-uLONG                            osdSignalEventSemaphore(SEMAPHORE_T);
+-	/* reset the event */
+-uLONG                            osdResetEventSemaphore(SEMAPHORE_T);
+-
+-/*----------------- */
+-/* Thread functions */
+-/*----------------- */
+-
+-  /* Releases control to the task switcher in non-preemptive */
+-  /* multitasking operating systems. */
+-void            osdSwitchThreads(void);
+-
+-  /* Starts a thread function */
+-uLONG   osdStartThread(void *,void *);
+-
+-/* what is my thread id */
+-uLONG osdGetThreadID(void);
+-
+-/* wakes up the specifed thread */
+-void osdWakeThread(uLONG);
+-
+-/* osd sleep for x miliseconds */
+-void osdSleep(uLONG);
+-
+-#define DPT_THREAD_PRIORITY_LOWEST 0x00
+-#define DPT_THREAD_PRIORITY_NORMAL 0x01
+-#define DPT_THREAD_PRIORITY_HIGHEST 0x02
+-
+-uCHAR osdSetThreadPriority(uLONG tid, uCHAR priority);
+-
+-#ifdef __cplusplus
+-   }    /* end the xtern "C" declaration */
+-#endif
+-
+-#endif  /* osd_util_h */
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt/dpti_i2o-dev.h linux-2.6.5/drivers/scsi/dpt/dpti_i2o-dev.h
+--- linux-2.6.5.old/drivers/scsi/dpt/dpti_i2o-dev.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt/dpti_i2o-dev.h	2004-04-04 14:04:51.145816016 -0400
+@@ -0,0 +1,395 @@
++/*
++ * I2O user space accessible structures/APIs
++ * 
++ * (c) Copyright 1999, 2000 Red Hat Software
++ *
++ * This program is free software; you can redistribute it and/or 
++ * modify it under the terms of the GNU General Public License 
++ * as published by the Free Software Foundation; either version 
++ * 2 of the License, or (at your option) any later version.  
++ * 
++ *************************************************************************
++ *
++ * This header file defines the I2O APIs that are available to both
++ * the kernel and user level applications.  Kernel specific structures
++ * are defined in i2o_osm. OSMs should include _only_ i2o_osm.h which
++ * automatically includs this file.
++ *
++ */
++
++#ifndef _I2O_DEV_H
++#define _I2O_DEV_H
++
++
++#include <linux/ioctl.h>
++
++/*
++ * I2O Control IOCTLs and structures
++ */
++#define I2O_MAGIC_NUMBER	'i'
++#define I2OGETIOPS		_IOR(I2O_MAGIC_NUMBER,0,u8[MAX_I2O_CONTROLLERS])
++#define I2OHRTGET		_IOWR(I2O_MAGIC_NUMBER,1,struct i2o_cmd_hrtlct)
++#define I2OLCTGET		_IOWR(I2O_MAGIC_NUMBER,2,struct i2o_cmd_hrtlct)
++#define I2OPARMSET		_IOWR(I2O_MAGIC_NUMBER,3,struct i2o_cmd_psetget)
++#define I2OPARMGET		_IOWR(I2O_MAGIC_NUMBER,4,struct i2o_cmd_psetget)
++#define I2OSWDL			_IOWR(I2O_MAGIC_NUMBER,5,struct i2o_sw_xfer)
++#define I2OSWUL			_IOWR(I2O_MAGIC_NUMBER,6,struct i2o_sw_xfer)
++#define I2OSWDEL		_IOWR(I2O_MAGIC_NUMBER,7,struct i2o_sw_xfer)
++#define I2OVALIDATE		_IOR(I2O_MAGIC_NUMBER,8,u32)
++#define I2OHTML			_IOWR(I2O_MAGIC_NUMBER,9,struct i2o_html)
++#define I2OEVTREG		_IOW(I2O_MAGIC_NUMBER,10,struct i2o_evt_id)
++#define I2OEVTGET		_IOR(I2O_MAGIC_NUMBER,11,struct i2o_evt_info)
++
++struct i2o_cmd_hrtlct
++{
++	unsigned int iop;	/* IOP unit number */
++	void *resbuf;		/* Buffer for result */
++	unsigned int *reslen;	/* Buffer length in bytes */
++};
++
++struct i2o_cmd_psetget
++{
++	unsigned int iop;	/* IOP unit number */
++	unsigned int tid;	/* Target device TID */
++	void *opbuf;		/* Operation List buffer */
++	unsigned int oplen;	/* Operation List buffer length in bytes */
++	void *resbuf;		/* Result List buffer */
++	unsigned int *reslen;	/* Result List buffer length in bytes */
++};
++
++struct i2o_sw_xfer
++{
++	unsigned int iop;	/* IOP unit number */
++	unsigned char flags;	/* Flags field */
++	unsigned char sw_type;	/* Software type */
++	unsigned int sw_id;	/* Software ID */
++	void *buf;		/* Pointer to software buffer */
++	unsigned int *swlen;	/* Length of software data */
++	unsigned int *maxfrag;	/* Maximum fragment count */
++        unsigned int *curfrag;	/* Current fragment count */
++};
++
++struct i2o_html
++{
++	unsigned int iop;	/* IOP unit number */
++	unsigned int tid;	/* Target device ID */
++	unsigned int page;	/* HTML page */
++	void *resbuf;		/* Buffer for reply HTML page */
++	unsigned int *reslen;	/* Length in bytes of reply buffer */
++	void *qbuf;		/* Pointer to HTTP query string */
++	unsigned int qlen;	/* Length in bytes of query string buffer */
++};
++
++#define I2O_EVT_Q_LEN 32
++
++struct i2o_evt_id
++{
++	unsigned int iop;
++	unsigned int tid;
++	unsigned int evt_mask;
++};
++
++/* Event data size = frame size - message header + evt indicator */
++#define I2O_EVT_DATA_SIZE 88
++
++struct i2o_evt_info
++{
++	struct i2o_evt_id id;
++	unsigned char evt_data[I2O_EVT_DATA_SIZE];
++ 	unsigned int data_size;
++};
++
++struct i2o_evt_get
++{
++	struct i2o_evt_info info;
++	int pending;
++	int lost;
++};
++
++
++/**************************************************************************
++ * HRT related constants and structures
++ **************************************************************************/
++#define I2O_BUS_LOCAL	0
++#define I2O_BUS_ISA	1
++#define I2O_BUS_EISA	2
++#define I2O_BUS_MCA	3
++#define I2O_BUS_PCI	4
++#define I2O_BUS_PCMCIA	5
++#define I2O_BUS_NUBUS	6
++#define I2O_BUS_CARDBUS	7
++#define I2O_BUS_UNKNOWN	0x80
++
++#ifndef __KERNEL__
++
++typedef unsigned char u8;
++typedef unsigned short u16;
++typedef unsigned int u32;
++
++#endif /* __KERNEL__ */
++
++typedef struct _i2o_pci_bus {
++	u8 PciFunctionNumber;
++	u8 PciDeviceNumber;
++	u8 PciBusNumber;
++	u8 reserved;
++	u16 PciVendorID;
++	u16 PciDeviceID;
++} i2o_pci_bus;
++
++typedef struct _i2o_local_bus {
++	u16 LbBaseIOPort;
++	u16 reserved;
++	u32 LbBaseMemoryAddress;
++} i2o_local_bus;
++
++typedef struct _i2o_isa_bus {
++	u16 IsaBaseIOPort;
++	u8 CSN;
++	u8 reserved;
++	u32 IsaBaseMemoryAddress;
++} i2o_isa_bus;
++
++typedef struct _i2o_eisa_bus_info {
++	u16 EisaBaseIOPort;
++	u8 reserved;
++	u8 EisaSlotNumber;
++	u32 EisaBaseMemoryAddress;
++} i2o_eisa_bus;
++
++typedef struct _i2o_mca_bus {
++	u16 McaBaseIOPort;
++	u8 reserved;
++	u8 McaSlotNumber;
++	u32 McaBaseMemoryAddress;
++} i2o_mca_bus;
++
++typedef struct _i2o_other_bus {
++	u16 BaseIOPort;
++	u16 reserved;
++	u32 BaseMemoryAddress;
++} i2o_other_bus;
++
++typedef struct _i2o_hrt_entry {
++	u32 adapter_id;
++	u32 parent_tid:12;
++	u32 state:4;
++	u32 bus_num:8;
++	u32 bus_type:8;
++	union {
++		i2o_pci_bus pci_bus;
++		i2o_local_bus local_bus;
++		i2o_isa_bus isa_bus;
++		i2o_eisa_bus eisa_bus;
++		i2o_mca_bus mca_bus;
++		i2o_other_bus other_bus;
++	} bus;
++} i2o_hrt_entry;
++
++typedef struct _i2o_hrt {
++	u16 num_entries;
++	u8 entry_len;
++	u8 hrt_version;
++	u32 change_ind;
++	i2o_hrt_entry hrt_entry[1];
++} i2o_hrt;
++
++typedef struct _i2o_lct_entry {
++	u32 entry_size:16;
++	u32 tid:12;
++	u32 reserved:4;
++	u32 change_ind;
++	u32 device_flags;
++	u32 class_id:12;
++	u32 version:4;
++	u32 vendor_id:16;
++	u32 sub_class;
++	u32 user_tid:12;
++	u32 parent_tid:12;
++	u32 bios_info:8;
++	u8 identity_tag[8];
++	u32 event_capabilities;
++} i2o_lct_entry;
++
++typedef struct _i2o_lct {
++	u32 table_size:16;
++	u32 boot_tid:12;
++	u32 lct_ver:4;
++	u32 iop_flags;
++	u32 change_ind;
++	i2o_lct_entry lct_entry[1];
++} i2o_lct;
++
++typedef struct _i2o_status_block {
++	u16 org_id;
++	u16 reserved;
++	u16 iop_id:12;
++	u16 reserved1:4;
++	u16 host_unit_id;
++	u16 segment_number:12;
++	u16 i2o_version:4;
++	u8 iop_state;
++	u8 msg_type;
++	u16 inbound_frame_size;
++	u8 init_code;	
++	u8 reserved2;
++	u32 max_inbound_frames;
++	u32 cur_inbound_frames;
++	u32 max_outbound_frames;
++	char product_id[24];	
++	u32 expected_lct_size;
++	u32 iop_capabilities;
++	u32 desired_mem_size;
++	u32 current_mem_size;
++	u32 current_mem_base;
++	u32 desired_io_size;
++	u32 current_io_size;
++	u32 current_io_base;
++	u32 reserved3:24;
++	u32 cmd_status:8;
++} i2o_status_block;
++ 
++/* Event indicator mask flags */
++#define I2O_EVT_IND_STATE_CHANGE		0x80000000
++#define I2O_EVT_IND_GENERAL_WARNING		0x40000000
++#define I2O_EVT_IND_CONFIGURATION_FLAG		0x20000000
++#define I2O_EVT_IND_LOCK_RELEASE		0x10000000
++#define I2O_EVT_IND_CAPABILITY_CHANGE		0x08000000
++#define I2O_EVT_IND_DEVICE_RESET		0x04000000
++#define I2O_EVT_IND_EVT_MASK_MODIFIED		0x02000000
++#define I2O_EVT_IND_FIELD_MODIFIED		0x01000000
++#define I2O_EVT_IND_VENDOR_EVT			0x00800000
++#define I2O_EVT_IND_DEVICE_STATE		0x00400000
++
++/* Executive event indicitors */
++#define I2O_EVT_IND_EXEC_RESOURCE_LIMITS	0x00000001
++#define I2O_EVT_IND_EXEC_CONNECTION_FAIL	0x00000002
++#define I2O_EVT_IND_EXEC_ADAPTER_FAULT		0x00000004
++#define I2O_EVT_IND_EXEC_POWER_FAIL		0x00000008
++#define I2O_EVT_IND_EXEC_RESET_PENDING		0x00000010
++#define I2O_EVT_IND_EXEC_RESET_IMMINENT		0x00000020
++#define I2O_EVT_IND_EXEC_HW_FAIL		0x00000040
++#define I2O_EVT_IND_EXEC_XCT_CHANGE		0x00000080
++#define I2O_EVT_IND_EXEC_NEW_LCT_ENTRY		0x00000100
++#define I2O_EVT_IND_EXEC_MODIFIED_LCT		0x00000200
++#define I2O_EVT_IND_EXEC_DDM_AVAILABILITY	0x00000400
++
++/* Random Block Storage Event Indicators */
++#define I2O_EVT_IND_BSA_VOLUME_LOAD		0x00000001
++#define I2O_EVT_IND_BSA_VOLUME_UNLOAD		0x00000002
++#define I2O_EVT_IND_BSA_VOLUME_UNLOAD_REQ	0x00000004
++#define I2O_EVT_IND_BSA_CAPACITY_CHANGE		0x00000008
++#define I2O_EVT_IND_BSA_SCSI_SMART		0x00000010
++
++/* Event data for generic events */
++#define I2O_EVT_STATE_CHANGE_NORMAL		0x00
++#define I2O_EVT_STATE_CHANGE_SUSPENDED		0x01
++#define I2O_EVT_STATE_CHANGE_RESTART		0x02
++#define I2O_EVT_STATE_CHANGE_NA_RECOVER		0x03
++#define I2O_EVT_STATE_CHANGE_NA_NO_RECOVER	0x04
++#define I2O_EVT_STATE_CHANGE_QUIESCE_REQUEST	0x05
++#define I2O_EVT_STATE_CHANGE_FAILED		0x10
++#define I2O_EVT_STATE_CHANGE_FAULTED		0x11
++
++#define I2O_EVT_GEN_WARNING_NORMAL		0x00
++#define I2O_EVT_GEN_WARNING_ERROR_THRESHOLD	0x01
++#define I2O_EVT_GEN_WARNING_MEDIA_FAULT		0x02
++
++#define I2O_EVT_CAPABILITY_OTHER		0x01
++#define I2O_EVT_CAPABILITY_CHANGED		0x02
++
++#define I2O_EVT_SENSOR_STATE_CHANGED		0x01
++
++/*
++ *	I2O classes / subclasses
++ */
++
++/*  Class ID and Code Assignments
++ *  (LCT.ClassID.Version field)
++ */
++#define    I2O_CLASS_VERSION_10                        0x00
++#define    I2O_CLASS_VERSION_11                        0x01
++
++/*  Class code names
++ *  (from v1.5 Table 6-1 Class Code Assignments.)
++ */
++ 
++#define    I2O_CLASS_EXECUTIVE                         0x000
++#define    I2O_CLASS_DDM                               0x001
++#define    I2O_CLASS_RANDOM_BLOCK_STORAGE              0x010
++#define    I2O_CLASS_SEQUENTIAL_STORAGE                0x011
++#define    I2O_CLASS_LAN                               0x020
++#define    I2O_CLASS_WAN                               0x030
++#define    I2O_CLASS_FIBRE_CHANNEL_PORT                0x040
++#define    I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL          0x041
++#define    I2O_CLASS_SCSI_PERIPHERAL                   0x051
++#define    I2O_CLASS_ATE_PORT                          0x060
++#define    I2O_CLASS_ATE_PERIPHERAL                    0x061
++#define    I2O_CLASS_FLOPPY_CONTROLLER                 0x070
++#define    I2O_CLASS_FLOPPY_DEVICE                     0x071
++#define    I2O_CLASS_BUS_ADAPTER_PORT                  0x080
++#define    I2O_CLASS_PEER_TRANSPORT_AGENT              0x090
++#define    I2O_CLASS_PEER_TRANSPORT                    0x091
++
++/* 
++ *  Rest of 0x092 - 0x09f reserved for peer-to-peer classes
++ */
++ 
++#define    I2O_CLASS_MATCH_ANYCLASS                    0xffffffff
++
++/* 
++ *  Subclasses
++ */
++
++#define    I2O_SUBCLASS_i960                           0x001
++#define    I2O_SUBCLASS_HDM                            0x020
++#define    I2O_SUBCLASS_ISM                            0x021
++ 
++/* Operation functions */
++
++#define I2O_PARAMS_FIELD_GET	0x0001
++#define I2O_PARAMS_LIST_GET	0x0002
++#define I2O_PARAMS_MORE_GET	0x0003
++#define I2O_PARAMS_SIZE_GET	0x0004
++#define I2O_PARAMS_TABLE_GET	0x0005
++#define I2O_PARAMS_FIELD_SET	0x0006
++#define I2O_PARAMS_LIST_SET	0x0007
++#define I2O_PARAMS_ROW_ADD	0x0008
++#define I2O_PARAMS_ROW_DELETE	0x0009
++#define I2O_PARAMS_TABLE_CLEAR	0x000A
++
++/*
++ * I2O serial number conventions / formats 
++ * (circa v1.5)
++ */
++
++#define    I2O_SNFORMAT_UNKNOWN                        0
++#define    I2O_SNFORMAT_BINARY                         1
++#define    I2O_SNFORMAT_ASCII                          2
++#define    I2O_SNFORMAT_UNICODE                        3
++#define    I2O_SNFORMAT_LAN48_MAC                      4
++#define    I2O_SNFORMAT_WAN                            5
++
++/* 
++ * Plus new in v2.0 (Yellowstone pdf doc)
++ */
++
++#define    I2O_SNFORMAT_LAN64_MAC                      6
++#define    I2O_SNFORMAT_DDM                            7
++#define    I2O_SNFORMAT_IEEE_REG64                     8
++#define    I2O_SNFORMAT_IEEE_REG128                    9
++#define    I2O_SNFORMAT_UNKNOWN2                       0xff
++
++/*
++ *	I2O Get Status State values 
++ */
++
++#define	ADAPTER_STATE_INITIALIZING		0x01
++#define	ADAPTER_STATE_RESET			0x02
++#define	ADAPTER_STATE_HOLD			0x04
++#define 	ADAPTER_STATE_READY			0x05
++#define	ADAPTER_STATE_OPERATIONAL		0x08
++#define	ADAPTER_STATE_FAILED			0x10
++#define	ADAPTER_STATE_FAULTED			0x11
++	
++#endif /* _I2O_DEV_H */
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt/dpti_i2o.h linux-2.6.5/drivers/scsi/dpt/dpti_i2o.h
+--- linux-2.6.5.old/drivers/scsi/dpt/dpti_i2o.h	2004-04-03 22:37:06.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt/dpti_i2o.h	2004-04-04 14:04:51.145816016 -0400
+@@ -1,6 +1,5 @@
+-#ifndef _SCSI_I2O_H
+-#define _SCSI_I2O_H
+-
++#ifndef _I2O_H
++#define _I2O_H
+ /* I2O kernel space accessible structures/APIs
+  *
+  * (c) Copyright 1999, 2000 Red Hat Software
+@@ -19,10 +18,9 @@
+ 
+ #ifdef __KERNEL__       /* This file to be included by kernel only */
+ 
+-#include <linux/i2o-dev.h>
++#include "dpti_i2o-dev.h"
+ 
+ #include <asm/semaphore.h> /* Needed for MUTEX init macros */
+-#include <linux/version.h>
+ #include <linux/config.h>
+ #include <linux/notifier.h>
+ #include <asm/atomic.h>
+@@ -44,10 +42,16 @@
+ 
+ #define I2O_MAX_MANAGERS	4
+ 
++#include <asm/semaphore.h> /* Needed for MUTEX init macros */
++
+ /*
+  *	I2O Interface Objects
+  */
+ 
++#include <linux/config.h>
++#include <linux/notifier.h>
++#include <asm/atomic.h>
++
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0)
+ 
+ #define DECLARE_MUTEX(name) struct semaphore name=MUTEX
+@@ -456,4 +460,4 @@
+ 
+ #endif /* __KERNEL__ */
+ 
+-#endif /* _SCSI_I2O_H */
++#endif /* _I2O_H */
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt/dpti_ioctl.h linux-2.6.5/drivers/scsi/dpt/dpti_ioctl.h
+--- linux-2.6.5.old/drivers/scsi/dpt/dpti_ioctl.h	2004-04-03 22:36:57.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt/dpti_ioctl.h	2004-04-04 14:04:51.146815864 -0400
+@@ -3,10 +3,10 @@
+                              -------------------
+     begin                : Thu Sep 7 2000
+     copyright            : (C) 2001 by Adaptec
+-    email                : deanna_bonds@adaptec.com
++    email                : Mark_Salyzyn@adaptec.com
++    original author      : doug_anderson@adaptec.com & deanna_bonds@adaptec.com
+ 
+-    See Documentation/scsi/dpti.txt for history, notes, license info
+-    and credits
++    See README.dpti for history, notes, license info, and credits
+  ***************************************************************************/
+ 
+ /***************************************************************************
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt/dptsig.h linux-2.6.5/drivers/scsi/dpt/dptsig.h
+--- linux-2.6.5.old/drivers/scsi/dpt/dptsig.h	2004-04-03 22:38:14.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt/dptsig.h	2004-04-04 14:04:51.146815864 -0400
+@@ -1,7 +1,8 @@
+ /*	BSDI dptsig.h,v 1.7 1998/06/03 19:15:00 karels Exp	*/
+ 
+ /*
+- * Copyright (c) 1996-1999 Distributed Processing Technology Corporation
++ * Copyright (c) 1996-2000 Distributed Processing Technology Corporation
++ * Copyright (c) 2000-2001 Adaptec Corporation.
+  * All rights reserved.
+  *
+  * Redistribution and use in source form, with or without modification, are
+@@ -92,6 +93,7 @@
+ #define PROC_INTEL      0x00    /* Intel 80x86 */
+ #define PROC_MOTOROLA   0x01    /* Motorola 68K */
+ #define PROC_MIPS4000   0x02    /* MIPS RISC 4000 */
++#define PROC_MIPS       PROC_MIPS4000 /* MIPS RISC */
+ #define PROC_ALPHA      0x03    /* DEC Alpha */
+ #define PROC_POWERPC    0x04    /* IBM Power PC */
+ #define PROC_i960       0x05    /* Intel i960 */
+@@ -108,10 +110,14 @@
+ #define PROC_486        0x08    /* Intel 80486 */
+ #define PROC_PENTIUM    0x10    /* Intel 586 aka P5 aka Pentium */
+ #define PROC_SEXIUM	0x20	/* Intel 686 aka P6 aka Pentium Pro or MMX */
++#define PROC_ITANIUM    0x40    /* Intel Itanium 64 bit */
+ 
+ /* PROC_i960: */
+-#define PROC_960RX      0x01    /* Intel 80960RC/RD */
++#define PROC_960RX      0x01    /* Intel 80960RP/RD */
+ #define PROC_960HX      0x02    /* Intel 80960HA/HD/HT */
++#define PROC_960RN      0x03    /* Intel 80960RN/RM */
++#define PROC_960RS      0x04    /* Intel 80960RS */
++#define PROC_80303      0x05    /* Intel 80303 (ZION) */
+ 
+ /* PROC_MOTOROLA: */
+ #define PROC_68000      0x01    /* Motorola 68000 */
+@@ -125,8 +131,9 @@
+ #define PROC_PPC603		0x02	/* PowerPC 603 */
+ #define PROC_PPC604		0x04	/* PowerPC 604 */
+ 
+-/* PROC_MIPS4000: */
++/* PROC_MIPS */
+ #define PROC_R4000      0x01    /* MIPS R4000 */
++#define PROC_RM7000     0x02    /* MIPS RM7000 */
+ 
+ /* Filetype - sigBYTE dsFiletype;       DISTINCT VALUES */
+ /* ------------------------------------------------------------------ */
+@@ -147,6 +154,7 @@
+ #define FT_LIBRARY      14      /* Storage Manager Real-Mode Calls */
+ #define FT_RESOURCE 	15 	/* Storage Manager Resource File */
+ #define FT_MODEM_DB  	16  	/* Storage Manager Modem Database */
++#define FT_DMI          17      /* DMI component interface */
+ 
+ /* Filetype flags - sigBYTE dsFiletypeFlags;    FLAG BITS */
+ /* ------------------------------------------------------------------ */
+@@ -170,6 +178,7 @@
+ #define OEM_OLIVETTI    5       /* Olivetti */
+ #define OEM_SNI         6       /* Siemens/Nixdorf */
+ #define OEM_SUN         7       /* SUN Microsystems */
++#define OEM_ADAPTEC     8       /* Adaptec */
+ 
+ /* Operating System  - sigLONG dsOS;    FLAG BITS */
+ /* ------------------------------------------------------------------ */
+@@ -202,6 +211,8 @@
+ #define OS_SINIX_N      0x04000000 /* SNI SINIX-N			*/
+ #define OS_PLAN9	0x08000000 /* ATT Plan 9			*/
+ #define OS_TSX		0x10000000 /* SNH TSX-32			*/
++#define OS_WINDOWS_98   0x20000000 /* Microsoft Windows '98     */
++#define OS_NW5x                 0x40000000 /* Novell Netware 5x */
+ 
+ #define OS_OTHER        0x80000000 /* Other				*/
+ 
+@@ -284,6 +295,93 @@
+ #define REQ_ENGINE      0x10    /* Requires a DPT Engine to be loaded   */
+ #define REQ_COMM_ENG    0x20    /* Requires a DPT Communications Engine */
+ 
++/* ------------------------------------------------------------------   */
++/* Requirements - sigWORD dsFirmware;         FLAG BITS                 */
++/* ------------------------------------------------------------------   */
++#define dsFirmware dsApplication
++#define FW_DNLDSIZE16_OLD       0x0000    /* 0..3 DownLoader Size 16K - TO SUPPORT OLD IMAGES */
++#define FW_DNLDSIZE16k    0x0000    /* 0..3 DownLoader Size 16k             */
++#define FW_DNLDSIZE16     0x0001    /* 0..3 DownLoader Size 16K         */
++#define FW_DNLDSIZE32     0x0002    /* 0..3 DownLoader Size 32K         */
++#define FW_DNLDSIZE64     0x0004    /* 0..3 DownLoader Size 64K         */
++#define FW_DNLDSIZE0      0x000f    /* 0..3 DownLoader Size 0K - NONE   */
++#define FW_DNLDSIZE_NONE        0x000F    /* 0..3 DownLoader Size - NONE      */
++
++                /* Code Offset is position of the code within the ROM CODE Segment */
++#define FW_DNLDR_TOP      0x0000        /* 12 DownLoader Position (0=Top, 1=Bottom) */
++#define FW_DNLDR_BTM      0x1000        /* 12 DownLoader Position (0=Top, 1=Bottom) Dominator */
++
++#define FW_LOAD_BTM               0x0000        /* 13 Code Offset (0=Btm, 1=Top) MIPS   */
++#define FW_LOAD_TOP               0x2000        /* 13 Code Offset (0=Btm, 1=Top) i960   */
++
++#define FW_SIG_VERSION1   0x0000    /* 15..14 Version Bits 0=Ver1               */
++#define FW_SIG_VERSION2   0x4000        /* 15..14 Version Bits 1=Ver2       */
++
++/*
++                                0..3   Downloader Size (Value * 16K)
++
++                                4
++                                5
++                                6
++                                7
++
++                                8
++                                9
++                                10
++                                11
++
++                                12              Downloader Position (0=Top of Image  1= Bottom of Image (Dominator) )
++                                13              Load Offset (0=BTM (MIPS) -- 1=TOP (960) )
++                                14..15  F/W Sig Version (0=Ver1)
++*/
++
++/* ------------------------------------------------------------------   */
++/* Sub System Vendor IDs - The PCI Sub system and vendor IDs for each   */
++/* Adaptec Raid controller                                              */
++/* ------------------------------------------------------------------   */
++#define PM1554U2_SUB_ID          0xC0011044
++#define PM1654U2_SUB_ID          0xC0021044
++#define PM1564U3_1_SUB_ID    0xC0031044
++#define PM1564U3_2_SUB_ID    0xC0041044
++#define PM1554U2_NOACPI_SUB_ID      0xC0051044
++#define PM2554U2_SUB_ID      0xC00A1044
++#define PM2654U2_SUB_ID      0xC00B1044
++#define PM2664U3_1_SUB_ID    0xC00C1044
++#define PM2664U3_2_SUB_ID    0xC00D1044
++#define PM2554U2_NOACPI_SUB_ID      0xC00E1044
++#define PM2654U2_NOACPI_SUB_ID      0xC00F1044
++#define PM3754U2_SUB_ID      0xC0141044
++#define PM3755U2B_SUB_ID     0xC0151044
++#define PM3755F_SUB_ID       0xC0161044
++#define PM3757U2_1_SUB_ID    0xC01E1044
++#define PM3757U2_2_SUB_ID    0xC01F1044
++#define PM3767U3_2_SUB_ID    0xC0201044
++#define PM3767U3_4_SUB_ID    0xC0211044
++#define PM2865U3_1_SUB_ID    0xC0281044
++#define PM2865U3_2_SUB_ID    0xC0291044
++#define PM2865F_SUB_ID       0xC02A1044
++#define ADPT2000S_1_SUB_ID       0xC03C1044
++#define ADPT2000S_2_SUB_ID       0xC03D1044
++#define ADPT2000F_SUB_ID         0xC03E1044
++#define ADPT3000S_1_SUB_ID       0xC0461044
++#define ADPT3000S_2_SUB_ID       0xC0471044
++#define ADPT3000F_SUB_ID         0xC0481044
++#define ADPT5000S_1_SUB_ID       0xC0501044
++#define ADPT5000S_2_SUB_ID       0xC0511044
++#define ADPT5000F_SUB_ID         0xC0521044
++#define ADPT1000UDMA_SUB_ID      0xC05A1044
++#define ADPT1000UDMA_DAC_SUB_ID  0xC05B1044
++#define ADPTI2O_DEVICE_ID        0xa501
++#define ADPTDOMINATOR_DEVICE_ID  0xa511
++#define ADPTDOMINATOR_SUB_ID_START   0xC0321044
++#define ADPTDOMINATOR_SUB_ID_END     0xC03b1044
++
++
++
++/* ------------------------------------------------------------------   */
++/* ------------------------------------------------------------------   */
++/* ------------------------------------------------------------------   */
++
+ /*
+  * You may adjust dsDescription_size with an override to a value less than
+  * 50 so that the structure allocates less real space.
+@@ -318,6 +416,35 @@
+ /* 32 bytes minimum - with no description.  Put NULL at description[0] */
+ /* 81 bytes maximum - with 49 character description plus NULL. */
+ 
++#if defined __bsdi__
++#ifndef PACK
++#define PACK __attribute__ ((packed))
++#endif
++typedef struct dpt_sig_Packed {
++    char    dsSignature[6] PACK;      /* ALWAYS "dPtSiG" */
++    sigBYTE dsSigVersion PACK;        /* signature version (currently 1) */
++    sigBYTE dsProcessorFamily PACK;   /* what type of processor */
++    sigBYTE dsProcessor PACK;         /* precise processor */
++    sigBYTE dsFiletype PACK;          /* type of file */
++    sigBYTE dsFiletypeFlags PACK;     /* flags to specify load type, etc. */
++    sigBYTE dsOEM PACK;               /* OEM file was created for */
++    sigLONG dsOS PACK;                /* which Operating systems */
++    sigWORD dsCapabilities PACK;      /* RAID levels, etc. */
++    sigWORD dsDeviceSupp PACK;        /* Types of SCSI devices supported */
++    sigWORD dsAdapterSupp PACK;       /* DPT adapter families supported */
++    sigWORD dsApplication PACK;       /* applications file is for */
++    sigBYTE dsRequirements PACK;      /* Other driver dependencies */
++    sigBYTE dsVersion PACK;           /* 1 */
++    sigBYTE dsRevision PACK;          /* 'J' */
++    sigBYTE dsSubRevision PACK;       /* '9'   ' ' if N/A */
++    sigBYTE dsMonth PACK;             /* creation month */
++    sigBYTE dsDay PACK;               /* creation day */
++    sigBYTE dsYear PACK;              /* creation year since 1980 (1993=13) */
++    /* description (NULL terminated) */
++    char  dsDescription[dsDescription_size] PACK;
++} dpt_sig_S_Packed;
++#define PACKED_SIG_SIZE sizeof(dpt_sig_S_Packed)
++#endif
+ /* This line added at Roycroft's request */
+ /* Microsoft's NT compiler gets confused if you do a pack and don't */
+ /* restore it. */
+diff -ruN linux-2.6.5.old/drivers/scsi/dpt_i2o.c linux-2.6.5/drivers/scsi/dpt_i2o.c
+--- linux-2.6.5.old/drivers/scsi/dpt_i2o.c	2004-04-03 22:37:44.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpt_i2o.c	2004-04-04 14:05:11.269247824 -0400
+@@ -1,14 +1,15 @@
+ /***************************************************************************
+-                          dpti.c  -  description
++                          dpt_i2o.c  -  description
+                              -------------------
+     begin                : Thu Sep 7 2000
+-    copyright            : (C) 2000 by Adaptec
+-    email                : deanna_bonds@adaptec.com
++    copyright            : (C) 2000-2003 by Adaptec
++    email                : Mark_Salyzyn@adaptec.com
++    original author      : deanna_bonds@adaptec.com
+ 
+-			   July 30, 2001 First version being submitted
++    			   July 30, 2001 First version being submitted
+ 			   for inclusion in the kernel.  V2.4
+ 
+-    See Documentation/scsi/dpti.txt for history, notes, license info
++    See Documentation/scsi/dpti.txt for history, notes, license info,
+     and credits
+  ***************************************************************************/
+ 
+@@ -24,19 +25,21 @@
+ //#define DEBUG 1
+ //#define UARTDELAY 1
+ 
+-// On the real kernel ADDR32 should always be zero for 2.4. GFP_HIGH allocates
+-// high pages. Keep the macro around because of the broken unmerged ia64 tree
+-
+-#define ADDR32 (0)
+-
+-#error Please convert me to Documentation/DMA-mapping.txt
+-
+ #include <linux/version.h>
++
+ #include <linux/module.h>
+ 
+-MODULE_AUTHOR("Deanna Bonds, with _lots_ of help from Mark Salyzyn");
++MODULE_AUTHOR("Deanna Bonds & Mark Salyzyn");
+ MODULE_DESCRIPTION("Adaptec I2O RAID Driver");
+ 
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++static char kernel_version[] = UTS_RELEASE;
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,18)) && (LINUX_VERSION_CODE != KERNEL_VERSION(2,4,13)) && (LINUX_VERSION_CODE != KERNEL_VERSION(2,4,9))
++# define dma_handle ptr
++#endif
++
+ ////////////////////////////////////////////////////////////////
+ 
+ #include <linux/ioctl.h>	/* For SCSI-Passthrough */
+@@ -47,7 +50,12 @@
+ #include <linux/config.h>	/* for CONFIG_PCI */
+ #include <linux/pci.h>		/* for PCI support */
+ #include <linux/proc_fs.h>
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ #include <linux/blkdev.h>
++#else
++#include <linux/blk.h>
++#include <linux/tqueue.h>
++#endif
+ #include <linux/delay.h>	/* for udelay */
+ #include <linux/interrupt.h>
+ #include <linux/kernel.h>	/* for printk */
+@@ -62,14 +70,30 @@
+ 
+ #include <asm/processor.h>	/* for boot_cpu_data */
+ #include <asm/pgtable.h>
+-#include <asm/io.h>		/* for virt_to_bus, etc. */
++#include <asm/io.h>
+ 
+ #include "scsi.h"
+ #include "hosts.h"
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++#include "sd.h"
++#endif
+ 
+ #include "dpt/dptsig.h"
+ #include "dpti.h"
+ 
++#if (defined(__x86_64__))
++# include <asm-x86_64/ioctl32.h>
++#endif
++
++#if LINUX_VERSION_CODE  <= KERNEL_VERSION(2,4,2)   
++static inline int pci_set_dma_mask(struct pci_dev *dev, dma_addr_t mask)
++{
++    dev->dma_mask = mask;
++
++    return 0;
++}
++#endif
++
+ /*============================================================================
+  * Create a binary signature - this is read by dptsig
+  * Needed for our management apps
+@@ -79,14 +103,16 @@
+ 	{'d', 'P', 't', 'S', 'i', 'G'}, SIG_VERSION,
+ #ifdef __i386__
+ 	PROC_INTEL, PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
+-#elif defined(__ia64__)
+-	PROC_INTEL, PROC_IA64,
+-#elif defined(__sparc__)
+-	PROC_ULTRASPARC,
+-#elif defined(__alpha__)
+-	PROC_ALPHA ,
++#elif defined __ia64__
++	PROC_INTEL, PROC_ITANIUM,
++#elif defined __x86_64__
++	PROC_INTEL, PROC_SEXIUM,
++#elif defined __sparc__
++	PROC_ULTRASPARC, ~(sigBYTE)0U,
++#elif defined __alpha__
++	PROC_ALPHA, ~(sigBYTE)0U,
+ #else
+-	(-1),(-1)
++	~(sigBYTE)0U, ~(sigBYTE)0U,
+ #endif
+ 	 FT_HBADRVR, 0, OEM_DPT, OS_LINUX, CAP_OVERLAP, DEV_ALL,
+ 	ADF_ALL_SC5, 0, 0, DPT_VERSION, DPT_REVISION, DPT_SUBREVISION,
+@@ -101,9 +127,13 @@
+  *============================================================================
+  */
+ 
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++static struct semaphore adpt_configuration_lock = MUTEX;
++#else
+ DECLARE_MUTEX(adpt_configuration_lock);
+-
+-static struct i2o_sys_tbl *sys_tbl = NULL;
++#endif
++static struct i2o_sys_tbl *sys_tbl_va = NULL;
++static dma_addr_t sys_tbl_pa;
+ static int sys_tbl_ind = 0;
+ static int sys_tbl_len = 0;
+ 
+@@ -111,6 +141,15 @@
+ static adpt_hba* hba_chain = NULL;
+ static int hba_count = 0;
+ 
++// If this is driver is embedded in the kernel this define
++// should be moved to include/linux/proc_fs.h as an emumerated type
++#define PROC_SCSI_DPT_I2O  0
++struct proc_dir_entry proc_scsi_dptI2O = {
++	PROC_SCSI_DPT_I2O, 7, DPT_DRIVER,
++	S_IFDIR | S_IRUGO | S_IXUGO, 2,
++	0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL
++};
++
+ static struct file_operations adpt_fops = {
+ 	.ioctl		= adpt_ioctl,
+ 	.open		= adpt_open,
+@@ -149,9 +188,9 @@
+ 
+ static u8 adpt_read_blink_led(adpt_hba* host)
+ {
+-	if(host->FwDebugBLEDflag_P != 0) {
+-		if( readb(host->FwDebugBLEDflag_P) == 0xbc ){
+-			return readb(host->FwDebugBLEDvalue_P);
++	if(host->bled_flag_addr_virt != 0) {
++		if( readb(host->bled_flag_addr_virt) == 0xbc ){
++			return readb(host->bled_value_addr_virt);
+ 		}
+ 	}
+ 	return 0;
+@@ -178,10 +217,22 @@
+ 
+ 	PINFO("Detecting Adaptec I2O RAID controllers...\n");
+ 
+-        /* search for all Adatpec I2O RAID cards */
+-	while ((pDev = pci_find_device( PCI_DPT_VENDOR_ID, PCI_ANY_ID, pDev))) {
+-		if(pDev->device == PCI_DPT_DEVICE_ID ||
+-		   pDev->device == PCI_DPT_RAPTOR_DEVICE_ID){
++        /* search for all Adaptec I2O RAID cards */
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0))
++	while ((pDev = pci_find_device( dptids[0].vendor, PCI_ANY_ID, pDev))) {
++		if(pDev->device == dptids[0].device ||
++		   pDev->device == dptids[1].device){
++			if(adpt_install_hba(sht, pDev) ){
++				PERROR("Could not Init an I2O RAID device\n");
++				PERROR("Will not try to detect others.\n");
++				return hba_count-1;
++			}
++		}
++	}
++#else
++	while ((pDev = adpt_pci_find_device( dptids[0].vendor, pDev))) {
++		if(pDev->device == dptids[0].device ||
++		   pDev->device == dptids[1].device){
+ 			if(adpt_install_hba(sht, pDev) ){
+ 				PERROR("Could not Init an I2O RAID device\n");
+ 				PERROR("Will not try to detect others.\n");
+@@ -189,6 +240,7 @@
+ 			}
+ 		}
+ 	}
++#endif
+ 
+ 	/* In INIT state, Activate IOPs */
+ 	for (pHba = hba_chain; pHba; pHba = pHba->next) {
+@@ -242,11 +294,23 @@
+ 		adpt_inquiry(pHba);
+ 	}
+ 
++#if 0
++printk (KERN_INFO"dpti: Register us with the SCSI system\n");
++#endif
+ 	for (pHba = hba_chain; pHba; pHba = pHba->next) {
++#if 0
++printk (KERN_INFO"adpt_scsi_register(%p,%p)\n", pHba, sht);
++#endif
+ 		if( adpt_scsi_register(pHba,sht) < 0){
++#if 0
++printk (KERN_INFO"adpt_i2o_delete_hba(%p)\n", pHba);
++#endif
+ 			adpt_i2o_delete_hba(pHba);
+ 			continue;
+ 		}
++#if 0
++printk (KERN_INFO"registered\n");
++#endif
+ 		pHba->initialized = TRUE;
+ 		pHba->state &= ~DPTI_STATE_RESET;
+ 	}
+@@ -254,10 +318,27 @@
+ 	// Register our control device node
+ 	// nodes will need to be created in /dev to access this
+ 	// the nodes can not be created from within the driver
++#if 0
++printk (KERN_INFO"dpti: Register us with the char device system\n");
++#endif
+ 	if (hba_count && register_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER, &adpt_fops)) {
+ 		adpt_i2o_sys_shutdown();
+ 		return 0;
+ 	}
++#	if (defined(__x86_64__))
++		register_ioctl32_conversion(DPT_SIGNATURE, sys_ioctl);
++		register_ioctl32_conversion(I2OUSRCMD, sys_ioctl);
++		register_ioctl32_conversion(DPT_CTRLINFO, sys_ioctl);
++		register_ioctl32_conversion(DPT_SYSINFO, sys_ioctl);
++		register_ioctl32_conversion(DPT_BLINKLED, sys_ioctl);
++		register_ioctl32_conversion(I2ORESETCMD, sys_ioctl);
++		register_ioctl32_conversion(I2ORESCANCMD, sys_ioctl);
++		register_ioctl32_conversion(DPT_TARGET_BUSY & 0xFFFF, sys_ioctl);
++		register_ioctl32_conversion(DPT_TARGET_BUSY, sys_ioctl);
++#	endif
++#if 0
++printk (KERN_INFO"dpti: %d adapters\n", hba_count);
++#endif
+ 	return hba_count;
+ }
+ 
+@@ -284,11 +365,12 @@
+ 	u32 len;
+ 	u32 reqlen;
+ 	u8* buf;
++	dma_addr_t addr;
+ 	u8  scb[16];
+ 	s32 rcode;
+ 
+ 	memset(msg, 0, sizeof(msg));
+-	buf = (u8*)kmalloc(80,GFP_KERNEL|ADDR32);
++	buf = (u8*)pci_alloc_consistent(pHba->pDev, 80, &addr);
+ 	if(!buf){
+ 		printk(KERN_ERR"%s: Could not allocate buffer\n",pHba->name);
+ 		return;
+@@ -301,18 +383,18 @@
+ 
+ 	reqlen = 14;		// SINGLE SGE
+ 	/* Stick the headers on */
+-	msg[0] = reqlen<<16 | SGL_OFFSET_12;
+-	msg[1] = (0xff<<24|HOST_TID<<12|ADAPTER_TID);
++	msg[0] = cpu_to_le32(reqlen<<16 | SGL_OFFSET_12);
++	msg[1] = cpu_to_le32(0xff<<24|HOST_TID<<12|ADAPTER_TID);
+ 	msg[2] = 0;
+-	msg[3]  = 0;
++	msg[3] = 0;
+ 	// Adaptec/DPT Private stuff 
+-	msg[4] = I2O_CMD_SCSI_EXEC|DPT_ORGANIZATION_ID<<16;
+-	msg[5] = ADAPTER_TID | 1<<16 /* Interpret*/;
++	msg[4] = cpu_to_le32(I2O_CMD_SCSI_EXEC|DPT_ORGANIZATION_ID<<16);
++	msg[5] = cpu_to_le32(ADAPTER_TID | 1<<16) /* Interpret*/;
+ 	/* Direction, disconnect ok | sense data | simple queue , CDBLen */
+ 	// I2O_SCB_FLAG_ENABLE_DISCONNECT | 
+ 	// I2O_SCB_FLAG_SIMPLE_QUEUE_TAG | 
+ 	// I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE;
+-	msg[6] = scsidir|0x20a00000| 6 /* cmd len*/;
++	msg[6] = cpu_to_le32(scsidir|0x20a00000| 6) /* cmd len*/;
+ 
+ 	mptr=msg+7;
+ 
+@@ -331,15 +413,28 @@
+ 	lenptr=mptr++;		/* Remember me - fill in when we know */
+ 
+ 	/* Now fill in the SGList and command */
+-	*lenptr = len;
+-	*mptr++ = 0xD0000000|direction|len;
+-	*mptr++ = virt_to_bus(buf);
++	*lenptr = cpu_to_le32(len);
++	/* The following test gets optimized out if dma_addr_t is <= 32 bits */
++	if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)addr >> 32) != 0) ) {
++		*mptr++ = cpu_to_le32((0x7C<<24)+(2<<16)+0x02); /* Enable 64 bit */
++		*mptr++ = cpu_to_le32(1 << PAGE_SHIFT);
++		*mptr++ = cpu_to_le32(0xD0000000|direction|len);
++		*mptr++ = cpu_to_le32(addr);
++		*mptr++ = cpu_to_le32((u64)addr >> 32);
++		reqlen += 3;
++		msg[0] = cpu_to_le32(reqlen<<16 | SGL_OFFSET_12);
++	} else {
++		*mptr++ = cpu_to_le32(0xD0000000|direction|len);
++		*mptr++ = cpu_to_le32(addr);
++	}
+ 
+ 	// Send it on it's way
+ 	rcode = adpt_i2o_post_wait(pHba, msg, reqlen<<2, 120);
+ 	if (rcode != 0) {
+ 		sprintf(pHba->detail, "Adaptec I2O RAID");
+ 		printk(KERN_INFO "%s: Inquiry Error (%d)\n",pHba->name,rcode);
++		if (rcode != -ETIME && rcode != -EINTR)
++			pci_free_consistent(pHba->pDev, 80, buf, addr);
+ 	} else {
+ 		memset(pHba->detail, 0, sizeof(pHba->detail));
+ 		memcpy(&(pHba->detail), "Vendor: Adaptec ", 16);
+@@ -348,28 +443,62 @@
+ 		memcpy(&(pHba->detail[40]), " FW: ", 4);
+ 		memcpy(&(pHba->detail[44]), (u8*) &buf[32], 4);
+ 		pHba->detail[48] = '\0';	/* precautionary */
++		pci_free_consistent(pHba->pDev, 80, buf, addr);
+ 	}
+-	kfree(buf);
+ 	adpt_i2o_status_get(pHba);
+ 	return ;
+ }
+ 
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ static int adpt_slave_configure(Scsi_Device * device)
+ {
+-	struct Scsi_Host *host = device->host;
+-	adpt_hba* pHba;
++	struct Scsi_Host * host = device->host;
++	adpt_hba * pHba;
+ 
+ 	pHba = (adpt_hba *) host->hostdata[0];
+ 
+ 	if (host->can_queue && device->tagged_supported) {
+ 		scsi_adjust_queue_depth(device, MSG_SIMPLE_TAG,
+-				host->can_queue - 1);
++			host->can_queue - 1);
+ 	} else {
+ 		scsi_adjust_queue_depth(device, 0, 1);
+-	}
++        }
+ 	return 0;
+ }
++#else
++static void adpt_select_queue_depths(struct Scsi_Host *host, Scsi_Device * devicelist)
++{
++	Scsi_Device *device;	/* scsi layer per device information */
++	adpt_hba* pHba;
++
++	pHba = (adpt_hba *) host->hostdata[0];
++
++	for (device = devicelist; device != NULL; device = device->next) {
++		if (device->host != host) {
++			continue;
++		}
++		if (host->can_queue) {
++			device->queue_depth =  host->can_queue - 1;
++		} else {
++			device->queue_depth = 1;
++		}
++	}
++}
++#endif
++#if 0
++void adpt_sleep(void)
++{
++	spinlock_t * was_locked = (spinlock_t *)NULL;
++	if (spin_is_locked(&io_request_lock)) {
++		was_locked = &io_request_lock;
++		spin_unlock_irq(was_locked);
++	}
++	scsi_sleep(1);
++	if (was_locked)
++		spin_lock_irq(was_locked);
++}
++#endif
+ 
+ static int adpt_queue(Scsi_Cmnd * cmd, void (*done) (Scsi_Cmnd *))
+ {
+@@ -377,6 +506,10 @@
+ 	struct adpt_device* pDev = NULL;	/* dpt per device information */
+ 	ulong timeout = jiffies + (TMOUT_SCSI*HZ);
+ 
++#if 0
++printk (KERN_INFO"adpt_queue(%p,%p)\n", cmd, done);
++adpt_sleep();
++#endif
+ 	cmd->scsi_done = done;
+ 	/*
+ 	 * SCSI REQUEST_SENSE commands will be executed automatically by the 
+@@ -411,8 +544,9 @@
+ 		return 1;
+ 	}
+ 
+-	if(cmd->eh_state != SCSI_STATE_QUEUED){
+-		// If we are not doing error recovery
++	if ((cmd->eh_state != SCSI_STATE_QUEUED)
++	 && (cmd->device->type == TYPE_DISK)) {
++		// If the controller is doing error recovery
+ 		mod_timer(&cmd->eh_timeout, timeout);
+ 	}
+ 
+@@ -424,6 +558,10 @@
+ 		 * to the device structure.  This should be a TEST_UNIT_READY
+ 		 * command from scan_scsis_single.
+ 		 */
++#if 0
++printk (KERN_INFO"adpt_find_device(%p,%d,%d,%d)\n", pHba, cmd->device->channel, cmd->device->id, cmd->device->lun);
++adpt_sleep();
++#endif
+ 		if ((pDev = adpt_find_device(pHba, (u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun)) == NULL) {
+ 			// TODO: if any luns are at this bus, scsi id then fake a TEST_UNIT_READY and INQUIRY response 
+ 			// with type 7F (for all luns less than the max for this bus,id) so the lun scan will continue.
+@@ -431,8 +569,16 @@
+ 			cmd->scsi_done(cmd);
+ 			return 0;
+ 		}
++#if 0
++printk (KERN_INFO"pDev=%p\n", pDev);
++adpt_sleep();
++#endif
+ 		(struct adpt_device*)(cmd->device->hostdata) = pDev;
+ 	}
++#if 0
++printk (KERN_INFO"pDev->pScsi_dev=%p\n", cmd->device);
++adpt_sleep();
++#endif
+ 	pDev->pScsi_dev = cmd->device;
+ 
+ 	/*
+@@ -445,12 +591,21 @@
+ 	return adpt_scsi_to_i2o(pHba, cmd, pDev);
+ }
+ 
+-static int adpt_bios_param(struct scsi_device *sdev, struct block_device *dev,
+-		sector_t capacity, int geom[])
++static int adpt_bios_param(
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	struct scsi_device *sdev, struct block_device *dev, sector_t capacity,
++#else
++	Disk* disk, kdev_t dev,
++#endif
++	int geom[])
+ {
+ 	int heads=-1;
+ 	int sectors=-1;
+ 	int cylinders=-1;
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++	unsigned long capacity = disk->capacity;
++	Scsi_Device * sdev = disk->device;
++#endif
+ 
+ 	// *** First lets set the default geometry ****
+ 	
+@@ -479,7 +634,12 @@
+ 		heads = 255;
+ 		sectors = 63;
+ 	}
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	sector_div(capacity, heads * sectors);
++	cylinders = (unsigned)capacity;
++#else
+ 	cylinders = capacity / (heads * sectors);
++#endif
+ 
+ 	// Special case if CDROM
+ 	if(sdev->type == 5) {  // CDROM
+@@ -505,8 +665,15 @@
+ 	return (char *) (pHba->detail);
+ }
+ 
+-static int adpt_proc_info(struct Scsi_Host *host, char *buffer, char **start, off_t offset,
+-		  int length, int inout)
++static int adpt_proc_info(
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	struct Scsi_Host *host,
++#endif
++	char *buffer, char **start, off_t offset, int length,
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++	int hostno,
++#endif
++	int inout)
+ {
+ 	struct adpt_device* d;
+ 	int id;
+@@ -515,6 +682,9 @@
+ 	int begin = 0;
+ 	int pos = 0;
+ 	adpt_hba* pHba;
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++	struct Scsi_Host *host;
++#endif
+ 	int unit;
+ 
+ 	*start = buffer;
+@@ -538,7 +708,12 @@
+ 	// Find HBA (host bus adapter) we are looking for
+ 	down(&adpt_configuration_lock);
+ 	for (pHba = hba_chain; pHba; pHba = pHba->next) {
+-		if (pHba->host == host) {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++		if (pHba->host == host)
++#else
++		if (pHba->host->host_no == hostno)
++#endif
++		{
+ 			break;	/* found adapter */
+ 		}
+ 	}
+@@ -548,7 +723,11 @@
+ 	}
+ 	host = pHba->host;
+ 
+-	len  = sprintf(buffer    , "Adaptec I2O RAID Driver Version: %s\n\n", DPT_I2O_VERSION);
++#	if (defined(DPT_I2O_DRIVER_BUILD))
++		len  = sprintf(buffer    , "Adaptec I2O RAID Driver Version: " DPT_I2O_VERSION "[%d]\n\n", DPT_I2O_DRIVER_BUILD);
++#	else
++		len  = sprintf(buffer    , "Adaptec I2O RAID Driver Version: " DPT_I2O_VERSION "\n\n");
++#	endif
+ 	len += sprintf(buffer+len, "%s\n", pHba->detail);
+ 	len += sprintf(buffer+len, "SCSI Host=scsi%d  Control Node=/dev/%s  irq=%d\n", 
+ 			pHba->host->host_no, pHba->name, host->irq);
+@@ -575,8 +754,10 @@
+ 		for(id = 0; id < MAX_ID; id++) {
+ 			d = pHba->channel[chan].device[id];
+ 			while(d){
+-				len += sprintf(buffer+len,"\t%-24.24s", d->pScsi_dev->vendor);
+-				len += sprintf(buffer+len," Rev: %-8.8s\n", d->pScsi_dev->rev);
++				if (d->pScsi_dev) {
++					len += sprintf(buffer+len,"\t%-24.24s", d->pScsi_dev->vendor);
++					len += sprintf(buffer+len," Rev: %-8.8s\n", d->pScsi_dev->rev);
++				}
+ 				pos = begin + len;
+ 
+ 
+@@ -589,10 +770,10 @@
+ 					begin = pos;
+ 				}
+ 
+-				unit = d->pI2o_dev->lct_data.tid;
++				unit = le32_to_cpu(d->pI2o_dev->lct_data.tid);
+ 				len += sprintf(buffer+len, "\tTID=%d, (Channel=%d, Target=%d, Lun=%d)  (%s)\n\n",
+ 					       unit, (int)d->scsi_channel, (int)d->scsi_id, (int)d->scsi_lun,
+-					       d->pScsi_dev->online? "online":"offline"); 
++					       (d->pScsi_dev && d->pScsi_dev->online)? "online":"offline"); 
+ 				pos = begin + len;
+ 
+ 				/* CHECKPOINT */
+@@ -654,11 +835,14 @@
+ 	}
+ 
+ 	memset(msg, 0, sizeof(msg));
+-	msg[0] = FIVE_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1] = I2O_CMD_SCSI_ABORT<<24|HOST_TID<<12|dptdevice->tid;
++	msg[0] = cpu_to_le32(FIVE_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1] = cpu_to_le32(I2O_CMD_SCSI_ABORT<<24|HOST_TID<<12|dptdevice->tid);
+ 	msg[2] = 0;
+-	msg[3]= 0; 
+-	msg[4] = (u32)cmd;
++	msg[3] = 0; 
++	if (sizeof(cmd) > sizeof(u32))
++		msg[4] = (u32)cmd->serial_number;
++	else
++		msg[4] = (u32)(unsigned long)cmd; /* EVIL, not 64 bit safe, but faster */
+ 	if( (rcode = adpt_i2o_post_wait(pHba, msg, sizeof(msg), FOREVER)) != 0){
+ 		if(rcode == -EOPNOTSUPP ){
+ 			printk(KERN_INFO"%s: Abort cmd not supported\n",pHba->name);
+@@ -691,8 +875,8 @@
+ 		return FAILED;
+ 	}
+ 	memset(msg, 0, sizeof(msg));
+-	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1] = (I2O_DEVICE_RESET<<24|HOST_TID<<12|d->tid);
++	msg[0] = cpu_to_le32(FOUR_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1] = cpu_to_le32(I2O_DEVICE_RESET<<24|HOST_TID<<12|d->tid);
+ 	msg[2] = 0;
+ 	msg[3] = 0;
+ 
+@@ -720,12 +904,14 @@
+ {
+ 	adpt_hba* pHba;
+ 	u32 msg[4];
++	int channel;
+ 
++	channel = cmd->device->channel;
+ 	pHba = (adpt_hba*)cmd->device->host->hostdata[0];
+ 	memset(msg, 0, sizeof(msg));
+-	printk(KERN_WARNING"%s: Bus reset: SCSI Bus %d: tid: %d\n",pHba->name, cmd->device->channel,pHba->channel[cmd->device->channel].tid );
+-	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1] = (I2O_HBA_BUS_RESET<<24|HOST_TID<<12|pHba->channel[cmd->device->channel].tid);
++	printk(KERN_WARNING"%s: Bus reset: SCSI Bus %d: tid: %d\n",pHba->name, channel,pHba->channel[channel].tid );
++	msg[0] = cpu_to_le32(FOUR_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1] = cpu_to_le32(I2O_HBA_BUS_RESET<<24|HOST_TID<<12|pHba->channel[channel].tid);
+ 	msg[2] = 0;
+ 	msg[3] = 0;
+ 	if(adpt_i2o_post_wait(pHba, (void*)msg,sizeof(msg), FOREVER) ){
+@@ -742,8 +928,11 @@
+ {
+ 	adpt_hba* pHba;
+ 	int rcode;
++	int channel;
++
++	channel = cmd->device->channel;
+ 	pHba = (adpt_hba*)cmd->device->host->hostdata[0];
+-	printk(KERN_WARNING"%s: Hba Reset: scsi id %d: tid: %d\n",pHba->name,cmd->device->channel,pHba->channel[cmd->device->channel].tid );
++	printk(KERN_WARNING"%s: Hba Reset: scsi id %d: tid: %d\n",pHba->name,channel,pHba->channel[channel].tid );
+ 	rcode =  adpt_hba_reset(pHba);
+ 	if(rcode == 0){
+ 		printk(KERN_WARNING"%s: HBA reset complete\n",pHba->name);
+@@ -789,6 +978,8 @@
+ 		adpt_i2o_delete_hba(pHba);
+ 		return rcode;
+ 	}
++	adpt_inquiry(pHba);
++
+ 	pHba->state &= ~DPTI_STATE_RESET;
+ 
+ 	adpt_fail_posted_scbs(pHba);
+@@ -862,12 +1053,13 @@
+ 	ulong base_addr1_phys = 0;
+ 	u32 hba_map0_area_size = 0;
+ 	u32 hba_map1_area_size = 0;
+-	ulong base_addr_virt = 0;
+-	ulong msg_addr_virt = 0;
++	char * base_addr_virt = 0;
++	char * msg_addr_virt = 0;
+ 
+ 	int raptorFlag = FALSE;
+ 	int i;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0))
+ 	if(pci_enable_device(pDev)) {
+ 		return -EINVAL;
+ 	}
+@@ -894,14 +1086,75 @@
+ 	}
+ 
+ 
+-	base_addr_virt = (ulong)ioremap(base_addr0_phys,hba_map0_area_size);
++#else  /* 2.2.* kernel method */
++	u16 command = 0;
++	u16 subdevice = 0;
++
++	// Read in the command register and make sure that the device is 
++	// enabled and set up for bus master                             
++	pci_read_config_word(pDev, PCI_COMMAND, &command);
++	if(((command & PCI_COMMAND_MEMORY) && !(command & PCI_COMMAND_MASTER))){
++		command |= PCI_COMMAND_MASTER;
++		pci_write_config_word(pDev, PCI_COMMAND, command);
++	}
++
++	pci_read_config_dword(pDev, PCI_BASE_ADDRESS_0,(u32*)&base_addr0_phys);
++	// To get the size of the memory space taken we have to write out
++	// 0xffffffff (32 bit) to the base register (PCI_BASE_ADDRESS_0)
++	// and then read it back. The lower 4 bits are ignored not needed.
++	// They contain address space flag (io or memory) 
++	// and memory type (32 1M 64)
++	// The Rest is used to determine the size of memory space
++	// used. All other upper bits will be set to ones. 
++	// If we take the negative of this number and add one
++	// it will give us the memory size. We must also write the original
++	// Base address back out to reset it up.
++	pci_write_config_dword(pDev, PCI_BASE_ADDRESS_0 , 0xffffffff);
++	pci_read_config_dword(pDev, PCI_BASE_ADDRESS_0 , &hba_map0_area_size);
++
++	// Restore the base address
++	pci_write_config_dword(pDev, PCI_BASE_ADDRESS_0 , (u32)base_addr0_phys);
++	(u32)base_addr0_phys &= PCI_BASE_ADDRESS_MEM_MASK;
++
++	// Take the negative, disreguard the bottem four bits and add 1
++	hba_map0_area_size &= PCI_BASE_ADDRESS_MEM_MASK;	// And out the lower 4 bits
++	hba_map0_area_size = ~hba_map0_area_size + 1;	// Take the negative and add 1
++
++	pci_read_config_word (pDev, PCI_SUBSYSTEM_ID, &subdevice);
++
++	if(pDev->device == PCI_DPT_DEVICE_ID){
++		// Raptor card with this device id  needs 4M
++		if(subdevice >= 0xc032 && subdevice <= 0xc03b){ 
++			hba_map0_area_size = 0x400000;
++		} else {
++			if(hba_map0_area_size > 0x100000) { // Only give 'em 1M
++				hba_map0_area_size = 0x100000;
++			}
++		}
++	} else {
++		//Use BAR1 in this config
++		pci_read_config_dword(pDev,PCI_BASE_ADDRESS_1, (u32*)&base_addr1_phys);
++		pci_write_config_dword(pDev,PCI_BASE_ADDRESS_1, 0xffffffff);
++		pci_read_config_dword(pDev,PCI_BASE_ADDRESS_1, &hba_map1_area_size);
++
++		//Restore the base address
++		pci_write_config_dword(pDev,PCI_BASE_ADDRESS_1, (u32)base_addr1_phys);
++		(u32)base_addr1_phys &= PCI_BASE_ADDRESS_MEM_MASK;
++		hba_map1_area_size &= PCI_BASE_ADDRESS_MEM_MASK;
++		hba_map1_area_size = ~hba_map1_area_size + 1;
++		
++		raptorFlag=TRUE;
++	}
++#endif
++
++	base_addr_virt = (char *)ioremap(base_addr0_phys,hba_map0_area_size);
+ 	if(base_addr_virt == 0) {
+ 		PERROR("dpti: adpt_config_hba: io remap failed\n");
+ 		return -EINVAL;
+ 	}
+ 
+         if(raptorFlag == TRUE) {
+-		msg_addr_virt = (ulong)ioremap(base_addr1_phys, hba_map1_area_size );
++		msg_addr_virt = (char *)ioremap(base_addr1_phys, hba_map1_area_size );
+ 		if(msg_addr_virt == 0) {
+ 			PERROR("dpti: adpt_config_hba: io remap failed on BAR1\n");
+ 			iounmap((void*)base_addr_virt);
+@@ -949,32 +1202,31 @@
+ 	// Set up the Virtual Base Address of the I2O Device
+ 	pHba->base_addr_virt = base_addr_virt;
+ 	pHba->msg_addr_virt = msg_addr_virt;  
+-	pHba->irq_mask = (ulong)(base_addr_virt+0x30);
+-	pHba->post_port = (ulong)(base_addr_virt+0x40);
+-	pHba->reply_port = (ulong)(base_addr_virt+0x44);
++	pHba->irq_mask = (u32 *)(base_addr_virt+0x30);
++	pHba->post_port = (u32 *)(base_addr_virt+0x40);
++	pHba->reply_port = (u32 *)(base_addr_virt+0x44);
+ 
+-	pHba->hrt = NULL;
+-	pHba->lct = NULL;
++	pHba->hrt_va = NULL;
++	pHba->lct_va = NULL;
+ 	pHba->lct_size = 0;
+-	pHba->status_block = NULL;
++	pHba->status_block_va = NULL;
+ 	pHba->post_count = 0;
+ 	pHba->state = DPTI_STATE_RESET;
+-	pHba->pDev = pDev;
+ 	pHba->devices = NULL;
+ 
+ 	// Initializing the spinlocks
+ 	spin_lock_init(&pHba->state_lock);
+ 
+ 	if(raptorFlag == 0){
+-		printk(KERN_INFO"Adaptec I2O RAID controller %d at %lx size=%x irq=%d\n", 
++		printk(KERN_INFO"Adaptec I2O RAID controller %d at %p size=%x irq=%d\n", 
+ 			hba_count-1, base_addr_virt, hba_map0_area_size, pDev->irq);
+ 	} else {
+ 		printk(KERN_INFO"Adaptec I2O RAID controller %d irq=%d\n",hba_count-1, pDev->irq);
+-		printk(KERN_INFO"     BAR0 %lx - size= %x\n",base_addr_virt,hba_map0_area_size);
+-		printk(KERN_INFO"     BAR1 %lx - size= %x\n",msg_addr_virt,hba_map1_area_size);
++		printk(KERN_INFO"     BAR0 %p - size= %x\n",base_addr_virt,hba_map0_area_size);
++		printk(KERN_INFO"     BAR1 %p - size= %x\n",msg_addr_virt,hba_map1_area_size);
+ 	}
+ 
+-	if (request_irq (pDev->irq, adpt_isr, SA_SHIRQ, pHba->name, pHba)) {
++	if (request_irq (pDev->irq, adpt_isr, SA_SHIRQ, pHba->name, (void *)pHba)) {
+ 		printk(KERN_ERR"%s: Couldn't register IRQ %d\n", pHba->name, pDev->irq);
+ 		adpt_i2o_delete_hba(pHba);
+ 		return -EINVAL;
+@@ -1026,17 +1278,17 @@
+ 	if(pHba->msg_addr_virt != pHba->base_addr_virt){
+ 		iounmap((void*)pHba->msg_addr_virt);
+ 	}
+-	if(pHba->hrt) {
+-		kfree(pHba->hrt);
++	if(pHba->hrt_va) {
++		pci_free_consistent(pHba->pDev, le32_to_cpu(pHba->hrt_va->num_entries) * le32_to_cpu(pHba->hrt_va->entry_len) << 2, pHba->hrt_va, pHba->hrt_pa);
+ 	}
+-	if(pHba->lct){
+-		kfree(pHba->lct);
++	if(pHba->lct_va){
++		pci_free_consistent(pHba->pDev, pHba->lct_size, pHba->lct_va, pHba->lct_pa);
+ 	}
+-	if(pHba->status_block) {
+-		kfree(pHba->status_block);
++	if(pHba->status_block_va) {
++		pci_free_consistent(pHba->pDev, sizeof(i2o_status_block), pHba->status_block_va, pHba->status_block_pa);
+ 	}
+-	if(pHba->reply_pool){
+-		kfree(pHba->reply_pool);
++	if(pHba->reply_pool_va){
++		pci_free_consistent(pHba->pDev, pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4, pHba->reply_pool_va, pHba->reply_pool_pa);
+ 	}
+ 
+ 	for(d = pHba->devices; d ; d = next){
+@@ -1053,9 +1305,23 @@
+ 			}
+ 		}
+ 	}
+-	kfree(pHba);
+ 
++	if (pHba->host != NULL) {
++		scsi_unregister(pHba->host);
++	}
++	kfree(pHba);
+ 	if(hba_count <= 0){
++#		if (defined(__x86_64__))
++			unregister_ioctl32_conversion(DPT_SIGNATURE);
++			unregister_ioctl32_conversion(I2OUSRCMD);
++			unregister_ioctl32_conversion(DPT_CTRLINFO);
++			unregister_ioctl32_conversion(DPT_SYSINFO);
++			unregister_ioctl32_conversion(DPT_BLINKLED);
++			unregister_ioctl32_conversion(I2ORESETCMD);
++			unregister_ioctl32_conversion(I2ORESCANCMD);
++			unregister_ioctl32_conversion(DPT_TARGET_BUSY & 0xFFFF);
++			unregister_ioctl32_conversion(DPT_TARGET_BUSY);
++#		endif
+ 		unregister_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER);   
+ 	}
+ }
+@@ -1065,7 +1331,11 @@
+ {
+ 	int i;
+ 
+-	printk(KERN_INFO"Loading Adaptec I2O RAID: Version " DPT_I2O_VERSION "\n");
++#	if (defined(DPT_I2O_DRIVER_BUILD))
++		printk(KERN_INFO"Loading Adaptec I2O RAID: Version " DPT_I2O_VERSION "[%d]\n", DPT_I2O_DRIVER_BUILD);
++#	else
++		printk(KERN_INFO"Loading Adaptec I2O RAID: Version " DPT_I2O_VERSION "\n");
++#	endif
+ 	for (i = 0; i < DPTI_MAX_HBA; i++) {
+ 		hbas[i] = NULL;
+ 	}
+@@ -1083,7 +1353,7 @@
+ 
+ 	if(chan < 0 || chan >= MAX_CHANNEL)
+ 		return NULL;
+-	
++
+ 	if( pHba->channel[chan].device == NULL){
+ 		printk(KERN_DEBUG"Adaptec I2O RAID: Trying to find device before they are allocated\n");
+ 		return NULL;
+@@ -1135,7 +1405,7 @@
+ 	wait_data->next = adpt_post_wait_queue;
+ 	adpt_post_wait_queue = wait_data;
+ 	adpt_post_wait_id++;
+-	adpt_post_wait_id &= 0x7fff;
++	adpt_post_wait_id = (adpt_post_wait_id & 0x7fff);
+ 	wait_data->id =  adpt_post_wait_id;
+ 	spin_unlock_irqrestore(&adpt_post_wait_lock, flags);
+ 
+@@ -1144,28 +1414,85 @@
+ 
+ 	// this code is taken from kernel/sched.c:interruptible_sleep_on_timeout
+ 	wait.task = current;
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++	write_lock_irqsave(&waitqueue_lock,flags);
++	__add_wait_queue(&adpt_wq_i2o_post, &wait);
++	write_unlock(&waitqueue_lock);
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 	init_waitqueue_entry(&wait, current);
+-	spin_lock_irqsave(&adpt_wq_i2o_post.lock, flags);
++	spin_lock_irqsave(&adpt_wq_i2o_post.lock,flags);
+ 	__add_wait_queue(&adpt_wq_i2o_post, &wait);
+ 	spin_unlock(&adpt_wq_i2o_post.lock);
++#else
++	init_waitqueue_entry(&wait, current);
++	wq_write_lock_irqsave(&adpt_wq_i2o_post.lock,flags);
++	__add_wait_queue(&adpt_wq_i2o_post, &wait);
++	wq_write_unlock(&adpt_wq_i2o_post.lock);
++#endif
+ 
+ 	msg[2] |= 0x80000000 | ((u32)wait_data->id);
+ 	timeout *= HZ;
+ 	if((status = adpt_i2o_post_this(pHba, msg, len)) == 0){
++		spinlock_t * was_locked = (spinlock_t *)NULL;
+ 		set_current_state(TASK_INTERRUPTIBLE);
+-		spin_unlock_irq(pHba->host->host_lock);
+-		if (!timeout)
++		/*
++		 *	We are called before the host & host lock has been
++		 * assigned, and may be called with, or without, the host lock
++		 * held. We need to free the lock, if held, before going
++		 * to sleep.
++		 */
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++		if ((pHba->host != NULL) /* Sad */
++		 && (spin_is_locked(pHba->host->host_lock))) {
++			was_locked = pHba->host->host_lock;
++			spin_unlock_irq(was_locked);
++		}
++#else
++		if (spin_is_locked(&io_request_lock)) {
++			was_locked = &io_request_lock;
++			spin_unlock_irq(was_locked);
++		}
++#endif
++		if(!timeout){
+ 			schedule();
+-		else
+-			schedule_timeout(timeout*HZ);
+-		spin_lock_irq(pHba->host->host_lock);
++		} else {
++			timeout = schedule_timeout(timeout*HZ);
++			if (timeout == 0) {
++				// I/O issued, but cannot get result in
++				// specified time. Freeing resources is
++				// dangerous.
++				status = -ETIME;
++			}
++		}
++		if (was_locked)
++			spin_lock_irq(was_locked);
++		if (signal_pending(current)) {
++			printk("adpt_i2o_post_wait: interrupted\n");
++			status = -EINTR;
++		}
+ 	}
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++	write_lock_irq(&waitqueue_lock);
++	__remove_wait_queue(&adpt_wq_i2o_post, &wait);
++	write_unlock_irqrestore(&waitqueue_lock,flags);
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 	spin_lock_irq(&adpt_wq_i2o_post.lock);
+ 	__remove_wait_queue(&adpt_wq_i2o_post, &wait);
+-	spin_unlock_irqrestore(&adpt_wq_i2o_post.lock, flags);
++	spin_unlock_irqrestore(&adpt_wq_i2o_post.lock,flags);
++#else
++	wq_write_lock_irq(&adpt_wq_i2o_post.lock);
++	__remove_wait_queue(&adpt_wq_i2o_post, &wait);
++	wq_write_unlock_irqrestore(&adpt_wq_i2o_post.lock,flags);
++#endif
+ 
+-	if(status == -ETIMEDOUT){
+-		printk(KERN_INFO"dpti%d: POST WAIT TIMEOUT\n",pHba->unit);
++	wait_data->wq = 0;
++
++	if (status == -EINTR)
++		return status;
++
++	if(status == -ETIMEDOUT || status == -ETIME) {
++		printk(KERN_INFO"dpti%d: POST WAIT FAILED (%d)\n",
++		  pHba->unit, status);
+ 		// We will have to free the wait_data memory during shutdown
+ 		return status;
+ 	}
+@@ -1247,12 +1574,13 @@
+ 		if(p1->id == context) {
+ 			p1->status = status;
+ 			spin_unlock(&adpt_post_wait_lock);
+-			wake_up_interruptible(p1->wq);
++			if (p1->wq)
++				wake_up_interruptible(p1->wq);
+ 			return;
+ 		}
+ 	}
+ 	spin_unlock(&adpt_post_wait_lock);
+-        // If this happens we lose commands that probably really completed
++        // If this happens we loose commands that probably really completed
+ 	printk(KERN_DEBUG"dpti: Could Not find task %d in wait queue\n",context);
+ 	printk(KERN_DEBUG"      Tasks in wait queue:\n");
+ 	for(p1 = adpt_post_wait_queue; p1; p1 = p1->next) {
+@@ -1265,6 +1593,8 @@
+ {
+ 	u32 msg[8];
+ 	u8* status;
++	dma_addr_t addr;
++	u64 addr64;
+ 	u32 m = EMPTY_QUEUE ;
+ 	ulong timeout = jiffies + (TMOUT_IOPRESET*HZ);
+ 
+@@ -1277,16 +1607,16 @@
+ 	do {
+ 		rmb();
+ 		m = readl(pHba->post_port);
+-		if (m != EMPTY_QUEUE) {
++		if (m != cpu_to_le32(EMPTY_QUEUE)) {
+ 			break;
+ 		}
+ 		if(time_after(jiffies,timeout)){
+ 			printk(KERN_WARNING"Timeout waiting for message!\n");
+ 			return -ETIMEDOUT;
+ 		}
+-	} while (m == EMPTY_QUEUE);
++	} while (m == cpu_to_le32(EMPTY_QUEUE));
+ 
+-	status = (u8*)kmalloc(4, GFP_KERNEL|ADDR32);
++	status = (u8*)pci_alloc_consistent(pHba->pDev, 4, &addr);
+ 	if(status == NULL) {
+ 		adpt_send_nop(pHba, m);
+ 		printk(KERN_ERR"IOP reset failed - no free memory.\n");
+@@ -1294,16 +1624,17 @@
+ 	}
+ 	memset(status,0,4);
+ 
+-	msg[0]=EIGHT_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1]=I2O_CMD_ADAPTER_RESET<<24|HOST_TID<<12|ADAPTER_TID;
++	msg[0]=cpu_to_le32(EIGHT_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1]=cpu_to_le32(I2O_CMD_ADAPTER_RESET<<24|HOST_TID<<12|ADAPTER_TID);
+ 	msg[2]=0;
+ 	msg[3]=0;
+ 	msg[4]=0;
+ 	msg[5]=0;
+-	msg[6]=virt_to_bus(status);
+-	msg[7]=0;     
++	addr64 = cpu_to_le64(addr);
++	msg[6]=(u32)addr64;
++	msg[7]=(u32)(addr64 >> 32);
+ 
+-	memcpy_toio(pHba->msg_addr_virt+m, msg, sizeof(msg));
++	memcpy_toio(pHba->msg_addr_virt+le32_to_cpu(m), msg, sizeof(msg));
+ 	wmb();
+ 	writel(m, pHba->post_port);
+ 	wmb();
+@@ -1311,40 +1642,47 @@
+ 	while(*status == 0){
+ 		if(time_after(jiffies,timeout)){
+ 			printk(KERN_WARNING"%s: IOP Reset Timeout\n",pHba->name);
+-			kfree(status);
++			/* We loose 4 bytes of "status" here, but we cannot
++			   free these because controller may awake and corrupt
++			   those bytes at any time */
++			/* pci_free_consistent(pHba->pDev, 4, buf, addr); */
+ 			return -ETIMEDOUT;
+ 		}
+ 		rmb();
+ 	}
+ 
+-	if(*status == 0x01 /*I2O_EXEC_IOP_RESET_IN_PROGRESS*/) {
++	if(*status == cpu_to_le32(0x01) /*I2O_EXEC_IOP_RESET_IN_PROGRESS*/) {
+ 		PDEBUG("%s: Reset in progress...\n", pHba->name);
+ 		// Here we wait for message frame to become available
+ 		// indicated that reset has finished
+ 		do {
+ 			rmb();
+ 			m = readl(pHba->post_port);
+-			if (m != EMPTY_QUEUE) {
++			if (m != cpu_to_le32(EMPTY_QUEUE)) {
+ 				break;
+ 			}
+ 			if(time_after(jiffies,timeout)){
+ 				printk(KERN_ERR "%s:Timeout waiting for IOP Reset.\n",pHba->name);
++				/* We loose 4 bytes of "status" here, but we
++				   cannot free these because controller may
++				   awake and corrupt those bytes at any time */
++				/* pci_free_consistent(pHba->pDev, 4, buf, addr); */
+ 				return -ETIMEDOUT;
+ 			}
+-		} while (m == EMPTY_QUEUE);
++		} while (m == cpu_to_le32(EMPTY_QUEUE));
+ 		// Flush the offset
+ 		adpt_send_nop(pHba, m);
+ 	}
+ 	adpt_i2o_status_get(pHba);
+-	if(*status == 0x02 ||
+-			pHba->status_block->iop_state != ADAPTER_STATE_RESET) {
++	if(*status == cpu_to_le32(0x02) ||
++			pHba->status_block_va->iop_state != cpu_to_le32(ADAPTER_STATE_RESET)) {
+ 		printk(KERN_WARNING"%s: Reset reject, trying to clear\n",
+ 				pHba->name);
+ 	} else {
+ 		PDEBUG("%s: Reset completed.\n", pHba->name);
+ 	}
+ 
+-	kfree(status);
++	pci_free_consistent(pHba->pDev, 4, status, addr);
+ #ifdef UARTDELAY
+ 	// This delay is to allow someone attached to the card through the debug UART to 
+ 	// set up the dump levels that they want before the rest of the initialization sequence
+@@ -1360,7 +1698,7 @@
+ 	int max;
+ 	int tid;
+ 	struct i2o_device *d;
+-	i2o_lct *lct = pHba->lct;
++	i2o_lct *lct = pHba->lct_va;
+ 	u8 bus_no = 0;
+ 	s16 scsi_id;
+ 	s16 scsi_lun;
+@@ -1377,7 +1715,7 @@
+ 	max /= 9;
+ 
+ 	for(i=0;i<max;i++) {
+-		if( lct->lct_entry[i].user_tid != 0xfff){
++		if( lct->lct_entry[i].user_tid != cpu_to_le32(0xfff)){
+ 			/*
+ 			 * If we have hidden devices, we need to inform the upper layers about
+ 			 * the possible maximum id reference to handle device access when
+@@ -1385,12 +1723,12 @@
+ 			 * allow us future access to devices that are currently hidden
+ 			 * behind arrays, hotspares or have not been configured (JBOD mode).
+ 			 */
+-			if( lct->lct_entry[i].class_id != I2O_CLASS_RANDOM_BLOCK_STORAGE &&
+-			    lct->lct_entry[i].class_id != I2O_CLASS_SCSI_PERIPHERAL &&
+-			    lct->lct_entry[i].class_id != I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
++			if( lct->lct_entry[i].class_id != cpu_to_le32(I2O_CLASS_RANDOM_BLOCK_STORAGE) &&
++			    lct->lct_entry[i].class_id != cpu_to_le32(I2O_CLASS_SCSI_PERIPHERAL) &&
++			    lct->lct_entry[i].class_id != cpu_to_le32(I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL) ){
+ 			    	continue;
+ 			}
+-			tid = lct->lct_entry[i].tid;
++			tid = le32_to_cpu(lct->lct_entry[i].tid);
+ 			// I2O_DPT_DEVICE_INFO_GROUP_NO;
+ 			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) {
+ 				continue;
+@@ -1402,7 +1740,7 @@
+ 				printk(KERN_WARNING"%s: Channel number %d out of range \n", pHba->name, bus_no);
+ 				continue;
+ 			}
+-			if (scsi_id >= MAX_ID){
++			if(scsi_id > MAX_ID){
+ 				printk(KERN_WARNING"%s: SCSI ID %d out of range \n", pHba->name, bus_no);
+ 				continue;
+ 			}
+@@ -1430,21 +1768,21 @@
+ 		memcpy(&d->lct_data, &lct->lct_entry[i], sizeof(i2o_lct_entry));
+ 
+ 		d->flags = 0;
+-		tid = d->lct_data.tid;
++		tid = le32_to_cpu(d->lct_data.tid);
+ 		adpt_i2o_report_hba_unit(pHba, d);
+ 		adpt_i2o_install_device(pHba, d);
+ 	}
+ 	bus_no = 0;
+ 	for(d = pHba->devices; d ; d = d->next) {
+-		if(d->lct_data.class_id  == I2O_CLASS_BUS_ADAPTER_PORT ||
+-		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PORT){
+-			tid = d->lct_data.tid;
++		if(d->lct_data.class_id  == cpu_to_le32(I2O_CLASS_BUS_ADAPTER_PORT) ||
++		   d->lct_data.class_id  == cpu_to_le32(I2O_CLASS_FIBRE_CHANNEL_PORT)){
++			tid = le32_to_cpu(d->lct_data.tid);
+ 			// TODO get the bus_no from hrt-but for now they are in order
+ 			//bus_no = 
+ 			if(bus_no > pHba->top_scsi_channel){
+ 				pHba->top_scsi_channel = bus_no;
+ 			}
+-			pHba->channel[bus_no].type = d->lct_data.class_id;
++			pHba->channel[bus_no].type = le32_to_cpu(d->lct_data.class_id);
+ 			pHba->channel[bus_no].tid = tid;
+ 			if(adpt_i2o_query_scalar(pHba, tid, 0x0200, -1, buf, 28)>=0)
+ 			{
+@@ -1462,11 +1800,11 @@
+ 
+ 	// Setup adpt_device table
+ 	for(d = pHba->devices; d ; d = d->next) {
+-		if(d->lct_data.class_id  == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
+-		   d->lct_data.class_id  == I2O_CLASS_SCSI_PERIPHERAL ||
+-		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
++		if(d->lct_data.class_id  == cpu_to_le32(I2O_CLASS_RANDOM_BLOCK_STORAGE) ||
++		   d->lct_data.class_id  == cpu_to_le32(I2O_CLASS_SCSI_PERIPHERAL) ||
++		   d->lct_data.class_id  == cpu_to_le32(I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL) ){
+ 
+-			tid = d->lct_data.tid;
++			tid = le32_to_cpu(d->lct_data.tid);
+ 			scsi_id = -1;
+ 			// I2O_DPT_DEVICE_INFO_GROUP_NO;
+ 			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)>=0) {
+@@ -1476,7 +1814,7 @@
+ 				if(bus_no >= MAX_CHANNEL) {	// Something wrong skip it
+ 					continue;
+ 				}
+-				if (scsi_id >= MAX_ID) {
++				if(scsi_id > MAX_ID){
+ 					continue;
+ 				}
+ 				if( pHba->channel[bus_no].device[scsi_id] == NULL){
+@@ -1567,7 +1905,7 @@
+ 	}
+ 
+ //	if(pHba->in_use){
+-	//	up(&adpt_configuration_lock);
++//		up(&adpt_configuration_lock);
+ //		return -EBUSY;
+ //	}
+ 
+@@ -1602,7 +1940,6 @@
+ 	return 0;
+ }
+ 
+-
+ static int adpt_i2o_passthru(adpt_hba* pHba, u32* arg)
+ {
+ 	u32 msg[MAX_MESSAGE_SIZE];
+@@ -1611,13 +1948,14 @@
+ 	u32 reply_size = 0;
+ 	u32* user_msg = (u32*)arg;
+ 	u32* user_reply = NULL;
+-	ulong sg_list[pHba->sg_tablesize];
++	void * sg_list[pHba->sg_tablesize];
+ 	u32 sg_offset = 0;
+ 	u32 sg_count = 0;
+ 	int sg_index = 0;
+ 	u32 i = 0;
+ 	u32 rcode = 0;
+-	ulong p = 0;
++	void * p = 0;
++	dma_addr_t addr;
+ 	ulong flags = 0;
+ 
+ 	memset(&msg, 0, MAX_MESSAGE_SIZE*4);
+@@ -1651,10 +1989,34 @@
+ 	memset(reply,0,REPLY_FRAME_SIZE*4);
+ 	sg_offset = (msg[0]>>4)&0xf;
+ 	msg[2] = 0x40000000; // IOCTL context
+-	msg[3] = (u32)reply;
++	if (sizeof(reply) > sizeof(u32)) {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++		spin_lock_irqsave(pHba->host->host_lock, flags);
++#else
++		spin_lock_irqsave(&io_request_lock, flags);
++#endif
++		for (i = 0; i < (sizeof(pHba->ioctl_reply_context) / sizeof(pHba->ioctl_reply_context[0])); ++i) {
++			if (pHba->ioctl_reply_context[i] == NULL) {
++				pHba->ioctl_reply_context[i] = reply;
++				break;
++			}
++		}
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++		spin_unlock_irqrestore(pHba->host->host_lock, flags);
++#else
++		spin_unlock_irqrestore(&io_request_lock, flags);
++#endif
++		if (i >= (sizeof(pHba->ioctl_reply_context) / sizeof(pHba->ioctl_reply_context[0]))) {
++			kfree (reply);
++			printk(KERN_WARNING"%s: Too many outstanding ioctl commands\n",pHba->name);
++			return -EBUSY;
++		}
++		msg[3] = i;
++	} else
++		msg[3] = (u32)reply;	// EVIL, not 64 bit safe
+ 	memset(sg_list,0, sizeof(sg_list[0])*pHba->sg_tablesize);
+ 	if(sg_offset) {
+-		// TODO 64bit fix
++		// TODO 64 bit fix ?
+ 		struct sg_simple_element *sg =  (struct sg_simple_element*) (msg+sg_offset);
+ 		sg_count = (size - sg_offset*4) / sizeof(struct sg_simple_element);
+ 		if (sg_count > pHba->sg_tablesize){
+@@ -1673,7 +2035,7 @@
+ 			}
+ 			sg_size = sg[i].flag_count & 0xffffff;      
+ 			/* Allocate memory for the transfer */
+-			p = (ulong)kmalloc(sg_size, GFP_KERNEL|ADDR32);
++			p = pci_alloc_consistent(pHba->pDev, sg_size, &addr);
+ 			if(p == 0) {
+ 				printk(KERN_DEBUG"%s: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+ 						pHba->name,sg_size,i,sg_count);
+@@ -1681,9 +2043,15 @@
+ 				goto cleanup;
+ 			}
+ 			sg_list[sg_index++] = p; // sglist indexed with input frame, not our internal frame.
++			if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)addr >> 32) != 0) ) {
++				printk(KERN_DEBUG"%s: Could not allocate SG buffer in 32 space - size = %d buffer number %d of %d\n",
++						pHba->name,sg_size,i,sg_count);
++				rcode = -ENOMEM;
++				goto cleanup;
++			}
+ 			/* Copy in the user's SG buffer if necessary */
+ 			if(sg[i].flag_count & 0x04000000 /*I2O_SGL_FLAGS_DIR*/) {
+-				// TODO 64bit fix
++				// TODO 64 bit fix?
+ 				if (copy_from_user((void*)p,(void*)sg[i].addr_bus, sg_size)) {
+ 					printk(KERN_DEBUG"%s: Could not copy SG buf %d FROM user\n",pHba->name,i);
+ 					rcode = -EFAULT;
+@@ -1691,12 +2059,16 @@
+ 				}
+ 			}
+ 			//TODO 64bit fix
+-			sg[i].addr_bus = (u32)virt_to_bus((void*)p);
++			sg[i].addr_bus = cpu_to_le32(addr);
+ 		}
+ 	}
+ 
+ 	do {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 		spin_lock_irqsave(pHba->host->host_lock, flags);
++#else
++		spin_lock_irqsave(&io_request_lock, flags);
++#endif
+ 		// This state stops any new commands from enterring the
+ 		// controller while processing the ioctl
+ //		pHba->state |= DPTI_STATE_IOCTL;
+@@ -1704,7 +2076,11 @@
+ //		the queue empties and stops.  We need a way to restart the queue
+ 		rcode = adpt_i2o_post_wait(pHba, msg, size, FOREVER);
+ //		pHba->state &= ~DPTI_STATE_IOCTL;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 		spin_unlock_irqrestore(pHba->host->host_lock, flags);
++#else
++		spin_unlock_irqrestore(&io_request_lock, flags);
++#endif
+ 	} while(rcode == -ETIMEDOUT);  
+ 
+ 	if(rcode){
+@@ -1741,8 +2117,8 @@
+ 			if(! (sg[j].flag_count & 0x4000000 /*I2O_SGL_FLAGS_DIR*/)) {
+ 				sg_size = sg[j].flag_count & 0xffffff; 
+ 				// TODO 64bit fix
+-				if (copy_to_user((void*)sg[j].addr_bus,(void*)sg_list[j], sg_size)) {
+-					printk(KERN_WARNING"%s: Could not copy %lx TO user %x\n",pHba->name, sg_list[j], sg[j].addr_bus);
++				if (copy_to_user((void*)sg[j].addr_bus,sg_list[j], sg_size)) {
++					printk(KERN_WARNING"%s: Could not copy %p TO user %x\n",pHba->name, sg_list[j], sg[j].addr_bus);
+ 					rcode = -EFAULT;
+ 					goto cleanup;
+ 				}
+@@ -1765,10 +2141,13 @@
+ 
+ 
+ cleanup:
+-	kfree (reply);
+-	while(sg_index) {
+-		if(sg_list[--sg_index]) {
+-			kfree((void*)(sg_list[sg_index]));
++	if (rcode != -ETIME && rcode != -EINTR) {
++		struct sg_simple_element *sg =  (struct sg_simple_element*) (msg+sg_offset);
++		kfree (reply);
++		while(sg_index) {
++			if(sg_list[--sg_index]) {
++				pci_free_consistent(pHba->pDev, sg[sg_index].flag_count & 0xffffff, sg_list[sg_index], le32_to_cpu(sg[sg_index].addr_bus));
++			}
+ 		}
+ 	}
+ 	return rcode;
+@@ -1796,11 +2175,11 @@
+ 
+ #if defined __i386__ 
+ 	adpt_i386_info(&si);
+-#elif defined (__ia64__)
++#elif defined __ia64__
+ 	adpt_ia64_info(&si);
+-#elif defined(__sparc__)
++#elif defined __sparc__
+ 	adpt_sparc_info(&si);
+-#elif defined (__alpha__)
++#elif defined __alpha__ 
+ 	adpt_alpha_info(&si);
+ #else
+ 	si.processorType = 0xff ;
+@@ -1819,7 +2198,7 @@
+ 	// This is all the info we need for now
+ 	// We will add more info as our new
+ 	// managmenent utility requires it
+-	si->processorType = PROC_IA64;
++	si->processorType = PROC_ITANIUM;
+ }
+ #endif
+ 
+@@ -1894,7 +2273,7 @@
+ 	}
+ 
+ 	while((volatile u32) pHba->state & DPTI_STATE_RESET ) {
+-		set_task_state(current,TASK_UNINTERRUPTIBLE);
++		set_current_state(TASK_UNINTERRUPTIBLE);
+ 		schedule_timeout(2);
+ 
+ 	}
+@@ -1942,13 +2321,51 @@
+ 		break;
+ 		}
+ 	case I2ORESETCMD:
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 		spin_lock_irqsave(pHba->host->host_lock, flags);
++#else
++		spin_lock_irqsave(&io_request_lock, flags);
++#endif
+ 		adpt_hba_reset(pHba);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 		spin_unlock_irqrestore(pHba->host->host_lock, flags);
++#else
++		spin_unlock_irqrestore(&io_request_lock, flags);
++#endif
+ 		break;
+ 	case I2ORESCANCMD:
+ 		adpt_rescan(pHba);
+ 		break;
++	case DPT_TARGET_BUSY & 0xFFFF:
++	case DPT_TARGET_BUSY:
++	{
++		TARGET_BUSY_T busy;
++		struct adpt_device* d;
++
++		if (copy_from_user((void*)&busy, (void*)arg, sizeof(TARGET_BUSY_T))) {
++			return -EFAULT;
++		}
++
++		d = adpt_find_device(pHba, busy.channel, busy.id, busy.lun);
++		if(d == NULL){
++			return -ENODEV;
++		}
++		busy.isBusy = ((d->pScsi_dev)
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)) && (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
++		 && (atomic_read(&d->pScsi_dev->access_count)
++		  || test_bit(SHOST_RECOVERY, &pHba->host->shost_state)));
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
++		 && (d->pScsi_dev->device_busy /* Imperfect */
++		  || test_bit(SHOST_RECOVERY, &pHba->host->shost_state)));
++#else
++		 && (d->pScsi_dev->access_count
++		  || pHba->host->in_recovery));
++#endif
++		if (copy_to_user ((char*)arg, &busy, sizeof(busy))) {
++			return -EFAULT;
++		}
++		break;
++	}
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -1956,77 +2373,145 @@
+ 	return error;
+ }
+ 
++static inline Scsi_Cmnd * adpt_cmd_from_context(adpt_hba * pHba, u32 context)
++{
++	Scsi_Cmnd * cmd;
++
++	if (context == 0)
++		return NULL;
++	if (sizeof(cmd) > sizeof(u32)) {
++		Scsi_Device * d;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++# if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
++		shost_for_each_device(d, pHba->host) {
++# else
++		list_for_each_entry(d, &pHba->host->my_devices, siblings) {
++# endif
++			unsigned long flags;
++			spin_lock_irqsave(&d->list_lock, flags);
++			list_for_each_entry(cmd, &d->cmd_list, list) {
++				if (((u32)cmd->serial_number == context)
++				 || ((u32)cmd->serial_number_at_timeout == context)) {
++					spin_unlock_irqrestore(&d->list_lock, flags);
++					return cmd;
++				}
++			}
++			spin_unlock_irqrestore(&d->list_lock, flags);
++		}
++#else
++		d = pHba->host->host_queue;
++		while (d) {
++			for (cmd = d->device_queue; cmd ; cmd = cmd->next)
++				if (((u32)cmd->serial_number == context)
++				 || ((u32)cmd->serial_number_at_timeout == context))
++					return cmd;
++			d = d->next;
++		}
++#endif
++	} else
++		return (Scsi_Cmnd*)(unsigned long)context; /* 64 bit! */
++	return NULL;
++}
+ 
+-static void adpt_isr(int irq, void *dev_id, struct pt_regs *regs)
++static irqreturn_t adpt_isr(int irq, void *dev_id, struct pt_regs *regs)
+ {
+ 	Scsi_Cmnd* cmd;
+ 	adpt_hba* pHba = dev_id;
+ 	u32 m;
+-	ulong reply;
++	u8 * reply = (u8 *)-1L;
+ 	u32 status=0;
+ 	u32 context;
+ 	ulong flags = 0;
+ 
+ 	if (pHba == NULL ){
+ 		printk(KERN_WARNING"adpt_isr: NULL dev_id\n");
+-		return;
++		return IRQ_NONE;
+ 	}
+-	spin_lock_irqsave(pHba->host->host_lock, flags);
+-	while( readl(pHba->irq_mask) & I2O_INTERRUPT_PENDING_B) {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	if (pHba->host != NULL) /* Sad */
++		spin_lock_irqsave(pHba->host->host_lock, flags);
++#else
++	spin_lock_irqsave(&io_request_lock, flags);
++#endif
++	while( readl(pHba->irq_mask) & cpu_to_le32(I2O_INTERRUPT_PENDING_B)) {
+ 		m = readl(pHba->reply_port);
+-		if(m == EMPTY_QUEUE){
++		if(m == cpu_to_le32(EMPTY_QUEUE)){
+ 			// Try twice then give up
+ 			rmb();
+ 			m = readl(pHba->reply_port);
+-			if(m == EMPTY_QUEUE){ 
++			if(m == cpu_to_le32(EMPTY_QUEUE)){ 
+ 				// This really should not happen
+ 				printk(KERN_ERR"dpti: Could not get reply frame\n");
+ 				goto out;
+ 			}
+ 		}
+-		reply = (ulong)bus_to_virt(m);
++		if ((pHba->reply_pool_pa <= le32_to_cpu(m))
++		 && (le32_to_cpu(m) < (pHba->reply_pool_pa + (pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4)))) {
++			reply = ((u8 *)pHba->reply_pool_va) + (le32_to_cpu(m) - pHba->reply_pool_pa);
++		} else {
++			/* Ick, we should *never* be here */
++			printk(KERN_ERR"dpti: replay frame not from pool\n");
++			reply = (u8 *)bus_to_virt(le32_to_cpu(m));
++		}
+ 
+-		if (readl(reply) & MSG_FAIL) {
++		if (readl(reply) & cpu_to_le32(MSG_FAIL)) {
+ 			u32 old_m = readl(reply+28); 
+-			ulong msg;
++			char * msg;
+ 			u32 old_context;
+ 			PDEBUG("%s: Failed message\n",pHba->name);
+-			if(old_m >= 0x100000){
++			if(le32_to_cpu(old_m) >= 0x100000){
+ 				printk(KERN_ERR"%s: Bad preserved MFA (%x)- dropping frame\n",pHba->name,old_m);
+ 				writel(m,pHba->reply_port);
+ 				continue;
+ 			}
+ 			// Transaction context is 0 in failed reply frame
+-			msg = (ulong)(pHba->msg_addr_virt + old_m);
++			msg = pHba->msg_addr_virt + le32_to_cpu(old_m);
+ 			old_context = readl(msg+12);
+ 			writel(old_context, reply+12);
+ 			adpt_send_nop(pHba, old_m);
+ 		} 
+ 		context = readl(reply+8);
+ 		if(context & 0x40000000){ // IOCTL
+-			ulong p = (ulong)(readl(reply+12));
++			u32 context = readl(reply+12);
++			void * p;
++			if (sizeof(reply) > sizeof(u32)) {
++				p = pHba->ioctl_reply_context[context];
++				pHba->ioctl_reply_context[context] = NULL;
++			} else
++				p = (void *)(unsigned long)(readl(reply+12));
+ 			if( p != 0) {
+-				memcpy((void*)p, (void*)reply, REPLY_FRAME_SIZE * 4);
++				memcpy_fromio(p, (void*)reply, REPLY_FRAME_SIZE * 4);
+ 			}
+ 			// All IOCTLs will also be post wait
+ 		}
+ 		if(context & 0x80000000){ // Post wait message
+-			status = readl(reply+16);
++			status = le32_to_cpu(readl(reply+16));
+ 			if(status  >> 24){
+ 				status &=  0xffff; /* Get detail status */
+ 			} else {
+ 				status = I2O_POST_WAIT_OK;
+ 			}
+ 			if(!(context & 0x40000000)) {
+-				cmd = (Scsi_Cmnd*) readl(reply+12); 
++				cmd = adpt_cmd_from_context (pHba, readl(reply+12));
+ 				if(cmd != NULL) {
+ 					printk(KERN_WARNING"%s: Apparent SCSI cmd in Post Wait Context - cmd=%p context=%x\n", pHba->name, cmd, context);
+ 				}
+ 			}
+ 			adpt_i2o_post_wait_complete(context, status);
+ 		} else { // SCSI message
+-			cmd = (Scsi_Cmnd*) readl(reply+12); 
++			cmd = adpt_cmd_from_context (pHba, readl(reply+12));
+ 			if(cmd != NULL){
++				if(cmd->use_sg)
++					pci_unmap_sg(pHba->pDev,
++					  (struct scatterlist *)cmd->buffer,
++					  cmd->use_sg,
++					  scsi_to_pci_dma_dir(cmd->sc_data_direction));
++				else if(cmd->request_bufflen)
++					pci_unmap_single(pHba->pDev,
++					  cmd->SCp.dma_handle,
++					  cmd->request_bufflen,
++					  scsi_to_pci_dma_dir(cmd->sc_data_direction));
++
+ 				if(cmd->serial_number != 0) { // If not timedout
+ 					adpt_i2o_to_scsi(reply, cmd);
+ 				}
+@@ -2036,8 +2521,28 @@
+ 		wmb();
+ 		rmb();
+ 	}
+-out:	spin_unlock_irqrestore(pHba->host->host_lock, flags);
++out:
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	if (pHba->host != NULL) /* Sad */
++		spin_unlock_irqrestore(pHba->host->host_lock, flags);
++#else
++	spin_unlock_irqrestore(&io_request_lock, flags);
++#endif
++	if (reply == (u8 *)-1) {
++		return IRQ_NONE;
++	}
++	return IRQ_HANDLED;
++
+ }
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++/*
++ * dpti2oscsi2.c contains a table of scsi commands that is used to determine
++ * the data direction of the command.  It is used in dpt_scsi_to_i2o to speed
++ * up the building of the scsi message.
++ */
++#include "dpti2oscsi2.c"
++#endif
++
+ 
+ static s32 adpt_scsi_to_i2o(adpt_hba* pHba, Scsi_Cmnd* cmd, struct adpt_device* d)
+ {
+@@ -2051,6 +2556,10 @@
+ 	u32 reqlen;
+ 	s32 rcode;
+ 
++#if 0
++printk (KERN_INFO"adpt_scsi_to_i2o(%p,%p,%p)\n", pHba, cmd, d);
++adpt_sleep();
++#endif
+ 	memset(msg, 0 , sizeof(msg));
+ 	len = cmd->request_bufflen;
+ 	direction = 0x00000000;	
+@@ -2063,6 +2572,34 @@
+ 		 * Note:  Do not have to verify index is less than 0 since
+ 		 * cmd->cmnd[0] is an unsigned char
+ 		 */
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++		if (cmd->cmnd[0] < DISKXFERTBLSIZE) {
++			switch (i2oscsi2diskxfer[cmd->cmnd[0]]) {
++			case DATAIN:
++				scsidir  =0x40000000;	// DATA IN  (iop<--dev)
++				break;
++			case DATAOUT:
++				direction=0x04000000;	// SGL OUT
++				scsidir  =0x80000000;	// DATA OUT (iop-->dev)
++				break;
++			case NODATA:
++				break;
++			case NOSUPPORT:
++				scsidir  =0x40000000;	// DATA IN  (iop<--dev)
++				// Assume In - and continue;
++				break;
++			default:
++				printk(KERN_WARNING"%s: scsi opcode 0x%x not supported.\n",
++				     pHba->name, cmd->cmnd[0]);
++				cmd->result = (DID_OK <<16) | (INITIATOR_ERROR << 8);
++				cmd->scsi_done(cmd);
++				return 	0;
++			}
++		} else {
++			printk(KERN_WARNING"%s: cmd->cmnd[0] = %d is greater than table size, which is %d\n",
++			     pHba->name, cmd->cmnd[0], DISKXFERTBLSIZE);
++		}
++#else
+ 		switch(cmd->sc_data_direction){
+ 		case SCSI_DATA_READ:
+ 			scsidir  =0x40000000;	// DATA IN  (iop<--dev)
+@@ -2084,21 +2621,25 @@
+ 			cmd->scsi_done(cmd);
+ 			return 	0;
+ 		}
++#endif
+ 	}
+ 	// msg[0] is set later
+ 	// I2O_CMD_SCSI_EXEC
+-	msg[1] = ((0xff<<24)|(HOST_TID<<12)|d->tid);
++	msg[1] = cpu_to_le32((0xff<<24)|(HOST_TID<<12)|d->tid);
+ 	msg[2] = 0;
+-	msg[3] = (u32)cmd;	/* We want the SCSI control block back */
++	if (sizeof(cmd) > sizeof(u32))
++		msg[3] = (u32)cmd->serial_number;
++	else
++		msg[3] = (u32)(unsigned long)cmd;	/* EVIL 64 bit We want the SCSI control block back */
+ 	// Our cards use the transaction context as the tag for queueing
+ 	// Adaptec/DPT Private stuff 
+-	msg[4] = I2O_CMD_SCSI_EXEC|(DPT_ORGANIZATION_ID<<16);
+-	msg[5] = d->tid;
++	msg[4] = cpu_to_le32(I2O_CMD_SCSI_EXEC|(DPT_ORGANIZATION_ID<<16));
++	msg[5] = cpu_to_le32(d->tid);
+ 	/* Direction, disconnect ok | sense data | simple queue , CDBLen */
+ 	// I2O_SCB_FLAG_ENABLE_DISCONNECT | 
+ 	// I2O_SCB_FLAG_SIMPLE_QUEUE_TAG | 
+ 	// I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE;
+-	msg[6] = scsidir|0x20a00000|cmd->cmd_len;
++	msg[6] = cpu_to_le32(scsidir|0x20a00000|cmd->cmd_len);
+ 
+ 	mptr=msg+7;
+ 
+@@ -2108,37 +2649,102 @@
+ 	mptr+=4;
+ 	lenptr=mptr++;		/* Remember me - fill in when we know */
+ 	reqlen = 14;		// SINGLE SGE
++	/* The following test gets optimized out if dma_addr_t is <= 32 bits */
++	if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support)) {
++		*mptr++ = cpu_to_le32((0x7C<<24)+(2<<16)+0x02); /* Enable 64 bit */
++		*mptr++ = cpu_to_le32(1 << PAGE_SHIFT);
++		reqlen += 2;
++	}
+ 	/* Now fill in the SGList and command */
+ 	if(cmd->use_sg) {
+ 		struct scatterlist *sg = (struct scatterlist *)cmd->request_buffer;
++		int sg_count = pci_map_sg(pHba->pDev, sg, cmd->use_sg,
++		  scsi_to_pci_dma_dir(cmd->sc_data_direction));
+ 		len = 0;
+-		for(i = 0 ; i < cmd->use_sg; i++) {
+-			*mptr++ = direction|0x10000000|sg->length;
+-			len+=sg->length;
+-			*mptr++ = virt_to_bus(sg->address);
+-			sg++;
++		if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support)) {
++			for(i = 0 ; i < sg_count; i++) {
++				dma_addr_t addr;
++				*mptr++ = cpu_to_le32(direction|0x10000000|sg_dma_len(sg));
++				len+=sg_dma_len(sg);
++				addr = sg_dma_address(sg);
++				*mptr++ = cpu_to_le32(addr);
++				*mptr++ = cpu_to_le32((u64)addr >> 32);
++				sg++;
++			}
++			/* Make this an end of list */
++			mptr[-3] = cpu_to_le32(direction|0xD0000000|sg_dma_len(sg-1));
++#if 0
++reqlen = mptr - msg;
++*lenptr = cpu_to_le32(len);
++msg[0] = cpu_to_le32(reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0));
++printk(KERN_INFO"Message64=");
++{int i;
++for (i=0; i<reqlen; ++i)
++printk("%c%08x", (i?' ':'{'), msg[i]);
++}
++printk("}\n");
++adpt_sleep();
++#endif
++		} else {
++			for(i = 0 ; i < sg_count; i++) {
++				*mptr++ = cpu_to_le32(direction|0x10000000|sg_dma_len(sg));
++				len+=sg_dma_len(sg);
++				*mptr++ = cpu_to_le32(sg_dma_address(sg));
++				sg++;
++			}
++			/* Make this an end of list */
++			mptr[-2] = cpu_to_le32(direction|0xD0000000|sg_dma_len(sg-1));
++#if 0
++reqlen = mptr - msg;
++*lenptr = cpu_to_le32(len);
++msg[0] = cpu_to_le32(reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0));
++printk(KERN_INFO"Message32=");
++{int i;
++for (i=0; i<reqlen; ++i)
++printk("%c%08x", (i?' ':'{'), msg[i]);
++}
++printk("}\n");
++adpt_sleep();
++#endif
+ 		}
+-		/* Make this an end of list */
+-		mptr[-2] = direction|0xD0000000|(sg-1)->length;
+ 		reqlen = mptr - msg;
+-		*lenptr = len;
++		*lenptr = cpu_to_le32(len);
+ 		
+ 		if(cmd->underflow && len != cmd->underflow){
+ 			printk(KERN_WARNING"Cmd len %08X Cmd underflow %08X\n",
+ 				len, cmd->underflow);
+ 		}
+ 	} else {
+-		*lenptr = len = cmd->request_bufflen;
++		len = cmd->request_bufflen;
++
++		*lenptr = cpu_to_le32(len);
+ 		if(len == 0) {
+ 			reqlen = 12;
+ 		} else {
+-			*mptr++ = 0xD0000000|direction|cmd->request_bufflen;
+-			*mptr++ = virt_to_bus(cmd->request_buffer);
+-		}
++			*mptr++ = cpu_to_le32(0xD0000000|direction|cmd->request_bufflen);
++			cmd->SCp.dma_handle = pci_map_single(pHba->pDev,
++			  cmd->request_buffer,
++			  len, scsi_to_pci_dma_dir(cmd->sc_data_direction));
++			*mptr++ = cpu_to_le32(cmd->SCp.dma_handle);
++			if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support)) {
++				*mptr++ = cpu_to_le32((u64)cmd->SCp.dma_handle >> 32);
++				++reqlen;
++			}
++		}
++#if 0
++msg[0] = cpu_to_le32(reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0));
++printk(KERN_INFO"Message=");
++{int i;
++for (i=0; i<reqlen; ++i)
++printk("%c%08x", (i?' ':'{'), msg[i]);
++}
++printk("}\n");
++adpt_sleep();
++#endif
+ 	}
+ 	
+ 	/* Stick the headers on */
+-	msg[0] = reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0);
++	msg[0] = cpu_to_le32(reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0));
+ 	
+ 	// Send it on it's way
+ 	rcode = adpt_i2o_post_this(pHba, msg, reqlen<<2);
+@@ -2161,6 +2767,21 @@
+ 	(adpt_hba*)(host->hostdata[0]) = pHba;
+ 	pHba->host = host;
+ 
++	/*
++	 *      Only enable PAE mode if the dma_addr_t is larger than
++	 * 32 bit addressing, and we have more than 32 bit addressing
++	 * worth of memory.
++	 */
++	if( (sizeof(dma_addr_t) > 4)
++	 && (num_physpages > (0xFFFFFFFFULL >> PAGE_SHIFT))) {
++		pHba->pae_support = 1;
++		pci_set_dma_mask(pHba->pDev, (dma_addr_t)0xFFFFFFFFFFFFFFFFULL);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,18)) && defined(CONFIG_HIGHMEM) && ((LINUX_VERSION_CODE != KERNEL_VERSION(2,4,19)) || defined(CONFIG_HIGHIO))
++#if 1
++		host->highmem_io = 1;
++#endif
++#endif
++	}
+ 	host->irq = pHba->pDev->irq;
+ 	/* no IO ports, so don't have to set host->io_port and 
+ 	 * host->n_io_port
+@@ -2171,30 +2792,40 @@
+ 	host->max_id = 16;
+ 	host->max_lun = 256;
+ 	host->max_channel = pHba->top_scsi_channel + 1;
+-	host->cmd_per_lun = 1;
+-	host->unique_id = (uint) pHba;
++	host->cmd_per_lun = 256;
++	host->unique_id = (uint)(unsigned long)pHba; /* 64 bit */
+ 	host->sg_tablesize = pHba->sg_tablesize;
+ 	host->can_queue = pHba->post_fifo_size;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0))
++	scsi_set_device(host, &pHba->pDev->dev);
++#else
++	scsi_set_pci_device(host, pHba->pDev);
++#endif
+ 
+ 	return 0;
+ }
+ 
+ 
+-static s32 adpt_i2o_to_scsi(ulong reply, Scsi_Cmnd* cmd)
++static s32 adpt_i2o_to_scsi(u8 * reply, Scsi_Cmnd* cmd)
+ {
+ 	adpt_hba* pHba;
+ 	u32 hba_status;
+ 	u32 dev_status;
+-	u32 reply_flags = readl(reply) & 0xff00; // Leave it shifted up 8 bits 
++	u32 reply_flags = le32_to_cpu(readl(reply)) & 0xff00; // Leave it shifted up 8 bits 
+ 	// I know this would look cleaner if I just read bytes
+ 	// but the model I have been using for all the rest of the
+ 	// io is in 4 byte words - so I keep that model
+-	u16 detailed_status = readl(reply+16) &0xffff;
++	u16 detailed_status = le32_to_cpu(readl(reply+16)) &0xffff;
+ 	dev_status = (detailed_status & 0xff);
+ 	hba_status = detailed_status >> 8;
++//if (hba_status == 1) {
++// printk ("ReplyFrame=%08x %08x %08x %08x %08x %08x\n", le32_to_cpu(readl(reply)), le32_to_cpu(readl(reply+4)), le32_to_cpu(readl(reply+8)), le32_to_cpu(readl(reply+12)), le32_to_cpu(readl(reply+16)), le32_to_cpu(readl(reply+20)));
++//}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0))
+ 	// calculate resid for sg 
+-	cmd->resid = cmd->request_bufflen - readl(reply+5);
++	cmd->resid = cmd->request_bufflen - le32_to_cpu(readl(reply+5));
++#endif
+ 
+ 	pHba = (adpt_hba*) cmd->device->host->hostdata[0];
+ 
+@@ -2205,7 +2836,7 @@
+ 		case I2O_SCSI_DSC_SUCCESS:
+ 			cmd->result = (DID_OK << 16);
+ 			// handle underflow
+-			if(readl(reply+5) < cmd->underflow ) {
++			if(le32_to_cpu(readl(reply+5)) < cmd->underflow ) {
+ 				cmd->result = (DID_ERROR <<16);
+ 				printk(KERN_WARNING"%s: SCSI CMD underflow\n",pHba->name);
+ 			}
+@@ -2220,7 +2851,9 @@
+ 		case I2O_SCSI_DSC_NO_ADAPTER:
+ 		case I2O_SCSI_DSC_RESOURCE_UNAVAILABLE:
+ 			printk(KERN_WARNING"%s: SCSI Timeout-Device (%d,%d,%d) hba status=0x%x, dev status=0x%x, cmd=0x%x\n",
+-				pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun, hba_status, dev_status, cmd->cmnd[0]);
++				pHba->name,
++				(u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
++				hba_status, dev_status, cmd->cmnd[0]);
+ 			cmd->result = (DID_TIME_OUT << 16);
+ 			break;
+ 		case I2O_SCSI_DSC_ADAPTER_BUSY:
+@@ -2260,7 +2893,8 @@
+ 		case I2O_SCSI_DSC_REQUEST_INVALID:
+ 		default:
+ 			printk(KERN_WARNING"%s: SCSI error %0x-Device(%d,%d,%d) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
+-				pHba->name, detailed_status & I2O_SCSI_DSC_MASK, (u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
++				pHba->name, detailed_status & I2O_SCSI_DSC_MASK,
++				(u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
+ 			       hba_status, dev_status, cmd->cmnd[0]);
+ 			cmd->result = (DID_ERROR << 16);
+ 			break;
+@@ -2272,13 +2906,14 @@
+ 			u32 len = sizeof(cmd->sense_buffer);
+ 			len = (len > 40) ?  40 : len;
+ 			// Copy over the sense data
+-			memcpy(cmd->sense_buffer, (void*)(reply+28) , len);
++			memcpy_fromio(cmd->sense_buffer, (void*)(reply+28) , len);
+ 			if(cmd->sense_buffer[0] == 0x70 /* class 7 */ && 
+ 			   cmd->sense_buffer[2] == DATA_PROTECT ){
+ 				/* This is to handle an array failed */
+ 				cmd->result = (DID_TIME_OUT << 16);
+ 				printk(KERN_WARNING"%s: SCSI Data Protect-Device (%d,%d,%d) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
+-					pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun, 
++					pHba->name,
++					(u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
+ 					hba_status, dev_status, cmd->cmnd[0]);
+ 
+ 			}
+@@ -2290,7 +2925,8 @@
+ 		 */
+ 		cmd->result = (DID_TIME_OUT << 16);
+ 		printk(KERN_WARNING"%s: I2O MSG_FAIL - Device (%d,%d,%d) tid=%d, cmd=0x%x\n",
+-			pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
++			pHba->name,
++			(u32)cmd->device->channel, (u32)cmd->device->id, (u32)cmd->device->lun,
+ 			((struct adpt_device*)(cmd->device->hostdata))->tid, cmd->cmnd[0]);
+ 	}
+ 
+@@ -2308,13 +2944,25 @@
+ 	s32 rcode;
+ 	ulong flags;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ 	spin_lock_irqsave(pHba->host->host_lock, flags);
+-	if ((rcode=adpt_i2o_lct_get(pHba)) < 0)
++#else
++	spin_lock_irqsave(&io_request_lock, flags);
++#endif
++	if ((rcode=adpt_i2o_lct_get(pHba)) < 0){
+ 		goto out;
+-	if ((rcode=adpt_i2o_reparse_lct(pHba)) < 0)
++	}
++
++	if ((rcode=adpt_i2o_reparse_lct(pHba)) < 0){
+ 		goto out;
++	}
+ 	rcode = 0;
+-out:	spin_unlock_irqrestore(pHba->host->host_lock, flags);
++out:
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	spin_unlock_irqrestore(pHba->host->host_lock, flags);
++#else
++	spin_unlock_irqrestore(&io_request_lock, flags);
++#endif
+ 	return rcode;
+ }
+ 
+@@ -2325,7 +2973,7 @@
+ 	int max;
+ 	int tid;
+ 	struct i2o_device *d;
+-	i2o_lct *lct = pHba->lct;
++	i2o_lct *lct = pHba->lct_va;
+ 	u8 bus_no = 0;
+ 	s16 scsi_id;
+ 	s16 scsi_lun;
+@@ -2354,14 +3002,14 @@
+ 	printk(KERN_INFO "%s: LCT has %d entries.\n", pHba->name,max);
+ 	
+ 	for(i=0;i<max;i++) {
+-		if( lct->lct_entry[i].user_tid != 0xfff){
++		if( lct->lct_entry[i].user_tid != cpu_to_le32(0xfff)){
+ 			continue;
+ 		}
+ 
+-		if( lct->lct_entry[i].class_id == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
+-		    lct->lct_entry[i].class_id == I2O_CLASS_SCSI_PERIPHERAL ||
+-		    lct->lct_entry[i].class_id == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
+-			tid = lct->lct_entry[i].tid;
++		if( lct->lct_entry[i].class_id == cpu_to_le32(I2O_CLASS_RANDOM_BLOCK_STORAGE) ||
++		    lct->lct_entry[i].class_id == cpu_to_le32(I2O_CLASS_SCSI_PERIPHERAL) ||
++		    lct->lct_entry[i].class_id == cpu_to_le32(I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL) ){
++			tid = le32_to_cpu(lct->lct_entry[i].tid);
+ 			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) {
+ 				printk(KERN_ERR"%s: Could not query device\n",pHba->name);
+ 				continue;
+@@ -2415,7 +3063,7 @@
+ 					}
+ 				}
+ 				memset(pDev,0,sizeof(struct adpt_device));
+-				pDev->tid = d->lct_data.tid;
++				pDev->tid = le32_to_cpu(d->lct_data.tid);
+ 				pDev->scsi_channel = bus_no;
+ 				pDev->scsi_id = scsi_id;
+ 				pDev->scsi_lun = scsi_lun;
+@@ -2436,18 +3084,30 @@
+ 			// We found an old device - check it
+ 			while(pDev) {
+ 				if(pDev->scsi_lun == scsi_lun) {
+-					if(pDev->pScsi_dev->online == FALSE) {
++					/*
++					 * Can not set a device to
++					 * changed when in eh code
++					 * as it causes a recurse stack
++					 * panic timebomb.
++					 */
++					int change_ok = pDev->pScsi_dev
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,1))
++					 && !test_bit(SHOST_RECOVERY, &pHba->host->shost_state);
++#elif (LINUX_VERSION_CODE == KERNEL_VERSION(2,6,0))
++					 && !test_bit(SHOST_RECOVERY, &pHba->host->shost_state);
++#else
++					 && !pHba->host->in_recovery;
++#endif
++					if(pDev->pScsi_dev && (pDev->pScsi_dev->online == FALSE)) {
+ 						printk(KERN_WARNING"%s: Setting device (%d,%d,%d) back online\n",
+ 								pHba->name,bus_no,scsi_id,scsi_lun);
+-						if (pDev->pScsi_dev) {
+-							pDev->pScsi_dev->online = TRUE;
+-						}
++						pDev->pScsi_dev->online = TRUE;
+ 					}
+ 					d = pDev->pI2o_dev;
+-					if(d->lct_data.tid != tid) { // something changed
++					if(le32_to_cpu(d->lct_data.tid) != tid) { // something changed
+ 						pDev->tid = tid;
+ 						memcpy(&d->lct_data, &lct->lct_entry[i], sizeof(i2o_lct_entry));
+-						if (pDev->pScsi_dev) {
++						if (change_ok) {
+ 							pDev->pScsi_dev->changed = TRUE;
+ 							pDev->pScsi_dev->removable = TRUE;
+ 						}
+@@ -2472,6 +3132,20 @@
+ 			printk(KERN_WARNING"%s: Device (%d,%d,%d) offline\n",pHba->name,pDev->scsi_channel,pDev->scsi_id,pDev->scsi_lun);
+ 			if (pDev->pScsi_dev) {
+ 				pDev->pScsi_dev->online = FALSE;
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)) && (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
++				if (atomic_read(&pDev->pScsi_dev->access_count)) {
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
++				if (pDev->pScsi_dev->device_busy) {
++#else
++				if (pDev->pScsi_dev->access_count) {
++#endif
++					// A drive that was mounted is no longer there... bad!
++#ifdef SCSI_LOG_ERROR_RECOVERY
++					SCSI_LOG_ERROR_RECOVERY(1, printk ("%s:Rescan: Previously "
++								 "mounted drive not found!\n",pHba->name));
++#endif
++					printk(KERN_WARNING"%s:Mounted drive taken offline\n",pHba->name);
++				}
+ 			}
+ 		}
+ 	}
+@@ -2481,20 +3155,38 @@
+ static void adpt_fail_posted_scbs(adpt_hba* pHba)
+ {
+ 	Scsi_Cmnd* 	cmd = NULL;
+-	Scsi_Device* 	d = NULL;
++	Scsi_Device* 	d;
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++# if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0))
+ 	shost_for_each_device(d, pHba->host) {
++# else
++	list_for_each_entry(d, &pHba->host->my_devices, siblings) {
++# endif
+ 		unsigned long flags;
+ 		spin_lock_irqsave(&d->list_lock, flags);
+ 		list_for_each_entry(cmd, &d->cmd_list, list) {
++			if (cmd->serial_number == 0) {
++				continue;
++			}
++			cmd->result = (DID_OK << 16) | (QUEUE_FULL << 1);
++			cmd->scsi_done(cmd);
++		}
++		spin_unlock_irqrestore(&d->list_lock, flags);
++	}
++#else
++	d = pHba->host->host_queue;
++	while( d != NULL ){
++		for(cmd = d->device_queue; cmd ; cmd = cmd->next){
+ 			if(cmd->serial_number == 0){
+ 				continue;
+ 			}
+ 			cmd->result = (DID_OK << 16) | (QUEUE_FULL <<1);
+ 			cmd->scsi_done(cmd);
+ 		}
+-		spin_unlock_irqrestore(&d->list_lock, flags);
++		d = d->next;
+ 	}
++#endif
+ }
+ 
+ 
+@@ -2524,17 +3216,17 @@
+ 			}
+ 		}
+ 
+-		if(pHba->status_block->iop_state == ADAPTER_STATE_FAULTED) {
++		if(pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_FAULTED)) {
+ 			printk(KERN_CRIT "%s: hardware fault\n", pHba->name);
+ 			return -1;
+ 		}
+ 
+-		if (pHba->status_block->iop_state == ADAPTER_STATE_READY ||
+-		    pHba->status_block->iop_state == ADAPTER_STATE_OPERATIONAL ||
+-		    pHba->status_block->iop_state == ADAPTER_STATE_HOLD ||
+-		    pHba->status_block->iop_state == ADAPTER_STATE_FAILED) {
++		if (pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_READY) ||
++		    pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_OPERATIONAL) ||
++		    pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_HOLD) ||
++		    pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_FAILED)) {
+ 			adpt_i2o_reset_hba(pHba);			
+-			if (adpt_i2o_status_get(pHba) < 0 || pHba->status_block->iop_state != ADAPTER_STATE_RESET) {
++			if (adpt_i2o_status_get(pHba) < 0 || pHba->status_block_va->iop_state != cpu_to_le32(ADAPTER_STATE_RESET)) {
+ 				printk(KERN_ERR "%s: Failed to initialize.\n", pHba->name);
+ 				return -1;
+ 			}
+@@ -2586,10 +3278,10 @@
+ 	u32 *msg;
+ 	ulong timeout = jiffies + 5*HZ;
+ 
+-	while(m == EMPTY_QUEUE){
++	while(m == cpu_to_le32(EMPTY_QUEUE)){
+ 		rmb();
+ 		m = readl(pHba->post_port);
+-		if(m != EMPTY_QUEUE){
++		if(m != cpu_to_le32(EMPTY_QUEUE)){
+ 			break;
+ 		}
+ 		if(time_after(jiffies,timeout)){
+@@ -2597,9 +3289,9 @@
+ 			return 2;
+ 		}
+ 	}
+-	msg = (u32*)(pHba->msg_addr_virt + m);
+-	writel( THREE_WORD_MSG_SIZE | SGL_OFFSET_0,&msg[0]);
+-	writel( I2O_CMD_UTIL_NOP << 24 | HOST_TID << 12 | 0,&msg[1]);
++	msg = (u32*)(pHba->msg_addr_virt + le32_to_cpu(m));
++	writel( cpu_to_le32(THREE_WORD_MSG_SIZE | SGL_OFFSET_0),&msg[0]);
++	writel( cpu_to_le32(I2O_CMD_UTIL_NOP << 24 | HOST_TID << 12 | 0),&msg[1]);
+ 	writel( 0,&msg[2]);
+ 	wmb();
+ 
+@@ -2611,17 +3303,16 @@
+ static s32 adpt_i2o_init_outbound_q(adpt_hba* pHba)
+ {
+ 	u8 *status;
++	dma_addr_t addr;
+ 	u32 *msg = NULL;
+ 	int i;
+ 	ulong timeout = jiffies + TMOUT_INITOUTBOUND*HZ;
+-	u32* ptr;
+-	u32 outbound_frame;  // This had to be a 32 bit address
+ 	u32 m;
+ 
+ 	do {
+ 		rmb();
+ 		m = readl(pHba->post_port);
+-		if (m != EMPTY_QUEUE) {
++		if (m != cpu_to_le32(EMPTY_QUEUE)) {
+ 			break;
+ 		}
+ 
+@@ -2629,27 +3320,34 @@
+ 			printk(KERN_WARNING"%s: Timeout waiting for message frame\n",pHba->name);
+ 			return -ETIMEDOUT;
+ 		}
+-	} while(m == EMPTY_QUEUE);
++	} while(m == cpu_to_le32(EMPTY_QUEUE));
+ 
+-	msg=(u32 *)(pHba->msg_addr_virt+m);
++	msg=(u32 *)(pHba->msg_addr_virt+le32_to_cpu(m));
+ 
+-	status = kmalloc(4,GFP_KERNEL|ADDR32);
++	status = (u8*)pci_alloc_consistent(pHba->pDev, 4, &addr);
+ 	if (status==NULL) {
+ 		adpt_send_nop(pHba, m);
+ 		printk(KERN_WARNING"%s: IOP reset failed - no free memory.\n",
+ 			pHba->name);
+ 		return -ENOMEM;
+ 	}
++	if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)addr >> 32) != 0) ) {
++		pci_free_consistent(pHba->pDev, 4, status, addr);
++		adpt_send_nop(pHba, m);
++		printk(KERN_WARNING"%s: IOP reset failed - no free memory.\n",
++			pHba->name);
++		return -ENOMEM;
++	}
+ 	memset(status, 0, 4);
+ 
+-	writel(EIGHT_WORD_MSG_SIZE| SGL_OFFSET_6, &msg[0]);
+-	writel(I2O_CMD_OUTBOUND_INIT<<24 | HOST_TID<<12 | ADAPTER_TID, &msg[1]);
++	writel( cpu_to_le32(EIGHT_WORD_MSG_SIZE| SGL_OFFSET_6), &msg[0]);
++	writel( cpu_to_le32(I2O_CMD_OUTBOUND_INIT<<24 | HOST_TID<<12 | ADAPTER_TID), &msg[1]);
+ 	writel(0, &msg[2]);
+ 	writel(0x0106, &msg[3]);	/* Transaction context */
+-	writel(4096, &msg[4]);		/* Host page frame size */
+-	writel((REPLY_FRAME_SIZE)<<16|0x80, &msg[5]);	/* Outbound msg frame size and Initcode */
+-	writel(0xD0000004, &msg[6]);		/* Simple SG LE, EOB */
+-	writel(virt_to_bus(status), &msg[7]);
++	writel( cpu_to_le32(4096), &msg[4]);		/* Host page frame size */
++	writel( cpu_to_le32((REPLY_FRAME_SIZE)<<16|0x80), &msg[5]);	/* Outbound msg frame size and Initcode */
++	writel( cpu_to_le32(0xD0000004), &msg[6]);		/* Simple SG LE, EOB */
++	writel( cpu_to_le32(addr), &msg[7]);
+ 
+ 	writel(m, pHba->post_port);
+ 	wmb();
+@@ -2664,36 +3362,42 @@
+ 		rmb();
+ 		if(time_after(jiffies,timeout)){
+ 			printk(KERN_WARNING"%s: Timeout Initializing\n",pHba->name);
+-			kfree((void*)status);
++			/* We loose 4 bytes of "status" here, but we
++			   cannot free these because controller may
++			   awake and corrupt those bytes at any time */
++			/* pci_free_consistent(pHba->pDev, 4, status, addr); */
+ 			return -ETIMEDOUT;
+ 		}
+ 	} while (1);
+ 
+ 	// If the command was successful, fill the fifo with our reply
+ 	// message packets
+-	if(*status != 0x04 /*I2O_EXEC_OUTBOUND_INIT_COMPLETE*/) {
+-		kfree((void*)status);
++	if(*status != le32_to_cpu(0x04) /*I2O_EXEC_OUTBOUND_INIT_COMPLETE*/) {
++		pci_free_consistent(pHba->pDev, 4, status, addr);
+ 		return -2;
+ 	}
+-	kfree((void*)status);
++	pci_free_consistent(pHba->pDev, 4, status, addr);
+ 
+-	if(pHba->reply_pool != NULL){
+-		kfree(pHba->reply_pool);
++	if(pHba->reply_pool_va != NULL){
++		pci_free_consistent(pHba->pDev, pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4, pHba->reply_pool_va, pHba->reply_pool_pa);
+ 	}
+ 
+-	pHba->reply_pool = (u32*)kmalloc(pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4, GFP_KERNEL|ADDR32);
+-	if(!pHba->reply_pool){
++	pHba->reply_pool_va = (u32*)pci_alloc_consistent(pHba->pDev, pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4, &pHba->reply_pool_pa);
++	if(!pHba->reply_pool_va){
+ 		printk(KERN_ERR"%s: Could not allocate reply pool\n",pHba->name);
+ 		return -1;
+ 	}
+-	memset(pHba->reply_pool, 0 , pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4);
++	if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)pHba->reply_pool_pa >> 32) != 0) ) {
++		pci_free_consistent(pHba->pDev, pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4, pHba->reply_pool_va, pHba->reply_pool_pa);
++		pHba->reply_pool_va = NULL;
++		printk(KERN_ERR"%s: Could not allocate reply pool in 32 bit space\n",pHba->name);
++		return -1;
++	}
++	memset(pHba->reply_pool_va, 0 , pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4);
+ 
+-	ptr = pHba->reply_pool;
+ 	for(i = 0; i < pHba->reply_fifo_size; i++) {
+-		outbound_frame = (u32)virt_to_bus(ptr);
+-		writel(outbound_frame, pHba->reply_port);
++		writel(cpu_to_le32(pHba->reply_pool_pa + (i * REPLY_FRAME_SIZE * 4)), pHba->reply_port);
+ 		wmb();
+-		ptr +=  REPLY_FRAME_SIZE;
+ 	}
+ 	adpt_i2o_status_get(pHba);
+ 	return 0;
+@@ -2717,26 +3421,26 @@
+ 	u32 m;
+ 	u32 *msg;
+ 	u8 *status_block=NULL;
+-	ulong status_block_bus;
++	u64 status_block_pa;
+ 
+-	if(pHba->status_block == NULL) {
+-		pHba->status_block = (i2o_status_block*)
+-			kmalloc(sizeof(i2o_status_block),GFP_KERNEL|ADDR32);
+-		if(pHba->status_block == NULL) {
++	if(pHba->status_block_va == NULL) {
++		pHba->status_block_va = (i2o_status_block*)
++		  pci_alloc_consistent(pHba->pDev, sizeof(i2o_status_block),
++		    &pHba->status_block_pa);
++		if(pHba->status_block_va == NULL) {
+ 			printk(KERN_ERR
+ 			"dpti%d: Get Status Block failed; Out of memory. \n", 
+ 			pHba->unit);
+ 			return -ENOMEM;
+ 		}
+ 	}
+-	memset(pHba->status_block, 0, sizeof(i2o_status_block));
+-	status_block = (u8*)(pHba->status_block);
+-	status_block_bus = virt_to_bus(pHba->status_block);
++	memset(pHba->status_block_va, 0, sizeof(i2o_status_block));
++	status_block = (u8*)(pHba->status_block_va);
+ 	timeout = jiffies+TMOUT_GETSTATUS*HZ;
+ 	do {
+ 		rmb();
+ 		m = readl(pHba->post_port);
+-		if (m != EMPTY_QUEUE) {
++		if (m != cpu_to_le32(EMPTY_QUEUE)) {
+ 			break;
+ 		}
+ 		if(time_after(jiffies,timeout)){
+@@ -2744,20 +3448,21 @@
+ 					pHba->name);
+ 			return -ETIMEDOUT;
+ 		}
+-	} while(m==EMPTY_QUEUE);
++	} while(m==cpu_to_le32(EMPTY_QUEUE));
+ 
+ 	
+-	msg=(u32*)(pHba->msg_addr_virt+m);
++	msg=(u32*)(pHba->msg_addr_virt+le32_to_cpu(m));
+ 
+-	writel(NINE_WORD_MSG_SIZE|SGL_OFFSET_0, &msg[0]);
+-	writel(I2O_CMD_STATUS_GET<<24|HOST_TID<<12|ADAPTER_TID, &msg[1]);
+-	writel(1, &msg[2]);
++	writel( cpu_to_le32(NINE_WORD_MSG_SIZE|SGL_OFFSET_0), &msg[0]);
++	writel( cpu_to_le32(I2O_CMD_STATUS_GET<<24|HOST_TID<<12|ADAPTER_TID), &msg[1]);
++	writel( cpu_to_le32(1), &msg[2]);
+ 	writel(0, &msg[3]);
+ 	writel(0, &msg[4]);
+ 	writel(0, &msg[5]);
+-	writel(((u32)status_block_bus)&0xffffffff, &msg[6]);
+-	writel(0, &msg[7]);
+-	writel(sizeof(i2o_status_block), &msg[8]); // 88 bytes
++	status_block_pa = cpu_to_le64(pHba->status_block_pa);
++	writel( (u32)status_block_pa, &msg[6]);
++	writel( (u32)(status_block_pa >> 32), &msg[7]);
++	writel( cpu_to_le32(sizeof(i2o_status_block)), &msg[8]); // 88 bytes
+ 
+ 	//post message
+ 	writel(m, pHba->post_port);
+@@ -2773,18 +3478,25 @@
+ 	}
+ 
+ 	// Set up our number of outbound and inbound messages
+-	pHba->post_fifo_size = pHba->status_block->max_inbound_frames;
++	pHba->post_fifo_size = le32_to_cpu(pHba->status_block_va->max_inbound_frames);
+ 	if (pHba->post_fifo_size > MAX_TO_IOP_MESSAGES) {
+ 		pHba->post_fifo_size = MAX_TO_IOP_MESSAGES;
+ 	}
+ 
+-	pHba->reply_fifo_size = pHba->status_block->max_outbound_frames;
++	pHba->reply_fifo_size = le32_to_cpu(pHba->status_block_va->max_outbound_frames);
+ 	if (pHba->reply_fifo_size > MAX_FROM_IOP_MESSAGES) {
+ 		pHba->reply_fifo_size = MAX_FROM_IOP_MESSAGES;
+ 	}
+ 
+ 	// Calculate the Scatter Gather list size
+-	pHba->sg_tablesize = (pHba->status_block->inbound_frame_size * 4 -40)/ sizeof(struct sg_simple_element);
++	pHba->sg_tablesize = (le32_to_cpu(pHba->status_block_va->inbound_frame_size) * 4 - 12 * sizeof(u32))/ sizeof(struct sg_simple_element);
++	if( (sizeof(dma_addr_t) > 4)
++	 && (num_physpages > (0xFFFFFFFFULL >> PAGE_SHIFT))) {
++		pHba->sg_tablesize
++		  = (le32_to_cpu(pHba->status_block_va->inbound_frame_size) * 4
++		  - 14 * sizeof(u32))
++		  / (sizeof(struct sg_simple_element) + sizeof(u32));
++	}
+ 	if (pHba->sg_tablesize > SG_LIST_ELEMENTS) {
+ 		pHba->sg_tablesize = SG_LIST_ELEMENTS;
+ 	}
+@@ -2792,7 +3504,7 @@
+ 
+ #ifdef DEBUG
+ 	printk("dpti%d: State = ",pHba->unit);
+-	switch(pHba->status_block->iop_state) {
++	switch(le32_to_cpu(pHba->status_block_va->iop_state)) {
+ 		case 0x01:
+ 			printk("INIT\n");
+ 			break;
+@@ -2815,7 +3527,7 @@
+ 			printk("FAULTED\n");
+ 			break;
+ 		default:
+-			printk("%x (unknown!!)\n",pHba->status_block->iop_state);
++			printk("%x (unknown!!)\n",le32_to_cpu(pHba->status_block_va->iop_state));
+ 	}
+ #endif
+ 	return 0;
+@@ -2830,28 +3542,35 @@
+ 	int ret;
+ 	u32 buf[16];
+ 
+-	if ((pHba->lct_size == 0) || (pHba->lct == NULL)){
+-		pHba->lct_size = pHba->status_block->expected_lct_size;
++	if ((pHba->lct_size == 0) || (pHba->lct_va == NULL)){
++		pHba->lct_size = le32_to_cpu(pHba->status_block_va->expected_lct_size);
+ 	}
+ 	do {
+-		if (pHba->lct == NULL) {
+-			pHba->lct = kmalloc(pHba->lct_size, GFP_KERNEL|ADDR32);
+-			if(pHba->lct == NULL) {
++		if (pHba->lct_va == NULL) {
++			pHba->lct_va = pci_alloc_consistent(pHba->pDev, pHba->lct_size, &pHba->lct_pa);
++			if(pHba->lct_va == NULL) {
+ 				printk(KERN_CRIT "%s: Lct Get failed. Out of memory.\n",
+ 					pHba->name);
+ 				return -ENOMEM;
+ 			}
++			if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)pHba->lct_pa >> 32) != 0) ) {
++				pci_free_consistent(pHba->pDev, pHba->lct_size, pHba->lct_va, pHba->lct_pa);
++				pHba->lct_va = NULL;
++				printk(KERN_CRIT "%s: Lct Get failed. Out of 32 bit memory.\n",
++					pHba->name);
++				return -ENOMEM;
++			}
+ 		}
+-		memset(pHba->lct, 0, pHba->lct_size);
++		memset(pHba->lct_va, 0, pHba->lct_size);
+ 
+-		msg[0] = EIGHT_WORD_MSG_SIZE|SGL_OFFSET_6;
+-		msg[1] = I2O_CMD_LCT_NOTIFY<<24 | HOST_TID<<12 | ADAPTER_TID;
++		msg[0] = cpu_to_le32(EIGHT_WORD_MSG_SIZE|SGL_OFFSET_6);
++		msg[1] = cpu_to_le32(I2O_CMD_LCT_NOTIFY<<24 | HOST_TID<<12 | ADAPTER_TID);
+ 		msg[2] = 0;
+ 		msg[3] = 0;
+ 		msg[4] = 0xFFFFFFFF;	/* All devices */
+ 		msg[5] = 0x00000000;	/* Report now */
+-		msg[6] = 0xD0000000|pHba->lct_size;
+-		msg[7] = virt_to_bus(pHba->lct);
++		msg[6] = cpu_to_le32(0xD0000000|pHba->lct_size);
++		msg[7] = cpu_to_le32(pHba->lct_pa);
+ 
+ 		if ((ret=adpt_i2o_post_wait(pHba, msg, sizeof(msg), 360))) {
+ 			printk(KERN_ERR "%s: LCT Get failed (status=%#10x.\n", 
+@@ -2860,26 +3579,29 @@
+ 			return ret;
+ 		}
+ 
+-		if ((pHba->lct->table_size << 2) > pHba->lct_size) {
+-			pHba->lct_size = pHba->lct->table_size << 2;
+-			kfree(pHba->lct);
+-			pHba->lct = NULL;
++		ret = le32_to_cpu(pHba->lct_va->table_size) << 2;
++		if (ret > pHba->lct_size) {
++			pci_free_consistent(pHba->pDev, pHba->lct_size, pHba->lct_va, pHba->lct_pa);
++			pHba->lct_size = ret;
++			pHba->lct_va = NULL;
+ 		}
+-	} while (pHba->lct == NULL);
++	} while (pHba->lct_va == NULL);
+ 
+ 	PDEBUG("%s: Hardware resource table read.\n", pHba->name);
+ 
+ 
+ 	// I2O_DPT_EXEC_IOP_BUFFERS_GROUP_NO;
+ 	if(adpt_i2o_query_scalar(pHba, 0 , 0x8000, -1, buf, sizeof(buf))>=0) {
+-		pHba->FwDebugBufferSize = buf[1];
+-		pHba->FwDebugBuffer_P    = pHba->base_addr_virt + buf[0];
+-		pHba->FwDebugFlags_P     = pHba->FwDebugBuffer_P + FW_DEBUG_FLAGS_OFFSET;
+-		pHba->FwDebugBLEDvalue_P = pHba->FwDebugBuffer_P + FW_DEBUG_BLED_OFFSET;
+-		pHba->FwDebugBLEDflag_P  = pHba->FwDebugBLEDvalue_P + 1;
+-		pHba->FwDebugStrLength_P = pHba->FwDebugBuffer_P + FW_DEBUG_STR_LENGTH_OFFSET;
+-		pHba->FwDebugBuffer_P += buf[2]; 
+-		pHba->FwDebugFlags = 0;
++		pHba->fw_buffer_addr_virt  = pHba->base_addr_virt + buf[0];
++		pHba->bled_value_addr_virt = pHba->fw_buffer_addr_virt + FW_DEBUG_BLED_OFFSET;
++		pHba->bled_flag_addr_virt  = pHba->bled_value_addr_virt + 1; 
++		/* bled fields are both 8 bits, so increment by one is what is desired*/
++#ifdef DEBUG
++		pHba->fw_buffer_size = buf[1];
++		pHba->fw_debug_flags_addr_virt     = pHba->fw_buffer_addr_virt + FW_DEBUG_FLAGS_OFFSET;
++		pHba->fw_string_len_addr_virt = pHba->fw_buffer_addr_virt + FW_DEBUG_STR_LENGTH_OFFSET;
++#endif
++		pHba->fw_buffer_addr_virt += buf[2]; 
+ 	}
+ 
+ 	return 0;
+@@ -2887,51 +3609,58 @@
+ 
+ static int adpt_i2o_build_sys_table(void)
+ {
+-	adpt_hba* pHba = NULL;
++	adpt_hba* pHba = hba_chain;
+ 	int count = 0;
+ 
++	if(sys_tbl_va)
++		pci_free_consistent(pHba->pDev, sys_tbl_len, sys_tbl_va, sys_tbl_pa);
+ 	sys_tbl_len = sizeof(struct i2o_sys_tbl) +	// Header + IOPs
+ 				(hba_count) * sizeof(struct i2o_sys_tbl_entry);
+ 
+-	if(sys_tbl)
+-		kfree(sys_tbl);
+-
+-	sys_tbl = kmalloc(sys_tbl_len, GFP_KERNEL|ADDR32);
+-	if(!sys_tbl) {
++	sys_tbl_va = pci_alloc_consistent(pHba->pDev, sys_tbl_len, &sys_tbl_pa);
++	if(!sys_tbl_va) {
+ 		printk(KERN_WARNING "SysTab Set failed. Out of memory.\n");	
+ 		return -ENOMEM;
+ 	}
+-	memset(sys_tbl, 0, sys_tbl_len);
++	if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)sys_tbl_pa >> 32) != 0) ) {
++		pci_free_consistent(pHba->pDev, sys_tbl_len, sys_tbl_va, sys_tbl_pa);
++		sys_tbl_va = NULL;
++		printk(KERN_WARNING "SysTab Set failed. Out of 32 bit memory.\n");	
++		return -ENOMEM;
++	}
++	memset(sys_tbl_va, 0, sys_tbl_len);
+ 
+-	sys_tbl->num_entries = hba_count;
+-	sys_tbl->version = I2OVERSION;
+-	sys_tbl->change_ind = sys_tbl_ind++;
++	sys_tbl_va->num_entries = cpu_to_le32(hba_count);
++	sys_tbl_va->version = cpu_to_le32(I2OVERSION);
++	sys_tbl_va->change_ind = cpu_to_le32(sys_tbl_ind++);
+ 
+ 	for(pHba = hba_chain; pHba; pHba = pHba->next) {
++		u64 addr;
+ 		// Get updated Status Block so we have the latest information
+ 		if (adpt_i2o_status_get(pHba)) {
+-			sys_tbl->num_entries--;
++			sys_tbl_va->num_entries = cpu_to_le32(le32_to_cpu(sys_tbl_va->num_entries) - 1);
+ 			continue; // try next one	
+ 		}
+ 
+-		sys_tbl->iops[count].org_id = pHba->status_block->org_id;
+-		sys_tbl->iops[count].iop_id = pHba->unit + 2;
+-		sys_tbl->iops[count].seg_num = 0;
+-		sys_tbl->iops[count].i2o_version = pHba->status_block->i2o_version;
+-		sys_tbl->iops[count].iop_state = pHba->status_block->iop_state;
+-		sys_tbl->iops[count].msg_type = pHba->status_block->msg_type;
+-		sys_tbl->iops[count].frame_size = pHba->status_block->inbound_frame_size;
+-		sys_tbl->iops[count].last_changed = sys_tbl_ind - 1; // ??
+-		sys_tbl->iops[count].iop_capabilities = pHba->status_block->iop_capabilities;
+-		sys_tbl->iops[count].inbound_low = (u32)virt_to_bus((void*)pHba->post_port);
+-		sys_tbl->iops[count].inbound_high = (u32)((u64)virt_to_bus((void*)pHba->post_port)>>32);
++		sys_tbl_va->iops[count].org_id = pHba->status_block_va->org_id;
++		sys_tbl_va->iops[count].iop_id = cpu_to_le32(pHba->unit + 2);
++		sys_tbl_va->iops[count].seg_num = 0;
++		sys_tbl_va->iops[count].i2o_version = pHba->status_block_va->i2o_version;
++		sys_tbl_va->iops[count].iop_state = pHba->status_block_va->iop_state;
++		sys_tbl_va->iops[count].msg_type = pHba->status_block_va->msg_type;
++		sys_tbl_va->iops[count].frame_size = pHba->status_block_va->inbound_frame_size;
++		sys_tbl_va->iops[count].last_changed = cpu_to_le32(sys_tbl_ind - 1); // ??
++		sys_tbl_va->iops[count].iop_capabilities = pHba->status_block_va->iop_capabilities;
++		addr = cpu_to_le64(pHba->base_addr_phys + 0x40);
++		sys_tbl_va->iops[count].inbound_low = (u32)addr;
++		sys_tbl_va->iops[count].inbound_high = (u32)(addr >> 32);
+ 
+ 		count++;
+ 	}
+ 
+ #ifdef DEBUG
+ {
+-	u32 *table = (u32*)sys_tbl;
++	u32 *table = (u32*)sys_tbl_va;
+ 	printk(KERN_DEBUG"sys_tbl_len=%d in 32bit words\n",(sys_tbl_len >>2));
+ 	for(count = 0; count < (sys_tbl_len >>2); count++) {
+ 		printk(KERN_INFO "sys_tbl[%d] = %0#10x\n", 
+@@ -2951,7 +3680,7 @@
+ static void adpt_i2o_report_hba_unit(adpt_hba* pHba, struct i2o_device *d)
+ {
+ 	char buf[64];
+-	int unit = d->lct_data.tid;
++	int unit = le32_to_cpu(d->lct_data.tid);
+ 
+ 	printk(KERN_INFO "TID %3.3d ", unit);
+ 
+@@ -2971,17 +3700,17 @@
+ 		printk(" Rev: %-12.12s\n", buf);
+ 	}
+ #ifdef DEBUG
+-	 printk(KERN_INFO "\tClass: %.21s\n", adpt_i2o_get_class_name(d->lct_data.class_id));
+-	 printk(KERN_INFO "\tSubclass: 0x%04X\n", d->lct_data.sub_class);
++	 printk(KERN_INFO "\tClass: %.21s\n", adpt_i2o_get_class_name(le32_to_cpu(d->lct_data.class_id)));
++	 printk(KERN_INFO "\tSubclass: 0x%04X\n", le32_to_cpu(d->lct_data.sub_class));
+ 	 printk(KERN_INFO "\tFlags: ");
+ 
+-	 if(d->lct_data.device_flags&(1<<0))
++	 if(le32_to_cpu(d->lct_data.device_flags)&(1<<0))
+ 		  printk("C");	     // ConfigDialog requested
+-	 if(d->lct_data.device_flags&(1<<1))
++	 if(le32_to_cpu(d->lct_data.device_flags)&(1<<1))
+ 		  printk("U");	     // Multi-user capable
+-	 if(!(d->lct_data.device_flags&(1<<4)))
++	 if(!(le32_to_cpu(d->lct_data.device_flags)&(1<<4)))
+ 		  printk("P");	     // Peer service enabled!
+-	 if(!(d->lct_data.device_flags&(1<<5)))
++	 if(!(le32_to_cpu(d->lct_data.device_flags)&(1<<5)))
+ 		  printk("M");	     // Mgmt service enabled!
+ 	 printk("\n");
+ #endif
+@@ -3056,35 +3785,42 @@
+ static s32 adpt_i2o_hrt_get(adpt_hba* pHba)
+ {
+ 	u32 msg[6];
+-	int ret, size = sizeof(i2o_hrt);
++	int ret, size = sizeof(i2o_hrt), new_size;
+ 
+ 	do {
+-		if (pHba->hrt == NULL) {
+-			pHba->hrt=kmalloc(size, GFP_KERNEL|ADDR32);
+-			if (pHba->hrt == NULL) {
++		if (pHba->hrt_va == NULL) {
++			pHba->hrt_va = pci_alloc_consistent(pHba->pDev, size, &pHba->hrt_pa);
++			if (pHba->hrt_va == NULL) {
+ 				printk(KERN_CRIT "%s: Hrt Get failed; Out of memory.\n", pHba->name);
+ 				return -ENOMEM;
+ 			}
++			if( (sizeof(dma_addr_t) > 4) && (pHba->pae_support) && (((u64)pHba->hrt_pa >> 32) != 0) ) {
++				pci_free_consistent(pHba->pDev, size, pHba->hrt_va, pHba->hrt_pa);
++				pHba->hrt_va = NULL;
++				printk(KERN_CRIT "%s: Hrt Get failed; Out of 32 bit memory.\n", pHba->name);
++				return -ENOMEM;
++			}
+ 		}
+ 
+-		msg[0]= SIX_WORD_MSG_SIZE| SGL_OFFSET_4;
+-		msg[1]= I2O_CMD_HRT_GET<<24 | HOST_TID<<12 | ADAPTER_TID;
++		msg[0]= cpu_to_le32(SIX_WORD_MSG_SIZE| SGL_OFFSET_4);
++		msg[1]= cpu_to_le32(I2O_CMD_HRT_GET<<24 | HOST_TID<<12 | ADAPTER_TID);
+ 		msg[2]= 0;
+ 		msg[3]= 0;
+-		msg[4]= (0xD0000000 | size);    /* Simple transaction */
+-		msg[5]= virt_to_bus(pHba->hrt);   /* Dump it here */
++		msg[4]= cpu_to_le32(0xD0000000 | size);    /* Simple transaction */
++		msg[5]= cpu_to_le32(pHba->hrt_pa);   /* Dump it here */
+ 
+ 		if ((ret = adpt_i2o_post_wait(pHba, msg, sizeof(msg),20))) {
+ 			printk(KERN_ERR "%s: Unable to get HRT (status=%#10x)\n", pHba->name, ret);
+ 			return ret;
+ 		}
+ 
+-		if (pHba->hrt->num_entries * pHba->hrt->entry_len << 2 > size) {
+-			size = pHba->hrt->num_entries * pHba->hrt->entry_len << 2;
+-			kfree(pHba->hrt);
+-			pHba->hrt = NULL;
++		new_size = le32_to_cpu(pHba->hrt_va->num_entries) * le32_to_cpu(pHba->hrt_va->entry_len) << 2;
++		if (new_size > size) {
++			pci_free_consistent(pHba->pDev, size, pHba->hrt_va, pHba->hrt_pa);
++			size = new_size;
++			pHba->hrt_va = NULL;
+ 		}
+-	} while(pHba->hrt == NULL);
++	} while(pHba->hrt_va == NULL);
+ 	return 0;
+ }                                                                                                                                       
+ 
+@@ -3094,18 +3830,47 @@
+ static int adpt_i2o_query_scalar(adpt_hba* pHba, int tid, 
+ 			int group, int field, void *buf, int buflen)
+ {
+-	u16 opblk[] = { 1, 0, I2O_PARAMS_FIELD_GET, group, 1, field };
+-	u8  resblk[8+buflen]; /* 8 bytes for header */
++	u16 opblk[] = { cpu_to_le16(1), 0, cpu_to_le16(I2O_PARAMS_FIELD_GET), cpu_to_le16(group), cpu_to_le16(1), cpu_to_le16(field) };
++	u8 *opblk_va;
++	dma_addr_t opblk_pa;
++	u8 *resblk_va;
++	dma_addr_t resblk_pa;
+ 	int size;
+ 
++	/* 8 bytes for header */
++	resblk_va = pci_alloc_consistent(pHba->pDev, sizeof(u8) * (8 + buflen), &resblk_pa);
++	if (resblk_va == NULL) {
++		printk(KERN_CRIT "%s: query scaler failed; Out of memory.\n", pHba->name);
++		return -ENOMEM;
++	}
++
++	opblk_va = pci_alloc_consistent(pHba->pDev, sizeof(opblk), &opblk_pa);
++	if (opblk_va == NULL) {
++		pci_free_consistent(pHba->pDev, sizeof(u8) * (8+buflen), resblk_va, resblk_pa);
++		printk(KERN_CRIT "%s: query operatio failed; Out of memory.\n", pHba->name);
++		return -ENOMEM;
++	}
++
+ 	if (field == -1)  		/* whole group */
+-			opblk[4] = -1;
++		opblk[4] = -1;
++	memcpy(opblk_va, opblk, sizeof(opblk));
+ 
+ 	size = adpt_i2o_issue_params(I2O_CMD_UTIL_PARAMS_GET, pHba, tid, 
+-		opblk, sizeof(opblk), resblk, sizeof(resblk));
++		opblk_va, opblk_pa, sizeof(opblk), resblk_va, resblk_pa, sizeof(u8)*(8+buflen));
++	pci_free_consistent(pHba->pDev, sizeof(opblk), opblk_va, opblk_pa);
++	if (size == -ETIME) {
++		pci_free_consistent(pHba->pDev, sizeof(u8) * (8+buflen), resblk_va, resblk_pa);
++		printk(KERN_WARNING "%s: issue params failed; Timed out.\n", pHba->name);
++		return -ETIME;
++	} else if (size == -EINTR) {
++		pci_free_consistent(pHba->pDev, sizeof(u8) * (8+buflen), resblk_va, resblk_pa);
++		printk(KERN_WARNING "%s: issue params failed; Interrupted.\n", pHba->name);
++		return -EINTR;
++	}
+ 			
+-	memcpy(buf, resblk+8, buflen);  /* cut off header */
++	memcpy(buf, resblk_va+8, buflen);  /* cut off header */
+ 
++	pci_free_consistent(pHba->pDev, sizeof(u8) * (8+buflen), resblk_va, resblk_pa);
+ 	if (size < 0)
+ 		return size;	
+ 
+@@ -3122,37 +3887,38 @@
+  *	ResultCount, ErrorInfoSize, BlockStatus and BlockSize.
+  */
+ static int adpt_i2o_issue_params(int cmd, adpt_hba* pHba, int tid, 
+-		  void *opblk, int oplen, void *resblk, int reslen)
++		  void *opblk_va, dma_addr_t opblk_pa, int oplen,
++		  void *resblk_va, dma_addr_t resblk_pa, int reslen)
+ {
+ 	u32 msg[9]; 
+-	u32 *res = (u32 *)resblk;
++	u32 *res = (u32 *)resblk_va;
+ 	int wait_status;
+ 
+-	msg[0] = NINE_WORD_MSG_SIZE | SGL_OFFSET_5;
+-	msg[1] = cmd << 24 | HOST_TID << 12 | tid; 
++	msg[0] = cpu_to_le32(NINE_WORD_MSG_SIZE | SGL_OFFSET_5);
++	msg[1] = cpu_to_le32(cmd << 24 | HOST_TID << 12 | tid);
+ 	msg[2] = 0;
+ 	msg[3] = 0;
+ 	msg[4] = 0;
+-	msg[5] = 0x54000000 | oplen;	/* OperationBlock */
+-	msg[6] = virt_to_bus(opblk);
+-	msg[7] = 0xD0000000 | reslen;	/* ResultBlock */
+-	msg[8] = virt_to_bus(resblk);
++	msg[5] = cpu_to_le32(0x54000000 | oplen);	/* OperationBlock */
++	msg[6] = cpu_to_le32(opblk_pa);
++	msg[7] = cpu_to_le32(0xD0000000 | reslen);	/* ResultBlock */
++	msg[8] = cpu_to_le32(resblk_pa);
+ 
+ 	if ((wait_status = adpt_i2o_post_wait(pHba, msg, sizeof(msg), 20))) {
+    		return wait_status; 	/* -DetailedStatus */
+ 	}
+ 
+-	if (res[1]&0x00FF0000) { 	/* BlockStatus != SUCCESS */
++	if (res[1]&cpu_to_le32(0x00FF0000)) { 	/* BlockStatus != SUCCESS */
+ 		printk(KERN_WARNING "%s: %s - Error:\n  ErrorInfoSize = 0x%02x, "
+ 			"BlockStatus = 0x%02x, BlockSize = 0x%04x\n",
+ 			pHba->name,
+ 			(cmd == I2O_CMD_UTIL_PARAMS_SET) ? "PARAMS_SET"
+ 							 : "PARAMS_GET",   
+-			res[1]>>24, (res[1]>>16)&0xFF, res[1]&0xFFFF);
+-		return -((res[1] >> 16) & 0xFF); /* -BlockStatus */
++			le32_to_cpu(res[1])>>24, (le32_to_cpu(res[1])>>16)&0xFF, le32_to_cpu(res[1])&0xFFFF);
++		return -((le32_to_cpu(res[1]) >> 16) & 0xFF); /* -BlockStatus */
+ 	}
+ 
+-	 return 4 + ((res[1] & 0x0000FFFF) << 2); /* bytes used in resblk */ 
++	 return 4 + ((le32_to_cpu(res[1]) & 0x0000FFFF) << 2); /* bytes used in resblk */ 
+ }
+ 
+ 
+@@ -3165,13 +3931,13 @@
+ 
+ 	/* SysQuiesce discarded if IOP not in READY or OPERATIONAL state */
+ 
+-	if((pHba->status_block->iop_state != ADAPTER_STATE_READY) &&
+-   	   (pHba->status_block->iop_state != ADAPTER_STATE_OPERATIONAL)){
++	if((pHba->status_block_va->iop_state != cpu_to_le32(ADAPTER_STATE_READY)) &&
++   	   (pHba->status_block_va->iop_state != cpu_to_le32(ADAPTER_STATE_OPERATIONAL))){
+ 		return 0;
+ 	}
+ 
+-	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1] = I2O_CMD_SYS_QUIESCE<<24|HOST_TID<<12|ADAPTER_TID;
++	msg[0] = cpu_to_le32(FOUR_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1] = cpu_to_le32(I2O_CMD_SYS_QUIESCE<<24|HOST_TID<<12|ADAPTER_TID);
+ 	msg[2] = 0;
+ 	msg[3] = 0;
+ 
+@@ -3196,18 +3962,18 @@
+ 	int ret;
+ 	
+ 	adpt_i2o_status_get(pHba);
+-	if(!pHba->status_block){
++	if(!pHba->status_block_va){
+ 		return -ENOMEM;
+ 	}
+ 	/* Enable only allowed on READY state */
+-	if(pHba->status_block->iop_state == ADAPTER_STATE_OPERATIONAL)
++	if(pHba->status_block_va->iop_state == cpu_to_le32(ADAPTER_STATE_OPERATIONAL))
+ 		return 0;
+ 
+-	if(pHba->status_block->iop_state != ADAPTER_STATE_READY)
++	if(pHba->status_block_va->iop_state != cpu_to_le32(ADAPTER_STATE_READY))
+ 		return -EINVAL;
+ 
+-	msg[0]=FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
+-	msg[1]=I2O_CMD_SYS_ENABLE<<24|HOST_TID<<12|ADAPTER_TID;
++	msg[0]= cpu_to_le32(FOUR_WORD_MSG_SIZE|SGL_OFFSET_0);
++	msg[1]= cpu_to_le32(I2O_CMD_SYS_ENABLE<<24|HOST_TID<<12|ADAPTER_TID);
+ 	msg[2]= 0;
+ 	msg[3]= 0;
+ 
+@@ -3228,11 +3994,11 @@
+ 	 u32 msg[12];
+ 	 int ret;
+ 
+-	msg[0] = I2O_MESSAGE_SIZE(12) | SGL_OFFSET_6;
+-	msg[1] = I2O_CMD_SYS_TAB_SET<<24 | HOST_TID<<12 | ADAPTER_TID;
++	msg[0] = cpu_to_le32(I2O_MESSAGE_SIZE(12) | SGL_OFFSET_6);
++	msg[1] = cpu_to_le32(I2O_CMD_SYS_TAB_SET<<24 | HOST_TID<<12 | ADAPTER_TID);
+ 	msg[2] = 0;
+ 	msg[3] = 0;
+-	msg[4] = (0<<16) | ((pHba->unit+2) << 12); /* Host 0 IOP ID (unit + 2) */
++	msg[4] = cpu_to_le32((0<<16) | ((pHba->unit+2) << 12)); /* Host 0 IOP ID (unit + 2) */
+ 	msg[5] = 0;				   /* Segment 0 */
+ 
+ 	/* 
+@@ -3240,11 +4006,11 @@
+ 	 * System table (SysTab), Private memory space declaration and 
+ 	 * Private i/o space declaration  
+ 	 */
+-	msg[6] = 0x54000000 | sys_tbl_len;
+-	msg[7] = virt_to_phys(sys_tbl);
+-	msg[8] = 0x54000000 | 0;
++	msg[6] = cpu_to_le32(0x54000000 | sys_tbl_len);
++	msg[7] = cpu_to_le32(sys_tbl_pa);
++	msg[8] = cpu_to_le32(0x54000000 | 0);
+ 	msg[9] = 0;
+-	msg[10] = 0xD4000000 | 0;
++	msg[10] = cpu_to_le32(0xD4000000 | 0);
+ 	msg[11] = 0;
+ 
+ 	if ((ret=adpt_i2o_post_wait(pHba, msg, sizeof(msg), 120))) {
+@@ -3279,24 +4045,64 @@
+ 
+ #endif
+ 
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++static struct pci_dev *
++adpt_pci_find_device(uint vendor, struct pci_dev *from)
++{
++	if(!from){
++		from = pci_devices;
++	} else {
++		from = from->next;
++	}
++	while (from && from->vendor != vendor) {
++		from = from->next;
++	}
++	return from;
++}
++#endif
++
+ static Scsi_Host_Template driver_template = {
+-	.name			= "dpt_i2o",
+-	.proc_name		= "dpt_i2o",
+-	.proc_info		= adpt_proc_info,
+-	.detect			= adpt_detect,	
+-	.release		= adpt_release,
+-	.info			= adpt_info,
+-	.queuecommand		= adpt_queue,
+-	.eh_abort_handler	= adpt_abort,
+-	.eh_device_reset_handler = adpt_device_reset,
+-	.eh_bus_reset_handler	= adpt_bus_reset,
+-	.eh_host_reset_handler	= adpt_reset,
+-	.bios_param		= adpt_bios_param,
+-	.slave_configure	= adpt_slave_configure,
+-	.can_queue		= MAX_TO_IOP_MESSAGES,
+-	.this_id		= 7,
+-	.cmd_per_lun		= 1,
+-	.use_clustering		= ENABLE_CLUSTERING,
++	.name				= "dpt_i2o",
++	.proc_name			= "dpt_i2o",
++	.proc_info			= adpt_proc_info,
++	.detect				= adpt_detect,
++	.release			= adpt_release,
++	.info				= adpt_info,
++	.queuecommand			= adpt_queue,
++	.eh_abort_handler		= adpt_abort,
++	.eh_device_reset_handler	= adpt_device_reset,
++	.eh_bus_reset_handler		= adpt_bus_reset,
++	.eh_host_reset_handler		= adpt_reset,
++	.bios_param			= adpt_bios_param,
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++	.slave_configure		= adpt_slave_configure,
++#else
++	.select_queue_depths		= adpt_select_queue_depths,
++#endif
++	.can_queue			= MAX_TO_IOP_MESSAGES,
++	.this_id			= 7,
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++	.sg_tablesize			= 0, /* max scatter-gather cmds */
++#endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,7))
++	.max_sectors			= 4096,
++#endif
++	.cmd_per_lun			= 256,
++	.use_clustering			= ENABLE_CLUSTERING,
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++	.use_new_eh_code		= 1,
++#endif
++	.proc_dir			= &proc_scsi_dptI2O,
+ };
++
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0))
++#include "scsi_module.c"
++#elif (defined(MODULE))
+ #include "scsi_module.c"
+-MODULE_LICENSE("GPL");
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,5,65))
++EXPORT_NO_SYMBOLS;
++#endif
++
++MODULE_LICENSE("Dual BSD/GPL");
+diff -ruN linux-2.6.5.old/drivers/scsi/dpti.h linux-2.6.5/drivers/scsi/dpti.h
+--- linux-2.6.5.old/drivers/scsi/dpti.h	2004-04-03 22:36:12.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpti.h	2004-04-04 14:05:13.388925584 -0400
+@@ -3,10 +3,10 @@
+                              -------------------
+     begin                : Thu Sep 7 2000
+     copyright            : (C) 2001 by Adaptec
+-    email                : deanna_bonds@adaptec.com
++    email                : Mark_Salyzyn@adaptec.com
++    original author      : deanna_bonds@adaptec.com
+ 
+-    See Documentation/scsi/dpti.txt for history, notes, license info
+-    and credits
++    See README.dpti for history, notes, license info, and credits
+  ***************************************************************************/
+ 
+ /***************************************************************************
+@@ -37,16 +37,28 @@
+  * SCSI interface function Prototypes
+  */
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++static int adpt_proc_info(struct Scsi_Host * host, char *buffer, char **start, off_t offset, int length, int inout);
++#else
++static int adpt_proc_info(char *buffer, char **start, off_t offset, int length, int host_no, int inout);
++#endif
+ static int adpt_detect(Scsi_Host_Template * sht);
+ static int adpt_queue(Scsi_Cmnd * cmd, void (*cmdcomplete) (Scsi_Cmnd *));
+ static int adpt_abort(Scsi_Cmnd * cmd);
+ static int adpt_reset(Scsi_Cmnd* cmd);
+ static int adpt_release(struct Scsi_Host *host);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
+ static int adpt_slave_configure(Scsi_Device *);
++#else
++static void adpt_select_queue_depths(struct Scsi_Host *host, Scsi_Device * devicelist);
++#endif
+ 
+ static const char *adpt_info(struct Scsi_Host *pSHost);
+-static int adpt_bios_param(struct scsi_device * sdev, struct block_device *dev,
+-		sector_t, int geom[]);
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,65))
++static int adpt_bios_param(struct scsi_device * sdev, struct block_device * bdev, sector_t, int geom[]);
++#else
++static int adpt_bios_param(Disk * disk, kdev_t dev, int geom[]);
++#endif
+ 
+ static int adpt_bus_reset(Scsi_Cmnd* cmd);
+ static int adpt_device_reset(Scsi_Cmnd* cmd);
+@@ -62,17 +74,18 @@
+ 
+ #include "dpt/sys_info.h"
+ #include <linux/wait.h>
++#include <linux/interrupt.h>
+ #include "dpt/dpti_i2o.h"
+ #include "dpt/dpti_ioctl.h"
+ 
+-#define DPT_I2O_VERSION "2.4 Build 5"
++#define DPT_I2O_VERSION "2.5.0"
+ #define DPT_VERSION     2
+-#define DPT_REVISION    '4'
+-#define DPT_SUBREVISION '5'
++#define DPT_REVISION    '5'
++#define DPT_SUBREVISION '0'
+ #define DPT_BETA	""
+-#define DPT_MONTH      8 
+-#define DPT_DAY        7
+-#define DPT_YEAR        (2001-1980)
++#define DPT_MONTH      8
++#define DPT_DAY        4
++#define DPT_YEAR        (2003-1980)
+ 
+ #define DPT_DRIVER	"dpt_i2o"
+ #define DPTI_I2O_MAJOR	(151)
+@@ -228,36 +241,42 @@
+ 	char name[32];
+ 	char detail[55];
+ 
+-	ulong base_addr_virt;
+-	ulong msg_addr_virt;
++	char * base_addr_virt;
++	char * msg_addr_virt;
+ 	ulong base_addr_phys;
+-	ulong  post_port;
+-	ulong  reply_port;
+-	ulong  irq_mask;
++	u32 *  post_port;
++	u32 *  reply_port;
++	u32 *  irq_mask;
+ 	u16  post_count;
+ 	u32  post_fifo_size;
+ 	u32  reply_fifo_size;
+-	u32* reply_pool;
++	u32* reply_pool_va;
++	dma_addr_t reply_pool_pa;
+ 	u32  sg_tablesize;	// Scatter/Gather List Size.       
+ 	u8  top_scsi_channel;
+ 	u8  top_scsi_id;
+ 	u8  top_scsi_lun;
++	u8  pae_support;
+ 
+-	i2o_status_block* status_block;
+-	i2o_hrt* hrt;
+-	i2o_lct* lct;
++	i2o_status_block* status_block_va;
++	dma_addr_t status_block_pa;
++	i2o_hrt* hrt_va;
++	dma_addr_t hrt_pa;
++	i2o_lct* lct_va;
++	dma_addr_t lct_pa;
+ 	uint lct_size;
+ 	struct i2o_device* devices;
+ 	struct adpt_channel channel[MAX_CHANNEL];
+ 	struct proc_dir_entry* proc_entry;	/* /proc dir */
+ 
+-	ulong FwDebugBuffer_P;	// Virtual Address Of FW Debug Buffer
+-	u32   FwDebugBufferSize;	// FW Debug Buffer Size In Bytes
+-	ulong FwDebugStrLength_P;	// Virtual Addr Of FW Debug String Len
+-	ulong FwDebugFlags_P;	// Virtual Address Of FW Debug Flags 
+-	ulong FwDebugBLEDflag_P;	// Virtual Addr Of FW Debug BLED
+-	ulong FwDebugBLEDvalue_P;	// Virtual Addr Of FW Debug BLED
+-	u32 FwDebugFlags;
++	char * fw_buffer_addr_virt;	// Virtual Address Of FW Debug Buffer
++	char * bled_flag_addr_virt;	// Virtual Addr Of FW Debug BLED
++	char * bled_value_addr_virt;	// Virtual Addr Of FW Debug BLED
++
++	u32   fw_buffer_size;	// FW Debug Buffer Size In Bytes
++	char * fw_string_len_addr_virt;	// Virtual Addr Of FW Debug String Len
++	char * fw_debug_flags_addr_virt;	// Virtual Address Of FW Debug Flags 
++	u32 * ioctl_reply_context[4];
+ } adpt_hba;
+ 
+ struct sg_simple_element {
+@@ -269,10 +288,28 @@
+  * Function Prototypes
+  */
+ 
++#ifndef IRQ_HANDLED
++  typedef void irqreturn_t;
++# define IRQ_NONE
++# define IRQ_HANDLED
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0))
++#define iminor(x)	MINOR(x->i_rdev)
++#endif
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
++#define set_current_state(x)	current->state = x
++#endif
++
++#ifndef MODULE_LICENSE
++# define MODULE_LICENSE(x) /* NOTHING */
++#endif
++
+ static void adpt_i2o_sys_shutdown(void);
+ static int adpt_init(void);
+ static int adpt_i2o_build_sys_table(void);
+-static void adpt_isr(int irq, void *dev_id, struct pt_regs *regs);
++static irqreturn_t adpt_isr(int irq, void *dev_id, struct pt_regs *regs);
+ #ifdef REBOOT_NOTIFIER
+ static int adpt_reboot_event(struct notifier_block *n, ulong code, void *p);
+ #endif
+@@ -284,7 +321,8 @@
+ static const char *adpt_i2o_get_class_name(int class);
+ #endif
+ static int adpt_i2o_issue_params(int cmd, adpt_hba* pHba, int tid, 
+-		  void *opblk, int oplen, void *resblk, int reslen);
++		  void *opblk_va, dma_addr_t opblk_pa, int oplen,
++		  void *resblk_va, dma_addr_t resblk_pa, int reslen);
+ static int adpt_i2o_post_wait(adpt_hba* pHba, u32* msg, int len, int timeout);
+ static int adpt_i2o_lct_get(adpt_hba* pHba);
+ static int adpt_i2o_parse_lct(adpt_hba* pHba);
+@@ -297,7 +335,7 @@
+ static s32 adpt_i2o_init_outbound_q(adpt_hba* pHba);
+ static s32 adpt_i2o_hrt_get(adpt_hba* pHba);
+ static s32 adpt_scsi_to_i2o(adpt_hba* pHba, Scsi_Cmnd* cmd, struct adpt_device* dptdevice);
+-static s32 adpt_i2o_to_scsi(ulong reply, Scsi_Cmnd* cmd);
++static s32 adpt_i2o_to_scsi(u8 * reply, Scsi_Cmnd* cmd);
+ static s32 adpt_scsi_register(adpt_hba* pHba,Scsi_Host_Template * sht);
+ static s32 adpt_hba_reset(adpt_hba* pHba);
+ static s32 adpt_i2o_reset_hba(adpt_hba* pHba);
+diff -ruN linux-2.6.5.old/drivers/scsi/dpti2oscsi2.c linux-2.6.5/drivers/scsi/dpti2oscsi2.c
+--- linux-2.6.5.old/drivers/scsi/dpti2oscsi2.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.5/drivers/scsi/dpti2oscsi2.c	2004-04-04 14:05:11.269247824 -0400
+@@ -0,0 +1,239 @@
++
++/*
++ * NOTE:  You must include i2obscsi.h before including this file
++ */
++
++/*
++ *      SCSI opcodes
++ */
++/*
++ * i2oscsi2dixkxfer is a table of data transfer direction for SCSI Disk 
++ * device commands.  The table indicates if the command will transfer 
++ * data in (from device to system) or data out (from system to device)
++ * NOSUPPORT indicates the command is not used for a disk device
++ */
++
++/* #define	DATAIN	I2O_SCB_FLAG_XFER_FROM_DEVICE */
++#define	DATAIN	0x01
++/* #define	DATAOUT	I2O_SCB_FLAG_XFER_TO_DEVICE */
++#define	DATAOUT	0x02
++/* #define	NODATA	I2O_SCB_FLAG_NO_DATA_XFER */
++#define	NODATA	0x00
++#define	NOSUPPORT	0xFF
++
++unsigned char i2oscsi2diskxfer[] = {
++
++
++/* TEST_UNIT_READY       0x00 */ NODATA,
++/* REZERO_UNIT           0x01 */ NODATA,
++/*			 0x02 */ NOSUPPORT,
++/* REQUEST_SENSE         0x03 */ DATAIN,
++/* FORMAT_UNIT           0x04 */ DATAOUT,
++/* READ_BLOCK_LIMITS     0x05 */ DATAIN,
++/*			 0x06 */ NOSUPPORT,
++/* REASSIGN_BLOCKS       0x07 */ DATAOUT,
++/* READ_6                0x08 */ DATAIN,
++
++/*			 0x09 */ NOSUPPORT,
++
++/* WRITE_6               0x0a */ DATAOUT,
++/* SEEK_6                0x0b */ NODATA,
++/*			 0x0c */ NOSUPPORT,
++/*			 0x0d */ NOSUPPORT,
++/*			 0x0e */ NOSUPPORT,
++/* READ_REVERSE          0x0f */ NOSUPPORT,
++/* WRITE_FILEMARKS       0x10 */ NODATA,
++/* SPACE                 0x11 */ NOSUPPORT,
++/* INQUIRY               0x12 */ DATAIN,
++/*			 0x13 */ NOSUPPORT,
++/* RECOVER_BUFFERED_DATA 0x14 */ NOSUPPORT,
++/* MODE_SELECT           0x15 */ DATAOUT,
++/* RESERVE               0x16 */ DATAOUT,
++/* RELEASE               0x17 */ NODATA,
++/* COPY                  0x18 */ DATAOUT,
++	/* ERASE                 0x19 */ NOSUPPORT,
++	/* NODATA if supported */
++/* MODE_SENSE            0x1a */ DATAIN,
++/* START_STOP            0x1b */ NODATA,
++/* RECEIVE_DIAGNOSTIC    0x1c */ DATAIN,
++/* SEND_DIAGNOSTIC       0x1d */ DATAOUT,
++/* ALLOW_MEDIUM_REMOVAL  0x1e */ NODATA,
++
++/*			 0x1f */ NOSUPPORT,
++/*			 0x20 */ NOSUPPORT,
++/*			 0x21 */ NOSUPPORT,
++/*			 0x22 */ NOSUPPORT,
++/*			 0x23 */ NOSUPPORT,
++
++/* SET_WINDOW            0x24 */ DATAOUT,
++/* READ_CAPACITY         0x25 */ DATAIN,
++
++/*			 0x26 */ NOSUPPORT,
++/*			 0x27 */ NOSUPPORT,
++
++/* READ_10               0x28 */ DATAIN,
++
++/*			 0x29 */ NOSUPPORT,
++
++/* WRITE_10              0x2a */ DATAOUT,
++/* SEEK_10               0x2b */ NODATA,
++
++/*			 0x2c */ NOSUPPORT,
++/*			 0x2d */ NOSUPPORT,
++
++/* WRITE_VERIFY          0x2e */ DATAOUT,
++/* VERIFY                0x2f */ NODATA,
++/* SEARCH_HIGH           0x30 */ DATAOUT,
++/* SEARCH_EQUAL          0x31 */ DATAOUT,
++/* SEARCH_LOW            0x32 */ DATAOUT,
++/* SET_LIMITS            0x33 */ NODATA,
++/* PRE_FETCH             0x34 */ DATAIN,
++/* SYNCHRONIZE_CACHE     0x35 */ NODATA,
++/* LOCK_UNLOCK_CACHE     0x36 */ NODATA,
++/* READ_DEFECT_DATA      0x37 */ DATAIN,
++/* MEDIUM_SCAN           0x38 */ DATAOUT,
++/* COMPARE               0x39 */ DATAOUT,
++/* COPY_VERIFY           0x3a */ DATAOUT,
++/* WRITE_BUFFER          0x3b */ DATAOUT,
++/* READ_BUFFER           0x3c */ DATAIN,
++/* UPDATE_BLOCK          0x3d */ DATAOUT,
++/* READ_LONG             0x3e */ DATAIN,
++/* WRITE_LONG            0x3f */ DATAOUT,
++/* CHANGE_DEFINITION     0x40 */ DATAOUT,
++/* WRITE_SAME            0x41 */ DATAOUT,
++
++/*			 0x42 */ DATAIN,
++
++/* READ_TOC              0x43 */ DATAIN,
++
++/*			 0x44 */ DATAIN,
++/*			 0x45 */ NOSUPPORT,
++/*			 0x46 */ NOSUPPORT,
++/*			 0x47 */ NOSUPPORT,
++/*			 0x48 */ NOSUPPORT,
++/*			 0x49 */ NOSUPPORT,
++/*			 0x4a */ NOSUPPORT,
++/*			 0x4b */ NOSUPPORT,
++
++/* LOG_SELECT            0x4c */ DATAOUT,
++/* LOG_SENSE             0x4d */ DATAIN,
++
++/*			 0x4e */ NOSUPPORT,
++/*			 0x4f */ NOSUPPORT,
++/*			 0x50 */ NOSUPPORT,
++/*			 0x51 */ DATAIN,
++/*			 0x52 */ DATAIN,
++/*			 0x53 */ DATAOUT,
++/*			 0x54 */ NOSUPPORT,
++
++/* MODE_SELECT_10        0x55 */ DATAOUT,
++
++/*			 0x56 */ NODATA,
++/*			 0x57 */ NODATA,
++/*			 0x58 */ NOSUPPORT,
++/*			 0x59 */ NOSUPPORT,
++
++/* MODE_SENSE_10         0x5a */ DATAIN,
++
++/*			 0x5b */ DATAIN,
++/*			 0x5c */ DATAIN,
++/*			 0x5d */ NOSUPPORT,
++/*			 0x5e */ NOSUPPORT,
++/*			 0x5f */ NOSUPPORT,
++
++/* assign NOSUPPORT for 0x60 - 0x9f */
++	/* 0x60 - 0x6f */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	/* 0x70 - 0x7f */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	/* 0x80 - 0x8f */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	/* 0x90 - 0x9f */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++
++/*			 0xa0 */ NOSUPPORT,
++/*			 0xa1 */ NOSUPPORT,
++/*			 0xa2 */ NOSUPPORT,
++/*			 0xa3 */ NOSUPPORT,
++/*			 0xa4 */ NOSUPPORT,
++
++/* MOVE_MEDIUM           0xa5 */ NODATA,
++
++/*			 0xa6 */ NOSUPPORT,
++/*			 0xa7 */ NOSUPPORT,
++
++/* READ_12               0xa8 */ DATAIN,
++
++/*			 0xa9 */ NOSUPPORT,
++
++/* WRITE_12              0xaa */ DATAOUT,
++
++/*			 0xab */ NOSUPPORT,
++/*			 0xac */ NOSUPPORT,
++/*			 0xad */ NOSUPPORT,
++
++/* WRITE_VERIFY_12       0xae */ DATAOUT,
++
++/*			 0xaf */ NOSUPPORT,
++
++/* SEARCH_HIGH_12        0xb0 */ DATAOUT,
++/* SEARCH_EQUAL_12       0xb1 */ DATAOUT,
++/* SEARCH_LOW_12         0xb2 */ DATAOUT,
++
++/*			 0xb3 */ NOSUPPORT,
++/*			 0xb4 */ NOSUPPORT,
++/*			 0xb5 */ NOSUPPORT,
++
++/* SEND_VOLUME_TAG       0xb6 */ DATAOUT,
++
++/*			 0xb7 */ NOSUPPORT,
++
++/* READ_ELEMENT_STATUS   0xb8 */ DATAIN,
++
++/*			 0xb9 */ NOSUPPORT,
++/*			 0xba */ NOSUPPORT,
++/*			 0xbb */ DATAOUT,
++/*			 0xbc */ NOSUPPORT,
++/*			 0xbd */ DATAIN,
++/*			 0xbe */ NOSUPPORT,
++/*			 0xbf */ NOSUPPORT,
++
++/* assign NOSUPPORT for 0xc0 - 0xdf */
++	/* 0xc0 - 0xcf */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	/* 0xd0 - 0xdf */
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT, NOSUPPORT,
++	NOSUPPORT, NOSUPPORT,
++
++/*			 0xe0 */ NOSUPPORT,
++/*			 0xe1 */ NOSUPPORT,
++/*			 0xe2 */ NOSUPPORT,
++/*			 0xe3 */ NOSUPPORT,
++/*			 0xe4 */ NOSUPPORT,
++/*			 0xe5 */ NOSUPPORT,
++/*			 0xe6 */ NOSUPPORT,
++/*			 0xe7 */ NOSUPPORT,
++/*			 0xe8 */ NOSUPPORT,
++/*			 0xe9 */ NOSUPPORT,
++
++/* WRITE_LONG_2          0xea */ DATAOUT
++};
++
++#define	DISKXFERTBLSIZE sizeof(i2oscsi2diskxfer)

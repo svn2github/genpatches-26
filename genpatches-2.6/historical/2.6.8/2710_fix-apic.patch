@@ -1,0 +1,32 @@
+Fix 2705_fix-intel-acpi.patch for Dell laptop users.
+Already in 2.6.9 tree.
+
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/10/10 13:21:08-04:00 len.brown@intel.com 
+#   [ACPI] If BIOS disabled the LAPIC, believe it by default.
+#   "lapic" is available to force enabling the LAPIC
+#   in the event you know more than your BIOS vendor.
+#   http://bugzilla.kernel.org/show_bug.cgi?id=3238
+# 
+# arch/i386/kernel/apic.c
+#   2004/10/10 13:21:01-04:00 len.brown@intel.com +6 -0
+#   override BIOS and enable LAPIC only if "lapic" requested
+# 
+diff -Nru a/arch/i386/kernel/apic.c b/arch/i386/kernel/apic.c
+--- a/arch/i386/kernel/apic.c	2004-10-10 13:21:31 -04:00
++++ b/arch/i386/kernel/apic.c	2004-10-10 13:21:31 -04:00
+@@ -692,6 +692,12 @@
+ 
+ 	if (!cpu_has_apic) {
+ 		/*
++		 * Over-ride BIOS and try to enable LAPIC
++		 * only if "lapic" specified
++		 */
++		if (enable_local_apic != 1)
++			goto no_apic;
++		/*
+ 		 * Some BIOSes disable the local APIC in the
+ 		 * APIC_BASE MSR. This can only be done in
+ 		 * software for Intel P6 and AMD K7 (Model > 1).

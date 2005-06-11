@@ -1,0 +1,33 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/03 11:19:17+01:00 perex@suse.cz 
+#   [ALSA] Fix memory corruption
+#   
+#   Digigram VX core
+#   Fixed the memory corruption by the wrong sized kmalloc.
+#   
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/drivers/vx/vx_core.c
+#   2004/12/20 04:03:54+01:00 perex@suse.cz +1 -1
+#   [ALSA] Fix memory corruption
+#   
+#   D:2004/12/20 11:03:54
+#   C:Digigram VX core
+#   F:drivers/vx/vx_core.c:1.9->1.10 
+#   L:Fixed the memory corruption by the wrong sized kmalloc.
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/drivers/vx/vx_core.c b/sound/drivers/vx/vx_core.c
+--- a/sound/drivers/vx/vx_core.c	2005-01-22 22:17:34 -08:00
++++ b/sound/drivers/vx/vx_core.c	2005-01-22 22:17:34 -08:00
+@@ -734,7 +734,7 @@
+ 
+ 	snd_assert(card && hw && ops, return NULL);
+ 
+-	chip = kcalloc(1, sizeof(chip) + extra_size, GFP_KERNEL);
++	chip = kcalloc(1, sizeof(*chip) + extra_size, GFP_KERNEL);
+ 	if (! chip) {
+ 		snd_printk(KERN_ERR "vx_core: no memory\n");
+ 		return NULL;

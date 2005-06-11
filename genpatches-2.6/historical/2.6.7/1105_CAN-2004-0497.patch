@@ -1,0 +1,21 @@
+Date: Fri, 2 Jul 2004 09:39:17 -0700
+From: Chris Wright <chrisw@osdl.org>
+Subject: [PATCH] chown permission check fix for ATTR_GID
+
+SuSE discovered this problem with chown and ATTR_GID.  Make sure user
+is authorized to change the group, CAN-2004-0497.
+
+===== fs/attr.c 1.20 vs edited =====
+--- 1.20/fs/attr.c	2003-10-07 18:52:02 -07:00
++++ edited/fs/attr.c	2004-07-02 09:07:32 -07:00
+@@ -35,7 +35,8 @@
+ 
+ 	/* Make sure caller can chgrp. */
+ 	if ((ia_valid & ATTR_GID) &&
+-	    (!in_group_p(attr->ia_gid) && attr->ia_gid != inode->i_gid) &&
++	    (current->fsuid != inode->i_uid ||
++	    (!in_group_p(attr->ia_gid) && attr->ia_gid != inode->i_gid)) &&
+ 	    !capable(CAP_CHOWN))
+ 		goto error;
+ 
+

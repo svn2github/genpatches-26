@@ -1,0 +1,90 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 08:09:20-08:00 torvalds@ppc970.osdl.org
+#   Handle two threads both trying to expand their stack simultaneously.
+#
+#   We had all the locking right, but we didn't check whether one of the
+#   threads now no longer needed to expand, so we could incorrectly _shrink_
+#   the stack in the other thread instead (not only causing segfaults, but
+#   since we didn't do a proper unmap, we'd possibly leak pages too).
+#
+#   So re-check the need for expand after getting the lock.
+#
+#   Noticed by Paul Starzetz.
+#
+# mm/mmap.c
+#   2005/01/12 08:09:12-08:00 torvalds@ppc970.osdl.org +25 -13
+#   Handle two threads both trying to expand their stack simultaneously.
+#
+
+Rediff
+
+diff -X dontdiff -urNp linux-2.6.10/mm/mmap.c linux-dsd/mm/mmap.c
+--- linux-2.6.10/mm/mmap.c	2005-01-13 23:46:28.059840008 +0000
++++ linux-dsd/mm/mmap.c	2005-01-13 23:49:31.326979168 +0000
+@@ -1372,7 +1372,6 @@ static int acct_stack_growth(struct vm_a
+ int expand_stack(struct vm_area_struct * vma, unsigned long address)
+ {
+ 	int error;
+-	unsigned long size, grow;
+ 
+ 	if (!(vma->vm_flags & VM_GROWSUP))
+ 		return -EFAULT;
+@@ -1392,8 +1391,19 @@ int expand_stack(struct vm_area_struct *
+ 	 */
+ 	address += 4 + PAGE_SIZE - 1;
+ 	address &= PAGE_MASK;
+-	size = address - vma->vm_start;
+-	grow = (address - vma->vm_end) >> PAGE_SHIFT;
++	error = 0;
++
++	/* Somebody else might have raced and expanded it already */
++	if (address > vma->vm_end) {
++		unsigned long size, grow;
++
++		size = address - vma->vm_start;
++		grow = (address - vma->vm_end) >> PAGE_SHIFT;
++
++		error = acct_stack_growth(vma, size, grow);
++		if (!error)
++			vma->vm_end = address;
++	}
+ 
+ 	error = acct_stack_growth(vma, size, grow);
+ 	if (!error)
+@@ -1425,7 +1435,6 @@ find_extend_vma(struct mm_struct *mm, un
+ int expand_stack(struct vm_area_struct *vma, unsigned long address)
+ {
+ 	int error;
+-	unsigned long size, grow;
+ 
+ 	/*
+ 	 * We must make sure the anon_vma is allocated
+@@ -1441,13 +1450,20 @@ int expand_stack(struct vm_area_struct *
+ 	 * anon_vma lock to serialize against concurrent expand_stacks.
+ 	 */
+ 	address &= PAGE_MASK;
+-	size = vma->vm_end - address;
+-	grow = (vma->vm_start - address) >> PAGE_SHIFT;
++	error = 0;
+ 
+-	error = acct_stack_growth(vma, size, grow);
+-	if (!error) {
+-		vma->vm_start = address;
+-		vma->vm_pgoff -= grow;
++	/* Somebody else might have raced and expanded it already */
++	if (address < vma->vm_start) {
++		unsigned long size, grow;
++
++		size = vma->vm_end - address;
++		grow = (vma->vm_start - address) >> PAGE_SHIFT;
++
++		error = acct_stack_growth(vma, size, grow);
++		if (!error) {
++			vma->vm_start = address;
++			vma->vm_pgoff -= grow;
++		}
+ 	}
+ 	anon_vma_unlock(vma);
+ 	return error;

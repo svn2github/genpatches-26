@@ -1,0 +1,122 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/12/01 01:05:10-05:00 len.brown@intel.com 
+#   [ACPI] fix reboot on poweroff regression due to enabled wakeup GPEs
+#   http://bugzilla.kernel.org/show_bug.cgi?id=3669
+#   
+#   Signed-off-by: David Shaohua Li <shaohua.li@intel.com>
+#   Signed-off-by: Len Brown <len.brown@intel.com>
+# 
+# drivers/acpi/sleep/Makefile
+#   2004/12/01 01:05:02-05:00 len.brown@intel.com +2 -2
+#   disable wakeup GPEs on poweroff
+# 
+# drivers/acpi/sleep/poweroff.c
+#   2004/12/01 01:05:02-05:00 len.brown@intel.com +2 -0
+#   disable wakeup GPEs on poweroff
+# 
+# drivers/acpi/sleep/sleep.h
+#   2004/12/01 01:05:02-05:00 len.brown@intel.com +1 -0
+#   disable wakeup GPEs on poweroff
+# 
+# drivers/acpi/sleep/wakeup.c
+#   2004/12/01 01:05:02-05:00 len.brown@intel.com +30 -2
+#   disable wakeup GPEs on poweroff
+# 
+diff -Nru a/drivers/acpi/sleep/Makefile b/drivers/acpi/sleep/Makefile
+--- a/drivers/acpi/sleep/Makefile	2004-12-02 12:23:02 -08:00
++++ b/drivers/acpi/sleep/Makefile	2004-12-02 12:23:02 -08:00
+@@ -1,5 +1,5 @@
+-obj-y					:= poweroff.o
+-obj-$(CONFIG_ACPI_SLEEP)		+= main.o wakeup.o
++obj-y					:= poweroff.o wakeup.o
++obj-$(CONFIG_ACPI_SLEEP)		+= main.o
+ obj-$(CONFIG_ACPI_SLEEP_PROC_FS)	+= proc.o
+ 
+ EXTRA_CFLAGS += $(ACPI_CFLAGS)
+diff -Nru a/drivers/acpi/sleep/poweroff.c b/drivers/acpi/sleep/poweroff.c
+--- a/drivers/acpi/sleep/poweroff.c	2004-12-02 12:23:02 -08:00
++++ b/drivers/acpi/sleep/poweroff.c	2004-12-02 12:23:02 -08:00
+@@ -9,6 +9,7 @@
+ #include <linux/init.h>
+ #include <acpi/acpi_bus.h>
+ #include <linux/sched.h>
++#include "sleep.h"
+ 
+ static void
+ acpi_power_off (void)
+@@ -16,6 +17,7 @@
+ 	printk("%s called\n",__FUNCTION__);
+ 	/* Some SMP machines only can poweroff in boot CPU */
+ 	set_cpus_allowed(current, cpumask_of_cpu(0));
++	acpi_wakeup_gpe_poweroff_prepare();
+ 	acpi_enter_sleep_state_prep(ACPI_STATE_S5);
+ 	ACPI_DISABLE_IRQS();
+ 	acpi_enter_sleep_state(ACPI_STATE_S5);
+diff -Nru a/drivers/acpi/sleep/sleep.h b/drivers/acpi/sleep/sleep.h
+--- a/drivers/acpi/sleep/sleep.h	2004-12-02 12:23:02 -08:00
++++ b/drivers/acpi/sleep/sleep.h	2004-12-02 12:23:02 -08:00
+@@ -5,3 +5,4 @@
+ extern void acpi_enable_wakeup_device_prep(u8 sleep_state);
+ extern void acpi_enable_wakeup_device(u8 sleep_state);
+ extern void acpi_disable_wakeup_device(u8 sleep_state);
++extern void acpi_wakeup_gpe_poweroff_prepare(void);
+diff -Nru a/drivers/acpi/sleep/wakeup.c b/drivers/acpi/sleep/wakeup.c
+--- a/drivers/acpi/sleep/wakeup.c	2004-12-02 12:23:02 -08:00
++++ b/drivers/acpi/sleep/wakeup.c	2004-12-02 12:23:02 -08:00
+@@ -1,5 +1,6 @@
+ /*
+  * wakeup.c - support wakeup devices
++ * Copyright (C) 2004 Li Shaohua <shaohua.li@intel.com>
+  */
+ 
+ #include <linux/init.h>
+@@ -13,14 +14,16 @@
+ #define _COMPONENT		ACPI_SYSTEM_COMPONENT
+ ACPI_MODULE_NAME		("wakeup_devices")
+ 
++extern struct list_head	acpi_wakeup_device_list;
++extern spinlock_t acpi_device_lock;
++
++#ifdef CONFIG_ACPI_SLEEP
+ /**
+  * acpi_enable_wakeup_device_prep - prepare wakeup devices
+  *	@sleep_state:	ACPI state
+  * Enable all wakup devices power if the devices' wakeup level
+  * is higher than requested sleep level
+  */
+-extern struct list_head	acpi_wakeup_device_list;
+-extern spinlock_t acpi_device_lock;
+ 
+ void
+ acpi_enable_wakeup_device_prep(
+@@ -179,3 +182,28 @@
+ }
+ 
+ late_initcall(acpi_wakeup_device_init);
++#endif
++
++/*
++ * Disable all wakeup GPEs before power off.
++ * 
++ * Since acpi_enter_sleep_state() will disable all
++ * RUNTIME GPEs, we simply mark all GPES that
++ * are not enabled for wakeup from S5 as RUNTIME.
++ */
++void acpi_wakeup_gpe_poweroff_prepare(void)
++{
++	struct list_head * node, * next;
++
++	list_for_each_safe(node, next, &acpi_wakeup_device_list) {
++		struct acpi_device * dev = container_of(node,
++			struct acpi_device, wakeup_list);
++
++		/* The GPE can wakeup system from S5, don't touch it */
++		if ((u32)dev->wakeup.sleep_state == ACPI_STATE_S5)
++			continue;
++		/* acpi_set_gpe_type will automatically disable GPE */
++		acpi_set_gpe_type(dev->wakeup.gpe_device,
++			dev->wakeup.gpe_number, ACPI_GPE_TYPE_RUNTIME);
++	}
++}

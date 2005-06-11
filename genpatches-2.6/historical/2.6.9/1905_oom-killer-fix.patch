@@ -1,0 +1,161 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/19 14:54:22-08:00 akpm@osdl.org 
+#   [PATCH] vmscan: ignore swap token when in trouble
+#   
+#   The token-based thrashing control patches introduced a problem: when a task
+#   which doesn't hold the token tries to run direct-reclaim, that task is told
+#   that pages which belong to the token-holding mm are referenced, even though
+#   they are not.  This means that it is possible for a huge number of a
+#   non-token-holding mm's pages to be scanned to no effect.  Eventually, we give
+#   up and go and oom-kill something.
+#   
+#   So the patch arranges for the thrashing control logic to be defeated if the
+#   caller has reached the highest level of scanning priority.
+#   
+#   
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# include/linux/rmap.h
+#   2004/11/18 23:03:10-08:00 akpm@osdl.org +2 -2
+#   vmscan: ignore swap token when in trouble
+# 
+# mm/rmap.c
+#   2004/11/18 23:03:10-08:00 akpm@osdl.org +13 -10
+#   vmscan: ignore swap token when in trouble
+# 
+# mm/vmscan.c
+#   2004/11/18 23:03:10-08:00 akpm@osdl.org +2 -2
+#   vmscan: ignore swap token when in trouble
+# 
+diff -Nru a/include/linux/rmap.h b/include/linux/rmap.h
+--- a/include/linux/rmap.h	2004-12-14 13:09:46 -08:00
++++ b/include/linux/rmap.h	2004-12-14 13:09:46 -08:00
+@@ -89,7 +89,7 @@
+ /*
+  * Called from mm/vmscan.c to handle paging out
+  */
+-int page_referenced(struct page *, int is_locked);
++int page_referenced(struct page *, int is_locked, int ignore_token);
+ int try_to_unmap(struct page *);
+ 
+ /*
+@@ -103,7 +103,7 @@
+ #define anon_vma_prepare(vma)	(0)
+ #define anon_vma_link(vma)	do {} while (0)
+ 
+-#define page_referenced(page,l)	TestClearPageReferenced(page)
++#define page_referenced(page,l,i) TestClearPageReferenced(page)
+ #define try_to_unmap(page)	SWAP_FAIL
+ 
+ #endif	/* CONFIG_MMU */
+diff -Nru a/mm/rmap.c b/mm/rmap.c
+--- a/mm/rmap.c	2004-12-14 13:09:46 -08:00
++++ b/mm/rmap.c	2004-12-14 13:09:46 -08:00
+@@ -254,7 +254,7 @@
+  * repeatedly from either page_referenced_anon or page_referenced_file.
+  */
+ static int page_referenced_one(struct page *page,
+-	struct vm_area_struct *vma, unsigned int *mapcount)
++	struct vm_area_struct *vma, unsigned int *mapcount, int ignore_token)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+ 	unsigned long address;
+@@ -289,7 +289,7 @@
+ 	if (ptep_clear_flush_young(vma, address, pte))
+ 		referenced++;
+ 
+-	if (mm != current->mm && has_swap_token(mm))
++	if (mm != current->mm && !ignore_token && has_swap_token(mm))
+ 		referenced++;
+ 
+ 	(*mapcount)--;
+@@ -302,7 +302,7 @@
+ 	return referenced;
+ }
+ 
+-static int page_referenced_anon(struct page *page)
++static int page_referenced_anon(struct page *page, int ignore_token)
+ {
+ 	unsigned int mapcount;
+ 	struct anon_vma *anon_vma;
+@@ -315,7 +315,8 @@
+ 
+ 	mapcount = page_mapcount(page);
+ 	list_for_each_entry(vma, &anon_vma->head, anon_vma_node) {
+-		referenced += page_referenced_one(page, vma, &mapcount);
++		referenced += page_referenced_one(page, vma, &mapcount,
++							ignore_token);
+ 		if (!mapcount)
+ 			break;
+ 	}
+@@ -334,7 +335,7 @@
+  *
+  * This function is only called from page_referenced for object-based pages.
+  */
+-static int page_referenced_file(struct page *page)
++static int page_referenced_file(struct page *page, int ignore_token)
+ {
+ 	unsigned int mapcount;
+ 	struct address_space *mapping = page->mapping;
+@@ -372,7 +373,8 @@
+ 			referenced++;
+ 			break;
+ 		}
+-		referenced += page_referenced_one(page, vma, &mapcount);
++		referenced += page_referenced_one(page, vma, &mapcount,
++							ignore_token);
+ 		if (!mapcount)
+ 			break;
+ 	}
+@@ -389,7 +391,7 @@
+  * Quick test_and_clear_referenced for all mappings to a page,
+  * returns the number of ptes which referenced the page.
+  */
+-int page_referenced(struct page *page, int is_locked)
++int page_referenced(struct page *page, int is_locked, int ignore_token)
+ {
+ 	int referenced = 0;
+ 
+@@ -401,14 +403,15 @@
+ 
+ 	if (page_mapped(page) && page->mapping) {
+ 		if (PageAnon(page))
+-			referenced += page_referenced_anon(page);
++			referenced += page_referenced_anon(page, ignore_token);
+ 		else if (is_locked)
+-			referenced += page_referenced_file(page);
++			referenced += page_referenced_file(page, ignore_token);
+ 		else if (TestSetPageLocked(page))
+ 			referenced++;
+ 		else {
+ 			if (page->mapping)
+-				referenced += page_referenced_file(page);
++				referenced += page_referenced_file(page,
++								ignore_token);
+ 			unlock_page(page);
+ 		}
+ 	}
+diff -Nru a/mm/vmscan.c b/mm/vmscan.c
+--- a/mm/vmscan.c	2004-12-14 13:09:46 -08:00
++++ b/mm/vmscan.c	2004-12-14 13:09:46 -08:00
+@@ -377,7 +377,7 @@
+ 		if (page_mapped(page) || PageSwapCache(page))
+ 			sc->nr_scanned++;
+ 
+-		referenced = page_referenced(page, 1);
++		referenced = page_referenced(page, 1, sc->priority <= 0);
+ 		/* In active use or really unfreeable?  Activate it. */
+ 		if (referenced && page_mapping_inuse(page))
+ 			goto activate_locked;
+@@ -715,7 +715,7 @@
+ 		if (page_mapped(page)) {
+ 			if (!reclaim_mapped ||
+ 			    (total_swap_pages == 0 && PageAnon(page)) ||
+-			    page_referenced(page, 0)) {
++			    page_referenced(page, 0, sc->priority <= 0)) {
+ 				list_add(&page->lru, &l_active);
+ 				continue;
+ 			}

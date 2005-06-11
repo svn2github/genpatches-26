@@ -1,0 +1,59 @@
+http://marc.theaimsgroup.com/?l=linux-sparc&m=110106256825061&w=2
+
+Due to some bugs in break handling in the sunsab.c serial driver, sending 
+a break over serial console (equivalent of Stop-A sent from keyboard) does 
+not dump user to the PROM command line. AFAICT, in the 2.4 -> 2.6 
+transition the checking for break has been moved from check_status() to 
+receive_chars(). However, in the current version of the driver the BRK 
+interrupt never reaches receive_chars(). Even if it would, for the break 
+to take effect a non-zero count of characters must be present in the
+buffer at the same time, which never happens. The patch below corrects the 
+problem (I have tried to make it as unintrusive as possible).
+
+--- linux-2.6.8.1-vanilla/drivers/serial/sunsab.c	2004-08-14 03:55:19.000000000 -0700
++++ linux-2.6.8.1/drivers/serial/sunsab.c	2004-11-29 23:53:12.688603765 -0800
+@@ -143,6 +143,11 @@ receive_chars(struct uart_sunsab_port *u
+ 		writeb(SAB82532_CMDR_RMC, &up->regs->w.cmdr);
+ 	}
+ 
++	/* Count may be zero for BRK, so we check for it here */
++	if((stat->sreg.isr1 & SAB82532_ISR1_BRK) &&
++	   (up->port.line == up->port.cons->index))
++		saw_console_brk = 1;
++
+ 	for (i = 0; i < count; i++) {
+ 		unsigned char ch = buf[i];
+ 
+@@ -172,8 +177,6 @@ receive_chars(struct uart_sunsab_port *u
+ 				stat->sreg.isr0 &= ~(SAB82532_ISR0_PERR |
+ 						     SAB82532_ISR0_FERR);
+ 				up->port.icount.brk++;
+-				if (up->port.line == up->port.cons->index)
+-					saw_console_brk = 1;
+ 				/*
+ 				 * We do the SysRQ and SAK checking
+ 				 * here because otherwise the break
+@@ -325,8 +328,9 @@ static irqreturn_t sunsab_interrupt(int 
+ 
+ 	tty = NULL;
+ 	if (status.stat) {
+-		if (status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
+-					SAB82532_ISR0_RFO | SAB82532_ISR0_RPF))
++		if ((status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
++		     SAB82532_ISR0_RFO | SAB82532_ISR0_RPF)) ||
++		    (status.sreg.isr1 & SAB82532_ISR1_BRK))
+ 			tty = receive_chars(up, &status, regs);
+ 		if ((status.sreg.isr0 & SAB82532_ISR0_CDSC) ||
+ 		    (status.sreg.isr1 & SAB82532_ISR1_CSC))
+@@ -352,8 +356,9 @@ static irqreturn_t sunsab_interrupt(int 
+ 
+ 	tty = NULL;
+ 	if (status.stat) {
+-		if (status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
+-					SAB82532_ISR0_RFO | SAB82532_ISR0_RPF))
++		if ((status.sreg.isr0 & (SAB82532_ISR0_TCD | SAB82532_ISR0_TIME |
++		     SAB82532_ISR0_RFO | SAB82532_ISR0_RPF)) ||
++		    (status.sreg.isr1 & SAB82532_ISR1_BRK))
+ 			tty = receive_chars(up, &status, regs);
+ 		if ((status.sreg.isr0 & SAB82532_ISR0_CDSC) ||
+ 		    (status.sreg.isr1 & (SAB82532_ISR1_BRK | SAB82532_ISR1_CSC)))

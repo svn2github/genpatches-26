@@ -1,0 +1,1447 @@
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/crypto/Kconfig ppc-development-sources-2.6.1_rc1-r1/crypto/Kconfig
+--- ppc-development-sources-2.6.1_rc1-r1.orig/crypto/Kconfig	2004-01-02 13:41:23.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/crypto/Kconfig	2004-01-02 13:58:41.940632200 +0100
+@@ -151,6 +151,12 @@
+ 	  
+ 	  You will most probably want this if using IPSec.
+ 
++config CRYPTO_UCL
++	tristate "UCL nrv2e compression algorithm"
++	depends on CRYPTO
++	help
++	  UCL nrv2e kernel module used mainly for gcloop.
++
+ config CRYPTO_TEST
+ 	tristate "Testing module"
+ 	depends on CRYPTO
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/crypto/Makefile ppc-development-sources-2.6.1_rc1-r1/crypto/Makefile
+--- ppc-development-sources-2.6.1_rc1-r1.orig/crypto/Makefile	2004-01-02 13:41:23.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/crypto/Makefile	2004-01-02 13:58:41.971627488 +0100
+@@ -1,6 +1,7 @@
+ #
+ # Cryptographic API
+ #
++CFLAGS_ucl_compress.o = -I /usr/include
+ 
+ proc-crypto-$(CONFIG_PROC_FS) = proc.o
+ 
+@@ -22,5 +23,10 @@
+ obj-$(CONFIG_CRYPTO_CAST5) += cast5.o
+ obj-$(CONFIG_CRYPTO_CAST6) += cast6.o
+ obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
++ucl-objs := ucl_compress.o libucl.a
++obj-${CONFIG_CRYPTO_UCL} += ucl.o
++#dirty
++$(obj)/libucl.a:
++	cp /usr/lib/libucl.a $(obj)/
+ 
+ obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/crypto/ucl_compress.c ppc-development-sources-2.6.1_rc1-r1/crypto/ucl_compress.c
+--- ppc-development-sources-2.6.1_rc1-r1.orig/crypto/ucl_compress.c	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/crypto/ucl_compress.c	2004-01-02 13:58:41.972627336 +0100
+@@ -0,0 +1,122 @@
++/* 
++ * Cryptographic API.
++ *
++ * ucl/nrv2e, implemented here primarily for use
++ * by gcloop
++ *
++ * Copyright (c) 2003 James Morris <jmorris@intercode.com.au>
++ * Copyright (c) 2003 Luca Barbato <lu_zero@gentoo.org>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the Free
++ * Software Foundation; either version 2 of the License, or (at your option) 
++ * any later version.
++ *
++ *
++ * Just an hack to use ucl instead of zlib
++ *
++ */
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/crypto.h>
++#include <ucl/ucl.h>
++#include <linux/vmalloc.h>
++#include <linux/interrupt.h>
++#include <linux/mm.h>
++#include <linux/net.h>
++
++/*#define DEFLATE_DEF_LEVEL		Z_DEFAULT_COMPRESSION
++#define DEFLATE_DEF_WINBITS		11
++#define DEFLATE_DEF_MEMLEVEL		MAX_MEM_LEVEL
++*/
++
++
++/*better build the compressor w/out malloc but that is ok for a try*/
++void* malloc(unsigned long size)
++{
++return vmalloc(size);
++}
++
++void free(void *data)
++{
++vfree(data);
++}
++
++
++struct uclcomp_ctx {
++	struct ucl_compress_config_t config;
++	int level;
++};
++
++static inline int uclcomp_gfp(void)
++{
++	return in_softirq() ? GFP_ATOMIC : GFP_KERNEL;
++}
++
++static int uclcomp_init(void *ctx)
++{
++	return ucl_init();
++}
++
++static void uclcomp_exit(void *ctx)
++{
++/*	struct deflate_ctx *dctx = ctx;
++
++	if (dctx->comp_initialized)
++		vfree(dctx->comp_stream.workspace);
++	if (dctx->decomp_initialized)
++		kfree(dctx->decomp_stream.workspace);*/
++}
++
++static int uclcomp_compress(void *ctx, const u8 *src, unsigned int slen,
++	                    u8 *dst, unsigned int *dlen)
++{
++/* FIXME : I should use the ctx to store the configuration data for the 
++ * compressor, now we are just using the default.
++ */
++	int ret = 0;
++	ret =ucl_nrv2e_99_compress (src, slen, dst, dlen,
++					NULL,10,NULL,NULL);
++	return (ret == UCL_E_OK) ? 0 : -EINVAL;
++}
++ 
++static int uclcomp_decompress(void *ctx, const u8 *src, unsigned int slen,
++                              u8 *dst, unsigned int *dlen)
++{
++	
++	int ret = 0;
++	ret = ucl_nrv2e_decompress_8 (src, slen, dst, 
++					(ucl_uintp) dlen, NULL);
++	return (ret == UCL_E_OK) ? 0 : -EINVAL;
++}
++
++static struct crypto_alg alg = {
++	.cra_name		= "ucl",
++	.cra_flags		= CRYPTO_ALG_TYPE_COMPRESS,
++	.cra_ctxsize		= sizeof(struct uclcomp_ctx),
++	.cra_module		= THIS_MODULE,
++	.cra_list		= LIST_HEAD_INIT(alg.cra_list),
++	.cra_u			= { .compress = {
++	.coa_init		= uclcomp_init,
++	.coa_exit		= uclcomp_exit,
++	.coa_compress 		= uclcomp_compress,
++	.coa_decompress  	= uclcomp_decompress } }
++};
++
++static int __init init(void)
++{
++	return crypto_register_alg(&alg);
++}
++
++static void __exit fini(void)
++{
++	crypto_unregister_alg(&alg);
++}
++
++module_init(init);
++module_exit(fini);
++
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("Ucl compression/decompression");
++MODULE_AUTHOR("Luca Barbato <lu_zero@gentoo.org>");
++
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/Kconfig ppc-development-sources-2.6.1_rc1-r1/drivers/block/Kconfig
+--- ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/Kconfig	2004-01-02 13:42:49.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/drivers/block/Kconfig	2004-01-02 14:04:23.289739248 +0100
+@@ -257,6 +257,14 @@
+ 	  provided by the CryptoAPI as loop transformation. This might be
+ 	  used as hard disk encryption.
+ 
++config BLK_DEV_COMPRESSLOOP
++	tristate "Compressloop Support (EXPERIMENTAL)"
++	select CRYPTO
++	depends on BLK_DEV_CRYPTOLOOP && EXPERIMENTAL
++	---help---
++	  Cryptoloop workalike, supports compressors from CryptoAPI
++
++
+ config BLK_DEV_NBD
+ 	tristate "Network block device support"
+ 	depends on NET
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/Makefile ppc-development-sources-2.6.1_rc1-r1/drivers/block/Makefile
+--- ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/Makefile	2004-01-02 13:42:49.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/drivers/block/Makefile	2004-01-02 13:58:42.059614112 +0100
+@@ -12,6 +12,7 @@
+ # NOTE that ll_rw_blk.c must come early in linkage order - it starts the
+ # kblockd threads
+ #
++#CFLAGS_compressloop.o = -I /usr/include
+ 
+ obj-y	:= elevator.o ll_rw_blk.o ioctl.o genhd.o scsi_ioctl.o
+ 
+@@ -38,3 +39,7 @@
+ obj-$(CONFIG_BLK_DEV_UMEM)	+= umem.o
+ obj-$(CONFIG_BLK_DEV_NBD)	+= nbd.o
+ obj-$(CONFIG_BLK_DEV_CRYPTOLOOP) += cryptoloop.o
++
++#compressloop1-objs := compressloop.o libucl.a
++
++obj-$(CONFIG_BLK_DEV_COMPRESSLOOP) +=compressloop.o
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/compressloop.c ppc-development-sources-2.6.1_rc1-r1/drivers/block/compressloop.c
+--- ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/compressloop.c	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/drivers/block/compressloop.c	2004-01-02 13:58:42.094608792 +0100
+@@ -0,0 +1,400 @@
++/*
++   Linux loop decompression enabling module, based on cryptoloop.c
++
++   Copyright (C)  2002 Herbert Valerio Riedel <hvr@gnu.org>
++   Copyright (C)  2003 Fruhwirth Clemens <clemens@endorphin.org>
++   Copyright (C)  2004 Luca Barbato <lu_zero@gentoo.org>
++
++   This module is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This module is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this module; if not, write to the Free Software
++   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++
++#include <linux/module.h>
++
++#include <linux/init.h>
++#include <linux/string.h>
++#include <linux/crypto.h>
++#include <linux/blkdev.h>
++#include <linux/loop.h>
++#include <asm/semaphore.h>
++#include <asm/uaccess.h>
++#include <linux/cloop.h>
++#include <linux/vmalloc.h>
++#include <linux/slab.h>
++
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("loop blockdevice transfer function adaptor"
++		"/ CryptoAPI (compressors)");
++MODULE_AUTHOR("Luca Barbato <lu_zero@gentoo.org>");
++
++#define CLOOP_NAME "gcloop"
++
++#define LOOP_IV_SECTOR_BITS 9
++#define LOOP_IV_SECTOR_SIZE (1 << LOOP_IV_SECTOR_BITS)
++
++#ifndef MIN
++#define MIN(x,y) ((x) < (y) ? (x) : (y))
++#endif
++
++/* 
++ * The loop-AES way to access file is working, the former I used isn't
++ * anymore - lu*/
++
++static int cloop_file_io(struct file *file, char *buf, int size, loff_t *ppos)
++{
++	mm_segment_t fs;
++	int x, y, z;
++
++	y = 0;
++	do {
++		z = size - y;
++		fs = get_fs();
++		set_fs(get_ds());
++		x = file->f_op->read(file, buf + y, z, ppos);
++		set_fs(fs);
++		if (!x)
++			return 1;
++		
++		if (x < 0) {
++			if ((x == -EAGAIN) || (x == -ENOMEM) || (x == -ERESTART) || (x == -EINTR)) {
++				blk_run_queues();
++				set_current_state(TASK_INTERRUPTIBLE);
++				schedule_timeout(HZ / 2);
++				continue;
++			}
++			return 1;
++		}
++		y += x;
++	} while (y < size);
++	return 0;
++}
++
++
++
++static int
++load_compressed_head(struct loop_device *lo, struct compressloop_data *data)
++{
++	struct file *file = lo->lo_backing_file;
++	char *buf = NULL;
++	int total_offsets = 1, offsets_read ,i;
++	loff_t pos=0;
++	ssize_t bsize = lo->lo_blocksize;
++	int size = sizeof(struct cloop_head);
++	char *fbuf = (char *) &data->head;
++	
++	
++	
++	printk(KERN_INFO "%s: loading compressed headers \n",
++		CLOOP_NAME);
++	
++	buf = kmalloc(bsize,GFP_KERNEL);
++	if(buf == NULL) {
++		printk(KERN_ERR "%s: can't alloc %i bytes \n",
++			CLOOP_NAME,bsize);
++		return -EINVAL;
++	}
++ 	data->buffered_blocknum=-1;
++	
++	/* first load the head */
++
++	if (cloop_file_io(file, fbuf, size, &pos)) {
++		printk(KERN_ERR "%s: I/O Error\n",
++			CLOOP_NAME);
++	}
++		
++	if (ntohl(data->head.block_size) % 512 != 0) {
++		printk(KERN_ERR "%s: bsize %u not multiple of 512\n",
++			CLOOP_NAME, ntohl(data->head.block_size));
++		goto error_release;
++	}
++	
++	total_offsets=ntohl(data->head.num_blocks)+1;
++	data->offsets = kmalloc(sizeof(u_int32_t) * total_offsets, GFP_KERNEL);
++	if (!data->offsets) {
++		printk(KERN_ERR "%s: out of kernel mem for offsets\n",
++			CLOOP_NAME);
++		goto error_release;
++        }
++	
++	data->buffer = kmalloc(ntohl(data->head.block_size), GFP_KERNEL);
++        if (!data->buffer) {
++		printk(KERN_ERR "%s: out of kernel mem for buffer\n",
++			CLOOP_NAME);
++		goto error_release;
++	}
++
++
++	data->compressed_buffer = kmalloc(ntohl(data->head.block_size), GFP_KERNEL);
++        if (!data->compressed_buffer) {
++		printk(KERN_ERR "%s: out of kernel mem for compressed_buffer\n",			CLOOP_NAME);
++		goto error_release;
++	}
++
++	
++	/* then load the offset */
++	
++	for (i = 0, offsets_read = 0; offsets_read < total_offsets; i++) {
++		int toread=MIN(bsize,(total_offsets-offsets_read)*sizeof(uint32_t));
++		if(cloop_file_io(file, buf, bsize, &pos)) {
++			printk(KERN_ERR "%s: can't read the image\n",
++				CLOOP_NAME);
++			return -EINVAL;
++		}
++		
++		memcpy(&data->offsets[offsets_read], buf, toread);
++		offsets_read += toread/sizeof(uint32_t);
++	}
++#ifdef CLOOP_DEBUG
++	for (i=0; i< ntohl(data->head.num_blocks); i++) {
++		printk(KERN_ERR "Block %u pos %u length %u \n", i,ntohl(data->offsets[i]),ntohl(data->offsets[i+1])-ntohl(data->offsets[i]));
++	}
++#endif
++	/*FIXME it needs some more checks*/
++	lo->lo_sizelimit=ntohl(data->head.num_blocks) 
++			 * ntohl(data->head.block_size)/512;
++
++	printk(KERN_ERR "loading complete: total size %llu, %u blocks \n",
++			lo->lo_sizelimit, ntohl(data->head.num_blocks) );
++	
++	init_MUTEX(&data->mutex);
++	kfree(buf);
++	return 0;
++
++error_release:
++	if(buf) kfree(buf);
++	if(data->offsets) kfree(data->offsets);
++	if(data->compressed_buffer) kfree(data->compressed_buffer);
++	if(data->buffer) kfree(data->buffer);
++	printk(KERN_ERR "%s: loading failed\n",
++		CLOOP_NAME);
++	return -EINVAL;
++}
++
++static int
++compressloop_init(struct loop_device *lo, const struct loop_info64 *info)
++{
++	int err = -EINVAL;
++	char cms[LO_NAME_SIZE];			/* cipher-mode string */
++	char *cipher;
++	char *mode;
++	char *cmsp = cms;			/* c-m string pointer */
++	struct compressloop_data *data = NULL;
++	
++	strncpy(cms, info->lo_crypt_name, LO_NAME_SIZE);
++	cms[LO_NAME_SIZE - 1] = 0;
++	cipher = strsep(&cmsp, "-");
++	mode = strsep(&cmsp, "-");
++	
++	printk(KERN_INFO "%s: loading %s cipher, %s mode\n",CLOOP_NAME,
++			cipher,(mode)?mode:"standard");
++	
++	data = kmalloc(sizeof(struct compressloop_data), GFP_KERNEL);
++	if (data == NULL)
++		return -EINVAL;
++	
++	memset (data,0,sizeof(struct compressloop_data));
++	
++	if (mode == NULL || strcmp(mode, "comp") == 0)
++		data->tfm = crypto_alloc_tfm(cipher,0);
++	if (data->tfm == NULL)
++		goto out_free_data;
++
++	err = load_compressed_head(lo,data);
++	
++	if (err !=0)
++		goto out_free_tfm;
++	
++	lo->key_data = data;
++	lo->lo_flags |= LO_FLAGS_READ_ONLY;
++	return 0;
++
++ out_free_tfm:
++	crypto_free_tfm(data->tfm);
++ 
++ out_free_data:
++ 	kfree(data);
++ 	return err;
++}
++
++static int
++compressloop_ioctl(struct loop_device *lo, int cmd, unsigned long arg)
++{
++	return -EINVAL;
++}
++
++static int
++compressloop_release(struct loop_device *lo)
++{
++	struct  compressloop_data *data= (struct compressloop_data *) lo->key_data;
++	
++	if (data != NULL) {
++		if(data->tfm) crypto_free_tfm(data->tfm);
++		if(data->offsets) kfree(data->offsets);
++		if(data->compressed_buffer) kfree(data->compressed_buffer);
++		if(data->buffer) kfree(data->buffer);
++		kfree(data);
++		lo->key_data = NULL;
++		return 0;
++	}
++	printk(KERN_ERR "compressloop_release(): data == NULL?\n");
++	return -EINVAL;
++}
++
++
++
++static inline int 
++load_buffer(loff_t blocknum, struct loop_device *lo)
++{
++	unsigned int buf_done = 0;
++	unsigned long buflen;
++	unsigned int buf_length;
++	loff_t pos;
++	int ret = 0;
++	struct file *file = lo->lo_backing_file;
++	struct compressloop_data *data = (struct compressloop_data *) lo->key_data;
++
++	if( blocknum > ntohl(data->head.num_blocks) || blocknum < 0) {
++		printk(KERN_WARNING "%s: Invalid block number %llu requested.\n",
++			CLOOP_NAME, blocknum);
++	 	data->buffered_blocknum = -1;
++	 	return 0;
++  	}
++	
++	if (blocknum == data->buffered_blocknum ) return 1;
++
++	/* Get the compressed blocksize*/
++	buf_length = ntohl(data->offsets[blocknum+1])
++			- ntohl(data->offsets[blocknum]);
++	/* Get the uncompressed blocksize*/
++	buflen = ntohl(data->head.block_size);
++
++	pos = ntohl(data->offsets[blocknum]);
++#ifdef GCLOOP_DEBUG
++	printk (KERN_INFO "load_buffer : block %llu offset %u buf_length %u, %u - %u \n",blocknum, ntohl(data->offsets[blocknum]), buf_length, ntohl(data->offsets[blocknum+1]), ntohl(data->offsets[blocknum]) );
++#endif
++	/*if the block is uncompressible we just memcpy() the block*/
++	if (buf_length==0) {
++		memset(data->buffer,0,buflen);
++		data->buffered_blocknum = blocknum;
++		return 1;
++	}
++
++	if (cloop_file_io(file,(char *)data->compressed_buffer,buf_length, &pos)) {
++		printk(KERN_ERR "%s: I/O Error\n",
++			CLOOP_NAME);
++	}
++
++	if(buf_length>buflen) { /*Not a blocksize we expect*/
++		printk(KERN_ERR "%s; error, corrupted index or old cloop"
++			"format, please update the image", CLOOP_NAME);
++		return 0;
++	}
++	if(buf_length==buflen) /*uncompressed*/
++		memcpy(data->buffer,data->compressed_buffer,
++	 		buflen);
++	else
++	ret = crypto_comp_decompress(data->tfm, data->compressed_buffer,
++			buf_length, data->buffer, (unsigned int *)&buflen);
++
++	if (ret != 0) {
++		printk(KERN_ERR "%s: error %i uncompressing block %llu %u/%lu/%u/%u "
++			"%u-%u\n", CLOOP_NAME, ret, blocknum,
++			ntohl(data->head.block_size), buflen, 
++			buf_length, buf_done, ntohl(data->offsets[blocknum]),
++			ntohl(data->offsets[blocknum+1]));
++	 	data->buffered_blocknum = -1;
++	 	return 0;
++	}
++	
++	data->buffered_blocknum = blocknum;
++	return 1;
++}
++
++
++static int
++do_clo_receive(struct loop_device *lo,
++	       struct bio_vec *bvec, int bsize, loff_t pos)
++{
++	int retval=0;
++	char *dest=kmap(bvec->bv_page) + bvec->bv_offset;
++	struct compressloop_data *data =
++		(struct compressloop_data *) lo->key_data;
++	uint32_t block_size=ntohl(data->head.block_size),
++		len=bvec->bv_len;
++	down_interruptible(& data->mutex);
++#ifdef GCLOOP_DEBUG
++	printk (KERN_INFO "do_clo_receive : bsize %i blocksize %u len %u pos %llu \n",bsize, block_size, len, pos );
++#endif
++	while (len > 0) {
++		unsigned int offset_in_buffer, length_in_buffer;
++		loff_t index = pos;
++
++	/* using div64.h do_div macro*/
++		offset_in_buffer = do_div(index,block_size);
++
++		if (!load_buffer(index,lo)) {
++	 		retval=-EIO;
++	 		break;
++	 	}
++	/* Now, at least part of what we want will be in the buffer. */
++		length_in_buffer = block_size - offset_in_buffer;
++
++		if (length_in_buffer > len)
++			length_in_buffer = len;
++
++		memcpy(dest, data->buffer + offset_in_buffer,length_in_buffer);
++
++		dest += length_in_buffer;
++		len -= length_in_buffer;
++		pos += length_in_buffer;
++	}
++	
++	kunmap(bvec->bv_page);
++	up(&data->mutex);
++	return (retval < 0)? retval: 0;
++}
++
++
++
++
++static struct loop_func_table compressloop_funcs = {
++	.number = LO_CRYPT_CRYPTOAPI,
++	.init = compressloop_init,
++	.ioctl = compressloop_ioctl,
++	.transfer = NULL,
++	.release = compressloop_release,
++	.owner = THIS_MODULE,
++	.do_receive = do_clo_receive
++};
++
++static int __init
++init_compressloop(void)
++{
++	int rc = loop_register_transfer(&compressloop_funcs);
++
++	if (rc)
++		printk(KERN_ERR "compressloop: loop_register_transfer failed\n");
++	return rc;
++}
++
++static void __exit
++cleanup_compressloop(void)
++{
++	if (loop_unregister_transfer(LO_CRYPT_CRYPTOAPI))
++		printk(KERN_ERR
++			"compressloop: loop_unregister_transfer failed\n");
++}
++
++module_init(init_compressloop);
++module_exit(cleanup_compressloop);
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/loop.c ppc-development-sources-2.6.1_rc1-r1/drivers/block/loop.c
+--- ppc-development-sources-2.6.1_rc1-r1.orig/drivers/block/loop.c	2004-01-02 13:42:48.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/drivers/block/loop.c	2004-01-02 14:03:29.813868816 +0100
+@@ -324,7 +324,7 @@
+ 	for (vecnr = 0; vecnr < bio->bi_vcnt; vecnr++) {
+ 		struct bio_vec *bvec = &bio->bi_io_vec[vecnr];
+ 
+-		ret = do_lo_receive(lo, bvec, bsize, pos);
++		ret = lo->do_receive(lo, bvec, bsize, pos);
+ 		if (ret < 0)
+ 			break;
+ 		pos += bvec->bv_len;
+@@ -886,7 +886,17 @@
+ 	err = loop_init_xfer(lo, xfer, info);
+ 	if (err)
+ 		return err;
+-
++	/*If you are about to use a compressed loop*/
++	if (!xfer)
++		xfer = &none_funcs;
++		
++	if (xfer->number == LO_CRYPT_CRYPTOAPI &&
++	    xfer->do_receive != NULL){
++	/*believe what is written in the image*/
++	set_capacity(disks[lo->lo_number], lo->lo_sizelimit);
++	}
++	else
++	/*else check for physical limits*/
+ 	if (lo->lo_offset != info->lo_offset ||
+ 	    lo->lo_sizelimit != info->lo_sizelimit) {
+ 		lo->lo_offset = info->lo_offset;
+@@ -895,13 +905,14 @@
+ 			return -EFBIG;
+ 	}
+ 
++
+ 	memcpy(lo->lo_file_name, info->lo_file_name, LO_NAME_SIZE);
+ 	memcpy(lo->lo_crypt_name, info->lo_crypt_name, LO_NAME_SIZE);
+ 	lo->lo_file_name[LO_NAME_SIZE-1] = 0;
+ 	lo->lo_crypt_name[LO_NAME_SIZE-1] = 0;
+ 
+-	if (!xfer)
+-		xfer = &none_funcs;
++/*	if (!xfer)
++		xfer = &none_funcs;*/
+ 	lo->transfer = xfer->transfer;
+ 	lo->ioctl = xfer->ioctl;
+ 
+@@ -912,8 +923,12 @@
+ 		memcpy(lo->lo_encrypt_key, info->lo_encrypt_key,
+ 		       info->lo_encrypt_key_size);
+ 		lo->lo_key_owner = current->uid;
+-	}	
+-
++	}
++	
++	if (xfer->do_receive) 
++		lo->do_receive = xfer->do_receive;
++	else 	lo->do_receive=do_lo_receive;
++	
+ 	return 0;
+ }
+ 
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/include/linux/cloop.h ppc-development-sources-2.6.1_rc1-r1/include/linux/cloop.h
+--- ppc-development-sources-2.6.1_rc1-r1.orig/include/linux/cloop.h	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/include/linux/cloop.h	2004-01-02 13:58:42.000000000 +0100
+@@ -0,0 +1,28 @@
++#ifndef _CLOOP_H
++#define _CLOOP_H
++
++
++#define CLOOP_HEADROOM 128
++
++struct cloop_head
++{
++	char preamble[CLOOP_HEADROOM];
++	u_int32_t block_size;
++	u_int32_t num_blocks;
++};
++
++struct compressloop_data 
++{
++	/* data we need to know which block uncompress) */
++	struct cloop_head head;
++	u_int32_t *offsets;
++	/* will hold the uncompressor */
++	struct 	crypto_tfm *tfm;
++	/*workspace/cache*/
++	char 	*buffer;
++	char 	*compressed_buffer;
++	int 	buffered_blocknum;
++	struct semaphore mutex;
++};
++
++#endif /*_CLOOP_H*/
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/include/linux/loop.h ppc-development-sources-2.6.1_rc1-r1/include/linux/loop.h
+--- ppc-development-sources-2.6.1_rc1-r1.orig/include/linux/loop.h	2004-01-02 13:38:34.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/include/linux/loop.h	2004-01-02 13:58:42.000000000 +0100
+@@ -63,6 +63,8 @@
+ 	atomic_t		lo_pending;
+ 
+ 	request_queue_t		*lo_queue;
++	int 		(*do_receive)(struct loop_device *lo,
++			struct bio_vec *bvec, int bsize, loff_t pos);
+ };
+ 
+ #endif /* __KERNEL__ */
+@@ -135,6 +137,9 @@
+ 	int (*release)(struct loop_device *); 
+ 	int (*ioctl)(struct loop_device *, int cmd, unsigned long arg);
+ 	struct module *owner;
++	int (*do_receive)(struct loop_device *lo, struct bio_vec *bvec,
++			int bsize, loff_t pos);
++
+ }; 
+ 
+ int loop_register_transfer(struct loop_func_table *funcs);
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/ucl.h ppc-development-sources-2.6.1_rc1-r1/include/ucl/ucl.h
+--- ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/ucl.h	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/include/ucl/ucl.h	2004-01-02 13:58:42.000000000 +0100
+@@ -0,0 +1,235 @@
++/* ucl.h -- prototypes for the UCL real-time data compression library
++
++   This file is part of the UCL data compression library.
++
++   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
++   All Rights Reserved.
++
++   The UCL library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 2 of
++   the License, or (at your option) any later version.
++
++   The UCL library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with the UCL library; see the file COPYING.
++   If not, write to the Free Software Foundation, Inc.,
++   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++
++   Markus F.X.J. Oberhumer
++   <markus@oberhumer.com>
++   http://www.oberhumer.com/opensource/ucl/
++ */
++
++
++#ifndef __UCL_H
++#define __UCL_H
++
++#ifndef __UCLCONF_H
++#include <ucl/uclconf.h>
++#endif
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++
++/***********************************************************************
++//
++************************************************************************/
++
++/* note: to use default values pass -1, i.e. initialize
++ * this struct by a memset(x,0xff,sizeof(x)) */
++struct ucl_compress_config_t
++{
++    int bb_endian;
++    int bb_size;
++    ucl_uint max_offset;
++    ucl_uint max_match;
++    int s_level;
++    int h_level;
++    int p_level;
++    int c_flags;
++    ucl_uint m_size;
++};
++
++#define ucl_compress_config_p   ucl_compress_config_t __UCL_MMODEL *
++
++
++/***********************************************************************
++// compressors
++************************************************************************/
++
++UCL_EXTERN(int)
++ucl_nrv2b_99_compress      ( const ucl_bytep src, ucl_uint src_len,
++                                   ucl_bytep dst, ucl_uintp dst_len,
++                                   ucl_progress_callback_p cb,
++                                   int level,
++                             const struct ucl_compress_config_p conf,
++                                   ucl_uintp result );
++
++UCL_EXTERN(int)
++ucl_nrv2d_99_compress      ( const ucl_bytep src, ucl_uint src_len,
++                                   ucl_bytep dst, ucl_uintp dst_len,
++                                   ucl_progress_callback_p cb,
++                                   int level,
++                             const struct ucl_compress_config_p conf,
++                                   ucl_uintp result );
++
++UCL_EXTERN(int)
++ucl_nrv2e_99_compress      ( const ucl_bytep src, ucl_uint src_len,
++                                   ucl_bytep dst, ucl_uintp dst_len,
++                                   ucl_progress_callback_p cb,
++                                   int level,
++                             const struct ucl_compress_config_p conf,
++                                   ucl_uintp result );
++
++
++/***********************************************************************
++// decompressors
++************************************************************************/
++
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_8          ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_le16       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_le32       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_safe_8     ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_safe_le16  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_decompress_safe_le32  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_8          ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_le16       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_le32       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_safe_8     ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_safe_le16  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_decompress_safe_le32  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_8          ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_le16       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_le32       ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_safe_8     ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_safe_le16  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_decompress_safe_le32  ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++
++/***********************************************************************
++// assembler decompressors [TO BE ADDED]
++************************************************************************/
++
++
++/***********************************************************************
++// test an overlapping in-place decompression within a buffer:
++//   - try a virtual decompression from &buf[src_off] -> &buf[0]
++//   - no data is actually written
++//   - only the bytes at buf[src_off .. src_off+src_len] will get accessed
++************************************************************************/
++
++UCL_EXTERN(int)
++ucl_nrv2b_test_overlap_8        ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_test_overlap_le16     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2b_test_overlap_le32     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++UCL_EXTERN(int)
++ucl_nrv2d_test_overlap_8        ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_test_overlap_le16     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2d_test_overlap_le32     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++UCL_EXTERN(int)
++ucl_nrv2e_test_overlap_8        ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_test_overlap_le16     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++UCL_EXTERN(int)
++ucl_nrv2e_test_overlap_le32     ( const ucl_bytep buf, ucl_uint src_off,
++                                        ucl_uint  src_len, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++
++#ifdef __cplusplus
++} /* extern "C" */
++#endif
++
++#endif /* already included */
++
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/uclconf.h ppc-development-sources-2.6.1_rc1-r1/include/ucl/uclconf.h
+--- ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/uclconf.h	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/include/ucl/uclconf.h	2004-01-02 13:58:42.000000000 +0100
+@@ -0,0 +1,407 @@
++/* uclconf.h -- configuration for the UCL real-time data compression library
++
++   This file is part of the UCL data compression library.
++
++   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
++   All Rights Reserved.
++
++   The UCL library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 2 of
++   the License, or (at your option) any later version.
++
++   The UCL library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with the UCL library; see the file COPYING.
++   If not, write to the Free Software Foundation, Inc.,
++   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++
++   Markus F.X.J. Oberhumer
++   <markus@oberhumer.com>
++   http://www.oberhumer.com/opensource/ucl/
++ */
++
++
++#ifndef __UCLCONF_H
++#define __UCLCONF_H
++
++#define UCL_VERSION             0x010100L
++#define UCL_VERSION_STRING      "1.01"
++#define UCL_VERSION_DATE        "Jan 02 2002"
++
++/* internal Autoconf configuration file - only used when building UCL */
++#if defined(UCL_HAVE_CONFIG_H)
++#  include <config.h>
++#endif
++#include <limits.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++
++/***********************************************************************
++// UCL requires a conforming <limits.h>
++************************************************************************/
++
++#if !defined(CHAR_BIT) || (CHAR_BIT != 8)
++#  error "invalid CHAR_BIT"
++#endif
++#if !defined(UCHAR_MAX) || !defined(UINT_MAX) || !defined(ULONG_MAX)
++#  error "check your compiler installation"
++#endif
++#if (USHRT_MAX < 1) || (UINT_MAX < 1) || (ULONG_MAX < 1)
++#  error "your limits.h macros are broken"
++#endif
++
++/* workaround a compiler bug under hpux 10.20 */
++#define UCL_0xffffffffL         4294967295ul
++
++#if !defined(UCL_UINT32_C)
++#  if (UINT_MAX < UCL_0xffffffffL)
++#    define UCL_UINT32_C(c)     c ## UL
++#  else
++#    define UCL_UINT32_C(c)     c ## U
++#  endif
++#endif
++
++
++/***********************************************************************
++// architecture defines
++************************************************************************/
++
++#if !defined(__UCL_WIN) && !defined(__UCL_DOS) && !defined(__UCL_OS2)
++#  if defined(__WINDOWS__) || defined(_WINDOWS) || defined(_Windows)
++#    define __UCL_WIN
++#  elif defined(__WIN32__) || defined(_WIN32) || defined(WIN32)
++#    define __UCL_WIN
++#  elif defined(__NT__) || defined(__NT_DLL__) || defined(__WINDOWS_386__)
++#    define __UCL_WIN
++#  elif defined(__DOS__) || defined(__MSDOS__) || defined(MSDOS)
++#    define __UCL_DOS
++#  elif defined(__OS2__) || defined(__OS2V2__) || defined(OS2)
++#    define __UCL_OS2
++#  elif defined(__palmos__)
++#    define __UCL_PALMOS
++#  elif defined(__TOS__) || defined(__atarist__)
++#    define __UCL_TOS
++#  endif
++#endif
++
++#if (UINT_MAX < UCL_0xffffffffL)
++#  if defined(__UCL_WIN)
++#    define __UCL_WIN16
++#  elif defined(__UCL_DOS)
++#    define __UCL_DOS16
++#  elif defined(__UCL_PALMOS)
++#    define __UCL_PALMOS16
++#  elif defined(__UCL_TOS)
++#    define __UCL_TOS16
++#  elif defined(__C166__)
++#  else
++#    error "16-bit target not supported - contact me for porting hints"
++#  endif
++#endif
++
++#if !defined(__UCL_i386)
++#  if defined(__UCL_DOS) || defined(__UCL_WIN16)
++#    define __UCL_i386
++#  elif defined(__i386__) || defined(__386__) || defined(_M_IX86)
++#    define __UCL_i386
++#  endif
++#endif
++
++#if defined(__UCL_STRICT_16BIT)
++#  if (UINT_MAX < UCL_0xffffffffL)
++#    include <ucl/ucl16bit.h>
++#  endif
++#endif
++
++/* memory checkers */
++#if !defined(__UCL_CHECKER)
++#  if defined(__BOUNDS_CHECKING_ON)
++#    define __UCL_CHECKER
++#  elif defined(__CHECKER__)
++#    define __UCL_CHECKER
++#  elif defined(__INSURE__)
++#    define __UCL_CHECKER
++#  elif defined(__PURIFY__)
++#    define __UCL_CHECKER
++#  endif
++#endif
++
++
++/***********************************************************************
++// integral and pointer types
++************************************************************************/
++
++/* Integral types with 32 bits or more */
++#if !defined(UCL_UINT32_MAX)
++#  if (UINT_MAX >= UCL_0xffffffffL)
++     typedef unsigned int       ucl_uint32;
++     typedef int                ucl_int32;
++#    define UCL_UINT32_MAX      UINT_MAX
++#    define UCL_INT32_MAX       INT_MAX
++#    define UCL_INT32_MIN       INT_MIN
++#  elif (ULONG_MAX >= UCL_0xffffffffL)
++     typedef unsigned long      ucl_uint32;
++     typedef long               ucl_int32;
++#    define UCL_UINT32_MAX      ULONG_MAX
++#    define UCL_INT32_MAX       LONG_MAX
++#    define UCL_INT32_MIN       LONG_MIN
++#  else
++#    error "ucl_uint32"
++#  endif
++#endif
++
++/* ucl_uint is used like size_t */
++#if !defined(UCL_UINT_MAX)
++#  if (UINT_MAX >= UCL_0xffffffffL)
++     typedef unsigned int       ucl_uint;
++     typedef int                ucl_int;
++#    define UCL_UINT_MAX        UINT_MAX
++#    define UCL_INT_MAX         INT_MAX
++#    define UCL_INT_MIN         INT_MIN
++#  elif (ULONG_MAX >= UCL_0xffffffffL)
++     typedef unsigned long      ucl_uint;
++     typedef long               ucl_int;
++#    define UCL_UINT_MAX        ULONG_MAX
++#    define UCL_INT_MAX         LONG_MAX
++#    define UCL_INT_MIN         LONG_MIN
++#  else
++#    error "ucl_uint"
++#  endif
++#endif
++
++/* Memory model that allows to access memory at offsets of ucl_uint. */
++#if !defined(__UCL_MMODEL)
++#  if (UCL_UINT_MAX <= UINT_MAX)
++#    define __UCL_MMODEL
++#  elif defined(__UCL_DOS16) || defined(__UCL_WIN16)
++#    define __UCL_MMODEL        __huge
++#    define UCL_999_UNSUPPORTED
++#  elif defined(__UCL_PALMOS16) || defined(__UCL_TOS16)
++#    define __UCL_MMODEL
++#  else
++#    error "__UCL_MMODEL"
++#  endif
++#endif
++
++/* no typedef here because of const-pointer issues */
++#define ucl_byte                unsigned char __UCL_MMODEL
++#define ucl_bytep               unsigned char __UCL_MMODEL *
++#define ucl_charp               char __UCL_MMODEL *
++#define ucl_voidp               void __UCL_MMODEL *
++#define ucl_shortp              short __UCL_MMODEL *
++#define ucl_ushortp             unsigned short __UCL_MMODEL *
++#define ucl_uint32p             ucl_uint32 __UCL_MMODEL *
++#define ucl_int32p              ucl_int32 __UCL_MMODEL *
++#define ucl_uintp               ucl_uint __UCL_MMODEL *
++#define ucl_intp                ucl_int __UCL_MMODEL *
++#define ucl_voidpp              ucl_voidp __UCL_MMODEL *
++#define ucl_bytepp              ucl_bytep __UCL_MMODEL *
++
++typedef int ucl_bool;
++
++
++/***********************************************************************
++// function types
++************************************************************************/
++
++/* linkage */
++#if !defined(__UCL_EXTERN_C)
++#  ifdef __cplusplus
++#    define __UCL_EXTERN_C      extern "C"
++#  else
++#    define __UCL_EXTERN_C      extern
++#  endif
++#endif
++
++/* calling conventions */
++#if !defined(__UCL_CDECL)
++#  if defined(__UCL_DOS16) || defined(__UCL_WIN16)
++#    define __UCL_CDECL         __far __cdecl
++#  elif defined(__UCL_i386) && defined(_MSC_VER)
++#    define __UCL_CDECL         __cdecl
++#  elif defined(__UCL_i386) && defined(__WATCOMC__)
++#    define __UCL_CDECL         __near __cdecl
++#  else
++#    define __UCL_CDECL
++#  endif
++#endif
++#if !defined(__UCL_ENTRY)
++#  define __UCL_ENTRY           __UCL_CDECL
++#endif
++
++/* DLL export information */
++#if !defined(__UCL_EXPORT1)
++#  define __UCL_EXPORT1
++#endif
++#if !defined(__UCL_EXPORT2)
++#  define __UCL_EXPORT2
++#endif
++
++/* calling convention for C functions */
++#if !defined(UCL_PUBLIC)
++#  define UCL_PUBLIC(_rettype)  __UCL_EXPORT1 _rettype __UCL_EXPORT2 __UCL_ENTRY
++#endif
++#if !defined(UCL_EXTERN)
++#  define UCL_EXTERN(_rettype)  __UCL_EXTERN_C UCL_PUBLIC(_rettype)
++#endif
++#if !defined(UCL_PRIVATE)
++#  define UCL_PRIVATE(_rettype) static _rettype __UCL_ENTRY
++#endif
++
++/* cdecl calling convention for assembler functions */
++#if !defined(UCL_PUBLIC_CDECL)
++#  define UCL_PUBLIC_CDECL(_rettype) \
++                __UCL_EXPORT1 _rettype __UCL_EXPORT2 __UCL_CDECL
++#endif
++#if !defined(UCL_EXTERN_CDECL)
++#  define UCL_EXTERN_CDECL(_rettype)  __UCL_EXTERN_C UCL_PUBLIC_CDECL(_rettype)
++#endif
++
++/* C++ exception specification for extern "C" function types */
++#if !defined(__cplusplus)
++#  undef UCL_NOTHROW
++#  define UCL_NOTHROW
++#elif !defined(UCL_NOTHROW)
++#  define UCL_NOTHROW
++#endif
++
++
++typedef int
++(__UCL_ENTRY *ucl_compress_t)   ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++typedef int
++(__UCL_ENTRY *ucl_decompress_t) ( const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++typedef int
++(__UCL_ENTRY *ucl_optimize_t)   (       ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem );
++
++typedef int
++(__UCL_ENTRY *ucl_compress_dict_t)(const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem,
++                                  const ucl_bytep dict, ucl_uint dict_len );
++
++typedef int
++(__UCL_ENTRY *ucl_decompress_dict_t)(const ucl_bytep src, ucl_uint  src_len,
++                                        ucl_bytep dst, ucl_uintp dst_len,
++                                        ucl_voidp wrkmem,
++                                  const ucl_bytep dict, ucl_uint dict_len );
++
++
++/* a progress indicator callback function */
++typedef struct
++{
++    void (__UCL_ENTRY *callback) (ucl_uint, ucl_uint, int, ucl_voidp user);
++    ucl_voidp user;
++}
++ucl_progress_callback_t;
++#define ucl_progress_callback_p ucl_progress_callback_t __UCL_MMODEL *
++
++
++/***********************************************************************
++// error codes and prototypes
++************************************************************************/
++
++/* Error codes for the compression/decompression functions. Negative
++ * values are errors, positive values will be used for special but
++ * normal events.
++ */
++#define UCL_E_OK                    0
++#define UCL_E_ERROR                 (-1)
++#define UCL_E_INVALID_ARGUMENT      (-2)
++#define UCL_E_OUT_OF_MEMORY         (-3)
++/* compression errors */
++#define UCL_E_NOT_COMPRESSIBLE      (-101)
++/* decompression errors */
++#define UCL_E_INPUT_OVERRUN         (-201)
++#define UCL_E_OUTPUT_OVERRUN        (-202)
++#define UCL_E_LOOKBEHIND_OVERRUN    (-203)
++#define UCL_E_EOF_NOT_FOUND         (-204)
++#define UCL_E_INPUT_NOT_CONSUMED    (-205)
++#define UCL_E_OVERLAP_OVERRUN       (-206)
++
++
++/* ucl_init() should be the first function you call.
++ * Check the return code !
++ *
++ * ucl_init() is a macro to allow checking that the library and the
++ * compiler's view of various types are consistent.
++ */
++#define ucl_init() __ucl_init2(UCL_VERSION,(int)sizeof(short),(int)sizeof(int),\
++    (int)sizeof(long),(int)sizeof(ucl_uint32),(int)sizeof(ucl_uint),\
++    (int)-1,(int)sizeof(char *),(int)sizeof(ucl_voidp),\
++    (int)sizeof(ucl_compress_t))
++UCL_EXTERN(int) __ucl_init2(ucl_uint32,int,int,int,int,int,int,int,int,int);
++
++/* version functions (useful for shared libraries) */
++UCL_EXTERN(ucl_uint32) ucl_version(void);
++UCL_EXTERN(const char *) ucl_version_string(void);
++UCL_EXTERN(const char *) ucl_version_date(void);
++UCL_EXTERN(const ucl_charp) _ucl_version_string(void);
++UCL_EXTERN(const ucl_charp) _ucl_version_date(void);
++
++/* string functions */
++UCL_EXTERN(int)
++ucl_memcmp(const ucl_voidp _s1, const ucl_voidp _s2, ucl_uint _len);
++UCL_EXTERN(ucl_voidp)
++ucl_memcpy(ucl_voidp _dest, const ucl_voidp _src, ucl_uint _len);
++UCL_EXTERN(ucl_voidp)
++ucl_memmove(ucl_voidp _dest, const ucl_voidp _src, ucl_uint _len);
++UCL_EXTERN(ucl_voidp)
++ucl_memset(ucl_voidp _s, int _c, ucl_uint _len);
++
++/* checksum functions */
++UCL_EXTERN(ucl_uint32)
++ucl_adler32(ucl_uint32 _adler, const ucl_bytep _buf, ucl_uint _len);
++UCL_EXTERN(ucl_uint32)
++ucl_crc32(ucl_uint32 _c, const ucl_bytep _buf, ucl_uint _len);
++
++/* memory allocation functions */
++UCL_EXTERN(ucl_voidp) ucl_alloc(ucl_uint _nelems, ucl_uint _size);
++UCL_EXTERN(ucl_voidp) ucl_malloc(ucl_uint _size);
++UCL_EXTERN(void) ucl_free(ucl_voidp _ptr);
++
++typedef ucl_voidp (__UCL_ENTRY *ucl_alloc_hook_t) (ucl_uint, ucl_uint);
++typedef void (__UCL_ENTRY *ucl_free_hook_t) (ucl_voidp);
++
++extern ucl_alloc_hook_t ucl_alloc_hook;
++extern ucl_free_hook_t ucl_free_hook;
++
++/* misc. */
++UCL_EXTERN(ucl_bool) ucl_assert(int _expr);
++UCL_EXTERN(int) _ucl_config_check(void);
++typedef union { ucl_bytep p; ucl_uint u; } __ucl_pu_u;
++typedef union { ucl_bytep p; ucl_uint32 u32; } __ucl_pu32_u;
++
++/* align a char pointer on a boundary that is a multiple of `size' */
++UCL_EXTERN(unsigned) __ucl_align_gap(const ucl_voidp _ptr, ucl_uint _size);
++#define UCL_PTR_ALIGN_UP(_ptr,_size) \
++    ((_ptr) + (ucl_uint) __ucl_align_gap((const ucl_voidp)(_ptr),(ucl_uint)(_size)))
++
++
++#ifdef __cplusplus
++} /* extern "C" */
++#endif
++
++#endif /* already included */
++
+diff -ruN ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/uclutil.h ppc-development-sources-2.6.1_rc1-r1/include/ucl/uclutil.h
+--- ppc-development-sources-2.6.1_rc1-r1.orig/include/ucl/uclutil.h	1970-01-01 01:00:00.000000000 +0100
++++ ppc-development-sources-2.6.1_rc1-r1/include/ucl/uclutil.h	2004-01-02 13:58:42.000000000 +0100
+@@ -0,0 +1,71 @@
++/* uclutil.h -- utilities for the UCL real-time data compression library
++
++   This file is part of the UCL data compression library.
++
++   Copyright (C) 2002 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2001 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 2000 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1999 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1998 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1997 Markus Franz Xaver Johannes Oberhumer
++   Copyright (C) 1996 Markus Franz Xaver Johannes Oberhumer
++   All Rights Reserved.
++
++   The UCL library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 2 of
++   the License, or (at your option) any later version.
++
++   The UCL library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with the UCL library; see the file COPYING.
++   If not, write to the Free Software Foundation, Inc.,
++   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++
++   Markus F.X.J. Oberhumer
++   <markus@oberhumer.com>
++   http://www.oberhumer.com/opensource/ucl/
++ */
++
++
++#ifndef __UCLUTIL_H
++#define __UCLUTIL_H
++
++#ifndef __UCLCONF_H
++#include <ucl/uclconf.h>
++#endif
++
++#include <stdio.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++
++/***********************************************************************
++//
++************************************************************************/
++
++UCL_EXTERN(ucl_uint)
++ucl_fread(FILE *f, ucl_voidp buf, ucl_uint size);
++UCL_EXTERN(ucl_uint)
++ucl_fwrite(FILE *f, const ucl_voidp buf, ucl_uint size);
++
++
++#if (UCL_UINT_MAX <= UINT_MAX)
++   /* avoid problems with Win32 DLLs */
++#  define ucl_fread(f,b,s)      (fread(b,1,s,f))
++#  define ucl_fwrite(f,b,s)     (fwrite(b,1,s,f))
++#endif
++
++
++#ifdef __cplusplus
++} /* extern "C" */
++#endif
++
++#endif /* already included */
++

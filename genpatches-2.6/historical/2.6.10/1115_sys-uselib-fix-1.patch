@@ -1,0 +1,47 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/07 15:58:52-08:00 torvalds@ppc970.osdl.org 
+#   Fix do_brk() locking in library loader
+#   
+#   The regular executable loader path doesn't need the locking,
+#   because it's the only user of its VM. But the same is not true
+#   at library load time. So get the mmap semaphore.
+# 
+# fs/binfmt_aout.c
+#   2005/01/07 15:58:44-08:00 torvalds@ppc970.osdl.org +2 -0
+#   Fix do_brk() locking in library loader
+# 
+# fs/binfmt_elf.c
+#   2005/01/07 15:58:45-08:00 torvalds@ppc970.osdl.org +4 -1
+#   Fix do_brk() locking in library loader
+# 
+diff -Nru a/fs/binfmt_aout.c b/fs/binfmt_aout.c
+--- a/fs/binfmt_aout.c	2005-01-13 11:38:23 -08:00
++++ b/fs/binfmt_aout.c	2005-01-13 11:38:23 -08:00
+@@ -512,7 +512,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -Nru a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+--- a/fs/binfmt_elf.c	2005-01-13 11:38:23 -08:00
++++ b/fs/binfmt_elf.c	2005-01-13 11:38:23 -08:00
+@@ -1024,8 +1024,11 @@
+ 
+ 	len = ELF_PAGESTART(elf_phdata->p_filesz + elf_phdata->p_vaddr + ELF_MIN_ALIGN - 1);
+ 	bss = elf_phdata->p_memsz + elf_phdata->p_vaddr;
+-	if (bss > len)
++	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(len, bss - len);
++		up_write(&current->mm->mmap_sem);
++	}
+ 	error = 0;
+ 
+ out_free_ph:

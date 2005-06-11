@@ -1,0 +1,16 @@
+Temporary workaround fix to allow nv_sata to work
+Patch won't be merged upstream (fix is required elsewhere) but this is a
+safe workaround according to nvidia!
+http://bugzilla.kernel.org/show_bug.cgi?id=3352
+
+--- linux-2.6.9-rc4-bk1/drivers/scsi/sata_nv.c.orig	2004-10-13 17:37:04.259463752 +0100
++++ linux-2.6.9-rc4-bk1/drivers/scsi/sata_nv.c	2004-10-13 17:37:17.191497784 +0100
+@@ -221,7 +221,7 @@
+ static struct ata_port_info nv_port_info = {
+ 	.sht		= &nv_sht,
+ 	.host_flags	= ATA_FLAG_SATA |
+-			  ATA_FLAG_SATA_RESET |
++		/*	  ATA_FLAG_SATA_RESET | */
+ 			  ATA_FLAG_SRST |
+ 			  ATA_FLAG_NO_LEGACY,
+ 	.pio_mask	= NV_PIO_MASK,

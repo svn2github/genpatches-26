@@ -1,0 +1,12 @@
+diff -ruN linux-2.6.3.old/include/asm-x86_64/pci.h linux-2.6.3/include/asm-x86_64/pci.h
+--- linux-2.6.3.old/include/asm-x86_64/pci.h	2004-02-17 22:57:32.000000000 -0500
++++ linux-2.6.3/include/asm-x86_64/pci.h	2004-02-20 20:26:21.169903392 -0500
+@@ -25,7 +25,7 @@
+ #define PCIBIOS_MIN_IO		0x1000
+ #define PCIBIOS_MIN_MEM		(pci_mem_start)
+ 
+-#define PCIBIOS_MIN_CARDBUS_IO	0x4000
++#define PCIBIOS_MIN_CARDBUS_IO	0x5000
+ 
+ void pcibios_config_init(void);
+ struct pci_bus * pcibios_scan_root(int bus);

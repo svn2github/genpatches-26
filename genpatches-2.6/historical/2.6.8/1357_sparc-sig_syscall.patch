@@ -1,0 +1,71 @@
+On Mon, 06 Dec 2004 00:58:11 +0000
+Richard Mortimer <richm@oldelvet.org.uk> wrote:
+
+> I've noticed a problem on 2.6.8.1 sparc64 kernel with the nanosleep
+> system call (and probably others) where if the system call is
+> interrupted by a signal (TSTP/CONT in my test case) it doesn't get
+> restarted and just ends up returning error code -516. I first noticed
+> this using tail -f <file> terminates if you ctrl-z and then fg it.
+
+Good catch Richard.  In fact all restart block handling is hosed
+on sparc.  It's because of the return from syscall check for
+error cases, the return value errno comparison is off by one.
+
+This should fix it, and it does for me on sparc64 for your test
+program.
+
+===== arch/sparc/kernel/entry.S 1.28 vs edited =====
+--- 1.28/arch/sparc/kernel/entry.S	2004-10-19 21:17:00 -07:00
++++ edited/arch/sparc/kernel/entry.S	2004-12-05 21:08:05 -08:00
+@@ -1508,7 +1508,7 @@
+ 	.globl	ret_sys_call
+ ret_sys_call:
+ 	ld	[%curptr + TI_FLAGS], %l6
+-	cmp	%o0, -ENOIOCTLCMD
++	cmp	%o0, -ERESTART_RESTARTBLOCK
+ 	ld	[%sp + STACKFRAME_SZ + PT_PSR], %g3
+ 	set	PSR_C, %g2
+ 	bgeu	1f
+@@ -1587,7 +1587,7 @@
+ 
+ 	st	%o0, [%sp + STACKFRAME_SZ + PT_I0]
+ 	set	PSR_C, %g2
+-	cmp	%o0, -ENOIOCTLCMD
++	cmp	%o0, -ERESTART_RESTARTBLOCK
+ 	bgeu	1f
+ 	 ld	[%sp + STACKFRAME_SZ + PT_PSR], %g3
+ 
+@@ -1678,7 +1678,7 @@
+ 
+ 	st	%o0, [%sp + STACKFRAME_SZ + PT_I0]
+ 	set	PSR_C, %g2
+-	cmp	%o0, -ENOIOCTLCMD
++	cmp	%o0, -ERESTART_RESTARTBLOCK
+ 	bgeu	1f
+ 	 ld	[%sp + STACKFRAME_SZ + PT_PSR], %g3
+ 
+===== arch/sparc64/kernel/entry.S 1.36 vs edited =====
+--- 1.36/arch/sparc64/kernel/entry.S	2004-10-19 21:17:00 -07:00
++++ edited/arch/sparc64/kernel/entry.S	2004-12-05 21:08:14 -08:00
+@@ -1778,7 +1778,7 @@
+ 	 stx		%l0, [%curptr + TI_FLAGS]
+ 
+ 1:
+-	cmp		%o0, -ENOIOCTLCMD
++	cmp		%o0, -ERESTART_RESTARTBLOCK
+ 	bgeu,pn		%xcc, 1f
+ 	 andcc		%l0, _TIF_SYSCALL_TRACE, %l6	
+ 80:
+===== arch/sparc64/solaris/entry64.S 1.6 vs edited =====
+--- 1.6/arch/sparc64/solaris/entry64.S	2003-08-18 01:08:52 -07:00
++++ edited/arch/sparc64/solaris/entry64.S	2004-12-05 21:08:22 -08:00
+@@ -109,7 +109,7 @@
+ 	sra		%o0, 0, %o0
+ 	mov		%ulo(TSTATE_XCARRY | TSTATE_ICARRY), %g2
+ 	ldx		[%sp + PTREGS_OFF + PT_V9_TSTATE], %g3
+-	cmp		%o0, -ENOIOCTLCMD
++	cmp		%o0, -ERESTART_RESTARTBLOCK
+ 	sllx		%g2, 32, %g2
+ 	bgeu,pn		%xcc, 1f
+ 	 andcc		%l6, _TIF_SYSCALL_TRACE, %l6	
+-

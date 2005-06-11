@@ -1,0 +1,34 @@
+I found a solution for the HyperSPARC DMA problems in 2.6.  This allows
+my SS20 with HyperSPARCs to boot to single user.  It's not efficient,
+but I hope it points out whats needed for a proper fix.  Seems that the
+iotlb entries need to flushed to ram or uncached since the iommu changes
+between 2.5.60 and 2.5.70.
+
+The second part seems to be needed to allow consistent sbus dma mappings
+to be cached on HyperSPARC.  I have also tested this change on 2.4.27
+with no noticeable difference.  Can anyone prove if it helps or hurts?
+
+Bob
+
+diff -Naur linux-2.6.8-gentoo-r12.orig/arch/sparc/mm/iommu.c linux-2.6.8-gentoo-r12/arch/sparc/mm/iommu.c
+--- linux-2.6.8-gentoo-r12.orig/arch/sparc/mm/iommu.c	2004-08-13 22:38:08.000000000 -0700
++++ linux-2.6.8-gentoo-r12/arch/sparc/mm/iommu.c	2004-12-06 00:38:31.226735584 -0800
+@@ -173,6 +173,7 @@
+ 	}
+ 
+ 	iommu_viking_flush_iotlb(iopte0, npages);
++	flush_cache_all(); /* hack to fix dma errors with hypersparc */
+ 
+ 	return busa0;
+ }
+diff -Naur linux-2.6.8-gentoo-r12.orig/arch/sparc/mm/srmmu.c linux-2.6.8-gentoo-r12/arch/sparc/mm/srmmu.c
+--- linux-2.6.8-gentoo-r12.orig/arch/sparc/mm/srmmu.c	2004-08-13 22:37:14.000000000 -0700
++++ linux-2.6.8-gentoo-r12/arch/sparc/mm/srmmu.c	2004-12-06 00:39:00.072350384 -0800
+@@ -1463,6 +1463,7 @@
+ static void __init init_hypersparc(void)
+ {
+ 	srmmu_name = "ROSS HyperSparc";
++	srmmu_modtype = HyperSparc;
+ 
+ 	init_vac_layout();
+ 

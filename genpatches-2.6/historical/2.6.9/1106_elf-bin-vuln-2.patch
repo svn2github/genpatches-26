@@ -1,0 +1,42 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/11/16 17:38:30-08:00 chrisw@osdl.org 
+#   [PATCH] binfmt_elf: handle p_filesz == 0 on PT_INTERP section
+#   
+#   Jakub Jelinek points out that current fix has an underflow problem
+#   if elf_ppnt->p_filesz == 0.  Fix that up, and also stop overwriting
+#   interpreter buffer, simply check that it's NULL-terminated.
+#   
+#   From: Jakub Jelinek <jakub@redhat.com>
+#   Signed-off-by: Chris Wright <chrisw@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/binfmt_elf.c
+#   2004/11/16 11:01:21-08:00 chrisw@osdl.org +5 -2
+#   binfmt_elf: handle p_filesz == 0 on PT_INTERP section
+# 
+diff -Nru a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+--- a/fs/binfmt_elf.c	2004-11-18 08:18:51 -08:00
++++ b/fs/binfmt_elf.c	2004-11-18 08:18:51 -08:00
+@@ -576,7 +576,8 @@
+ 			 */
+ 
+ 			retval = -ENOMEM;
+-			if (elf_ppnt->p_filesz > PATH_MAX)
++			if (elf_ppnt->p_filesz > PATH_MAX || 
++			    elf_ppnt->p_filesz == 0)
+ 				goto out_free_file;
+ 			elf_interpreter = (char *) kmalloc(elf_ppnt->p_filesz,
+ 							   GFP_KERNEL);
+@@ -592,7 +593,9 @@
+ 				goto out_free_interp;
+ 			}
+ 			/* make sure path is NULL terminated */
+-			elf_interpreter[elf_ppnt->p_filesz - 1] = '\0';
++			retval = -EINVAL;
++			if (elf_interpreter[elf_ppnt->p_filesz - 1] != '\0')
++				goto out_free_interp;
+ 
+ 			/* If the program interpreter is one of these two,
+ 			 * then assume an iBCS2 image. Otherwise assume

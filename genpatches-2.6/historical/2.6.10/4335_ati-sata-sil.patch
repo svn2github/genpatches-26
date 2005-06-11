@@ -1,0 +1,22 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/12 00:30:07-05:00 fli@ati.com 
+#   [libata sata_sil] support ATI IXP300/IXP400 SATA
+# 
+# drivers/scsi/sata_sil.c
+#   2005/01/12 00:29:53-05:00 fli@ati.com +2 -0
+#   [libata sata_sil] support ATI IXP300/IXP400 SATA
+# 
+diff -Nru a/drivers/scsi/sata_sil.c b/drivers/scsi/sata_sil.c
+--- a/drivers/scsi/sata_sil.c	2005-01-13 12:16:51 -08:00
++++ b/drivers/scsi/sata_sil.c	2005-01-13 12:16:51 -08:00
+@@ -71,6 +71,8 @@
+ 	{ 0x1095, 0x0240, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
+ 	{ 0x1095, 0x3512, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
+ 	{ 0x1095, 0x3114, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3114 },
++	{ 0x1002, 0x436e, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
++	{ 0x1002, 0x4379, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
+ 	{ }	/* terminate list */
+ };
+ 

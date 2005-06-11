@@ -1,0 +1,30 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/21 07:59:42-08:00 venkatesh.pallipadi@intel.com 
+#   [PATCH] x86-64: Fix do_suspend_lowlevel
+#   
+#   do_suspend_lowlevel doesn't have an argument anymore, but the assembly code
+#   would still test it and fail randomly. Remove the bogus test.
+#   
+#   Signed-off-by: Andi Kleen <ak@suse.de>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# arch/x86_64/kernel/acpi/wakeup.S
+#   2005/01/20 20:59:14-08:00 venkatesh.pallipadi@intel.com +0 -3
+#   x86-64: Fix do_suspend_lowlevel
+# 
+diff -Nru a/arch/x86_64/kernel/acpi/wakeup.S b/arch/x86_64/kernel/acpi/wakeup.S
+--- a/arch/x86_64/kernel/acpi/wakeup.S	2005-01-22 02:09:01 -08:00
++++ b/arch/x86_64/kernel/acpi/wakeup.S	2005-01-22 02:09:01 -08:00
+@@ -429,9 +429,6 @@
+ do_suspend_lowlevel:
+ .LFB5:
+ 	subq	$8, %rsp
+-.LCFI2:
+-	testl	%edi, %edi
+-	jne	.L99
+ 	xorl	%eax, %eax
+ 	call	save_processor_state
+ 

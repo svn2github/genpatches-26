@@ -1,0 +1,41 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/08 13:37:59-08:00 riel@redhat.com 
+#   [PATCH] vmscan: count writeback pages in nr_scanned
+#   
+#   OOM kills have been observed with 70% of the pages in lowmem being in the
+#   writeback state.  If we count those pages in sc->nr_scanned, the VM should
+#   throttle and wait for IO completion, instead of OOM killing.
+#   
+#   (akpm: this is how the code was designed to work - we broke it six months
+#   ago).
+#   
+#   Signed-off-by: Rik van Riel <riel@redhat.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# mm/vmscan.c
+#   2005/01/07 21:56:48-08:00 riel@redhat.com +3 -3
+#   vmscan: count writeback pages in nr_scanned
+# 
+diff -Nru a/mm/vmscan.c b/mm/vmscan.c
+--- a/mm/vmscan.c	2005-01-13 10:46:23 -08:00
++++ b/mm/vmscan.c	2005-01-13 10:46:23 -08:00
+@@ -369,13 +369,13 @@
+ 
+ 		BUG_ON(PageActive(page));
+ 
+-		if (PageWriteback(page))
+-			goto keep_locked;
+-
+ 		sc->nr_scanned++;
+ 		/* Double the slab pressure for mapped and swapcache pages */
+ 		if (page_mapped(page) || PageSwapCache(page))
+ 			sc->nr_scanned++;
++
++		if (PageWriteback(page))
++			goto keep_locked;
+ 
+ 		referenced = page_referenced(page, 1, sc->priority <= 0);
+ 		/* In active use or really unfreeable?  Activate it. */
