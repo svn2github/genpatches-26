@@ -92,10 +92,6 @@ Patch:	1150_sunrpc-nfsacl.patch
 From:	http://bugs.gentoo.org/74070
 Desc:	Fix security problem in sunrpc nfsacl protocol extension.
 
-Patch:	1315_alpha-sysctl-uac.patch
-From:	
-Desc:	enable control of the unaligned access control policy from sysctl
-
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -204,4 +200,8 @@ Desc:	Speech synthesizer to provide console access for blind/hard-of-sight users
 Patch:	4901_speakup-parport.patch
 From:	http://bugs.gentoo.org/88467
 Desc:	Speakup + parallel port collision fix
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
 
