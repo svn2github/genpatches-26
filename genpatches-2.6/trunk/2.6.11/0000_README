@@ -88,25 +88,9 @@ Patch:	1100_ptrace-root.patch
 From:	http://bugs.gentoo.org/95649
 Desc:	Fix potential local root in x86_64 ptrace
 
-Patch:	1101_ptrace-canonical.patch
-From:	http://bugs.gentoo.org/95644
-Desc:	x86_64 ptrace security fix
-
-Patch:	1102_ptrace-check-segment.patch
-From:	http://bugs.gentoo.org/95644
-Desc:	x86_64 ptrace security fix
-
-Patch:	1105_mmap-range.patch
-From:	http://bugs.gentoo.org/95645
-Desc:	Fix mmap ranging problem
-
 Patch:	1110_aio-hugepage.patch
 From:	http://bugs.gentoo.org/87913
 Desc:	Fix potential 64bit AIO DoS
-
-Patch:	1115_sysret.patch
-From:	http://bugs.gentoo.org/95644
-Desc:	AMD K8 bug workaround
 
 Patch:	1120_syscall-page.patch
 From:	http://bugs.gentoo.org/95644
