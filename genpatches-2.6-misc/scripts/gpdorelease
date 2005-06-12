@@ -8,7 +8,7 @@ EXISTING_TAGS="$(svn ls svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-p
 
 for i in $EXISTING_TAGS ; do
 	tag="${i%/}"
-	[[ $tag == $BRANCH ]] && lastrelease="${tag}"
+	[[ ${tag/-*} == $BRANCH ]] && lastrelease="${tag}"
 done
 
 if [[ -z $lastrelease ]] ; then
