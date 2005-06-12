@@ -1,0 +1,24 @@
+#!/bin/bash
+
+PATCHES="$(ls /home/dsd/projects/gentoo/genpatches/2.6.$1/*.patch)"
+for i in ${PATCHES} ; do
+	short="${i##*/}"
+	code="${short:0:4}"
+
+	if [[ $code -lt $2 ]] ; then
+		continue
+	fi
+
+	echo ">>> Dry run: ${short}"
+	if ! patch --dry-run -p1 -i ${i} >/dev/null 2>&1 ; then
+		echo ">>> Patch ${short} fails to dry run"
+		exit
+	fi
+
+	echo ">>> Apply: ${short}"
+	if ! patch -p1 -i ${i} ; then
+		echo ">>> Patch ${short} failed to apply"
+		exit
+	fi
+done
+echo ">>> Done"
