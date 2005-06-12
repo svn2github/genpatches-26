@@ -1,0 +1,44 @@
+#!/bin/bash
+
+. ~/.genpatchesrc
+
+BRANCH="2.6.$1"
+
+EXISTING_TAGS="$(svn ls svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags)"
+
+for i in $EXISTING_TAGS ; do
+	tag="${i%/}"
+	[[ $tag == $BRANCH ]] && lastrelease="${tag}"
+done
+
+if [[ -z $lastrelease ]] ; then
+	newrel="1"
+else
+	newrel="${lastrelease#${BRANCH}-}"
+	(( newrel++ ))
+fi
+
+newfullver="${BRANCH}-${newrel}"
+
+echo "I will now:"
+echo "1. Tag the ${BRANCH} branch as ${newfullver} (immediate commit)"
+echo "2. Produce genpatches-${newfullver} tarballs"
+echo "3. Upload tarballs to distfiles-local"
+echo
+echo "Make sure everything is already committed and ready to roll."
+echo "Press enter to continue."
+
+read
+
+svn copy svn+ssh://dsd@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/${BRANCH} svn+ssh://dsd@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags/${newfullver} -m "${newfullver} release"
+
+file_base="/tmp/genpatches-$newfullver.base.tar.bz2"
+file_extras="/tmp/genpatches-$newfullver.extras.tar.bz2"
+dir="${BRANCH}"
+cd ${GENPATCHES_TRUNK}
+
+[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvjf ${file_base} ${dir}/[012]*
+[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+
+scp /tmp/genpatches-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
+

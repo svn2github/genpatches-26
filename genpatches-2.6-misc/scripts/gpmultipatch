@@ -1,6 +1,8 @@
 #!/bin/bash
 
-PATCHES="$(ls /home/dsd/projects/gentoo/genpatches/2.6.$1/*.patch)"
+. ~/.genpatchesrc
+
+PATCHES="$(ls ${GENPATCHES_TRUNK}/2.6.$1/*.patch)"
 for i in ${PATCHES} ; do
 	short="${i##*/}"
 	code="${short:0:4}"
