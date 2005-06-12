@@ -88,7 +88,7 @@ Patch:	4320_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
-Patch:	4500_fbsplash-0.9.1-r2.patch
+Patch:	4500_fbsplash-0.9.2-r3.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 

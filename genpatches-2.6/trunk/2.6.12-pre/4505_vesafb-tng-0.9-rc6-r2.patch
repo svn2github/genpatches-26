@@ -1,339 +1,7 @@
 # This is a BitKeeper generated diff -Nru style patch.
-#
-# ChangeSet
-#   2005/01/15 14:00:12+01:00 spock@spock.one.pl 
-#   Made video option parsing more fool-proof, fixed delayed console switches for people using the 'redraw' option, fixed a MTRR problem.
-# 
-# drivers/video/vesafb-tng.c
-#   2005/01/15 14:00:02+01:00 spock@spock.one.pl +6 -7
-#   Made video option parsing more fool-proof, fixed delayed console switches for people using the 'redraw' option, fixed a MTRR problem.
-# 
-# ChangeSet
-#   2005/01/12 19:50:57+01:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2005/01/12 19:50:29+01:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2005/01/05 14:46:25+01:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2005/01/05 14:46:03+01:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/12/18 15:53:56+01:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2004/12/18 15:53:33+01:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/11/22 15:44:23+01:00 spock@spock.one.pl 
-#   Fixed compilation warnings (remap_page_range -> io_remap_page_range).
-# 
-# drivers/video/vesafb-thread.c
-#   2004/11/22 15:44:08+01:00 spock@spock.one.pl +2 -2
-#   Fixed compilation warnings (remap_page_range -> io_remap_page_range).
-# 
-# ChangeSet
-#   2004/11/21 14:18:54+01:00 spock@spock.one.pl 
-#   Only use fb_get_options() if vesafb-tng is compiled into the kernel.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/11/21 14:15:09+01:00 spock@spock.one.pl +4 -2
-#   Only use fb_get_options() if vesafb-tng is compiled into the kernel.
-# 
-# ChangeSet
-#   2004/11/21 10:52:50+01:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2004/11/21 10:52:33+01:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/11/01 19:28:20+01:00 spock@spock.one.pl 
-#   Fixed partially broken mode-matching code.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/11/01 19:10:52+01:00 spock@spock.one.pl +18 -7
-#   Fixed partially broken mode-matching code.
-# 
-# ChangeSet
-#   2004/11/01 19:06:12+01:00 spock@spock.one.pl 
-#   Merge
-# 
-# drivers/video/fbmem.c
-#   2004/11/01 19:06:10+01:00 spock@spock.one.pl +0 -0
-#   SCCS merged
-# 
-# drivers/video/Makefile
-#   2004/10/30 21:23:36+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# drivers/video/Kconfig
-#   2004/10/30 21:23:35+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/10/28 19:02:21+02:00 spock@spock.one.pl 
-#   Added a fix for yres_virtual.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/10/28 19:02:09+02:00 spock@spock.one.pl +6 -2
-#   Added a fix for yres_virtual.
-# 
-# ChangeSet
-#   2004/10/28 00:34:25+02:00 spock@spock.one.pl 
-#   Merged changes from vesafb (vram_remap, vram_total).
-# 
-# drivers/video/vesafb-tng.c
-#   2004/10/28 00:34:12+02:00 spock@spock.one.pl +66 -24
-#   Merged changes from vesafb (vram_remap, vram_total).
-# 
-# ChangeSet
-#   2004/10/28 00:25:27+02:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2004/10/28 00:25:12+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# drivers/video/Kconfig
-#   2004/10/28 00:25:12+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# arch/i386/boot/video.S
-#   2004/10/28 00:25:12+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# Documentation/fb/vesafb.txt
-#   2004/10/28 00:25:12+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/10/21 22:19:02+02:00 spock@spock.one.pl 
-#   Added automatic selection of FB_MODE_HELPERS.
-# 
-# drivers/video/Kconfig
-#   2004/10/21 22:18:49+02:00 spock@spock.one.pl +1 -0
-#   Added automatic selection of FB_MODE_HELPERS.
-# 
-# ChangeSet
-#   2004/10/18 16:24:05+02:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/Kconfig
-#   2004/10/18 16:23:59+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/09/30 16:33:03+02:00 spock@spock.one.pl 
-#   Changed the code to reflect changes in fb_get_options' behaviour.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/09/30 16:19:46+02:00 spock@spock.one.pl +3 -1
-#   Changed to reflect changes in fb_get_options' behaviour.
-# 
-# ChangeSet
-#   2004/09/30 16:14:04+02:00 spock@spock.one.pl 
-#   Resolved makefile conflicts.
-# 
-# drivers/video/Makefile
-#   2004/09/30 16:13:51+02:00 spock@spock.one.pl +17 -1
-#   Fixed makefile.
-# 
-# drivers/video/fbmem.c
-#   2004/09/30 16:07:32+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/09/15 16:47:57+02:00 spock@spock.one.pl 
-#   Moved module_init() call to make the driver work with the new fb init code.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/09/15 16:47:46+02:00 spock@spock.one.pl +2 -1
-#   Moved module_init() call to make the driver work with the new fb init code.
-# 
-# ChangeSet
-#   2004/09/14 19:46:14+02:00 spock@spock.one.pl 
-#   Merged minor changes.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/09/14 19:12:58+02:00 spock@spock.one.pl +1 -0
-#   Merged minor changes.
-# 
-# ChangeSet
-#   2004/09/14 19:03:28+02:00 spock@spock.one.pl 
-#   Resolved vesafb-tng conflicts.
-# 
-# drivers/video/fbmem.c
-#   2004/09/14 19:03:19+02:00 spock@spock.one.pl +6 -0
-#   Resolved vesafb-tng conflicts.
-# 
-# drivers/video/Makefile
-#   2004/09/14 19:03:19+02:00 spock@spock.one.pl +17 -1
-#   Resolved vesafb-tng conflicts.
-# 
-# ChangeSet
-#   2004/09/10 22:06:10+02:00 spock@spock.one.pl 
-#   Removed info about 'used hacks' from the docs.
-#   TAG: vesafb-tng-0.9-rc4-r3
-# 
-# Documentation/fb/vesafb.txt
-#   2004/09/10 22:05:53+02:00 spock@spock.one.pl +3 -11
-#   Removed info about 'used hacks' from the docs.
-# 
-# ChangeSet
-#   2004/09/10 21:17:52+02:00 spock@spock.one.pl 
-#   Removed the code for copying OEM data from RAM.
-# 
-# drivers/video/vesafb-thread.c
-#   2004/09/10 21:17:37+02:00 spock@spock.one.pl +5 -14
-#   Removed the code for copying OEM data from RAM.
-# 
-# ChangeSet
-#   2004/09/10 20:11:45+02:00 spock@spock.one.pl 
-#   Changed the VBE mode matching and mode setting logic. Cleaned up the code.
-# 
-# drivers/video/vesafb-tng.c
-#   2004/09/10 20:11:36+02:00 spock@spock.one.pl +252 -242
-#   Changed the VBE mode matching and mode setting logic. Cleaned up the code.
-# 
-# ChangeSet
-#   2004/09/09 16:48:42+02:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2004/09/09 16:48:36+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# drivers/video/Makefile
-#   2004/09/09 16:48:36+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/08/24 23:02:56+02:00 spock@spock.one.pl 
-#   Merge spock.one.pl:/devel/kernel/linux-2.5
-#   into spock.one.pl:/devel/kernel/linux-vesafb-tng
-# 
-# drivers/video/fbmem.c
-#   2004/08/24 23:02:46+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# drivers/video/Makefile
-#   2004/08/24 23:02:46+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# drivers/video/Kconfig
-#   2004/08/24 23:02:45+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# arch/i386/boot/video.S
-#   2004/08/24 23:02:45+02:00 spock@spock.one.pl +0 -0
-#   Auto merged
-# 
-# ChangeSet
-#   2004/08/24 11:18:50+02:00 spock@spock.one.pl 
-#   Updated the docs, fixed a minor bug with maxclk, add the code to switch the DAC palette format to 8 bit.
-#   TAG: vesafb-tng-0.9-rc4-r1
-# 
-# drivers/video/vesafb-tng.c
-#   2004/08/24 11:18:42+02:00 spock@spock.one.pl +48 -19
-#   Added the code to switch DAC palette format to 8bit in 256 color modes. Changes 'forward-ported' from vesafb.
-#   Fixed a type which caused maxpixclock to be set to 0 in some cases.
-# 
-# include/video/vesa.h
-#   2004/08/23 17:13:30+02:00 spock@spock.one.pl +1 -0
-#   Added the CAP_CAN_SWITCH_DAC constant.
-# 
-# Documentation/fb/vesafb.txt
-#   2004/08/23 16:42:35+02:00 spock@spock.one.pl +4 -0
-#   Added a hint about vbemode and nocrtc no the docs.
-# 
-# ChangeSet
-#   2004/08/23 16:16:51+02:00 spock@spock.one.pl 
-#   Fixed a stupid bit-logic problem ('do not clear the screen' bit set instead of 'use linear framebuffer'), fixed Makefile and Kconfig.
-# 
-# drivers/video/Kconfig
-#   2004/08/23 16:16:35+02:00 spock@spock.one.pl +1 -1
-#   Changed Kconfig to not allow to choose vesafb-tng on x86_64 systems.
-# 
-# drivers/video/Makefile
-#   2004/08/23 16:11:41+02:00 spock@spock.one.pl +14 -13
-#   Fixed a bug in the Makefile that caused vesafb to be built even if CONFIG_FB_VESA was set to 'n'.
-# 
-# BitKeeper/etc/config
-#   2004/08/19 00:20:28+02:00 spock@spock.one.pl +2 -3
-#   Changed configuration settings for vesafb-tng
-# 
-# BitKeeper/etc/logging_ok
-#   2004/08/19 00:10:17+02:00 spock@spock.one.pl +0 -6
-#   Removed all entries
-# 
-# drivers/video/vesafb-tng.c
-#   2004/08/18 23:35:52+02:00 spock@spock.one.pl +1 -5
-#   Fixed the LFB bit problem (D15 was set instead of D14).
-# 
-# ChangeSet
-#   2004/08/18 23:33:08+02:00 spock@spock.one.pl 
-#   Merged vesafb-tng-0.9-rc4
-# 
-# drivers/video/fbmem.c
-#   2004/08/18 23:32:56+02:00 spock@spock.one.pl +4 -1
-#   Merged vesafb-tng-0.9-rc4
-# 
-# drivers/video/Makefile
-#   2004/08/18 23:32:56+02:00 spock@spock.one.pl +18 -1
-#   Merged vesafb-tng-0.9-rc4
-# 
-# drivers/video/Kconfig
-#   2004/08/18 23:32:56+02:00 spock@spock.one.pl +42 -1
-#   Merged vesafb-tng-0.9-rc4
-# 
-# arch/i386/boot/video.S
-#   2004/08/18 23:32:56+02:00 spock@spock.one.pl +10 -2
-#   Merged vesafb-tng-0.9-rc4
-# 
-# Documentation/fb/vesafb.txt
-#   2004/08/18 23:30:19+02:00 spock@spock.one.pl +171 -62
-# 
-# include/video/vesa.h
-#   2004/08/18 23:29:33+02:00 spock@spock.one.pl +125 -0
-# 
-# include/video/vesa.h
-#   2004/08/18 23:29:33+02:00 spock@spock.one.pl +0 -0
-#   BitKeeper file /devel/kernel/linux-vesafb-tng/include/video/vesa.h
-# 
-# drivers/video/vesafb-tng.c
-#   2004/08/18 23:29:22+02:00 spock@spock.one.pl +1124 -0
-# 
-# drivers/video/vesafb-tng.c
-#   2004/08/18 23:29:22+02:00 spock@spock.one.pl +0 -0
-#   BitKeeper file /devel/kernel/linux-vesafb-tng/drivers/video/vesafb-tng.c
-# 
-# drivers/video/vesafb-thread.c
-#   2004/08/18 23:29:21+02:00 spock@spock.one.pl +578 -0
-# 
-# drivers/video/vesafb-thread.c
-#   2004/08/18 23:29:21+02:00 spock@spock.one.pl +0 -0
-#   BitKeeper file /devel/kernel/linux-vesafb-tng/drivers/video/vesafb-thread.c
-# 
 diff -Nru a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
---- a/Documentation/fb/vesafb.txt	2005-01-15 14:00:49 +01:00
-+++ b/Documentation/fb/vesafb.txt	2005-01-15 14:00:49 +01:00
+--- a/Documentation/fb/vesafb.txt	2005-03-28 23:14:56 +02:00
++++ b/Documentation/fb/vesafb.txt	2005-03-28 23:14:56 +02:00
 @@ -2,16 +2,18 @@
  What is vesafb?
  ===============
@@ -642,8 +310,8 @@ diff -Nru a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +Micha³ Januszewski <spock@gentoo.org>
 +
 diff -Nru a/arch/i386/boot/video.S b/arch/i386/boot/video.S
---- a/arch/i386/boot/video.S	2005-01-15 14:00:49 +01:00
-+++ b/arch/i386/boot/video.S	2005-01-15 14:00:49 +01:00
+--- a/arch/i386/boot/video.S	2005-03-28 23:14:56 +02:00
++++ b/arch/i386/boot/video.S	2005-03-28 23:14:56 +02:00
 @@ -164,10 +164,12 @@
  # parameters in the default 80x25 mode -- these are set directly,
  # because some very obscure BIOSes supply insane values.
@@ -705,17 +373,18 @@ diff -Nru a/arch/i386/boot/video.S b/arch/i386/boot/video.S
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
 diff -Nru a/drivers/video/Kconfig b/drivers/video/Kconfig
---- a/drivers/video/Kconfig	2005-01-15 14:00:49 +01:00
-+++ b/drivers/video/Kconfig	2005-01-15 14:00:49 +01:00
-@@ -329,13 +329,55 @@
+--- a/drivers/video/Kconfig	2005-03-28 23:14:56 +02:00
++++ b/drivers/video/Kconfig	2005-03-28 23:14:56 +02:00
+@@ -458,7 +458,7 @@
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
 -	bool "VESA VGA graphics support"
 +	tristate "VESA VGA graphics support"
- 	depends on FB && (X86 || X86_64)
- 	help
- 	  This is the frame buffer device driver for generic VESA 2.0
+ 	depends on (FB = y) && (X86 || X86_64)
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+@@ -469,6 +469,48 @@
  	  compliant graphic cards. The older VESA 1.2 cards are not supported.
  	  You will get a boot time penguin logo at no additional cost. Please
  	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
@@ -765,37 +434,36 @@ diff -Nru a/drivers/video/Kconfig b/drivers/video/Kconfig
  config VIDEO_SELECT
  	bool
 diff -Nru a/drivers/video/Makefile b/drivers/video/Makefile
---- a/drivers/video/Makefile	2005-01-15 14:00:49 +01:00
-+++ b/drivers/video/Makefile	2005-01-15 14:00:49 +01:00
-@@ -96,7 +96,23 @@
- obj-$(CONFIG_FB_PXA)		  += pxafb.o cfbimgblt.o cfbcopyarea.o cfbfillrect.o
+--- a/drivers/video/Makefile	2005-03-28 23:14:56 +02:00
++++ b/drivers/video/Makefile	2005-03-28 23:14:56 +02:00
+@@ -90,7 +90,22 @@
+ obj-$(CONFIG_FB_TX3912)		  += tx3912fb.o
  
  # Platform or fallback drivers go here
--obj-$(CONFIG_FB_VESA)             += vesafb.o cfbfillrect.o cfbcopyarea.o cfbimgblt.o
+-obj-$(CONFIG_FB_VESA)             += vesafb.o
 +ifeq ($(CONFIG_FB_VESA),m)
 +  ifeq ($(CONFIG_FB_VESA_STD),y)
-+    obj-y                         += vesafb.o cfbfillrect.o cfbcopyarea.o cfbimgblt.o
++    obj-y                         += vesafb.o
 +  else
-+    obj-m                         += vesafb-tng.o cfbfillrect.o cfbcopyarea.o cfbimgblt.o
++    obj-m                         += vesafb-tng.o
 +    obj-y                         += vesafb-thread.o
 +   endif
 +else
 +  ifeq ($(CONFIG_FB_VESA),y)
 +    ifeq ($(CONFIG_FB_VESA_STD),y)
-+      obj-y                       += vesafb.o cfbfillrect.o cfbcopyarea.o cfbimgblt.o
++      obj-y                       += vesafb.o
 +    else
-+      obj-y                       += vesafb-tng.o vesafb-thread.o cfbfillrect.o \
-+                                     cfbcopyarea.o cfbimgblt.o
++      obj-y                       += vesafb-tng.o vesafb-thread.o
 +    endif
 +  endif
 +endif
- obj-$(CONFIG_FB_VGA16)            += vga16fb.o cfbfillrect.o cfbcopyarea.o \
- 	                             cfbimgblt.o vgastate.o
- obj-$(CONFIG_FB_OF)               += offb.o cfbfillrect.o cfbimgblt.o cfbcopyarea.o
+ obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
+ obj-$(CONFIG_FB_OF)               += offb.o
+ 
 diff -Nru a/drivers/video/fbmem.c b/drivers/video/fbmem.c
---- a/drivers/video/fbmem.c	2005-01-15 14:00:49 +01:00
-+++ b/drivers/video/fbmem.c	2005-01-15 14:00:49 +01:00
-@@ -51,6 +51,8 @@
+--- a/drivers/video/fbmem.c	2005-03-28 23:14:56 +02:00
++++ b/drivers/video/fbmem.c	2005-03-28 23:14:56 +02:00
+@@ -52,6 +52,8 @@
       *  Frame buffer device initialization and setup routines
       */
  
@@ -804,7 +472,7 @@ diff -Nru a/drivers/video/fbmem.c b/drivers/video/fbmem.c
  #define FBPIXMAPSIZE	(1024 * 8)
  
  static struct notifier_block *fb_notifier_list;
-@@ -1177,6 +1179,10 @@
+@@ -1203,6 +1205,10 @@
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -814,10 +482,55 @@ diff -Nru a/drivers/video/fbmem.c b/drivers/video/fbmem.c
 +#endif
  	return 0;
  }
- subsys_initcall(fbmem_init);
+ 
+diff -Nru a/drivers/video/fbmon.c b/drivers/video/fbmon.c
+--- a/drivers/video/fbmon.c	2005-03-28 23:14:56 +02:00
++++ b/drivers/video/fbmon.c	2005-03-28 23:14:56 +02:00
+@@ -518,7 +518,7 @@
+  * This function builds a mode database using the contents of the EDID
+  * data
+  */
+-static struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
++struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
+ {
+ 	struct fb_videomode *mode, *m;
+ 	unsigned char *block;
+@@ -593,7 +593,7 @@
+ 		kfree(modedb);
+ }
+ 
+-static int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
++int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
+ {
+ 	int i, retval = 1;
+ 	unsigned char *block;
+@@ -1197,9 +1197,17 @@
+ {
+ 	return NULL;
+ }
++struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
++{
++	return NULL;
++}
+ void fb_destroy_modedb(struct fb_videomode *modedb)
+ {
+ }
++int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
++{
++	return 1;
++}
+ int fb_get_mode(int flags, u32 val, struct fb_var_screeninfo *var,
+ 		struct fb_info *info)
+ {
+@@ -1275,3 +1283,5 @@
+ EXPORT_SYMBOL(fb_get_mode);
+ EXPORT_SYMBOL(fb_validate_mode);
+ EXPORT_SYMBOL(fb_destroy_modedb);
++EXPORT_SYMBOL(fb_create_modedb);
++EXPORT_SYMBOL(fb_get_monitor_limits);
 diff -Nru a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
 --- /dev/null	Wed Dec 31 16:00:00 196900
-+++ b/drivers/video/vesafb-thread.c	2005-01-15 14:00:49 +01:00
++++ b/drivers/video/vesafb-thread.c	2005-03-28 23:14:56 +02:00
 @@ -0,0 +1,569 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards - kernel thread 
@@ -1390,8 +1103,8 @@ diff -Nru a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
 +EXPORT_SYMBOL(vesafb_queue_task);
 diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 --- /dev/null	Wed Dec 31 16:00:00 196900
-+++ b/drivers/video/vesafb-tng.c	2005-01-15 14:00:49 +01:00
-@@ -0,0 +1,1221 @@
++++ b/drivers/video/vesafb-tng.c	2005-03-28 23:14:56 +02:00
+@@ -0,0 +1,1226 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
 + *
@@ -1422,6 +1135,8 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +
 +#include <asm/io.h>
 +#include <asm/mtrr.h>
++#include <asm/page.h>
++#include <asm/pgtable.h>
 +#include "edid.h"
 +
 +#define dac_reg	(0x3c8)
@@ -1486,6 +1201,9 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +
 +extern void vesafb_queue_task(struct vesafb_task *task);
 +static int vesafb_find_vbe_mode(int xres, int yres, int bpp, unsigned char flags);
++
++struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize);
++int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs);
 +
 +/* --------------------------------------------------------------------- */
 +
@@ -2103,13 +1821,13 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +		goto set_monspecs;
 +
 +	if ((mytask->regs.ebx & 0x3) == 3) {
-+		printk(KERN_INFO "vesafb: hardware supports both DCC1 and DCC2 transfers\n");
++		printk(KERN_INFO "vesafb: hardware supports both DDC1 and DDC2 transfers\n");
 +	} else if ((mytask->regs.ebx & 0x3) == 2) {
-+		printk(KERN_INFO "vesafb: hardware supports DCC2 transfers\n");
++		printk(KERN_INFO "vesafb: hardware supports DDC2 transfers\n");
 +	} else if ((mytask->regs.ebx & 0x3) == 1) {
-+		printk(KERN_INFO "vesafb: hardware supports DCC1 transfers\n");
++		printk(KERN_INFO "vesafb: hardware supports DDC1 transfers\n");
 +	} else {
-+		printk(KERN_INFO "vesafb: hardware doesn't support DCC transfers\n");
++		printk(KERN_INFO "vesafb: hardware doesn't support DDC transfers\n");
 +		goto set_monspecs;
 +	}
 +	
@@ -2145,7 +1863,7 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +	if (maxhf)
 +		info->monspecs.hfmax = maxhf * 1000;
 +
-+	/* in case DCC transfers are not supported the user can provide monitor limits 
++	/* in case DDC transfers are not supported the user can provide monitor limits 
 +	   manually, lower limits are set to "safe" values */
 +	if (!mon_limits && maxclk && maxvf && maxhf) {
 +		info->monspecs.dclkmin = 0;	
@@ -2458,7 +2176,7 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +	   region already (FIXME) */
 +	request_region(0x3c0, 32, "vesafb");
 +
-+	if (mtrr) {
++	if (mtrr && !(info->fix.smem_start & (PAGE_SIZE - 1))) {
 +		int temp_size = size_total;
 +
 +		/* Find the largest power-of-two */
@@ -2615,7 +2333,7 @@ diff -Nru a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphic boards");
 diff -Nru a/include/video/vesa.h b/include/video/vesa.h
 --- /dev/null	Wed Dec 31 16:00:00 196900
-+++ b/include/video/vesa.h	2005-01-15 14:00:49 +01:00
++++ b/include/video/vesa.h	2005-03-28 23:14:56 +02:00
 @@ -0,0 +1,126 @@
 +#define crtc_pib(arg) ((struct vesafb_crtc_info_block*)(arg))
 +#define vbe_pib(arg) ((struct vesafb_vbe_info_block*)(arg))
