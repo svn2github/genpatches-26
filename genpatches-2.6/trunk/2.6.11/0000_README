@@ -84,6 +84,10 @@ Patch:	1010_linux-2.6.11.11.patch
 From:	http://www.kernel.org/pub/linux/kernel/v2.6/
 Desc:	Linux 2.6.11.11 - misc fixes
 
+Patch:	1010_linux-2.6.11.12.patch
+From:	http://www.kernel.org/pub/linux/kernel/v2.6/
+Desc:	Linux 2.6.11.12 - misc fixes
+
 Patch:	1100_ptrace-root.patch
 From:	http://bugs.gentoo.org/95649
 Desc:	Fix potential local root in x86_64 ptrace
