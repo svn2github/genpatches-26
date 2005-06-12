@@ -108,6 +108,10 @@ Patch:	1115_sysret.patch
 From:	http://bugs.gentoo.org/95644
 Desc:	AMD K8 bug workaround
 
+Patch:	1120_syscall-page.patch
+From:	http://bugs.gentoo.org/95644
+Desc:	Fix potential x86_64 local DoS
+
 Patch:	1150_sunrpc-nfsacl.patch
 From:	http://bugs.gentoo.org/74070
 Desc:	Fix security problem in sunrpc nfsacl protocol extension.
