@@ -1,0 +1,49 @@
+The current logic assumes that a /proc/<PID>/task directory should have a
+hardlink count of 3, probably counting ".", "..", and a directory for a single
+child task.
+
+It's fairly obvious that this doesn't work out correctly when a PID has more
+than one child task, which is quite often the case.
+
+This should fix it up.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+
+--- linux-2.6.11-gentoo-r5/fs/proc/base.c.orig	2005-04-02 20:47:10.000000000 +0100
++++ linux-2.6.11-gentoo-r5/fs/proc/base.c	2005-04-02 20:51:43.000000000 +0100
+@@ -1337,6 +1337,8 @@ static struct file_operations proc_tgid_
+ static struct inode_operations proc_tgid_attr_inode_operations;
+ #endif
+ 
++static int get_tid_list(int index, unsigned int *tids, struct inode *dir);
++
+ /* SMP-safe */
+ static struct dentry *proc_pident_lookup(struct inode *dir, 
+ 					 struct dentry *dentry,
+@@ -1376,7 +1378,7 @@ static struct dentry *proc_pident_lookup
+ 	 */
+ 	switch(p->type) {
+ 		case PROC_TGID_TASK:
+-			inode->i_nlink = 3;
++			inode->i_nlink = 2 + get_tid_list(2, NULL, dir);
+ 			inode->i_op = &proc_task_inode_operations;
+ 			inode->i_fop = &proc_task_operations;
+ 			break;
+@@ -1845,7 +1847,8 @@ static int get_tid_list(int index, unsig
+ 
+ 		if (--index >= 0)
+ 			continue;
+-		tids[nr_tids] = tid;
++		if (tids != NULL)
++			tids[nr_tids] = tid;
+ 		nr_tids++;
+ 		if (nr_tids >= PROC_MAXPIDS)
+ 			break;
+@@ -1945,6 +1948,7 @@ static int proc_task_readdir(struct file
+ 	}
+ 
+ 	nr_tids = get_tid_list(pos, tid_array, inode);
++	inode->i_nlink = pos + nr_tids;
+ 
+ 	for (i = 0; i < nr_tids; i++) {
+ 		unsigned long j = PROC_NUMBUF;

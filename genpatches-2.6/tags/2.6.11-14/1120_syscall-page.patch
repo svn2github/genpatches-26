@@ -1,0 +1,13 @@
+diff -urNp linux-2.6.11/arch/x86_64/mm/fault.c linux-2.6.11.SUSE/arch/x86_64/mm/fault.c
+--- linux-2.6.11/arch/x86_64/mm/fault.c	2005-06-02 16:18:33.999340707 +0200
++++ linux-2.6.11.SUSE/arch/x86_64/mm/fault.c	2005-06-02 16:21:36.922002147 +0200
+@@ -474,7 +474,7 @@ bad_area_nosemaphore:
+ 
+ #ifdef CONFIG_IA32_EMULATION
+ 	/* 32bit vsyscall. map on demand. */
+-	if (test_thread_flag(TIF_IA32) &&
++	if (test_thread_flag(TIF_IA32) && ((error_code & 0x6) == 0x4) &&
+ 	    address >= VSYSCALL32_BASE && address < VSYSCALL32_END) {
+ 		if (map_syscall32(mm, address) < 0)
+ 			goto out_of_memory2;
+
