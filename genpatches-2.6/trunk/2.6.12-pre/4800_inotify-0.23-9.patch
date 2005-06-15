@@ -34,24 +34,24 @@ Signed-off-by: Robert Love <rml@novell.com>
  fs/attr.c                             |   33 -
  fs/compat.c                           |   12 
  fs/file_table.c                       |    3 
- fs/inode.c                            |    6 
- fs/inotify.c                          |  981 ++++++++++++++++++++++++++++++++++
+ fs/inode.c                            |    9 
+ fs/inotify.c                          |  985 ++++++++++++++++++++++++++++++++++
  fs/namei.c                            |   30 -
  fs/nfsd/vfs.c                         |    6 
  fs/open.c                             |    4 
  fs/read_write.c                       |   15 
  fs/sysfs/file.c                       |    7 
  fs/xattr.c                            |    5 
- include/linux/fs.h                    |    6 
+ include/linux/fs.h                    |    7 
  include/linux/fsnotify.h              |  257 ++++++++
  include/linux/inotify.h               |  124 ++++
  include/linux/sched.h                 |    4 
  kernel/user.c                         |    4 
- 19 files changed, 1570 insertions(+), 64 deletions(-)
+ 19 files changed, 1578 insertions(+), 64 deletions(-)
 
 diff -urN linux-2.6.12-rc6/Documentation/filesystems/inotify.txt linux/Documentation/filesystems/inotify.txt
 --- linux-2.6.12-rc6/Documentation/filesystems/inotify.txt	1969-12-31 19:00:00.000000000 -0500
-+++ linux/Documentation/filesystems/inotify.txt	2005-06-07 15:49:02.000000000 -0400
++++ linux/Documentation/filesystems/inotify.txt	2005-06-13 11:28:04.000000000 -0400
 @@ -0,0 +1,123 @@
 +				    inotify
 +	     a powerful yet simple file change notification system
@@ -178,7 +178,7 @@ diff -urN linux-2.6.12-rc6/Documentation/filesystems/inotify.txt linux/Documenta
 +implement inside of the kernel.
 diff -urN linux-2.6.12-rc6/fs/attr.c linux/fs/attr.c
 --- linux-2.6.12-rc6/fs/attr.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/attr.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/attr.c	2005-06-13 11:28:04.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/mm.h>
  #include <linux/string.h>
@@ -237,7 +237,7 @@ diff -urN linux-2.6.12-rc6/fs/attr.c linux/fs/attr.c
  
 diff -urN linux-2.6.12-rc6/fs/compat.c linux/fs/compat.c
 --- linux-2.6.12-rc6/fs/compat.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/compat.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/compat.c	2005-06-13 11:28:04.000000000 -0400
 @@ -37,7 +37,7 @@
  #include <linux/ctype.h>
  #include <linux/module.h>
@@ -266,7 +266,7 @@ diff -urN linux-2.6.12-rc6/fs/compat.c linux/fs/compat.c
  
 diff -urN linux-2.6.12-rc6/fs/file_table.c linux/fs/file_table.c
 --- linux-2.6.12-rc6/fs/file_table.c	2005-03-02 02:37:47.000000000 -0500
-+++ linux/fs/file_table.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/file_table.c	2005-06-13 11:28:04.000000000 -0400
 @@ -16,6 +16,7 @@
  #include <linux/eventpoll.h>
  #include <linux/mount.h>
@@ -286,7 +286,7 @@ diff -urN linux-2.6.12-rc6/fs/file_table.c linux/fs/file_table.c
  	 * in the file cleanup chain.
 diff -urN linux-2.6.12-rc6/fs/inode.c linux/fs/inode.c
 --- linux-2.6.12-rc6/fs/inode.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/inode.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/inode.c	2005-06-13 11:28:07.000000000 -0400
 @@ -21,6 +21,7 @@
  #include <linux/pagemap.h>
  #include <linux/cdev.h>
@@ -295,18 +295,28 @@ diff -urN linux-2.6.12-rc6/fs/inode.c linux/fs/inode.c
  
  /*
   * This is needed for the following functions:
-@@ -128,6 +129,10 @@
+@@ -128,6 +129,9 @@
  #ifdef CONFIG_QUOTA
  		memset(&inode->i_dquot, 0, sizeof(inode->i_dquot));
  #endif
 +#ifdef CONFIG_INOTIFY
-+		INIT_LIST_HEAD(&inode->inotify_watches);
-+		sema_init(&inode->inotify_sem, 1);
++		atomic_set(&inode->inotify_watch_count, 0);
 +#endif
  		inode->i_pipe = NULL;
  		inode->i_bdev = NULL;
  		inode->i_cdev = NULL;
-@@ -346,6 +351,7 @@
+@@ -202,6 +206,10 @@
+ 	INIT_LIST_HEAD(&inode->i_data.i_mmap_nonlinear);
+ 	spin_lock_init(&inode->i_lock);
+ 	i_size_ordered_init(inode);
++#ifdef CONFIG_INOTIFY
++	INIT_LIST_HEAD(&inode->inotify_watches);
++	sema_init(&inode->inotify_sem, 1);
++#endif
+ }
+ 
+ EXPORT_SYMBOL(inode_init_once);
+@@ -346,6 +354,7 @@
  
  	down(&iprune_sem);
  	spin_lock(&inode_lock);
@@ -316,8 +326,8 @@ diff -urN linux-2.6.12-rc6/fs/inode.c linux/fs/inode.c
  
 diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 --- linux-2.6.12-rc6/fs/inotify.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux/fs/inotify.c	2005-06-07 15:49:02.000000000 -0400
-@@ -0,0 +1,981 @@
++++ linux/fs/inotify.c	2005-06-13 11:28:07.000000000 -0400
+@@ -0,0 +1,985 @@
 +/*
 + * fs/inotify.c - inode-based file event notifications
 + *
@@ -737,6 +747,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	get_inotify_watch(watch);
 +
 +	atomic_inc(&dev->user->inotify_watches);
++	atomic_inc(&watch->inode->inotify_watch_count);
 +
 +	return watch;
 +}
@@ -786,6 +797,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	list_del(&watch->i_list);
 +	list_del(&watch->d_list);
 +
++	atomic_dec(&watch->inode->inotify_watch_count);
 +	atomic_dec(&dev->user->inotify_watches);
 +	idr_remove(&dev->idr, watch->wd);
 +	put_inotify_watch(watch);
@@ -822,6 +834,9 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +{
 +	struct inotify_watch *watch, *next;
 +
++	if (likely(!atomic_read(&inode->inotify_watch_count)))
++		return;
++
 +	down(&inode->inotify_sem);
 +	list_for_each_entry_safe(watch, next, &inode->inotify_watches, i_list) {
 +		u32 watch_mask = watch->mask;
@@ -857,8 +872,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	parent = dentry->d_parent;
 +	inode = parent->d_inode;
 +
-+	/* We intentially do the list_empty() lockless.  The race is fine. */
-+	if (!list_empty(&inode->inotify_watches)) {
++	if (unlikely(atomic_read(&inode->inotify_watch_count))) {
 +		dget(parent);
 +		spin_unlock(&dentry->d_lock);
 +		inotify_inode_queue_event(inode, mask, cookie, name);
@@ -1301,7 +1315,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +module_init(inotify_init);
 diff -urN linux-2.6.12-rc6/fs/Kconfig linux/fs/Kconfig
 --- linux-2.6.12-rc6/fs/Kconfig	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/Kconfig	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/Kconfig	2005-06-13 11:28:04.000000000 -0400
 @@ -339,6 +339,19 @@
  	  If you don't know whether you need it, then you don't need it:
  	  answer N.
@@ -1324,7 +1338,7 @@ diff -urN linux-2.6.12-rc6/fs/Kconfig linux/fs/Kconfig
  	help
 diff -urN linux-2.6.12-rc6/fs/Makefile linux/fs/Makefile
 --- linux-2.6.12-rc6/fs/Makefile	2005-03-02 02:38:10.000000000 -0500
-+++ linux/fs/Makefile	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/Makefile	2005-06-13 11:28:04.000000000 -0400
 @@ -11,6 +11,7 @@
  		attr.o bad_inode.o file.o filesystems.o namespace.o aio.o \
  		seq_file.o xattr.o libfs.o fs-writeback.o mpage.o direct-io.o \
@@ -1335,7 +1349,7 @@ diff -urN linux-2.6.12-rc6/fs/Makefile linux/fs/Makefile
  
 diff -urN linux-2.6.12-rc6/fs/namei.c linux/fs/namei.c
 --- linux-2.6.12-rc6/fs/namei.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/namei.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/namei.c	2005-06-13 11:28:04.000000000 -0400
 @@ -21,7 +21,7 @@
  #include <linux/namei.h>
  #include <linux/quotaops.h>
@@ -1446,7 +1460,7 @@ diff -urN linux-2.6.12-rc6/fs/namei.c linux/fs/namei.c
  
 diff -urN linux-2.6.12-rc6/fs/nfsd/vfs.c linux/fs/nfsd/vfs.c
 --- linux-2.6.12-rc6/fs/nfsd/vfs.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/nfsd/vfs.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/nfsd/vfs.c	2005-06-13 11:28:04.000000000 -0400
 @@ -45,7 +45,7 @@
  #endif /* CONFIG_NFSD_V3 */
  #include <linux/nfsd/nfsfh.h>
@@ -1476,7 +1490,7 @@ diff -urN linux-2.6.12-rc6/fs/nfsd/vfs.c linux/fs/nfsd/vfs.c
  	/* clear setuid/setgid flag after write */
 diff -urN linux-2.6.12-rc6/fs/open.c linux/fs/open.c
 --- linux-2.6.12-rc6/fs/open.c	2005-03-02 02:37:47.000000000 -0500
-+++ linux/fs/open.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/open.c	2005-06-13 11:28:04.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/file.h>
  #include <linux/smp_lock.h>
@@ -1500,7 +1514,7 @@ diff -urN linux-2.6.12-rc6/fs/open.c linux/fs/open.c
  out:
 diff -urN linux-2.6.12-rc6/fs/read_write.c linux/fs/read_write.c
 --- linux-2.6.12-rc6/fs/read_write.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/read_write.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/read_write.c	2005-06-13 11:28:04.000000000 -0400
 @@ -10,7 +10,7 @@
  #include <linux/file.h>
  #include <linux/uio.h>
@@ -1546,7 +1560,7 @@ diff -urN linux-2.6.12-rc6/fs/read_write.c linux/fs/read_write.c
  	ret = -EFAULT;
 diff -urN linux-2.6.12-rc6/fs/sysfs/file.c linux/fs/sysfs/file.c
 --- linux-2.6.12-rc6/fs/sysfs/file.c	2005-06-07 15:47:52.000000000 -0400
-+++ linux/fs/sysfs/file.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/sysfs/file.c	2005-06-13 11:28:04.000000000 -0400
 @@ -3,7 +3,7 @@
   */
  
@@ -1577,7 +1591,7 @@ diff -urN linux-2.6.12-rc6/fs/sysfs/file.c linux/fs/sysfs/file.c
  			 * Drop reference from initial sysfs_get_dentry().
 diff -urN linux-2.6.12-rc6/fs/xattr.c linux/fs/xattr.c
 --- linux-2.6.12-rc6/fs/xattr.c	2005-03-02 02:38:07.000000000 -0500
-+++ linux/fs/xattr.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/fs/xattr.c	2005-06-13 11:28:04.000000000 -0400
 @@ -16,6 +16,7 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -1600,12 +1614,13 @@ diff -urN linux-2.6.12-rc6/fs/xattr.c linux/fs/xattr.c
  	}
 diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
 --- linux-2.6.12-rc6/include/linux/fs.h	2005-06-07 15:47:53.000000000 -0400
-+++ linux/include/linux/fs.h	2005-06-07 15:49:02.000000000 -0400
-@@ -471,6 +471,11 @@
++++ linux/include/linux/fs.h	2005-06-13 11:28:07.000000000 -0400
+@@ -471,6 +471,12 @@
  	struct dnotify_struct	*i_dnotify; /* for directory notifications */
  #endif
  
 +#ifdef CONFIG_INOTIFY
++	atomic_t		inotify_watch_count; /* number of watches */
 +	struct list_head	inotify_watches; /* watches on this inode */
 +	struct semaphore	inotify_sem;	/* protects the watches list */
 +#endif
@@ -1613,7 +1628,7 @@ diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
  	unsigned long		i_state;
  	unsigned long		dirtied_when;	/* jiffies of first dirtying */
  
-@@ -1369,7 +1374,6 @@
+@@ -1369,7 +1375,6 @@
  extern int do_remount_sb(struct super_block *sb, int flags,
  			 void *data, int force);
  extern sector_t bmap(struct inode *, sector_t);
@@ -1623,7 +1638,7 @@ diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
  extern int generic_permission(struct inode *, int,
 diff -urN linux-2.6.12-rc6/include/linux/fsnotify.h linux/include/linux/fsnotify.h
 --- linux-2.6.12-rc6/include/linux/fsnotify.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux/include/linux/fsnotify.h	2005-06-07 15:49:02.000000000 -0400
++++ linux/include/linux/fsnotify.h	2005-06-13 11:28:04.000000000 -0400
 @@ -0,0 +1,257 @@
 +#ifndef _LINUX_FS_NOTIFY_H
 +#define _LINUX_FS_NOTIFY_H
@@ -1884,7 +1899,7 @@ diff -urN linux-2.6.12-rc6/include/linux/fsnotify.h linux/include/linux/fsnotify
 +#endif	/* _LINUX_FS_NOTIFY_H */
 diff -urN linux-2.6.12-rc6/include/linux/inotify.h linux/include/linux/inotify.h
 --- linux-2.6.12-rc6/include/linux/inotify.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux/include/linux/inotify.h	2005-06-07 15:49:02.000000000 -0400
++++ linux/include/linux/inotify.h	2005-06-13 11:28:04.000000000 -0400
 @@ -0,0 +1,124 @@
 +/*
 + * Inode based directory notification for Linux
@@ -2012,7 +2027,7 @@ diff -urN linux-2.6.12-rc6/include/linux/inotify.h linux/include/linux/inotify.h
 +#endif	/* _LINUX_INOTIFY_H */
 diff -urN linux-2.6.12-rc6/include/linux/sched.h linux/include/linux/sched.h
 --- linux-2.6.12-rc6/include/linux/sched.h	2005-06-07 15:47:53.000000000 -0400
-+++ linux/include/linux/sched.h	2005-06-07 15:49:02.000000000 -0400
++++ linux/include/linux/sched.h	2005-06-13 11:28:04.000000000 -0400
 @@ -404,6 +404,10 @@
  	atomic_t processes;	/* How many processes does this user have? */
  	atomic_t files;		/* How many open files does this user have? */
@@ -2026,7 +2041,7 @@ diff -urN linux-2.6.12-rc6/include/linux/sched.h linux/include/linux/sched.h
  	unsigned long locked_shm; /* How many pages of mlocked shm ? */
 diff -urN linux-2.6.12-rc6/kernel/user.c linux/kernel/user.c
 --- linux-2.6.12-rc6/kernel/user.c	2005-06-07 15:47:53.000000000 -0400
-+++ linux/kernel/user.c	2005-06-07 15:49:02.000000000 -0400
++++ linux/kernel/user.c	2005-06-13 11:28:04.000000000 -0400
 @@ -120,6 +120,10 @@
  		atomic_set(&new->processes, 0);
  		atomic_set(&new->files, 0);
