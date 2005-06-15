@@ -101,17 +101,9 @@ From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems. This will become increasingly
 	popular for the livecd's
 
-Patch:	4800_inotify-0.23-8.patch
+Patch:	4800_inotify-0.23-9.patch
 From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify
 Desc:	Kernel-based file update monitoring, for GNOME and friends.
-
-Patch:	4900_speakup-20050303.patch
-From:	http://www.linux-speakup.org
-Desc:	Speech synthesizer to provide console access for blind/hard-of-sight users
-
-Patch:	4901_speakup-parport.patch
-From:	http://bugs.gentoo.org/88467
-Desc:	Speakup + parallel port collision fix
 
 Patch:	4905_alpha-sysctl-uac.patch
 From:	
