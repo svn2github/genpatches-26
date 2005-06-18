@@ -35,19 +35,19 @@ Signed-off-by: Robert Love <rml@novell.com>
  fs/compat.c                           |   12 
  fs/file_table.c                       |    3 
  fs/inode.c                            |    9 
- fs/inotify.c                          |  985 ++++++++++++++++++++++++++++++++++
+ fs/inotify.c                          |  983 ++++++++++++++++++++++++++++++++++
  fs/namei.c                            |   30 -
  fs/nfsd/vfs.c                         |    6 
  fs/open.c                             |    4 
  fs/read_write.c                       |   15 
  fs/sysfs/file.c                       |    7 
  fs/xattr.c                            |    5 
- include/linux/fs.h                    |    7 
+ include/linux/fs.h                    |    6 
  include/linux/fsnotify.h              |  257 ++++++++
  include/linux/inotify.h               |  124 ++++
  include/linux/sched.h                 |    4 
  kernel/user.c                         |    4 
- 19 files changed, 1578 insertions(+), 64 deletions(-)
+ 19 files changed, 1575 insertions(+), 64 deletions(-)
 
 diff -urN linux-2.6.12-rc6/Documentation/filesystems/inotify.txt linux/Documentation/filesystems/inotify.txt
 --- linux-2.6.12-rc6/Documentation/filesystems/inotify.txt	1969-12-31 19:00:00.000000000 -0500
@@ -326,8 +326,8 @@ diff -urN linux-2.6.12-rc6/fs/inode.c linux/fs/inode.c
  
 diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 --- linux-2.6.12-rc6/fs/inotify.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux/fs/inotify.c	2005-06-13 11:28:07.000000000 -0400
-@@ -0,0 +1,985 @@
++++ linux/fs/inotify.c	2005-06-17 11:07:19.000000000 -0400
+@@ -0,0 +1,983 @@
 +/*
 + * fs/inotify.c - inode-based file event notifications
 + *
@@ -421,7 +421,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +};
 +
 +/*
-+ * struct inotify_kernel_event - An intofiy event, originating from a watch and
++ * struct inotify_kernel_event - An inotify event, originating from a watch and
 + * queued for user-space.  A list of these is attached to each instance of the
 + * device.  In read(), this list is walked and all events that can fit in the
 + * buffer are returned.
@@ -747,7 +747,6 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	get_inotify_watch(watch);
 +
 +	atomic_inc(&dev->user->inotify_watches);
-+	atomic_inc(&watch->inode->inotify_watch_count);
 +
 +	return watch;
 +}
@@ -771,24 +770,6 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +}
 +
 +/*
-+ * inotify_dev_is_watching_inode - is this device watching this inode?
-+ *
-+ * Callers must hold dev->sem.
-+ */
-+static inline int inotify_dev_is_watching_inode(struct inotify_device *dev,
-+						struct inode *inode)
-+{
-+	struct inotify_watch *watch;
-+
-+	list_for_each_entry(watch, &dev->watches, d_list) {
-+		if (watch->inode == inode)
-+			return 1;
-+	}
-+
-+	return 0;
-+}
-+
-+/*
 + * remove_watch_no_event - remove_watch() without the IN_IGNORED event.
 + */
 +static void remove_watch_no_event(struct inotify_watch *watch,
@@ -797,7 +778,6 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	list_del(&watch->i_list);
 +	list_del(&watch->d_list);
 +
-+	atomic_dec(&watch->inode->inotify_watch_count);
 +	atomic_dec(&dev->user->inotify_watches);
 +	idr_remove(&dev->idr, watch->wd);
 +	put_inotify_watch(watch);
@@ -820,6 +800,15 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	remove_watch_no_event(watch, dev);
 +}
 +
++/*
++ * inotify_inode_watched - returns nonzero if there are watches on this inode
++ * and zero otherwise.  We call this lockless, we do not care if we race.
++ */
++static inline int inotify_inode_watched(struct inode *inode)
++{
++	return !list_empty(&inode->inotify_watches);
++}
++
 +/* Kernel API */
 +
 +/**
@@ -834,7 +823,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +{
 +	struct inotify_watch *watch, *next;
 +
-+	if (likely(!atomic_read(&inode->inotify_watch_count)))
++	if (!inotify_inode_watched(inode))
 +		return;
 +
 +	down(&inode->inotify_sem);
@@ -872,7 +861,7 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	parent = dentry->d_parent;
 +	inode = parent->d_inode;
 +
-+	if (unlikely(atomic_read(&inode->inotify_watch_count))) {
++	if (inotify_inode_watched(inode)) {
 +		dget(parent);
 +		spin_unlock(&dentry->d_lock);
 +		inotify_inode_queue_event(inode, mask, cookie, name);
@@ -906,6 +895,13 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +	list_for_each_entry_safe(inode, next_i, list, i_sb_list) {
 +		struct inotify_watch *watch, *next_w;
 +		struct list_head *watches;
++
++		/*
++		 * We cannot __iget() an inode in state I_CLEAR, which is fine
++		 * as by that point the inode cannot have any watches.
++		 */
++		if (inode->i_state & I_CLEAR)
++			continue;
 +
 +		/* In case the remove_watch() drops a reference */
 +		__iget(inode);
@@ -1082,7 +1078,9 @@ diff -urN linux-2.6.12-rc6/fs/inotify.c linux/fs/inotify.c
 +
 +	file->private_data = dev;
 +
-+	nonseekable_open(inode, file);
++	ret = nonseekable_open(inode, file);
++	if (ret)
++		goto out_err;
 +
 +	return 0;
 +out_err:
@@ -1614,13 +1612,12 @@ diff -urN linux-2.6.12-rc6/fs/xattr.c linux/fs/xattr.c
  	}
 diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
 --- linux-2.6.12-rc6/include/linux/fs.h	2005-06-07 15:47:53.000000000 -0400
-+++ linux/include/linux/fs.h	2005-06-13 11:28:07.000000000 -0400
-@@ -471,6 +471,12 @@
++++ linux/include/linux/fs.h	2005-06-17 11:01:37.000000000 -0400
+@@ -471,6 +471,11 @@
  	struct dnotify_struct	*i_dnotify; /* for directory notifications */
  #endif
  
 +#ifdef CONFIG_INOTIFY
-+	atomic_t		inotify_watch_count; /* number of watches */
 +	struct list_head	inotify_watches; /* watches on this inode */
 +	struct semaphore	inotify_sem;	/* protects the watches list */
 +#endif
@@ -1628,7 +1625,7 @@ diff -urN linux-2.6.12-rc6/include/linux/fs.h linux/include/linux/fs.h
  	unsigned long		i_state;
  	unsigned long		dirtied_when;	/* jiffies of first dirtying */
  
-@@ -1369,7 +1375,6 @@
+@@ -1369,7 +1374,6 @@
  extern int do_remount_sb(struct super_block *sb, int flags,
  			 void *data, int force);
  extern sector_t bmap(struct inode *, sector_t);
