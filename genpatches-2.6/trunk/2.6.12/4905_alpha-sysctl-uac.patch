@@ -1,7 +1,7 @@
-diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/arch/alpha/Kconfig linux-dsd/arch/alpha/Kconfig
---- linux-2.6.11-rc1-bk8/arch/alpha/Kconfig	2005-01-21 19:21:07.000000000 +0000
-+++ linux-dsd/arch/alpha/Kconfig	2005-01-21 19:36:16.166878648 +0000
-@@ -558,6 +558,32 @@ config VERBOSE_MCHECK_ON
+diff -urNpX dontdiff linux-2.6.12-gentoo/arch/alpha/Kconfig linux-dsd/arch/alpha/Kconfig
+--- linux-2.6.12-gentoo/arch/alpha/Kconfig	2005-06-18 17:22:51.000000000 +0100
++++ linux-dsd/arch/alpha/Kconfig	2005-06-18 17:47:00.000000000 +0100
+@@ -562,6 +562,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -34,9 +34,9 @@ diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/arch/alpha/Kconfig linux-dsd/arch/al
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/arch/alpha/kernel/traps.c linux-dsd/arch/alpha/kernel/traps.c
---- linux-2.6.11-rc1-bk8/arch/alpha/kernel/traps.c	2004-12-24 21:35:24.000000000 +0000
-+++ linux-dsd/arch/alpha/kernel/traps.c	2005-01-21 19:36:16.357849616 +0000
+diff -urNpX dontdiff linux-2.6.12-gentoo/arch/alpha/kernel/traps.c linux-dsd/arch/alpha/kernel/traps.c
+--- linux-2.6.12-gentoo/arch/alpha/kernel/traps.c	2005-03-02 07:38:20.000000000 +0000
++++ linux-dsd/arch/alpha/kernel/traps.c	2005-06-18 17:47:00.000000000 +0100
 @@ -15,6 +15,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -121,20 +121,20 @@ diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/arch/alpha/kernel/traps.c linux-dsd/
  }
 +
 +__initcall(init_uac_sysctl);
-diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/include/linux/sysctl.h linux-dsd/include/linux/sysctl.h
---- linux-2.6.11-rc1-bk8/include/linux/sysctl.h	2005-01-21 19:21:45.000000000 +0000
-+++ linux-dsd/include/linux/sysctl.h	2005-01-21 19:37:09.469775376 +0000
-@@ -135,6 +135,9 @@ enum
- 	KERN_HZ_TIMER=65,	/* int: hz timer on or off */
- 	KERN_UNKNOWN_NMI_PANIC=66, /* int: unknown nmi panic flag */
+diff -urNpX dontdiff linux-2.6.12-gentoo/include/linux/sysctl.h linux-dsd/include/linux/sysctl.h
+--- linux-2.6.12-gentoo/include/linux/sysctl.h	2005-06-18 17:37:23.000000000 +0100
++++ linux-dsd/include/linux/sysctl.h	2005-06-18 17:48:24.000000000 +0100
+@@ -137,6 +137,9 @@ enum
  	KERN_BOOTLOADER_TYPE=67, /* int: boot loader type */
+ 	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
+ 	KERN_FBSPLASH=69,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=68,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=70,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
  
-@@ -212,6 +215,17 @@ enum
+@@ -214,6 +217,17 @@ enum
  	PTY_NR=2
  };
  
@@ -152,10 +152,10 @@ diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/include/linux/sysctl.h linux-dsd/inc
  /* /proc/sys/bus/isa */
  enum
  {
-diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/kernel/sysctl.c linux-dsd/kernel/sysctl.c
---- linux-2.6.11-rc1-bk8/kernel/sysctl.c	2005-01-21 19:21:45.000000000 +0000
-+++ linux-dsd/kernel/sysctl.c	2005-01-21 19:36:16.533822864 +0000
-@@ -144,6 +144,9 @@ extern ctl_table random_table[];
+diff -urNpX dontdiff linux-2.6.12-gentoo/kernel/sysctl.c linux-dsd/kernel/sysctl.c
+--- linux-2.6.12-gentoo/kernel/sysctl.c	2005-06-18 17:37:23.000000000 +0100
++++ linux-dsd/kernel/sysctl.c	2005-06-18 17:47:00.000000000 +0100
+@@ -148,6 +148,9 @@ extern ctl_table random_table[];
  #ifdef CONFIG_UNIX98_PTYS
  extern ctl_table pty_table[];
  #endif
@@ -165,7 +165,7 @@ diff -X dontdiff -urNp linux-2.6.11-rc1-bk8/kernel/sysctl.c linux-dsd/kernel/sys
  
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
-@@ -216,6 +219,14 @@ static ctl_table root_table[] = {
+@@ -220,6 +223,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
