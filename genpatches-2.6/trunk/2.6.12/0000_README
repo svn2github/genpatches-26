@@ -64,6 +64,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	2300_qla2xxx-initialization.patch
+From:	scsi-for-linus-2.6 tree
+Desc:	Fix initialization of qla2xxx SCSI hardware
+
 Patch:	4100_skge-0.6.patch
 From:	http://users.tpg.com.au/sigm/patches/skge-netdev-2.6.11-mm4.patch
 Desc:	New driver for SysKonnect gigabit ethernet.
@@ -101,7 +105,7 @@ From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems. This will become increasingly
 	popular for the livecd's
 
-Patch:	4800_inotify-0.23-9.patch
+Patch:	4800_inotify-0.23-12.patch
 From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify
 Desc:	Kernel-based file update monitoring, for GNOME and friends.
 
