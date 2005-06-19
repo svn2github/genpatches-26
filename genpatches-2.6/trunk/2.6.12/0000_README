@@ -100,6 +100,10 @@ Patch:	4320_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
+Patch:	4325_promise-pdc20619.patch
+From:	Upstream 2.6.13
+Desc:	Add support for Promise 20619 SATA
+
 Patch:	4330_svw-broadcom.patch
 From:	Upstream 2.6.13
 Desc:	Add support for Serverworks/Broadcom BCM5785 (HT1000)
