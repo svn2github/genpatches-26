@@ -112,6 +112,10 @@ Patch:	4505_vesafb-tng-0.9-rc6-r2.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
 
+Patch:	4510_alsa-sn25p.patch
+From:	http://bugs.gentoo.org/96591
+Desc:	Support ice1712 audio on Shuttle SN25P laptops
+
 Patch:	4705_squashfs-2.1.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems. This will become increasingly
