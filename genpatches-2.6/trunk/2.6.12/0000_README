@@ -40,10 +40,6 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1150_sunrpc-nfsacl.patch
-From:	http://bugs.gentoo.org/74070
-Desc:	Fix security problem in sunrpc nfsacl protocol extension.
-
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
