@@ -117,6 +117,14 @@ Patch:	4800_inotify-0.23-12.patch
 From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify
 Desc:	Kernel-based file update monitoring, for GNOME and friends.
 
+Patch:	4900_speakup-20050622-dsd.patch
+From:	http://www.linux-speakup.org
+Desc:	Provides console speech for hard-of-sight users
+
+Patch:	4901_speakup-parport.patch
+From:	dsd@gentoo.org
+Desc:	Load parport after input, speakup fix.
+
 Patch:	4905_alpha-sysctl-uac.patch
 From:	
 Desc:	enable control of the unaligned access control policy from sysctl
