@@ -40,6 +40,10 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1001_linux-2.6.12.1.patch
+From:	http://www.kernel.org
+Desc:	Two security fixes
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
