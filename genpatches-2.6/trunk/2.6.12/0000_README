@@ -72,6 +72,10 @@ Patch:	1905_mm-BUG.patch
 From:	Stable queue
 Desc:	Fix remap_pte_range range checking
 
+Patch:	2100_e1000-spinlock.patch
+From:	Stable queue
+Desc:	Fix critical bug in e1000 driver
+
 Patch:	2300_qla2xxx-initialization.patch
 From:	scsi-for-linus-2.6 tree
 Desc:	Fix initialization of qla2xxx SCSI hardware
