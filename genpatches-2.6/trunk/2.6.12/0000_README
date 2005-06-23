@@ -64,6 +64,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1900_pci-driver-typo.patch
+From:	stable queue
+Desc:	Fix compilation problem
+
 Patch:	2300_qla2xxx-initialization.patch
 From:	scsi-for-linus-2.6 tree
 Desc:	Fix initialization of qla2xxx SCSI hardware
