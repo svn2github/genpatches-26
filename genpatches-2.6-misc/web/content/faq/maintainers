@@ -1,0 +1,2 @@
+Who maintains genpatches?
+According to <a href="http://www.gentoo.org/proj/en/kernel/index.xml">the kernel project page</a>, that would be me (Daniel Drake / dsd). Greg KH also lends a hand while he's not busy maintaining every kernel subsystem known to man. Michal Januszewski (spock) develops, maintains, and breaks our fbsplash and vesafb-tng patches. Jeremy Huddleston (eradicator) has the unfortunate job of trying to get things to work on SPARC.
