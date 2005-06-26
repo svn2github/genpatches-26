@@ -33,6 +33,10 @@ USERNAME="dsd"
 # The path to the directory where you have checked out trunk
 GENPATCHES_TRUNK="/home/dsd/projects/gentoo/genpatches"
 
+# Website stuff (dsd only)
+WEB_LOCAL="/home/dsd/projects/gentoo/genpatches-misc/web"
+WEB_GENPATCHES_BASE="dev.gentoo.org:/home/dsd/public_html/genpatches"
+
 --- end ~/.genpatchesrc -------------------------------------------------------
 
 gppatch
