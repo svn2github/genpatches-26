@@ -116,6 +116,18 @@ Patch:	4305_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
 
+Patch:	4310_forcedeth-mcp51.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP51 hardware in forcedeth driver
+
+Patch:	4311_forcedeth-poll.patch
+From:	Upstream 2.6.13
+Desc:	forcedeth bugfix for nforce3 hardware
+
+Patch:	4312_forcedeth-mcp55.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP55 hardware in forcedeth driver
+
 Patch:	4320_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
