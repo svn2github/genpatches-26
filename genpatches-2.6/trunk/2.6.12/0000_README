@@ -84,6 +84,10 @@ Patch:	2305_sata-bridge-lockup.patch
 From:	Upstream 2.6.13
 Desc:	Fix lockup on PATA->SATA bridges with certain drives
 
+Patch:	2310_libata-capacity.patch
+From:	Upstream 2.6.13
+Desc:	Fix capacity handling for >2TB
+
 Patch:	4100_skge-0.6.patch
 From:	http://users.tpg.com.au/sigm/patches/skge-netdev-2.6.11-mm4.patch
 Desc:	New driver for SysKonnect gigabit ethernet.
