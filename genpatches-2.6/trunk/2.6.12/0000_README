@@ -144,6 +144,10 @@ Patch:	4335_amd74xx-mcp55.patch
 From:	Upstream 2.6.13
 Desc:	Support MCP55 hardware in amd74xx IDE driver
 
+Patch:	4340_sata-nv-mcp5x.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP51 and MCP55 hardware in nv_sata driver
+
 Patch:	4500_fbsplash-0.9.2-r3.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
