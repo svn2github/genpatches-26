@@ -33,9 +33,16 @@ USERNAME="dsd"
 # The path to the directory where you have checked out trunk
 GENPATCHES_TRUNK="/home/dsd/projects/gentoo/genpatches"
 
-# Website stuff (dsd only)
+# Optional stuff
+DO_WEBSITE="no"
+DO_EMAIL_ANNOUNCEMENT="no"
+
+# Website stuff (if DO_WEBSITE=yes)
 WEB_LOCAL="/home/dsd/projects/gentoo/genpatches-misc/web"
 WEB_GENPATCHES_BASE="dev.gentoo.org:/home/dsd/public_html/genpatches"
+
+# Path to sendmail (if DO_EMAIL_ANNOUNCEMENT=yes)
+SENDMAIL=/usr/sbin/sendmail
 
 --- end ~/.genpatchesrc -------------------------------------------------------
 

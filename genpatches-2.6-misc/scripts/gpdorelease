@@ -24,6 +24,8 @@ echo "I will now:"
 echo "1. Tag the ${BRANCH} branch as ${newfullver} (immediate commit)"
 echo "2. Produce genpatches-${newfullver} tarballs"
 echo "3. Upload tarballs to distfiles-local"
+echo "4. (Optionally) create and upload website"
+echo "5. (Optionally) send a release announcement to gentoo-kernel"
 echo
 echo "Make sure everything is already committed and ready to roll."
 echo "Press enter to continue."
@@ -41,4 +43,11 @@ cd ${GENPATCHES_TRUNK}
 [ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
 
 scp /tmp/genpatches-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
+
+if [[ ${DO_WEBSITE} == "yes" ]] ; then
+	mv ${file_base} ${file_extras} ${WEB_LOCAL}/tarballs/
+	gpdoweb
+fi
+
+[[ ${DO_EMAIL_ANNOUNCEMENT} == "yes" ]] && gpdoemail $newfullver
 
