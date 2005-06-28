@@ -1,0 +1,183 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1001_linux-2.6.12.1.patch
+From:	http://www.kernel.org
+Desc:	Two security fixes
+
+Patch:	1340_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1360_sparc-kconfig-rework.patch
+From:	eradicator@gentoo.org
+Desc:	SPARC Kconfig updates
+
+Patch:	1361_sparc-kconfig-driver-rework.patch
+From:	eradicator@gentoo.org
+Desc:	SPARC Kconfig updates
+
+Patch:	1364_sparc-ffbh.patch
+From:	Jeremy Huddleston <eradicator@gentoo.org>
+Desc:	Add drivers/char/drm/ffb.h which got deleted in 2.6.11
+
+Patch:	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	1900_pci-driver-typo.patch
+From:	stable queue
+Desc:	Fix compilation problem
+
+Patch:	1905_mm-BUG.patch
+From:	Stable queue
+Desc:	Fix remap_pte_range range checking
+
+Patch:	2100_e1000-spinlock.patch
+From:	Stable queue
+Desc:	Fix critical bug in e1000 driver
+
+Patch:	2300_qla2xxx-initialization.patch
+From:	scsi-for-linus-2.6 tree
+Desc:	Fix initialization of qla2xxx SCSI hardware
+
+Patch:	2305_sata-bridge-lockup.patch
+From:	Upstream 2.6.13
+Desc:	Fix lockup on PATA->SATA bridges with certain drives
+
+Patch:	2310_libata-capacity.patch
+From:	Upstream 2.6.13
+Desc:	Fix capacity handling for >2TB
+
+Patch:	4100_skge-20050628.patch
+From:	Upstream 2.6.13 and netdev tree
+Desc:	New driver for SysKonnect gigabit ethernet
+
+Patch:	4101_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4105_r8169-997902.patch
+From:	Upstream 2.6.13
+Desc:	Support USR 997902 in r8169 driver
+
+Patch:	4110_tulip-planex.patch
+From:	Upstream 2.6.13
+Desc:	Support Planex FNW-3602-TX in tulip driver
+
+Patch:	4115_pegasus-elecom.patch
+From:	Upstream 2.6.13
+Desc:	Support Elecom (Laneed) LD-USBL/TX in pegasus driver
+
+Patch:	4300_via-vt6410.patch
+From:	ide-dev-2.6
+Desc:	Add support for VIA VT6410 IDE into vt82xx driver
+
+Patch:	4305_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4310_forcedeth-mcp51.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP51 hardware in forcedeth driver
+
+Patch:	4311_forcedeth-poll.patch
+From:	Upstream 2.6.13
+Desc:	forcedeth bugfix for nforce3 hardware
+
+Patch:	4312_forcedeth-mcp55.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP55 hardware in forcedeth driver
+
+Patch:	4320_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4325_promise-pdc20619.patch
+From:	Upstream 2.6.13
+Desc:	Add support for Promise 20619 SATA
+
+Patch:	4330_svw-broadcom.patch
+From:	Upstream 2.6.13
+Desc:	Add support for Serverworks/Broadcom BCM5785 (HT1000)
+
+Patch:	4335_amd74xx-mcp55.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP55 hardware in amd74xx IDE driver
+
+Patch:	4340_sata-nv-mcp5x.patch
+From:	Upstream 2.6.13
+Desc:	Support MCP51 and MCP55 hardware in nv_sata driver
+
+Patch:	4500_fbsplash-0.9.2-r3.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4505_vesafb-tng-0.9-rc6-r2.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4510_alsa-sn25p.patch
+From:	http://bugs.gentoo.org/96591
+Desc:	Support ice1712 audio on Shuttle SN25P laptops
+
+Patch:	4705_squashfs-2.1.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems. This will become increasingly
+	popular for the livecd's
+
+Patch:	4800_inotify-0.23-12.patch
+From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify
+Desc:	Kernel-based file update monitoring, for GNOME and friends.
+
+Patch:	4900_speakup-20050622-dsd.patch
+From:	http://www.linux-speakup.org
+Desc:	Provides console speech for hard-of-sight users
+
+Patch:	4901_speakup-parport.patch
+From:	dsd@gentoo.org
+Desc:	Load parport after input, speakup fix.
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
+

@@ -1,0 +1,64 @@
+--- linux-2.6.12/drivers/scsi/sata_nv.c	2005-06-17 20:48:29.000000000 +0100
++++ linux-dsd/drivers/scsi/sata_nv.c	2005-06-27 18:58:10.000000000 +0100
+@@ -20,6 +20,12 @@
+  *  If you do not delete the provisions above, a recipient may use your
+  *  version of this file under either the OSL or the GPL.
+  *
++ *  0.08
++ *     - Added support for MCP51 and MCP55.
++ *
++ *  0.07
++ *     - Added support for RAID class code.
++ *
+  *  0.06
+  *     - Added generic SATA support by using a pci_device_id that filters on
+  *       the IDE storage class code.
+@@ -48,7 +54,7 @@
+ #include <linux/libata.h>
+ 
+ #define DRV_NAME			"sata_nv"
+-#define DRV_VERSION			"0.6"
++#define DRV_VERSION			"0.8"
+ 
+ #define NV_PORTS			2
+ #define NV_PIO_MASK			0x1f
+@@ -116,7 +122,9 @@ enum nv_host_type
+ 	GENERIC,
+ 	NFORCE2,
+ 	NFORCE3,
+-	CK804
++	CK804,
++	MCP51,
++	MCP55
+ };
+ 
+ static struct pci_device_id nv_pci_tbl[] = {
+@@ -134,9 +142,18 @@ static struct pci_device_id nv_pci_tbl[]
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, CK804 },
+ 	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP04_SATA2,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, CK804 },
++	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SATA,
++		PCI_ANY_ID, PCI_ANY_ID, 0, 0, MCP51 },
++	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SATA2,
++		PCI_ANY_ID, PCI_ANY_ID, 0, 0, MCP51 },
++	{ PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NFORCE_MCP55_SATA,
++		PCI_ANY_ID, PCI_ANY_ID, 0, 0, MCP55 },
+ 	{ PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID,
+ 		PCI_ANY_ID, PCI_ANY_ID,
+ 		PCI_CLASS_STORAGE_IDE<<8, 0xffff00, GENERIC },
++	{ PCI_VENDOR_ID_NVIDIA, PCI_ANY_ID,
++		PCI_ANY_ID, PCI_ANY_ID,
++		PCI_CLASS_STORAGE_RAID<<8, 0xffff00, GENERIC },
+ 	{ 0, } /* terminate list */
+ };
+ 
+--- linux-2.6.12/include/linux/pci_ids.h	2005-06-27 18:54:57.000000000 +0100
++++ linux-dsd/include/linux/pci_ids.h	2005-06-27 18:59:42.000000000 +0100
+@@ -1235,6 +1235,7 @@
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SATA	0x0266
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE_MCP51_SATA2	0x0267
+ #define PCI_DEVICE_ID_NVIDIA_NFORCE_MCP55_IDE	0x036E
++#define PCI_DEVICE_ID_NVIDIA_NFORCE_MCP55_SATA	0x036F
+ #define PCI_DEVICE_ID_NVIDIA_NVENET_12		0x0268
+ #define PCI_DEVICE_ID_NVIDIA_NVENET_13		0x0269
+ #define PCI_DEVICE_ID_NVIDIA_MCP51_AUDIO	0x026B
