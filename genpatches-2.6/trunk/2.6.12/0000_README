@@ -88,6 +88,10 @@ Patch:	2310_libata-capacity.patch
 From:	Upstream 2.6.13
 Desc:	Fix capacity handling for >2TB
 
+Patch:	2315_ide-no-lba.patch
+From:	Upstream 2.6.13
+Desc:	Fix ide-disk inability to handle LBA only devices. Reqd for it8212.
+
 Patch:	4100_skge-20050628.patch
 From:	Upstream 2.6.13 and netdev tree
 Desc:	New driver for SysKonnect gigabit ethernet
@@ -147,6 +151,10 @@ Desc:	Support MCP55 hardware in amd74xx IDE driver
 Patch:	4340_sata-nv-mcp5x.patch
 From:	Upstream 2.6.13
 Desc:	Support MCP51 and MCP55 hardware in nv_sata driver
+
+Patch:	4345_it8212.patch
+From:	Upstream 2.6.13
+Desc:	Support IT8211/IT8222 IDE RAID hardware
 
 Patch:	4500_fbsplash-0.9.2-r3.patch
 From:	http://dev.gentoo.org/~spock
