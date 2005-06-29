@@ -156,6 +156,14 @@ Patch:	4345_it8212.patch
 From:	Upstream 2.6.13
 Desc:	Support IT8211/IT8222 IDE RAID hardware
 
+Patch:	4350_megaraid-update.patch
+From:	Upstream 2.6.13
+Desc:	megaraid-newgen driver update, including new hardware support
+
+Patch:	4351_megaraid-compatibility.patch
+From:	dsd@gentoo.org
+Desc:	Allow both megaraid drivers to be built side-by-side
+
 Patch:	4500_fbsplash-0.9.2-r3.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski

@@ -1,0 +1,49 @@
+diff -urp linux-2.6.12/drivers/scsi-orig/megaraid/Kconfig.megaraid linux-2.6.12/drivers/scsi/megaraid/Kconfig.megaraid
+--- linux-2.6.12/drivers/scsi-orig/megaraid/Kconfig.megaraid	2005-06-29 16:19:55.000000000 +0100
++++ linux-2.6.12/drivers/scsi/megaraid/Kconfig.megaraid	2005-06-29 16:22:12.000000000 +0100
+@@ -64,7 +64,6 @@ config MEGARAID_MAILBOX
+ 	To compile this driver as a module, choose M here: the
+ 	module will be called megaraid_mbox
+ 
+-if MEGARAID_NEWGEN=n
+ config MEGARAID_LEGACY
+ 	tristate "LSI Logic Legacy MegaRAID Driver"
+ 	depends on PCI && SCSI
+@@ -75,4 +74,4 @@ config MEGARAID_LEGACY
+ 
+ 	To compile this driver as a module, choose M here: the
+ 	module will be called megaraid
+-endif
++
+diff -urp linux-2.6.12/drivers/scsi-orig/megaraid.c linux-2.6.12/drivers/scsi/megaraid.c
+--- linux-2.6.12/drivers/scsi-orig/megaraid.c	2005-06-29 16:19:55.000000000 +0100
++++ linux-2.6.12/drivers/scsi/megaraid.c	2005-06-29 16:25:22.000000000 +0100
+@@ -5033,22 +5033,28 @@ megaraid_shutdown(struct device *dev)
+ }
+ 
+ static struct pci_device_id megaraid_pci_tbl[] = {
++#ifndef CONFIG_MEGARAID_NEWGEN
+ 	{PCI_VENDOR_ID_DELL, PCI_DEVICE_ID_DISCOVERY,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+ 	{PCI_VENDOR_ID_DELL, PCI_DEVICE_ID_PERC4_DI,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, BOARD_64BIT},
+ 	{PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_PERC4_QC_VERDE,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, BOARD_64BIT},
++#endif
+ 	{PCI_VENDOR_ID_AMI, PCI_DEVICE_ID_AMI_MEGARAID,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+ 	{PCI_VENDOR_ID_AMI, PCI_DEVICE_ID_AMI_MEGARAID2,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++#ifndef CONFIG_MEGARAID_NEWGEN
+ 	{PCI_VENDOR_ID_AMI, PCI_DEVICE_ID_AMI_MEGARAID3,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++#endif
+ 	{PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_AMI_MEGARAID3,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++#ifndef CONFIG_MEGARAID_NEWGEN
+ 	{PCI_VENDOR_ID_LSI_LOGIC, PCI_DEVICE_ID_AMI_MEGARAID3,
+ 		PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++#endif
+ 	{0,}
+ };
+ MODULE_DEVICE_TABLE(pci, megaraid_pci_tbl);
