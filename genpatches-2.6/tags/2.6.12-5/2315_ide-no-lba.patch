@@ -1,0 +1,26 @@
+Author: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Date: Mon, 27 Jun 2005 22:24:22 +0000 (-0700)
+Source: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=6efd936046b123303ace4330fd2f26195ad7b1c4
+
+  [PATCH] ide: fix ide-disk inability to handle LBA only devices.
+  
+  Years old bug, has to be fixed for it8212 to work
+  
+  Signed-off-by: Alan Cox <alan@redhat.com>
+  Acked-by: Bartlomiej Zolnierkiewicz <B.Zolnierkiewicz@elka.pw.edu.pl>
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+--- a/drivers/ide/ide-disk.c
++++ b/drivers/ide/ide-disk.c
+@@ -119,6 +119,10 @@ static int lba_capacity_is_ok (struct hd
+ {
+ 	unsigned long lba_sects, chs_sects, head, tail;
+ 
++	/* No non-LBA info .. so valid! */
++	if (id->cyls == 0)
++		return 1;
++
+ 	/*
+ 	 * The ATA spec tells large drives to return
+ 	 * C/H/S = 16383/16/63 independent of their size.
