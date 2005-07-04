@@ -10,3 +10,5 @@ diff -Naur linux-2.6.12-gentoo-r1.orig/arch/ppc64/Makefile linux-2.6.12-gentoo-r
  # Set default 32 bits cross compilers for vdso and boot wrapper
  CROSS32_COMPILE ?=
  
+
+
