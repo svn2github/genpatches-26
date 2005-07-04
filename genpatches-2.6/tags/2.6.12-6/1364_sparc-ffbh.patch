@@ -1,0 +1,16 @@
+diff -Naurp drivers/char/drm/ffb.h drivers/char/drm/ffb.h
+--- drivers/char/drm/ffb.h	1969-12-31 16:00:00.000000000 -0800
++++ drivers/char/drm/ffb.h	2005-04-06 13:55:38.000000000 -0700
+@@ -0,0 +1,12 @@
++/* ffb.h -- ffb DRM template customization -*- linux-c -*-
++ */
++
++#ifndef __FFB_H__
++#define __FFB_H__
++
++/* This remains constant for all DRM template files.
++ */
++#define DRM(x) ffb_##x
++
++#endif
++

@@ -1,0 +1,25 @@
+henrich@iijmio-mail.jp
+[netdrvr] tulip: add pci id
+[netdrvr] tulip: add pci id
+
+---
+commit 9b25978ef8ebe010f582489117f8a7a43a6b44a3
+tree f292cfeca16e0aff1521a2b879d1cb7e98cf2fe7
+parent f49d16ef2d6f008119d4ee2c895781fb229bad68
+author Hideki Yamane <henrich@iijmio-mail.jp> Mon, 27 Jun 2005 01:22:32 -0400
+committer Jeff Garzik <jgarzik@pobox.com> Mon, 27 Jun 2005 01:22:32 -0400
+
+ drivers/net/tulip/tulip_core.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/net/tulip/tulip_core.c b/drivers/net/tulip/tulip_core.c
+--- a/drivers/net/tulip/tulip_core.c
++++ b/drivers/net/tulip/tulip_core.c
+@@ -242,6 +242,7 @@ static struct pci_device_id tulip_pci_tb
+  	{ 0x10b9, 0x5261, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ULI526X },	/* ALi 1563 integrated ethernet */
+  	{ 0x10b9, 0x5263, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ULI526X },	/* ALi 1563 integrated ethernet */
+ 	{ 0x10b7, 0x9300, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET }, /* 3Com 3CSOHO100B-TX */
++	{ 0x14ea, 0xab08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, COMET }, /* Planex FNW-3602-TX */
+ 	{ } /* terminate list */
+ };
+ MODULE_DEVICE_TABLE(pci, tulip_pci_tbl);
