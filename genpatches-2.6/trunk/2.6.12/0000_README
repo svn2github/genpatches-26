@@ -177,6 +177,10 @@ From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems. This will become increasingly
 	popular for the livecd's
 
+Patch:	4800_inotify-0.23-15.patch
+From:	http://www.kernel.org/pub/linux/kernel/people/rml/inotify/v2.6/0.23/
+Desc:	Kernel-based file system monitoring
+
 Patch:	4900_speakup-20050622-dsd.patch
 From:	http://www.linux-speakup.org
 Desc:	Provides console speech for hard-of-sight users
