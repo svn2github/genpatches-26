@@ -1,0 +1,30 @@
+yoshfuji@linux-ipv6.org
+[PATCH] NETDEV: Elecom (Laneed) LD-USBL/TX support.
+[PATCH] NETDEV: Elecom (Laneed) LD-USBL/TX support.
+
+Elecom (Laneed) LD-USBL/TX support.
+
+Signed-off-by: YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
+
+---
+commit e8d997952bbea4f408f56a55f18667f2817dbb44
+tree e29cc7f3caae656f7cfb41019dd7f87e5c2d25ff
+parent 7b24017e9b4506d2f83e768bf2766cc1c4a3ee54
+author YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org> 1117004819 +0900
+committer Jeff Garzik <jgarzik@pobox.com> Mon, 27 Jun 2005 01:48:08 -0400
+
+ drivers/usb/net/pegasus.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/usb/net/pegasus.h b/drivers/usb/net/pegasus.h
+--- a/drivers/usb/net/pegasus.h
++++ b/drivers/usb/net/pegasus.h
+@@ -249,6 +249,8 @@ PEGASUS_DEV( "Kingston KNU101TX Ethernet
+ 		DEFAULT_GPIO_RESET)
+ PEGASUS_DEV( "LANEED USB Ethernet LD-USB/TX", VENDOR_LANEED, 0x4002,
+ 		DEFAULT_GPIO_RESET )
++PEGASUS_DEV( "LANEED USB Ethernet LD-USBL/TX", VENDOR_LANEED, 0x4005,
++		DEFAULT_GPIO_RESET | PEGASUS_II)
+ PEGASUS_DEV( "LANEED USB Ethernet LD-USB/TX", VENDOR_LANEED, 0x400b,
+ 		DEFAULT_GPIO_RESET | PEGASUS_II )
+ PEGASUS_DEV( "LANEED USB Ethernet LD-USB/T", VENDOR_LANEED, 0xabc1,
