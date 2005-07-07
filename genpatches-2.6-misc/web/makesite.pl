@@ -204,7 +204,7 @@ sub make_release_pages {
 	
 	make_releases_index();
 	opendir(DIR, $webscript_path.'/generated');
-	@patchpages = grep { /-patches\.htm$/ } readdir DIR;
+	@patchpages = grep { /-patches\.htm$/ } sort readdir DIR;
 	closedir(DIR);
 	
 	foreach $patch (@patchpages) {
@@ -217,7 +217,7 @@ sub make_releases_index {
 	my (%kernels, $info, @infopages, $kernel);
 	local (*DIR, *FILE, *INDEX);
 	opendir(DIR, $webscript_path.'/generated');
-	@infopages = grep { /-info\.htm$/ } readdir(DIR);
+	@infopages = grep { /-info\.htm$/ } sort readdir DIR;
 	foreach $info (@infopages) {
 		$info =~ m/^(\d\.\d\.\d+)-\d+-info\.htm$/;
 		$kernels{$1} = 1;

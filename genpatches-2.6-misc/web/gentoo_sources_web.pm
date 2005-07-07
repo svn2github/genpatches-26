@@ -8,7 +8,7 @@ $output_path = $webscript_path.'/output';
 $website_base = 'http://dev.gentoo.org/~dsd/genpatches';
 
 $ebuild_base = '/usr/local/gentoo-x86';
-@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/ck-sources');
+@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/ck-sources', 'sys-kernel/usermode-sources');
 
 sub html_header {
 	local *FD = shift;
