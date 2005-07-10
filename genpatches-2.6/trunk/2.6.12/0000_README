@@ -76,6 +76,10 @@ Patch:	1900_acpi-irq-0.patch
 From:	http://bugs.gentoo.org/97843
 Desc:	Fix ACPI bug causing big slowdown
 
+Patch:	2100_netfilter-bridge.patch
+From:	stable queue
+Desc:	Fix conntrack reference keeping on bridge devices
+
 Patch:	2305_sata-bridge-lockup.patch
 From:	Upstream 2.6.13
 Desc:	Fix lockup on PATA->SATA bridges with certain drives
