@@ -88,6 +88,10 @@ Patch:	2315_ide-no-lba.patch
 From:	Upstream 2.6.13
 Desc:	Fix ide-disk inability to handle LBA only devices. Reqd for it8212.
 
+Patch:	2900_gameport-probe.patch
+From:	GIT input tree
+Desc:	Fix gameport probe order
+
 Patch:	4100_skge-20050628.patch
 From:	Upstream 2.6.13 and netdev tree
 Desc:	New driver for SysKonnect gigabit ethernet
