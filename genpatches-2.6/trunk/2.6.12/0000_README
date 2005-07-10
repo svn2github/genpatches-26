@@ -52,6 +52,10 @@ Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
 
+Patch:	1305_ppc-ntp.patch
+From:	Upstream 2.6.13
+Desc:	Fix odd NTP timing behaviour on PPC
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
