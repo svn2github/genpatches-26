@@ -48,10 +48,6 @@ Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
 
-Patch:	1360_sparc-kconfig-rework.patch
-From:	eradicator@gentoo.org
-Desc:	SPARC Kconfig updates
-
 Patch:	1361_sparc-kconfig-driver-rework.patch
 From:	eradicator@gentoo.org
 Desc:	SPARC Kconfig updates
