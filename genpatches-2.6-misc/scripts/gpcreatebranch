@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. ~/.genpatchesrc
+
+if [[ ${#@} != 2 ]] ; then
+	echo ">>> USAGE: gpcreatebranch <old-minor> <new-minor>"
+	echo "This will create 2.6.<new-minor> from 2.6.<old-minor>"
+	exit -1
+exit
+
+echo ">>> Going to copy genpatches-2.6/trunk/2.6.$1 to genpatches-2.6/trunk/2.6.$2 and instant commit. Press enter to continue"
+read
+
+svn copy svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/2.6.$1 svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/2.6.$2 -m "Creating 2.6.$2 branch from 2.6.$1"
+

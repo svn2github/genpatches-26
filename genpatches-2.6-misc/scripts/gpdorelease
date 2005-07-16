@@ -2,7 +2,18 @@
 
 . ~/.genpatchesrc
 
+if [[ ${#@} == 0 ]] ; then
+	echo ">>> USAGE: gpdorelease <branch-minor>"
+	echo "This will expand to ${GENPATCHES_TRUNK}/2.6.<branch-minor>"
+	exit -1
+fi
+
 BRANCH="2.6.$1"
+
+if [[ $(svn status ${GENPATCHES_TRUNK} | wc -l) != "0" ]] ; then
+	echo ">>> ERROR: There are uncommited changes in ${GENPATCHES_TRUNK}"
+	exit -1
+fi
 
 EXISTING_TAGS="$(svn ls svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags)"
 

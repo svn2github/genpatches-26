@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. ~/.genpatchesrc
+
+if [[ ${#@} != 1 ]] ; then
+	echo ">>> USAGE: gpmvhistorcal <branch-minor>"
+	echo "This will move 2.6.<branch-minor> into historical"
+	exit -1
+fi
+
+echo ">>> Going to move genpatches-2.6/trunk/2.6.$1 to genpatches-2.6/historical/2.6.$1 and instant commit. Press enter to continue"
+read
+
+svn mv svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/2.6.$1 svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/historical -m "Moving 2.6.$1 into historical"
+

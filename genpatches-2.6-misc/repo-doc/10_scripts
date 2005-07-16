@@ -108,9 +108,17 @@ Post-commit hooks
 gpcreatebranch
 ==============
 
-To be written: Copy one branch to another under trunk.
+Copy one branch to another under trunk.
+
+Example: This will create a 2.6.13-pre branch from the 2.6.12 branch
+# gpcreatebranch 12 13-pre
+
 
 gpmvhistorical
 ==============
 
-To be written: Move a trunk branch into historical
+Move a trunk branch into historical
+
+Example: Move 2.6.11 into historical:
+# gpmvhistorical 11
+
