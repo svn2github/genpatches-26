@@ -120,6 +120,10 @@ Patch:	4115_pegasus-elecom.patch
 From:	Upstream 2.6.13
 Desc:	Support Elecom (Laneed) LD-USBL/TX in pegasus driver
 
+Patch:	4120_sungem-imacg5.patch
+From:	Upstream 2.6.13
+Desc:	Support new network adapters on imac G5 machines
+
 Patch:	4300_via-vt6410.patch
 From:	ide-dev-2.6
 Desc:	Add support for VIA VT6410 IDE into vt82xx driver
