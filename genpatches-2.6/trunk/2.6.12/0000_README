@@ -180,6 +180,10 @@ Patch:	4500_fbsplash-0.9.2-r3.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
+Patch:	4501_matroxfb-tileblitting.patch
+From:	spock@gentoo.org
+Desc:	Remove matroxfb dependency on tileblitting, to allow for fbsplash
+
 Patch:	4505_vesafb-tng-0.9-rc6-r2.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
