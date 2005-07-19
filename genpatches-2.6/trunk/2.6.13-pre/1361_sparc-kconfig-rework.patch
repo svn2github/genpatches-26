@@ -1,6 +1,6 @@
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig	2005-07-18 16:22:23.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig	2005-07-18 17:02:33.000000000 -0700
+diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig
+--- linux-2.6.13-rc3-git4/arch/sparc/Kconfig	2005-07-18 18:00:39.812719222 -0700
++++ linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig	2005-07-18 18:11:59.003763201 -0700
 @@ -5,15 +5,25 @@
  
  mainmenu "Linux/SPARC Kernel Configuration"
@@ -422,8 +422,8 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig linux-2.6.13-rc
  
  source "lib/Kconfig"
 +
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig.debug linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig.debug
---- linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig.debug	2005-06-17 12:48:29.000000000 -0700
+diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig.debug linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig.debug
+--- linux-2.6.13-rc3-git4/arch/sparc/Kconfig.debug	2005-06-17 12:48:29.000000000 -0700
 +++ linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig.debug	1969-12-31 16:00:00.000000000 -0800
 @@ -1,14 +0,0 @@
 -menu "Kernel hacking"
@@ -440,9 +440,9 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc/Kconfig.debug linux-2.6
 -	  This option will slow down process creation somewhat.
 -
 -endmenu
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig	2005-07-18 16:22:23.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig	2005-07-18 16:52:31.000000000 -0700
+diff -Naurp linux-2.6.13-rc3-git4/arch/sparc64/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig
+--- linux-2.6.13-rc3-git4/arch/sparc64/Kconfig	2005-07-18 18:00:39.839714586 -0700
++++ linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig	2005-07-18 18:44:30.687327634 -0700
 @@ -5,6 +5,17 @@
  
  mainmenu "Linux/UltraSPARC Kernel Configuration"
@@ -461,7 +461,7 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
  config 64BIT
  	def_bool y
  
-@@ -12,6 +23,10 @@ config MMU
+@@ -12,10 +23,23 @@ config MMU
  	bool
  	default y
  
@@ -472,10 +472,30 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
  config TIME_INTERPOLATION
  	bool
  	default y
-@@ -69,76 +84,7 @@ config SYSVIPC_COMPAT
- 	depends on COMPAT && SYSVIPC
- 	default y
  
++source "init/Kconfig"
++
++config SYSVIPC_COMPAT
++	bool
++	depends on COMPAT && SYSVIPC
++	default y
++
++menu "Processor type and features"
++
+ choice
+ 	prompt "Kernel page size"
+ 	default SPARC64_PAGE_SIZE_8KB
+@@ -62,84 +86,6 @@ config SECCOMP
+ 
+ source kernel/Kconfig.hz
+ 
+-source "init/Kconfig"
+-
+-config SYSVIPC_COMPAT
+-	bool
+-	depends on COMPAT && SYSVIPC
+-	default y
+-
 -menu "General machine setup"
 -
 -config BBC_I2C
@@ -546,10 +566,10 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
 -	bool
 -	depends on VT
 -	default y
-+menu "Processor type and features"
- 
+-
  config SMP
  	bool "Symmetric multi-processing support"
+ 	---help---
 @@ -205,25 +151,6 @@ config US2E_FREQ
  
  	  If in doubt, say N.
@@ -811,7 +831,7 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
  config CMDLINE_BOOL
  	bool "Default bootloader kernel arguments"
  
-@@ -521,25 +351,26 @@ config CMDLINE
+@@ -521,148 +351,14 @@ config CMDLINE
  
  	  NOTE: This option WILL override the PROM bootargs setting!
  
@@ -819,44 +839,44 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
 -
  endmenu
  
--source "net/Kconfig"
-+# Unfortunately too many of the menu items don't really have proper
-+# dependencies, so ridiculous things show up.  Later we should just be able
-+# to do
-+#source "drivers/Kconfig"
+ source "net/Kconfig"
  
 -source "drivers/base/Kconfig"
 -
 -source "drivers/video/Kconfig"
-+menu "Device Drivers"
- 
+-
 -source "drivers/serial/Kconfig"
 -
 -source "drivers/sbus/char/Kconfig"
-+source "drivers/base/Kconfig"
- 
- source "drivers/mtd/Kconfig"
- 
-+source "drivers/parport/Kconfig"
-+
- source "drivers/block/Kconfig"
- 
-+if PCI
- source "drivers/ide/Kconfig"
-+endif
- 
- source "drivers/scsi/Kconfig"
- 
-@@ -559,110 +390,30 @@ source "drivers/isdn/Kconfig"
- 
- source "drivers/telephony/Kconfig"
- 
+-
+-source "drivers/mtd/Kconfig"
+-
+-source "drivers/block/Kconfig"
+-
+-source "drivers/ide/Kconfig"
+-
+-source "drivers/scsi/Kconfig"
+-
+-source "drivers/fc4/Kconfig"
+-
+-source "drivers/md/Kconfig"
+-
+-if PCI
+-source "drivers/message/fusion/Kconfig"
+-endif
+-
+-source "drivers/ieee1394/Kconfig"
+-
+-source "drivers/net/Kconfig"
+-
+-source "drivers/isdn/Kconfig"
+-
+-source "drivers/telephony/Kconfig"
+-
 -# This one must be before the filesystem configs. -DaveM
-+source "drivers/input/Kconfig"
- 
+-
 -menu "Unix98 PTY support"
-+source "drivers/char/Kconfig"
- 
+-
 -config UNIX98_PTYS
 -	bool "Unix98 PTY support"
 -	---help---
@@ -895,18 +915,14 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
 -	  machines which support incoming telnet/rlogin/ssh connections and/or
 -	  serve several X terminals may want to increase this: every incoming
 -	  connection and every xterm uses up one PTY.
-+source "drivers/sbus/char/Kconfig"
- 
+-
 -	  When not in use, each additional set of 256 PTYs occupy
 -	  approximately 8 KB of kernel memory on 32-bit architectures.
-+source "drivers/media/Kconfig"
- 
+-
 -endmenu
-+source "drivers/video/Kconfig"
- 
+-
 -menu "XFree86 DRI support"
-+source "drivers/char/speakup/Kconfig"
- 
+-
 -config DRM
 -	bool "Direct Rendering Manager (XFree86 DRI support)"
 -	help
@@ -940,18 +956,15 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
 -	  Choose this option if you have an ATI Rage 128 graphics card.  If M
 -	  is selected, the module will be called r128.  AGP support for
 -	  this card is strongly suggested (unless you have a PCI version).
-+source "sound/Kconfig"
- 
+-
 -endmenu
-+source "drivers/usb/Kconfig"
- 
+-
 -source "drivers/input/Kconfig"
-+source "drivers/infiniband/Kconfig"
- 
+-
 -source "drivers/i2c/Kconfig"
-+endmenu
- 
- source "drivers/hwmon/Kconfig"
+-
+-source "drivers/hwmon/Kconfig"
++source "drivers/Kconfig"
  
  source "fs/Kconfig"
  
@@ -968,9 +981,24 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/arch/sparc64/Kconfig linux-2.6.13-
  source "arch/sparc64/oprofile/Kconfig"
  
  source "arch/sparc64/Kconfig.debug"
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/Kconfig	2005-07-18 17:03:55.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-18 17:22:52.000000000 -0700
+diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig
+--- linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig	2005-07-18 18:11:44.574247185 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig	2005-07-18 18:11:59.014761308 -0700
+@@ -103,3 +103,11 @@ config DRM_VIA
+ 	  Choose this option if you have a Via unichrome or compatible video
+ 	  chipset. If M is selected the module will be called via.
+ 
++config DRM_FFB
++	tristate "Creator/Creator3D"
++	depends on DRM && SPARC64
++	help
++	  Choose this option if you have one of Sun's Creator3D-based graphics
++	  and frame buffer cards.  Product page at
++	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
++
+diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig
+--- linux-2.6.13-rc3-git4/drivers/char/Kconfig	2005-07-18 18:11:44.575247013 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-18 18:11:59.013761480 -0700
 @@ -345,6 +345,13 @@ config AU1000_SERIAL_CONSOLE
  	  If you have an Alchemy AU1000 processor (MIPS based) and you want
  	  to use a console on a serial port, say Y.  Otherwise, say N.
@@ -985,7 +1013,7 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/Kconfig linux-2.6.13-
  config QTRONIX_KEYBOARD
  	bool "Enable Qtronix 990P Keyboard Support"
  	depends on IT8712
-@@ -733,9 +740,20 @@ config SGI_IP27_RTC
+@@ -734,9 +741,20 @@ config SGI_IP27_RTC
  	  via the file /proc/rtc and its behaviour is set by various ioctls on
  	  /dev/rtc.
  
@@ -1007,7 +1035,7 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/Kconfig linux-2.6.13-
  	---help---
  	  If you say Y here and create a character special file /dev/rtc with
  	  major number 10 and minor number 135 using mknod ("man mknod"), you
-@@ -844,6 +862,30 @@ config TANBAC_TB0219
+@@ -846,6 +864,30 @@ config TANBAC_TB0219
  	tristate "TANBAC TB0219 base board support"
  	depends TANBAC_TB0229
  
@@ -1038,33 +1066,22 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/Kconfig linux-2.6.13-
  
  menu "Ftape, the floppy tape device driver"
  
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/drivers/char/drm/Kconfig	2005-07-18 17:03:55.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig	2005-07-18 17:22:52.000000000 -0700
-@@ -103,3 +103,11 @@ config DRM_VIA
- 	  Choose this option if you have a Via unichrome or compatible video
- 	  chipset. If M is selected the module will be called via.
+diff -Naurp linux-2.6.13-rc3-git4/drivers/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/Kconfig
+--- linux-2.6.13-rc3-git4/drivers/Kconfig	2005-07-18 18:00:40.075674063 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/Kconfig	2005-07-18 18:49:36.231650387 -0700
+@@ -62,4 +62,9 @@ source "drivers/infiniband/Kconfig"
  
-+config DRM_FFB
-+	tristate "Creator/Creator3D"
-+	depends on DRM && SPARC64
-+	help
-+	  Choose this option if you have one of Sun's Creator3D-based graphics
-+	  and frame buffer cards.  Product page at
-+	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
+ source "drivers/sn/Kconfig"
+ 
++if SPARC32 || SPARC64
++  source "drivers/fc4/Kconfig"
++  source "drivers/sbus/char/Kconfig"
++endif
 +
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/sbus/Makefile linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile
---- linux-2.6.13-rc3-git4-gentoo.orig/drivers/sbus/Makefile	2005-07-18 17:03:55.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile	2005-07-18 17:22:52.000000000 -0700
-@@ -6,4 +6,4 @@ ifneq ($(ARCH),m68k)
- obj-y    := sbus.o dvma.o
- endif
- 
--obj-$(CONFIG_SBUSCHAR) += char/
-+obj-y += char/
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/sbus/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/drivers/sbus/char/Kconfig	2005-07-18 17:03:55.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig	2005-07-18 17:22:52.000000000 -0700
+ endmenu
+diff -Naurp linux-2.6.13-rc3-git4/drivers/sbus/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig
+--- linux-2.6.13-rc3-git4/drivers/sbus/char/Kconfig	2005-06-17 12:48:29.000000000 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig	2005-07-18 18:11:59.016760964 -0700
 @@ -13,15 +13,6 @@ config SUN_OPENPROMIO
  
  	  If unsure, say Y.
@@ -1117,9 +1134,18 @@ diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/drivers/sbus/char/Kconfig linux-2.
  
  endmenu
  
-diff -Naurp linux-2.6.13-rc3-git4-gentoo.orig/fs/Kconfig linux-2.6.13-rc3-git4-gentoo/fs/Kconfig
---- linux-2.6.13-rc3-git4-gentoo.orig/fs/Kconfig	2005-07-18 17:03:55.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/fs/Kconfig	2005-07-18 17:22:52.000000000 -0700
+diff -Naurp linux-2.6.13-rc3-git4/drivers/sbus/Makefile linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile
+--- linux-2.6.13-rc3-git4/drivers/sbus/Makefile	2005-06-17 12:48:29.000000000 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile	2005-07-18 18:11:59.016760964 -0700
+@@ -6,4 +6,4 @@ ifneq ($(ARCH),m68k)
+ obj-y    := sbus.o dvma.o
+ endif
+ 
+-obj-$(CONFIG_SBUSCHAR) += char/
++obj-y += char/
+diff -Naurp linux-2.6.13-rc3-git4/fs/Kconfig linux-2.6.13-rc3-git4-gentoo/fs/Kconfig
+--- linux-2.6.13-rc3-git4/fs/Kconfig	2005-07-18 18:00:42.781209426 -0700
++++ linux-2.6.13-rc3-git4-gentoo/fs/Kconfig	2005-07-18 18:11:59.018760619 -0700
 @@ -856,6 +856,20 @@ config RAMFS
  	  To compile this as a module, choose M here: the module will be called
  	  ramfs.
