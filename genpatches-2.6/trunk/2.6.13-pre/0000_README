@@ -56,10 +56,6 @@ Patch:	1361_sparc-kconfig-rework.patch
 From:	eradicator@gentoo.org
 Desc:	SPARC Kconfig reworked to be more similar to x86 layout
 
-Patch:	1364_sparc-ffbh.patch
-From:	Jeremy Huddleston <eradicator@gentoo.org>
-Desc:	Add drivers/char/drm/ffb.h which got deleted in 2.6.11
-
 Patch:	1370_sparc-modpost_stt_reg.patch
 From:	Fabio Massimo Di Nitto <fabbione@fabbione.net>
 Desc:	Correct modpost to work with newer glibc on sparc
