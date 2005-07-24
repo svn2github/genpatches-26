@@ -1,17 +1,6 @@
-diff -Naurp linux-2.6.13-rc3-git4/drivers/char/agp/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/agp/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/agp/Kconfig	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/agp/Kconfig	2005-07-18 18:07:15.762584496 -0700
-@@ -2,6 +2,7 @@ config AGP
- 	tristate "/dev/agpgart (AGP Support)" if !GART_IOMMU
- 	depends on ALPHA || IA64 || PPC || X86
- 	default y if GART_IOMMU
-+	depends on PCI
- 	---help---
- 	  AGP (Accelerated Graphics Port) is a bus system mainly used to
- 	  connect graphics cards to the rest of the system.
 diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig	2005-07-18 18:00:40.268640923 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig	2005-07-18 18:07:15.762584496 -0700
+--- linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig	2005-07-24 14:07:00.674871749 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig	2005-07-24 14:05:19.719578022 -0700
 @@ -25,7 +25,7 @@ config DRM_TDFX
  
  config DRM_GAMMA
@@ -22,8 +11,8 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4
  	  This is the old gamma driver, please tell me if it might actually
  	  work.
 diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/Kconfig	2005-07-18 18:00:40.261642125 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-18 18:07:15.761584668 -0700
+--- linux-2.6.13-rc3-git4/drivers/char/Kconfig	2005-07-24 14:07:00.675871584 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-24 14:05:19.753572397 -0700
 @@ -80,7 +80,7 @@ config SERIAL_NONSTANDARD
  
  config COMPUTONE
@@ -160,8 +149,8 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
  	  This driver is for the DoubleTalk PC, a speech synthesizer
  	  manufactured by RC Systems (<http://www.rcsys.com/>).  It is also
 diff -Naurp linux-2.6.13-rc3-git4/drivers/video/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/video/Kconfig
---- linux-2.6.13-rc3-git4/drivers/video/Kconfig	2005-07-18 18:00:42.713221102 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/video/Kconfig	2005-07-18 18:09:13.128338402 -0700
+--- linux-2.6.13-rc3-git4/drivers/video/Kconfig	2005-07-24 14:07:00.710865792 -0700
++++ linux-2.6.13-rc3-git4-gentoo/drivers/video/Kconfig	2005-07-24 14:16:29.767633762 -0700
 @@ -573,39 +573,6 @@ config BUS_I2C
  	depends on (FB = y) && VISWS
  	default y
@@ -202,27 +191,32 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/video/Kconfig linux-2.6.13-rc3-git4-ge
  config FB_PVR2
  	tristate "NEC PowerVR 2 display support"
  	depends on FB && SH_DREAMCAST
-@@ -1269,6 +1236,39 @@ config FB_FFB
- 	  This is the frame buffer device driver for the Creator, Creator3D,
- 	  and Elite3D graphics boards.
+@@ -1259,15 +1226,38 @@ config FB_SBUS
+ 	help
+ 	  Say Y if you want support for SBUS or UPA based frame buffer device.
  
+-config FB_FFB
+-	bool "Creator/Creator3D/Elite3D support"
+-	depends on FB_SBUS && SPARC64
 +config FB_SUN3
 +	bool "Sun3 framebuffer support"
 +	depends on (FB = y) && (SUN3 || SUN3X) && BROKEN
 +
 +config FB_BW2
 +	bool "BWtwo support"
-+	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on FB_SBUS || FB_SUN3
 +	select FB_CFB_FILLRECT
-+	select FB_CFB_COPYAREA
-+	select FB_CFB_IMAGEBLIT
-+	select FB_SOFT_CURSOR
-+	help
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+ 	select FB_SOFT_CURSOR
+ 	help
+-	  This is the frame buffer device driver for the Creator, Creator3D,
+-	  and Elite3D graphics boards.
 +	  This is the frame buffer device driver for the BWtwo frame buffer.
 +
 +config FB_CG3
 +	bool "CGthree support"
-+	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on FB_SBUS || FB_SUN3
 +	select FB_CFB_COPYAREA
 +	select FB_CFB_IMAGEBLIT
 +	select FB_SOFT_CURSOR
@@ -231,14 +225,30 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/video/Kconfig linux-2.6.13-rc3-git4-ge
 +
 +config FB_CG6
 +	bool "CGsix (GX,TurboGX) support"
-+	depends on (FB = y) && ((SPARC32 || SPARC64) && FB_SBUS || (SUN3 || SUN3X) && FB_SUN3)
++	depends on FB_SBUS || FB_SUN3
 +	select FB_CFB_COPYAREA
 +	select FB_CFB_IMAGEBLIT
 +	select FB_SOFT_CURSOR
 +	help
 +	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
 +	  frame buffer.
-+
+ 
  config FB_TCX
  	bool "TCX (SS4/SS5 only) support"
- 	depends on FB_SBUS
+@@ -1313,6 +1303,16 @@ config FB_LEO
+ 	  This is the frame buffer device driver for the SBUS-based Sun ZX
+ 	  (leo) frame buffer cards.
+ 
++config FB_FFB
++	bool "Creator/Creator3D/Elite3D support"
++	depends on FB_SBUS && SPARC64
++	select FB_CFB_COPYAREA
++	select FB_CFB_IMAGEBLIT
++	select FB_SOFT_CURSOR
++	help
++	  This is the frame buffer device driver for the Creator, Creator3D,
++	  and Elite3D graphics boards.
++
+ config FB_PCI
+ 	bool "PCI framebuffers"
+ 	depends on (FB = y) && PCI && (SPARC64 || SPARC32)
