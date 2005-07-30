@@ -96,6 +96,22 @@ Patch:	2100_early-vlan.patch
 From:	http://bugs.gentoo.org/99479
 Desc:	Fix bringing up of VLANs
 
+Patch:	2105_ipsec-overflow.patch
+From:	stable queue
+Desc:	Fix possible IPSEC policy overflow
+
+Patch:	2110_memory-nat-corruption.patch
+From:	stable queue
+Desc:	Fix possible NAT memory corruption
+
+Patch:	2115_ipv6-deadlock.patch
+From:	stable queue
+Desc:	Fix deadlock in ip6_queue
+
+Patch:	2120_conntrack-unload-crash.patch
+From:	stable queue
+Desc:	Fixes a crash when unloading ip_conntrack
+
 Patch:	2305_sata-bridge-lockup.patch
 From:	Upstream 2.6.13
 Desc:	Fix lockup on PATA->SATA bridges with certain drives
