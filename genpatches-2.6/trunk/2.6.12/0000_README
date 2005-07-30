@@ -80,6 +80,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1900_gconfig-crash.patch
+From:	http://bugs.gentoo.org/98410
+Desc:	Fix gconfig crash
+
 Patch:	2100_early-vlan.patch
 From:	http://bugs.gentoo.org/99479
 Desc:	Fix bringing up of VLANs
