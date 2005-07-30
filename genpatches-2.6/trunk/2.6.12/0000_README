@@ -56,6 +56,10 @@ Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
 
+Patch:	1305_k8-powernow-oops.patch
+From:	http://bugs.gentoo.org/100132
+Desc:	Fix powernow-related oops on dual-core AMD64 systems
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
