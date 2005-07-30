@@ -1,0 +1,70 @@
+manfred@colorfullife.com
+[PATCH] forcedeth: Add support for new device id
+[PATCH] forcedeth: Add support for new device id
+
+This is a multi-part message in MIME format.
+
+---
+commit f49d16ef2d6f008119d4ee2c895781fb229bad68
+tree 6c922b3b6d49f17563f0fd1f7ee67711f8e64813
+parent 8f767fc83cf4e4f1241b5a0b949b54088d075411
+author Manfred Spraul <manfred@colorfullife.com> Sun, 26 Jun 2005 11:04:52 +0200
+committer Jeff Garzik <jgarzik@pobox.com> Mon, 27 Jun 2005 01:12:29 -0400
+
+ drivers/net/forcedeth.c |   17 ++++++++++++++++-
+ include/linux/pci_ids.h |    2 ++
+ 2 files changed, 18 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/net/forcedeth.c b/drivers/net/forcedeth.c
+--- a/drivers/net/forcedeth.c
++++ b/drivers/net/forcedeth.c
+@@ -84,6 +84,7 @@
+  *	0.32: 16 Apr 2005: RX_ERROR4 handling added.
+  *	0.33: 16 May 2005: Support for MCP51 added.
+  *	0.34: 18 Jun 2005: Add DEV_NEED_LINKTIMER to all nForce nics.
++ *	0.35: 26 Jun 2005: Support for MCP55 added.
+  *
+  * Known bugs:
+  * We suspect that on some hardware no TX done interrupts are generated.
+@@ -95,7 +96,7 @@
+  * DEV_NEED_TIMERIRQ will not harm you on sane hardware, only generating a few
+  * superfluous timer interrupts from the nic.
+  */
+-#define FORCEDETH_VERSION		"0.34"
++#define FORCEDETH_VERSION		"0.35"
+ #define DRV_NAME			"forcedeth"
+ 
+ #include <linux/module.h>
+@@ -2284,6 +2285,20 @@ static struct pci_device_id pci_tbl[] = 
+ 		.subdevice = PCI_ANY_ID,
+ 		.driver_data = DEV_NEED_LASTPACKET1|DEV_IRQMASK_2|DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER,
+ 	},
++	{	/* MCP55 Ethernet Controller */
++		.vendor = PCI_VENDOR_ID_NVIDIA,
++		.device = PCI_DEVICE_ID_NVIDIA_NVENET_14,
++		.subvendor = PCI_ANY_ID,
++		.subdevice = PCI_ANY_ID,
++		.driver_data = DEV_NEED_LASTPACKET1|DEV_IRQMASK_2|DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER,
++	},
++	{	/* MCP55 Ethernet Controller */
++		.vendor = PCI_VENDOR_ID_NVIDIA,
++		.device = PCI_DEVICE_ID_NVIDIA_NVENET_15,
++		.subvendor = PCI_ANY_ID,
++		.subdevice = PCI_ANY_ID,
++		.driver_data = DEV_NEED_LASTPACKET1|DEV_IRQMASK_2|DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER,
++	},
+ 	{0,},
+ };
+ 
+diff --git a/include/linux/pci_ids.h b/include/linux/pci_ids.h
+--- a/include/linux/pci_ids.h
++++ b/include/linux/pci_ids.h
+@@ -1284,6 +1284,8 @@
+ #define PCI_DEVICE_ID_NVIDIA_GEFORCE_FX_GO5700_2    0x0348
+ #define PCI_DEVICE_ID_NVIDIA_QUADRO_FX_GO1000       0x034C
+ #define PCI_DEVICE_ID_NVIDIA_QUADRO_FX_1100         0x034E
++#define PCI_DEVICE_ID_NVIDIA_NVENET_14              0x0372
++#define PCI_DEVICE_ID_NVIDIA_NVENET_15              0x0373
+ 
+ #define PCI_VENDOR_ID_IMS		0x10e0
+ #define PCI_DEVICE_ID_IMS_8849		0x8849

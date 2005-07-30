@@ -1,0 +1,26 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Fri, 22 Jul 2005 19:51:03 +0000 (-0700)
+Subject: [NETFILTER]: Wait until all references to ip_conntrack_untracked are dropped on unload
+X-Git-Tag: v2.6.13-rc4
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=21f930e4abdcb9649f26e5b959c14dddee4e600b
+
+  [NETFILTER]: Wait until all references to ip_conntrack_untracked are dropped on unload
+  
+  Fixes a crash when unloading ip_conntrack.
+  
+  Signed-off-by: Patrick McHardy <kaber@trash.net>
+  Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/net/ipv4/netfilter/ip_conntrack_core.c
++++ b/net/ipv4/netfilter/ip_conntrack_core.c
+@@ -1107,6 +1107,9 @@ void ip_conntrack_cleanup(void)
+ 		schedule();
+ 		goto i_see_dead_people;
+ 	}
++	/* wait until all references to ip_conntrack_untracked are dropped */
++	while (atomic_read(&ip_conntrack_untracked.ct_general.use) > 1)
++		schedule();
+ 
+ 	kmem_cache_destroy(ip_conntrack_cachep);
+ 	kmem_cache_destroy(ip_conntrack_expect_cachep);

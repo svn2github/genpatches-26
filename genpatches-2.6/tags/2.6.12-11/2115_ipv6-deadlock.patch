@@ -1,0 +1,26 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Fri, 22 Jul 2005 19:49:30 +0000 (-0700)
+Subject: [NETFILTER]: Fix deadlock in ip6_queue
+X-Git-Tag: v2.6.13-rc4
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=4c1217deeb148ff8ab838ba4f1875d0f52dea343
+
+  [NETFILTER]: Fix deadlock in ip6_queue
+  
+  Already fixed in ip_queue, ip6_queue was missed.
+  
+  Signed-off-by: Patrick McHardy <kaber@trash.net>
+  Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/net/ipv6/netfilter/ip6_queue.c
++++ b/net/ipv6/netfilter/ip6_queue.c
+@@ -76,7 +76,9 @@ static DECLARE_MUTEX(ipqnl_sem);
+ static void
+ ipq_issue_verdict(struct ipq_queue_entry *entry, int verdict)
+ {
++	local_bh_disable();
+ 	nf_reinject(entry->skb, entry->info, verdict);
++	local_bh_enable();
+ 	kfree(entry);
+ }
+ 
