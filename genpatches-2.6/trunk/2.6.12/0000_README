@@ -124,6 +124,10 @@ Patch:	2315_ide-no-lba.patch
 From:	Upstream 2.6.13
 Desc:	Fix ide-disk inability to handle LBA only devices. Reqd for it8212.
 
+Patch:	2320_qla2xxx-failure.patch
+From:	stable queue
+Desc:	Fix NULL dereference on qla2xxx port failure
+
 Patch:	2700_irqpoll.patch
 From:	Upstream 2.6.13
 Desc:	Add irqpoll boot option for buggy BIOS workaround
