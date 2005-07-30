@@ -100,6 +100,10 @@ Patch:	4705_squashfs-2.2.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
+Patch:	4900_speakup-20050730-gregkh.patch
+From:	gregkh's driver tree
+Desc:	Provides console speech to visually-impaired users
+
 Patch:	4905_alpha-sysctl-uac.patch
 From:	
 Desc:	enable control of the unaligned access control policy from sysctl
