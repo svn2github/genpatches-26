@@ -828,16 +828,6 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	      u16 c, int is_fg)
  {
  	int depth = fb_get_color_depth(&info->var);
-@@ -276,7 +277,8 @@ static void fb_flashcursor(void *private
- 
- 	if (!vc || !CON_IS_VISIBLE(vc) ||
- 	    fbcon_is_inactive(vc, info) ||
-- 	    registered_fb[con2fb_map[vc->vc_num]] != info)
-+ 	    registered_fb[con2fb_map[vc->vc_num]] != info ||
-+	    vc_cons[ops->currcon].d->vc_deccm != 1)
- 		return;
- 	acquire_console_sem();
- 	p = &fb_display[vc->vc_num];
 @@ -285,6 +287,7 @@ static void fb_flashcursor(void *private
  		CM_ERASE : CM_DRAW;
  	ops->cursor(vc, info, p, mode, softback_lines, get_color(vc, info, c, 1),
@@ -1121,131 +1111,6 @@ diff --git a/drivers/video/fbcmap.c b/drivers/video/fbcmap.c
  
  #include <asm/uaccess.h>
  
-@@ -212,7 +213,7 @@ int fb_cmap_to_user(struct fb_cmap *from
- 
- int fb_set_cmap(struct fb_cmap *cmap, struct fb_info *info)
- {
--	int i, start;
-+	int i, start, rc = 0;
- 	u16 *red, *green, *blue, *transp;
- 	u_int hred, hgreen, hblue, htransp = 0xffff;
- 
-@@ -225,75 +226,55 @@ int fb_set_cmap(struct fb_cmap *cmap, st
- 	if (start < 0 || (!info->fbops->fb_setcolreg &&
- 			  !info->fbops->fb_setcmap))
- 		return -EINVAL;
--	if (info->fbops->fb_setcmap)
--		return info->fbops->fb_setcmap(cmap, info);
--	for (i = 0; i < cmap->len; i++) {
--		hred = *red++;
--		hgreen = *green++;
--		hblue = *blue++;
--		if (transp)
--			htransp = *transp++;
--		if (info->fbops->fb_setcolreg(start++,
--					      hred, hgreen, hblue, htransp,
--					      info))
--			break;
-+	if (info->fbops->fb_setcmap) {
-+		rc = info->fbops->fb_setcmap(cmap, info);
-+	} else {
-+		for (i = 0; i < cmap->len; i++) {
-+			hred = *red++;
-+			hgreen = *green++;
-+			hblue = *blue++;
-+			if (transp)
-+				htransp = *transp++;
-+			if (info->fbops->fb_setcolreg(start++,
-+						      hred, hgreen, hblue, 
-+						      htransp, info))
-+				break;
-+		}
- 	}
--	return 0;
-+	if (rc == 0) {
-+		fb_copy_cmap(cmap, &info->cmap);
-+		if (fbsplash_active(info, vc_cons[fg_console].d) &&
-+		    info->fix.visual == FB_VISUAL_DIRECTCOLOR)
-+			fbsplash_fix_pseudo_pal(info, vc_cons[fg_console].d);
-+	}
-+		
-+	return rc;
- }
- 
- int fb_set_user_cmap(struct fb_cmap_user *cmap, struct fb_info *info)
- {
--	int i, start;
--	u16 __user *red, *green, *blue, *transp;
--	u_int hred, hgreen, hblue, htransp = 0xffff;
--
--	red = cmap->red;
--	green = cmap->green;
--	blue = cmap->blue;
--	transp = cmap->transp;
--	start = cmap->start;
--
--	if (start < 0 || (!info->fbops->fb_setcolreg &&
--			  !info->fbops->fb_setcmap))
-+	int rc, size = cmap->len * sizeof(u16);
-+	struct fb_cmap umap;
-+	
-+	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
-+			        !info->fbops->fb_setcmap))
- 		return -EINVAL;
- 
--	/* If we can batch, do it */
--	if (info->fbops->fb_setcmap && cmap->len > 1) {
--		struct fb_cmap umap;
--		int size = cmap->len * sizeof(u16);
--		int rc;
--
--		memset(&umap, 0, sizeof(struct fb_cmap));
--		rc = fb_alloc_cmap(&umap, cmap->len, transp != NULL);
--		if (rc)
--			return rc;
--		if (copy_from_user(umap.red, red, size) ||
--		    copy_from_user(umap.green, green, size) ||
--		    copy_from_user(umap.blue, blue, size) ||
--		    (transp && copy_from_user(umap.transp, transp, size))) {
--			rc = -EFAULT;
--		}
--		umap.start = start;
--		if (rc == 0)
--			rc = info->fbops->fb_setcmap(&umap, info);
--		fb_dealloc_cmap(&umap);
-+	memset(&umap, 0, sizeof(struct fb_cmap));
-+	rc = fb_alloc_cmap(&umap, cmap->len, cmap->transp != NULL);
-+	if (rc)
- 		return rc;
-+	if (copy_from_user(umap.red, cmap->red, size) ||
-+	    copy_from_user(umap.green, cmap->green, size) ||
-+	    copy_from_user(umap.blue, cmap->blue, size) ||
-+	    (cmap->transp && copy_from_user(umap.transp, cmap->transp, size))) {
-+		fb_dealloc_cmap(&umap);
-+		return -EFAULT;
- 	}
--
--	for (i = 0; i < cmap->len; i++, red++, blue++, green++) {
--		if (get_user(hred, red) ||
--		    get_user(hgreen, green) ||
--		    get_user(hblue, blue) ||
--		    (transp && get_user(htransp, transp)))
--			return -EFAULT;
--		if (info->fbops->fb_setcolreg(start++,
--					      hred, hgreen, hblue, htransp,
--					      info))
--			return 0;
--		if (transp)
--			transp++;
--	}
--	return 0;
-+	umap.start = cmap->start;
-+	rc = fb_set_cmap(&umap, info);
-+	fb_dealloc_cmap(&umap);
-+	return rc;
- }
- 
- /**
 diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
 new file mode 100644
 --- /dev/null
@@ -1824,10 +1689,10 @@ diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
 @@ -137,6 +137,7 @@ enum
- 	KERN_BOOTLOADER_TYPE=67, /* int: boot loader type */
  	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
  	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
-+	KERN_FBSPLASH=70,	/* string: path to fbsplash helper */
+ 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
++	KERN_FBSPLASH=71,	/* string: path to fbsplash helper */
  };
  
  

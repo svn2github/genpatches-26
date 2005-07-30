@@ -1,6 +1,6 @@
-diff -urNpX dontdiff linux-2.6.13-rc3/arch/alpha/Kconfig linux-dsd/arch/alpha/Kconfig
---- linux-2.6.13-rc3/arch/alpha/Kconfig	2005-07-13 14:24:32.000000000 +0100
-+++ linux-dsd/arch/alpha/Kconfig	2005-07-13 14:27:30.000000000 +0100
+diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/Kconfig linux-dsd/arch/alpha/Kconfig
+--- linux-2.6.13-rc4-gentoo/arch/alpha/Kconfig	2005-07-30 14:25:13.000000000 +0100
++++ linux-dsd/arch/alpha/Kconfig	2005-07-30 17:38:12.000000000 +0100
 @@ -564,6 +564,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
@@ -34,9 +34,9 @@ diff -urNpX dontdiff linux-2.6.13-rc3/arch/alpha/Kconfig linux-dsd/arch/alpha/Kc
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-diff -urNpX dontdiff linux-2.6.13-rc3/arch/alpha/kernel/traps.c linux-dsd/arch/alpha/kernel/traps.c
---- linux-2.6.13-rc3/arch/alpha/kernel/traps.c	2005-07-13 14:24:32.000000000 +0100
-+++ linux-dsd/arch/alpha/kernel/traps.c	2005-07-13 14:27:30.000000000 +0100
+diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd/arch/alpha/kernel/traps.c
+--- linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c	2005-07-30 14:25:13.000000000 +0100
++++ linux-dsd/arch/alpha/kernel/traps.c	2005-07-30 17:38:12.000000000 +0100
 @@ -15,6 +15,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -121,15 +121,15 @@ diff -urNpX dontdiff linux-2.6.13-rc3/arch/alpha/kernel/traps.c linux-dsd/arch/a
  }
 +
 +__initcall(init_uac_sysctl);
-diff -urNpX dontdiff linux-2.6.13-rc3/include/linux/sysctl.h linux-dsd/include/linux/sysctl.h
---- linux-2.6.13-rc3/include/linux/sysctl.h	2005-07-13 14:26:24.000000000 +0100
-+++ linux-dsd/include/linux/sysctl.h	2005-07-13 14:28:12.000000000 +0100
+diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/include/linux/sysctl.h linux-dsd/include/linux/sysctl.h
+--- linux-2.6.13-rc4-gentoo/include/linux/sysctl.h	2005-07-30 17:15:44.000000000 +0100
++++ linux-dsd/include/linux/sysctl.h	2005-07-30 17:39:01.000000000 +0100
 @@ -147,6 +147,9 @@ enum
- 	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
  	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
- 	KERN_FBSPLASH=70,	/* string: path to fbsplash helper */
+ 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
+ 	KERN_FBSPLASH=71,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=70,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=72,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
@@ -152,20 +152,20 @@ diff -urNpX dontdiff linux-2.6.13-rc3/include/linux/sysctl.h linux-dsd/include/l
  /* /proc/sys/bus/isa */
  enum
  {
-diff -urNpX dontdiff linux-2.6.13-rc3/kernel/sysctl.c linux-dsd/kernel/sysctl.c
---- linux-2.6.13-rc3/kernel/sysctl.c	2005-07-13 14:26:24.000000000 +0100
-+++ linux-dsd/kernel/sysctl.c	2005-07-13 14:28:44.000000000 +0100
-@@ -155,6 +155,9 @@ extern ctl_table random_table[];
- #ifdef CONFIG_UNIX98_PTYS
- extern ctl_table pty_table[];
+diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/kernel/sysctl.c linux-dsd/kernel/sysctl.c
+--- linux-2.6.13-rc4-gentoo/kernel/sysctl.c	2005-07-30 17:15:44.000000000 +0100
++++ linux-dsd/kernel/sysctl.c	2005-07-30 17:38:12.000000000 +0100
+@@ -157,6 +157,9 @@ extern ctl_table inotify_table[];
+ #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
+ int sysctl_legacy_va_layout;
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +extern ctl_table uac_table[];
 +#endif
  
- #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
- int sysctl_legacy_va_layout;
-@@ -227,7 +230,14 @@ static ctl_table root_table[] = {
+ /* /proc declarations: */
+ 
+@@ -225,7 +228,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
