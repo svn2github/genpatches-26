@@ -1,6 +1,6 @@
-diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig
---- linux-2.6.13-rc3-git4/arch/sparc/Kconfig	2005-07-18 18:00:39.812719000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig	2005-07-24 13:35:15.368325289 -0700
+diff -Naurp linux-2.6.13-rc4-git2/arch/sparc/Kconfig linux-2.6.13-rc4-git2-gentoo/arch/sparc/Kconfig
+--- linux-2.6.13-rc4-git2/arch/sparc/Kconfig	2005-07-30 19:45:56.026773134 -0700
++++ linux-2.6.13-rc4-git2-gentoo/arch/sparc/Kconfig	2005-07-30 19:54:22.326031025 -0700
 @@ -5,15 +5,25 @@
  
  mainmenu "Linux/SPARC Kernel Configuration"
@@ -207,10 +207,10 @@ diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gento
 +source "drivers/Kconfig"
 +
 +menu "Power Management Support"
-+
-+source kernel/power/Kconfig
  
 -config SBUSCHAR
++source kernel/power/Kconfig
++
 +config GENERIC_CALIBRATE_DELAY
  	bool
  	default y
@@ -328,13 +328,13 @@ diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gento
 +	  Then your kernel will automatically call out to a user mode "policy
 +	  agent" (/sbin/hotplug) to load modules and set up software needed
 +	  to use devices as you hotplug them.
- 
--	  To compile the /proc/openprom support as a module, choose M here: the
--	  module will be called openpromfs.
++
 +source "drivers/pcmcia/Kconfig"
 +
 +source "drivers/pci/hotplug/Kconfig"
-+
+ 
+-	  To compile the /proc/openprom support as a module, choose M here: the
+-	  module will be called openpromfs.
 +endmenu
  
 -	  Only choose N if you know in advance that you will not need to modify
@@ -417,32 +417,9 @@ diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig linux-2.6.13-rc3-git4-gento
  source "fs/Kconfig"
  
  source "arch/sparc/Kconfig.debug"
-@@ -333,3 +244,4 @@ source "security/Kconfig"
- source "crypto/Kconfig"
- 
- source "lib/Kconfig"
-+
-diff -Naurp linux-2.6.13-rc3-git4/arch/sparc/Kconfig.debug linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig.debug
---- linux-2.6.13-rc3-git4/arch/sparc/Kconfig.debug	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/arch/sparc/Kconfig.debug	1969-12-31 16:00:00.000000000 -0800
-@@ -1,14 +0,0 @@
--menu "Kernel hacking"
--
--source "lib/Kconfig.debug"
--
--config DEBUG_STACK_USAGE
--	bool "Enable stack utilization instrumentation"
--	depends on DEBUG_KERNEL
--	help
--	  Enables the display of the minimum amount of free stack which each
--	  task has ever had available in the sysrq-T and sysrq-P debug output.
--
--	  This option will slow down process creation somewhat.
--
--endmenu
-diff -Naurp linux-2.6.13-rc3-git4/arch/sparc64/Kconfig linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig
---- linux-2.6.13-rc3-git4/arch/sparc64/Kconfig	2005-07-18 18:00:39.839714000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/arch/sparc64/Kconfig	2005-07-24 13:35:15.447312335 -0700
+diff -Naurp linux-2.6.13-rc4-git2/arch/sparc64/Kconfig linux-2.6.13-rc4-git2-gentoo/arch/sparc64/Kconfig
+--- linux-2.6.13-rc4-git2/arch/sparc64/Kconfig	2005-07-30 19:45:56.029772637 -0700
++++ linux-2.6.13-rc4-git2-gentoo/arch/sparc64/Kconfig	2005-07-30 19:54:22.349027257 -0700
 @@ -5,6 +5,17 @@
  
  mainmenu "Linux/UltraSPARC Kernel Configuration"
@@ -981,9 +958,9 @@ diff -Naurp linux-2.6.13-rc3-git4/arch/sparc64/Kconfig linux-2.6.13-rc3-git4-gen
  source "arch/sparc64/oprofile/Kconfig"
  
  source "arch/sparc64/Kconfig.debug"
-diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig	2005-07-18 18:11:44.574247000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/drm/Kconfig	2005-07-24 13:40:23.591743253 -0700
+diff -Naurp linux-2.6.13-rc4-git2/drivers/char/drm/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/char/drm/Kconfig
+--- linux-2.6.13-rc4-git2/drivers/char/drm/Kconfig	2005-07-30 19:46:00.126092873 -0700
++++ linux-2.6.13-rc4-git2-gentoo/drivers/char/drm/Kconfig	2005-07-30 19:54:22.350027093 -0700
 @@ -6,15 +6,15 @@
  #
  config DRM
@@ -1003,6 +980,15 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4
  
  config DRM_TDFX
  	tristate "3dfx Banshee/Voodoo3+"
+@@ -25,7 +25,7 @@ config DRM_TDFX
+ 
+ config DRM_GAMMA
+ 	tristate "3dlabs GMX 2000"
+-	depends on DRM && BROKEN
++	depends on DRM && PCI && BROKEN
+ 	help
+ 	  This is the old gamma driver, please tell me if it might actually
+ 	  work.
 @@ -103,3 +103,11 @@ config DRM_VIA
  	  Choose this option if you have a Via unichrome or compatible video
  	  chipset. If M is selected the module will be called via.
@@ -1015,9 +1001,9 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/drm/Kconfig linux-2.6.13-rc3-git4
 +	  and frame buffer cards.  Product page at
 +	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
 +
-diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/Kconfig	2005-07-18 18:11:44.575247000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-24 13:35:15.608285936 -0700
+diff -Naurp linux-2.6.13-rc4-git2/drivers/char/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/char/Kconfig
+--- linux-2.6.13-rc4-git2/drivers/char/Kconfig	2005-07-30 19:46:00.115094698 -0700
++++ linux-2.6.13-rc4-git2-gentoo/drivers/char/Kconfig	2005-07-30 19:57:05.398307358 -0700
 @@ -345,6 +345,13 @@ config AU1000_SERIAL_CONSOLE
  	  If you have an Alchemy AU1000 processor (MIPS based) and you want
  	  to use a console on a serial port, say Y.  Otherwise, say N.
@@ -1032,7 +1018,7 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
  config QTRONIX_KEYBOARD
  	bool "Enable Qtronix 990P Keyboard Support"
  	depends on IT8712
-@@ -734,9 +741,20 @@ config SGI_IP27_RTC
+@@ -733,9 +740,20 @@ config SGI_IP27_RTC
  	  via the file /proc/rtc and its behaviour is set by various ioctls on
  	  /dev/rtc.
  
@@ -1049,12 +1035,12 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
 +
  config GEN_RTC
  	tristate "Generic /dev/rtc emulation"
--	depends on RTC!=y && !IA64 && !ARM
-+	depends on RTC!=y && !IA64 && !ARM && SUN_MOSTEK_RTC!=y
+-	depends on RTC!=y && !IA64 && !ARM && !PPC64
++	depends on RTC!=y && !IA64 && !ARM && !PPC64 && SUN_MOSTEK_RTC!=y
  	---help---
  	  If you say Y here and create a character special file /dev/rtc with
  	  major number 10 and minor number 135 using mknod ("man mknod"), you
-@@ -846,6 +864,30 @@ config TANBAC_TB0219
+@@ -844,6 +862,30 @@ config TANBAC_TB0219
  	tristate "TANBAC TB0219 base board support"
  	depends TANBAC_TB0229
  
@@ -1085,9 +1071,9 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
  
  menu "Ftape, the floppy tape device driver"
  
-diff -Naurp linux-2.6.13-rc3-git4/drivers/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/Kconfig
---- linux-2.6.13-rc3-git4/drivers/Kconfig	2005-07-18 18:00:40.075674000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/Kconfig	2005-07-24 13:35:15.640280688 -0700
+diff -Naurp linux-2.6.13-rc4-git2/drivers/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/Kconfig
+--- linux-2.6.13-rc4-git2/drivers/Kconfig	2005-07-30 19:45:58.456369955 -0700
++++ linux-2.6.13-rc4-git2-gentoo/drivers/Kconfig	2005-07-30 19:54:22.352026766 -0700
 @@ -62,4 +62,9 @@ source "drivers/infiniband/Kconfig"
  
  source "drivers/sn/Kconfig"
@@ -1098,9 +1084,9 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/Kconfig linux-2.6.13-rc3-git4-gentoo/d
 +endif
 +
  endmenu
-diff -Naurp linux-2.6.13-rc3-git4/drivers/sbus/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig
---- linux-2.6.13-rc3-git4/drivers/sbus/char/Kconfig	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/char/Kconfig	2005-07-24 13:35:15.709269374 -0700
+diff -Naurp linux-2.6.13-rc4-git2/drivers/sbus/char/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/sbus/char/Kconfig
+--- linux-2.6.13-rc4-git2/drivers/sbus/char/Kconfig	2005-07-30 19:46:09.698504394 -0700
++++ linux-2.6.13-rc4-git2-gentoo/drivers/sbus/char/Kconfig	2005-07-30 19:57:50.205963155 -0700
 @@ -13,15 +13,6 @@ config SUN_OPENPROMIO
  
  	  If unsure, say Y.
@@ -1117,54 +1103,30 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/sbus/char/Kconfig linux-2.6.13-rc3-git
  config OBP_FLASH
  	tristate "OBP Flash Device support"
  	depends on SPARC64
-@@ -69,25 +60,16 @@ config SUN_JSFLASH
+@@ -69,11 +60,5 @@ config SUN_JSFLASH
  	  If you say Y here, you will be able to boot from your JavaStation's
  	  Flash memory.
  
 -# XXX Why don't we do "source drivers/char/Config.in" somewhere?
 -# no shit
--config APM_RTC_IS_GMT
--	bool
--	depends on EXPERIMENTAL && SPARC32 && PCI
--	default y
--	help
--	  Say Y here if your RTC (Real Time Clock a.k.a. hardware clock)
--	  stores the time in GMT (Greenwich Mean Time). Say N if your RTC
--	  stores localtime.
--
--	  It is in fact recommended to store GMT in your RTC, because then you
--	  don't have to worry about daylight savings time changes. The only
--	  reason not to use GMT in your RTC is if you also run a broken OS
--	  that doesn't understand GMT.
--
 -config RTC
 -	tristate "PC-style Real Time Clock Support"
 -	depends on PCI && EXPERIMENTAL && SPARC32
-+config BBC_I2C
-+	tristate "UltraSPARC-III bootbus i2c controller driver"
-+	depends on SPARC64 && PCI
-+	help
-+	  The BBC devices on the UltraSPARC III have two I2C controllers.  The
-+	  first I2C controller connects mainly to configuration PROMs (NVRAM,
-+	  CPU configuration, DIMM types, etc.).  The second I2C controller
-+	  connects to environmental control devices such as fans and
-+	  temperature sensors.  The second controller also connects to the
-+	  smartcard reader, if present.  Say Y to enable support for these.
- 
+-
  endmenu
  
-diff -Naurp linux-2.6.13-rc3-git4/drivers/sbus/Makefile linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile
---- linux-2.6.13-rc3-git4/drivers/sbus/Makefile	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/sbus/Makefile	2005-07-24 13:35:15.808253141 -0700
+diff -Naurp linux-2.6.13-rc4-git2/drivers/sbus/Makefile linux-2.6.13-rc4-git2-gentoo/drivers/sbus/Makefile
+--- linux-2.6.13-rc4-git2/drivers/sbus/Makefile	2005-06-17 12:48:29.000000000 -0700
++++ linux-2.6.13-rc4-git2-gentoo/drivers/sbus/Makefile	2005-07-30 19:54:22.354026438 -0700
 @@ -6,4 +6,4 @@ ifneq ($(ARCH),m68k)
  obj-y    := sbus.o dvma.o
  endif
  
 -obj-$(CONFIG_SBUSCHAR) += char/
 +obj-y += char/
-diff -Naurp linux-2.6.13-rc3-git4/fs/Kconfig linux-2.6.13-rc3-git4-gentoo/fs/Kconfig
---- linux-2.6.13-rc3-git4/fs/Kconfig	2005-07-18 18:00:42.781209000 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/fs/Kconfig	2005-07-24 13:35:15.883240843 -0700
+diff -Naurp linux-2.6.13-rc4-git2/fs/Kconfig linux-2.6.13-rc4-git2-gentoo/fs/Kconfig
+--- linux-2.6.13-rc4-git2/fs/Kconfig	2005-07-30 19:46:15.724504429 -0700
++++ linux-2.6.13-rc4-git2-gentoo/fs/Kconfig	2005-07-30 19:54:22.356026110 -0700
 @@ -856,6 +856,20 @@ config RAMFS
  	  To compile this as a module, choose M here: the module will be called
  	  ramfs.
