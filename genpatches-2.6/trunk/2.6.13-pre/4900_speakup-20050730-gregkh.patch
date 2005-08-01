@@ -8793,18 +8793,6 @@ unchanged:
  source "sound/Kconfig"
  
 unchanged:
---- gregkh-2.6.orig/arch/sparc64/Kconfig	2005-07-27 12:53:43.000000000 -0700
-+++ gregkh-2.6/arch/sparc64/Kconfig	2005-07-27 13:02:57.000000000 -0700
-@@ -655,6 +655,8 @@
- 
- source "drivers/media/Kconfig"
- 
-+source "drivers/char/speakup/Kconfig"
-+
- source "sound/Kconfig"
- 
- source "drivers/usb/Kconfig"
-unchanged:
 --- gregkh-2.6.orig/drivers/char/consolemap.c	2005-07-27 12:53:43.000000000 -0700
 +++ gregkh-2.6/drivers/char/consolemap.c	2005-07-27 13:02:57.000000000 -0700
 @@ -670,3 +670,4 @@
