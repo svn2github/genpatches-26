@@ -84,6 +84,10 @@ Patch:	4320_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
+Patch:	4340_sata-nv-mcp5x.patch
+From:	libata-dev tree
+Desc:	Support MCP5x nvidia SATA controllers
+
 Patch:	4355_promise-tx4200.patch
 From:	dsd@gentoo.org
 Desc:	Support promise TX4200 hardware
