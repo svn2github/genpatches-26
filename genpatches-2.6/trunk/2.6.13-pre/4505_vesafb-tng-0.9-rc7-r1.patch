@@ -1,6 +1,69 @@
-diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
---- a/Documentation/fb/vesafb.txt
-+++ b/Documentation/fb/vesafb.txt
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/arch/i386/boot/video.S linux-dsd/arch/i386/boot/video.S
+--- linux-2.6.13-rc5-gentoo/arch/i386/boot/video.S	2005-06-17 20:48:29.000000000 +0100
++++ linux-dsd/arch/i386/boot/video.S	2005-08-02 13:38:36.000000000 +0100
+@@ -164,10 +164,12 @@ basret:	ret
+ # parameters in the default 80x25 mode -- these are set directly,
+ # because some very obscure BIOSes supply insane values.
+ mode_params:
++#ifdef CONFIG_FB_VESA_STD
+ #ifdef CONFIG_VIDEO_SELECT
+ 	cmpb	$0, graphic_mode
+ 	jnz	mopar_gr
+ #endif
++#endif
+ 	movb	$0x03, %ah			# Read cursor position
+ 	xorb	%bh, %bh
+ 	int	$0x10
+@@ -200,6 +202,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES
+ 	ret
+ 
+ #ifdef CONFIG_VIDEO_SELECT
++#ifdef CONFIG_FB_VESA_STD
+ # Fetching of VESA frame buffer parameters
+ mopar_gr:
+ 	leaw	modelist+1024, %di
+@@ -278,6 +281,7 @@ dac_done:
+ 	movw	%es, %fs:(PARAM_VESAPM_SEG)
+ 	movw	%di, %fs:(PARAM_VESAPM_OFF)
+ no_pm:	ret
++#endif
+ 
+ # The video mode menu
+ mode_menu:
+@@ -492,10 +496,12 @@ mode_set:
+ 	
+ 	cmpb	$VIDEO_FIRST_V7>>8, %ah
+ 	jz	setv7
+-	
++
++#ifdef CONFIG_FB_VESA_STD
+ 	cmpb	$VIDEO_FIRST_VESA>>8, %ah
+ 	jnc	check_vesa
+-	
++#endif	
++
+ 	orb	%ah, %ah
+ 	jz	setmenu
+ 	
+@@ -567,6 +573,7 @@ setr1:	lodsw
+ 	movw	-4(%si), %ax			# Fetch mode ID
+ 	jmp	_m_s
+ 
++#ifdef CONFIG_FB_VESA_STD
+ check_vesa:
+ 	leaw	modelist+1024, %di
+ 	subb	$VIDEO_FIRST_VESA>>8, %bh
+@@ -600,6 +607,7 @@ check_vesa:
+ 	ret
+ 
+ _setbad:	jmp	setbad          	# Ugly...
++#endif
+ 
+ # Recalculate vertical display end registers -- this fixes various
+ # inconsistencies of extended modes on many adapters. Called when
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/Documentation/fb/vesafb.txt linux-dsd/Documentation/fb/vesafb.txt
+--- linux-2.6.13-rc5-gentoo/Documentation/fb/vesafb.txt	2005-08-02 13:32:01.000000000 +0100
++++ linux-dsd/Documentation/fb/vesafb.txt	2005-08-02 13:43:06.000000000 +0100
 @@ -2,16 +2,18 @@
  What is vesafb?
  ===============
@@ -100,13 +163,13 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
  X11
  ===
  
-@@ -86,65 +99,73 @@ It depends on X-Server and graphics boar
+@@ -86,62 +99,67 @@ It depends on X-Server and graphics boar
  
  The X-Server must restore the video mode correctly, else you end up
  with a broken console (and vesafb cannot do anything about this).
+-
 +With vesafb-tng chances are that the console will be restored properly
 +even if the X server messed up the video mode.
- 
  
  Refresh rates
  =============
@@ -187,33 +250,30 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 -
 -redraw	scroll by redrawing the affected part of the screen, this
 -	is the safe (and slow) default.
+-
+-
+-vgapal	Use the standard vga registers for palette changes.
 +ywrap	Same as ypan, but assumes your gfx board can wrap-around the video 
 +	memory (i.e. starts reading from top if it reaches the end of video 
 +	memory). Faster than ypan.
- 
++  
 +redraw	Scroll by redrawing the affected part of the screen, this is the 
 +	safe (and slow) default.
- 
--vgapal	Use the standard vga registers for palette changes.
++  
 +vgapal	Use the standard VGA registers for palette changes. 
  	This is the default.
 +
  pmipal	Use the protected mode interface for palette changes.
  
--mtrr	setup memory type range registers for the vesafb framebuffer.
-+mtrr	Setup memory type range registers for the vesafb framebuffer.
-+
-+nomtrr	Do not use memory type range registers for vesafb.
- 
- vremap:n
-         remap 'n' MiB of video RAM. If 0 or not specified, remap memory
-@@ -156,12 +177,96 @@ vtotal:n
+ mtrr:n	setup memory type range registers for the vesafb framebuffer
+@@ -170,12 +188,96 @@ vtotal:n
          if the video BIOS of your card incorrectly determines the total
          amount of video RAM, use this option to override the BIOS (in MiB).
  
 -Have fun!
 +Options accepted only by vesafb-tng:
-+
+ 
+-  Gerd
 +<mode>	The mode you want to set, in the standard modedb format. Refer to
 +	modedb.txt for detailed description. If you specify a mode that is
 +	not supported by your board's BIOS, vesafb will attempt to set a
@@ -292,8 +352,7 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +   - try to calculate timings with the GTF
 +   - low level setup - request_mem_region, ioremap, etc.
 +   - setup /proc/fb<x>/modes and /proc/fb<x>/vbe_info
- 
--  Gerd
++
 +Have fun!
  
  --
@@ -308,72 +367,77 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +Extended documentation for vm86, VBE3.0 and vesafb-tng by
 +Micha³ Januszewski <spock@gentoo.org>
 +
-diff --git a/arch/i386/boot/video.S b/arch/i386/boot/video.S
---- a/arch/i386/boot/video.S
-+++ b/arch/i386/boot/video.S
-@@ -164,10 +164,12 @@ basret:	ret
- # parameters in the default 80x25 mode -- these are set directly,
- # because some very obscure BIOSes supply insane values.
- mode_params:
-+#ifdef CONFIG_FB_VESA_STD
- #ifdef CONFIG_VIDEO_SELECT
- 	cmpb	$0, graphic_mode
- 	jnz	mopar_gr
- #endif
-+#endif
- 	movb	$0x03, %ah			# Read cursor position
- 	xorb	%bh, %bh
- 	int	$0x10
-@@ -200,6 +202,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES
- 	ret
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/fbmem.c linux-dsd/drivers/video/fbmem.c
+--- linux-2.6.13-rc5-gentoo/drivers/video/fbmem.c	2005-08-02 13:32:48.000000000 +0100
++++ linux-dsd/drivers/video/fbmem.c	2005-08-02 13:38:36.000000000 +0100
+@@ -52,6 +52,8 @@
+      *  Frame buffer device initialization and setup routines
+      */
  
- #ifdef CONFIG_VIDEO_SELECT
-+#ifdef CONFIG_FB_VESA_STD
- # Fetching of VESA frame buffer parameters
- mopar_gr:
- 	leaw	modelist+1024, %di
-@@ -278,6 +281,7 @@ dac_done:
- 	movw	%es, %fs:(PARAM_VESAPM_SEG)
- 	movw	%di, %fs:(PARAM_VESAPM_OFF)
- no_pm:	ret
-+#endif
- 
- # The video mode menu
- mode_menu:
-@@ -492,10 +496,12 @@ mode_set:
- 	
- 	cmpb	$VIDEO_FIRST_V7>>8, %ah
- 	jz	setv7
--	
++extern int vesafb_init_thread(void);
 +
-+#ifdef CONFIG_FB_VESA_STD
- 	cmpb	$VIDEO_FIRST_VESA>>8, %ah
- 	jnc	check_vesa
--	
-+#endif	
+ #define FBPIXMAPSIZE	(1024 * 8)
+ 
+ static struct notifier_block *fb_notifier_list;
+@@ -1157,6 +1159,10 @@ fbmem_init(void)
+ 		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
+ 		fb_class = NULL;
+ 	}
 +
- 	orb	%ah, %ah
- 	jz	setmenu
- 	
-@@ -567,6 +573,7 @@ setr1:	lodsw
- 	movw	-4(%si), %ax			# Fetch mode ID
- 	jmp	_m_s
- 
-+#ifdef CONFIG_FB_VESA_STD
- check_vesa:
- 	leaw	modelist+1024, %di
- 	subb	$VIDEO_FIRST_VESA>>8, %bh
-@@ -600,6 +607,7 @@ check_vesa:
- 	ret
- 
- _setbad:	jmp	setbad          	# Ugly...
++#if defined(CONFIG_FB_VESA_TNG) || defined(CONFIG_FB_VESA_TNG_MODULE)
++	vesafb_init_thread();
 +#endif
+ 	return 0;
+ }
  
- # Recalculate vertical display end registers -- this fixes various
- # inconsistencies of extended modes on many adapters. Called when
-diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
---- a/drivers/video/Kconfig
-+++ b/drivers/video/Kconfig
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/fbmon.c linux-dsd/drivers/video/fbmon.c
+--- linux-2.6.13-rc5-gentoo/drivers/video/fbmon.c	2005-08-02 13:32:48.000000000 +0100
++++ linux-dsd/drivers/video/fbmon.c	2005-08-02 13:38:36.000000000 +0100
+@@ -516,7 +516,7 @@ static void get_detailed_timing(unsigned
+  * This function builds a mode database using the contents of the EDID
+  * data
+  */
+-static struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
++struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
+ {
+ 	struct fb_videomode *mode, *m;
+ 	unsigned char *block;
+@@ -590,7 +590,7 @@ void fb_destroy_modedb(struct fb_videomo
+ 	kfree(modedb);
+ }
+ 
+-static int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
++int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
+ {
+ 	int i, retval = 1;
+ 	unsigned char *block;
+@@ -1178,9 +1178,17 @@ void fb_edid_to_monspecs(unsigned char *
+ {
+ 	specs = NULL;
+ }
++struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
++{
++	return NULL;
++}
+ void fb_destroy_modedb(struct fb_videomode *modedb)
+ {
+ }
++int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
++{
++	return 1;
++}
+ int fb_get_mode(int flags, u32 val, struct fb_var_screeninfo *var,
+ 		struct fb_info *info)
+ {
+@@ -1257,3 +1265,5 @@ EXPORT_SYMBOL(fb_edid_to_monspecs);
+ EXPORT_SYMBOL(fb_get_mode);
+ EXPORT_SYMBOL(fb_validate_mode);
+ EXPORT_SYMBOL(fb_destroy_modedb);
++EXPORT_SYMBOL(fb_create_modedb);
++EXPORT_SYMBOL(fb_get_monitor_limits);
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/Kconfig linux-dsd/drivers/video/Kconfig
+--- linux-2.6.13-rc5-gentoo/drivers/video/Kconfig	2005-08-02 13:34:50.000000000 +0100
++++ linux-dsd/drivers/video/Kconfig	2005-08-02 13:38:36.000000000 +0100
 @@ -493,7 +493,7 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
@@ -432,10 +496,10 @@ diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
  config VIDEO_SELECT
  	bool
  	depends on FB_VESA
-diff --git a/drivers/video/Makefile b/drivers/video/Makefile
---- a/drivers/video/Makefile
-+++ b/drivers/video/Makefile
-@@ -94,7 +94,22 @@ obj-$(CONFIG_FB_S1D13XXX)	  += s1d13xxxf
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/Makefile linux-dsd/drivers/video/Makefile
+--- linux-2.6.13-rc5-gentoo/drivers/video/Makefile	2005-08-02 13:34:50.000000000 +0100
++++ linux-dsd/drivers/video/Makefile	2005-08-02 13:38:36.000000000 +0100
+@@ -95,7 +95,22 @@ obj-$(CONFIG_FB_S1D13XXX)	  += s1d13xxxf
  obj-$(CONFIG_FB_IMX)              += imxfb.o
  
  # Platform or fallback drivers go here
@@ -459,78 +523,9 @@ diff --git a/drivers/video/Makefile b/drivers/video/Makefile
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
  
-diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
---- a/drivers/video/fbmem.c
-+++ b/drivers/video/fbmem.c
-@@ -52,6 +52,8 @@
-      *  Frame buffer device initialization and setup routines
-      */
- 
-+extern int vesafb_init_thread(void);
-+
- #define FBPIXMAPSIZE	(1024 * 8)
- 
- static struct notifier_block *fb_notifier_list;
-@@ -1155,6 +1157,10 @@ fbmem_init(void)
- 		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
- 		fb_class = NULL;
- 	}
-+
-+#if defined(CONFIG_FB_VESA_TNG) || defined(CONFIG_FB_VESA_TNG_MODULE)
-+	vesafb_init_thread();
-+#endif
- 	return 0;
- }
- 
-diff --git a/drivers/video/fbmon.c b/drivers/video/fbmon.c
---- a/drivers/video/fbmon.c
-+++ b/drivers/video/fbmon.c
-@@ -516,7 +516,7 @@ static void get_detailed_timing(unsigned
-  * This function builds a mode database using the contents of the EDID
-  * data
-  */
--static struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
-+struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
- {
- 	struct fb_videomode *mode, *m;
- 	unsigned char *block;
-@@ -590,7 +590,7 @@ void fb_destroy_modedb(struct fb_videomo
- 	kfree(modedb);
- }
- 
--static int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
-+int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
- {
- 	int i, retval = 1;
- 	unsigned char *block;
-@@ -1178,9 +1178,17 @@ void fb_edid_to_monspecs(unsigned char *
- {
- 	specs = NULL;
- }
-+struct fb_videomode *fb_create_modedb(unsigned char *edid, int *dbsize)
-+{
-+	return NULL;
-+}
- void fb_destroy_modedb(struct fb_videomode *modedb)
- {
- }
-+int fb_get_monitor_limits(unsigned char *edid, struct fb_monspecs *specs)
-+{
-+	return 1;
-+}
- int fb_get_mode(int flags, u32 val, struct fb_var_screeninfo *var,
- 		struct fb_info *info)
- {
-@@ -1255,3 +1263,5 @@ EXPORT_SYMBOL(fb_edid_to_monspecs);
- EXPORT_SYMBOL(fb_get_mode);
- EXPORT_SYMBOL(fb_validate_mode);
- EXPORT_SYMBOL(fb_destroy_modedb);
-+EXPORT_SYMBOL(fb_create_modedb);
-+EXPORT_SYMBOL(fb_get_monitor_limits);
-diff --git a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
-new file mode 100644
---- /dev/null
-+++ b/drivers/video/vesafb-thread.c
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/vesafb-thread.c linux-dsd/drivers/video/vesafb-thread.c
+--- linux-2.6.13-rc5-gentoo/drivers/video/vesafb-thread.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/video/vesafb-thread.c	2005-08-02 13:38:36.000000000 +0100
 @@ -0,0 +1,566 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards - kernel thread 
@@ -1098,10 +1093,9 @@ new file mode 100644
 +
 +EXPORT_SYMBOL(vesafb_pid);
 +EXPORT_SYMBOL(vesafb_queue_task);
-diff --git a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
-new file mode 100644
---- /dev/null
-+++ b/drivers/video/vesafb-tng.c
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/vesafb-tng.c linux-dsd/drivers/video/vesafb-tng.c
+--- linux-2.6.13-rc5-gentoo/drivers/video/vesafb-tng.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/video/vesafb-tng.c	2005-08-02 13:38:36.000000000 +0100
 @@ -0,0 +1,1243 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
@@ -2346,10 +2340,9 @@ new file mode 100644
 +MODULE_AUTHOR("Michal Januszewski");
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphic boards");
 +
-diff --git a/include/video/vesa.h b/include/video/vesa.h
-new file mode 100644
---- /dev/null
-+++ b/include/video/vesa.h
+diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/include/video/vesa.h linux-dsd/include/video/vesa.h
+--- linux-2.6.13-rc5-gentoo/include/video/vesa.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/include/video/vesa.h	2005-08-02 13:38:36.000000000 +0100
 @@ -0,0 +1,122 @@
 +#define crtc_pib(arg) ((struct vesafb_crtc_info_block*)(arg))
 +#define vbe_pib(arg) ((struct vesafb_vbe_info_block*)(arg))
