@@ -96,6 +96,10 @@ Patch:	1905_bio-clone-corruption.patch
 From:	stable queue
 Desc:	Fix possible corruption in bio-clone operation
 
+Patch:	1910_percpu-modalloc.patch
+From:	Rusty Russell
+Desc:	Fix a percpu_modalloc oops
+
 Patch:	2100_early-vlan.patch
 From:	http://bugs.gentoo.org/99479
 Desc:	Fix bringing up of VLANs
