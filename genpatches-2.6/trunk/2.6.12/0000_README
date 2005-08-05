@@ -124,6 +124,10 @@ Patch:	2125_skb-crash.patch
 From:	stable queue
 Desc:	Fix crash related to skb signedness
 
+Patch:	2130_netfilter-locking.patch
+From:	http://bugs.gentoo.org/86227
+Desc:	Fix netfilter locking mechanism
+
 Patch:	2305_sata-bridge-lockup.patch
 From:	Upstream 2.6.13
 Desc:	Fix lockup on PATA->SATA bridges with certain drives

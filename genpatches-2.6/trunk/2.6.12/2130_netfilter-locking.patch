@@ -1,0 +1,1502 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Tue, 21 Jun 2005 21:01:30 +0000 (-0700)
+Subject: [NETFILTER]: Kill lockhelp.h
+X-Git-Tag: v2.6.13-rc1
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=e45b1be8bcb3643808975a426fa3e201a2588e87
+
+  [NETFILTER]: Kill lockhelp.h
+  
+  Signed-off-by: Patrick McHardy <kaber@trash.net>
+  Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/include/linux/netfilter_ipv4/ip_conntrack_core.h
++++ b/include/linux/netfilter_ipv4/ip_conntrack_core.h
+@@ -1,7 +1,6 @@
+ #ifndef _IP_CONNTRACK_CORE_H
+ #define _IP_CONNTRACK_CORE_H
+ #include <linux/netfilter.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ /* This header is used to share core functionality between the
+    standalone connection tracking module, and the compatibility layer's use
+@@ -47,6 +46,6 @@ static inline int ip_conntrack_confirm(s
+ 
+ extern struct list_head *ip_conntrack_hash;
+ extern struct list_head ip_conntrack_expect_list;
+-DECLARE_RWLOCK_EXTERN(ip_conntrack_lock);
++extern rwlock_t ip_conntrack_lock;
+ #endif /* _IP_CONNTRACK_CORE_H */
+ 
+--- a/include/linux/netfilter_ipv4/ip_nat.h
++++ b/include/linux/netfilter_ipv4/ip_nat.h
+@@ -50,10 +50,9 @@ struct ip_nat_multi_range_compat
+ 
+ #ifdef __KERNEL__
+ #include <linux/list.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ /* Protects NAT hash tables, and NAT-private part of conntracks. */
+-DECLARE_RWLOCK_EXTERN(ip_nat_lock);
++extern rwlock_t ip_nat_lock;
+ 
+ /* The structure embedded in the conntrack structure. */
+ struct ip_nat_info
+--- a/include/linux/netfilter_ipv4/listhelp.h
++++ b/include/linux/netfilter_ipv4/listhelp.h
+@@ -2,7 +2,6 @@
+ #define _LISTHELP_H
+ #include <linux/config.h>
+ #include <linux/list.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ /* Header to do more comprehensive job than linux/list.h; assume list
+    is first entry in structure. */
+--- a/include/linux/netfilter_ipv4/lockhelp.h
++++ /dev/null
+@@ -1,129 +0,0 @@
+-#ifndef _LOCKHELP_H
+-#define _LOCKHELP_H
+-#include <linux/config.h>
+-
+-#include <linux/spinlock.h>
+-#include <asm/atomic.h>
+-#include <linux/interrupt.h>
+-#include <linux/smp.h>
+-
+-/* Header to do help in lock debugging. */
+-
+-#ifdef CONFIG_NETFILTER_DEBUG
+-struct spinlock_debug
+-{
+-	spinlock_t l;
+-	atomic_t locked_by;
+-};
+-
+-struct rwlock_debug
+-{
+-	rwlock_t l;
+-	long read_locked_map;
+-	long write_locked_map;
+-};
+-
+-#define DECLARE_LOCK(l) 						\
+-struct spinlock_debug l = { SPIN_LOCK_UNLOCKED, ATOMIC_INIT(-1) }
+-#define DECLARE_LOCK_EXTERN(l) 			\
+-extern struct spinlock_debug l
+-#define DECLARE_RWLOCK(l)				\
+-struct rwlock_debug l = { RW_LOCK_UNLOCKED, 0, 0 }
+-#define DECLARE_RWLOCK_EXTERN(l)		\
+-extern struct rwlock_debug l
+-
+-#define MUST_BE_LOCKED(l)						\
+-do { if (atomic_read(&(l)->locked_by) != smp_processor_id())		\
+-	printk("ASSERT %s:%u %s unlocked\n", __FILE__, __LINE__, #l);	\
+-} while(0)
+-
+-#define MUST_BE_UNLOCKED(l)						\
+-do { if (atomic_read(&(l)->locked_by) == smp_processor_id())		\
+-	printk("ASSERT %s:%u %s locked\n", __FILE__, __LINE__, #l);	\
+-} while(0)
+-
+-/* Write locked OK as well. */
+-#define MUST_BE_READ_LOCKED(l)						    \
+-do { if (!((l)->read_locked_map & (1UL << smp_processor_id()))		    \
+-	 && !((l)->write_locked_map & (1UL << smp_processor_id())))	    \
+-	printk("ASSERT %s:%u %s not readlocked\n", __FILE__, __LINE__, #l); \
+-} while(0)
+-
+-#define MUST_BE_WRITE_LOCKED(l)						     \
+-do { if (!((l)->write_locked_map & (1UL << smp_processor_id())))	     \
+-	printk("ASSERT %s:%u %s not writelocked\n", __FILE__, __LINE__, #l); \
+-} while(0)
+-
+-#define MUST_BE_READ_WRITE_UNLOCKED(l)					  \
+-do { if ((l)->read_locked_map & (1UL << smp_processor_id()))		  \
+-	printk("ASSERT %s:%u %s readlocked\n", __FILE__, __LINE__, #l);	  \
+- else if ((l)->write_locked_map & (1UL << smp_processor_id()))		  \
+-	 printk("ASSERT %s:%u %s writelocked\n", __FILE__, __LINE__, #l); \
+-} while(0)
+-
+-#define LOCK_BH(lk)						\
+-do {								\
+-	MUST_BE_UNLOCKED(lk);					\
+-	spin_lock_bh(&(lk)->l);					\
+-	atomic_set(&(lk)->locked_by, smp_processor_id());	\
+-} while(0)
+-
+-#define UNLOCK_BH(lk)				\
+-do {						\
+-	MUST_BE_LOCKED(lk);			\
+-	atomic_set(&(lk)->locked_by, -1);	\
+-	spin_unlock_bh(&(lk)->l);		\
+-} while(0)
+-
+-#define READ_LOCK(lk) 						\
+-do {								\
+-	MUST_BE_READ_WRITE_UNLOCKED(lk);			\
+-	read_lock_bh(&(lk)->l);					\
+-	set_bit(smp_processor_id(), &(lk)->read_locked_map);	\
+-} while(0)
+-
+-#define WRITE_LOCK(lk)							  \
+-do {									  \
+-	MUST_BE_READ_WRITE_UNLOCKED(lk);				  \
+-	write_lock_bh(&(lk)->l);					  \
+-	set_bit(smp_processor_id(), &(lk)->write_locked_map);		  \
+-} while(0)
+-
+-#define READ_UNLOCK(lk)							\
+-do {									\
+-	if (!((lk)->read_locked_map & (1UL << smp_processor_id())))	\
+-		printk("ASSERT: %s:%u %s not readlocked\n", 		\
+-		       __FILE__, __LINE__, #lk);			\
+-	clear_bit(smp_processor_id(), &(lk)->read_locked_map);		\
+-	read_unlock_bh(&(lk)->l);					\
+-} while(0)
+-
+-#define WRITE_UNLOCK(lk)					\
+-do {								\
+-	MUST_BE_WRITE_LOCKED(lk);				\
+-	clear_bit(smp_processor_id(), &(lk)->write_locked_map);	\
+-	write_unlock_bh(&(lk)->l);				\
+-} while(0)
+-
+-#else
+-#define DECLARE_LOCK(l) spinlock_t l = SPIN_LOCK_UNLOCKED
+-#define DECLARE_LOCK_EXTERN(l) extern spinlock_t l
+-#define DECLARE_RWLOCK(l) rwlock_t l = RW_LOCK_UNLOCKED
+-#define DECLARE_RWLOCK_EXTERN(l) extern rwlock_t l
+-
+-#define MUST_BE_LOCKED(l)
+-#define MUST_BE_UNLOCKED(l)
+-#define MUST_BE_READ_LOCKED(l)
+-#define MUST_BE_WRITE_LOCKED(l)
+-#define MUST_BE_READ_WRITE_UNLOCKED(l)
+-
+-#define LOCK_BH(l) spin_lock_bh(l)
+-#define UNLOCK_BH(l) spin_unlock_bh(l)
+-
+-#define READ_LOCK(l) read_lock_bh(l)
+-#define WRITE_LOCK(l) write_lock_bh(l)
+-#define READ_UNLOCK(l) read_unlock_bh(l)
+-#define WRITE_UNLOCK(l) write_unlock_bh(l)
+-#endif /*CONFIG_NETFILTER_DEBUG*/
+-
+-#endif /* _LOCKHELP_H */
+--- a/net/ipv4/netfilter/arp_tables.c
++++ b/net/ipv4/netfilter/arp_tables.c
+@@ -60,7 +60,6 @@ static DECLARE_MUTEX(arpt_mutex);
+ 
+ #define ASSERT_READ_LOCK(x) ARP_NF_ASSERT(down_trylock(&arpt_mutex) != 0)
+ #define ASSERT_WRITE_LOCK(x) ARP_NF_ASSERT(down_trylock(&arpt_mutex) != 0)
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/listhelp.h>
+ 
+ struct arpt_table_info {
+--- a/net/ipv4/netfilter/ip_conntrack_amanda.c
++++ b/net/ipv4/netfilter/ip_conntrack_amanda.c
+@@ -26,7 +26,6 @@
+ #include <net/checksum.h>
+ #include <net/udp.h>
+ 
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_helper.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_amanda.h>
+ 
+@@ -42,7 +41,7 @@ static char *conns[] = { "DATA ", "MESG 
+ 
+ /* This is slow, but it's simple. --RR */
+ static char amanda_buffer[65536];
+-static DECLARE_LOCK(amanda_buffer_lock);
++static DEFINE_SPINLOCK(amanda_buffer_lock);
+ 
+ unsigned int (*ip_nat_amanda_hook)(struct sk_buff **pskb,
+ 				   enum ip_conntrack_info ctinfo,
+@@ -76,7 +75,7 @@ static int help(struct sk_buff **pskb,
+ 		return NF_ACCEPT;
+ 	}
+ 
+-	LOCK_BH(&amanda_buffer_lock);
++	spin_lock_bh(&amanda_buffer_lock);
+ 	skb_copy_bits(*pskb, dataoff, amanda_buffer, (*pskb)->len - dataoff);
+ 	data = amanda_buffer;
+ 	data_limit = amanda_buffer + (*pskb)->len - dataoff;
+@@ -134,7 +133,7 @@ static int help(struct sk_buff **pskb,
+ 	}
+ 
+ out:
+-	UNLOCK_BH(&amanda_buffer_lock);
++	spin_unlock_bh(&amanda_buffer_lock);
+ 	return ret;
+ }
+ 
+--- a/net/ipv4/netfilter/ip_conntrack_core.c
++++ b/net/ipv4/netfilter/ip_conntrack_core.c
+@@ -38,10 +38,10 @@
+ #include <linux/percpu.h>
+ #include <linux/moduleparam.h>
+ 
+-/* This rwlock protects the main hash table, protocol/helper/expected
++/* ip_conntrack_lock protects the main hash table, protocol/helper/expected
+    registrations, conntrack timers*/
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_conntrack_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_conntrack_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_protocol.h>
+@@ -57,7 +57,7 @@
+ #define DEBUGP(format, args...)
+ #endif
+ 
+-DECLARE_RWLOCK(ip_conntrack_lock);
++DEFINE_RWLOCK(ip_conntrack_lock);
+ 
+ /* ip_conntrack_standalone needs this */
+ atomic_t ip_conntrack_count = ATOMIC_INIT(0);
+@@ -147,7 +147,7 @@ static void destroy_expect(struct ip_con
+ 
+ static void unlink_expect(struct ip_conntrack_expect *exp)
+ {
+-	MUST_BE_WRITE_LOCKED(&ip_conntrack_lock);
++	ASSERT_WRITE_LOCK(&ip_conntrack_lock);
+ 	list_del(&exp->list);
+ 	/* Logically in destroy_expect, but we hold the lock here. */
+ 	exp->master->expecting--;
+@@ -157,9 +157,9 @@ static void expectation_timed_out(unsign
+ {
+ 	struct ip_conntrack_expect *exp = (void *)ul_expect;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	unlink_expect(exp);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 	destroy_expect(exp);
+ }
+ 
+@@ -209,7 +209,7 @@ clean_from_lists(struct ip_conntrack *ct
+ 	unsigned int ho, hr;
+ 	
+ 	DEBUGP("clean_from_lists(%p)\n", ct);
+-	MUST_BE_WRITE_LOCKED(&ip_conntrack_lock);
++	ASSERT_WRITE_LOCK(&ip_conntrack_lock);
+ 
+ 	ho = hash_conntrack(&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
+ 	hr = hash_conntrack(&ct->tuplehash[IP_CT_DIR_REPLY].tuple);
+@@ -240,7 +240,7 @@ destroy_conntrack(struct nf_conntrack *n
+ 	if (ip_conntrack_destroyed)
+ 		ip_conntrack_destroyed(ct);
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	/* Expectations will have been removed in clean_from_lists,
+ 	 * except TFTP can create an expectation on the first packet,
+ 	 * before connection is in the list, so we need to clean here,
+@@ -254,7 +254,7 @@ destroy_conntrack(struct nf_conntrack *n
+ 	}
+ 
+ 	CONNTRACK_STAT_INC(delete);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	if (ct->master)
+ 		ip_conntrack_put(ct->master);
+@@ -268,12 +268,12 @@ static void death_by_timeout(unsigned lo
+ {
+ 	struct ip_conntrack *ct = (void *)ul_conntrack;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	/* Inside lock so preempt is disabled on module removal path.
+ 	 * Otherwise we can get spurious warnings. */
+ 	CONNTRACK_STAT_INC(delete_list);
+ 	clean_from_lists(ct);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 	ip_conntrack_put(ct);
+ }
+ 
+@@ -282,7 +282,7 @@ conntrack_tuple_cmp(const struct ip_conn
+ 		    const struct ip_conntrack_tuple *tuple,
+ 		    const struct ip_conntrack *ignored_conntrack)
+ {
+-	MUST_BE_READ_LOCKED(&ip_conntrack_lock);
++	ASSERT_READ_LOCK(&ip_conntrack_lock);
+ 	return tuplehash_to_ctrack(i) != ignored_conntrack
+ 		&& ip_ct_tuple_equal(tuple, &i->tuple);
+ }
+@@ -294,7 +294,7 @@ __ip_conntrack_find(const struct ip_conn
+ 	struct ip_conntrack_tuple_hash *h;
+ 	unsigned int hash = hash_conntrack(tuple);
+ 
+-	MUST_BE_READ_LOCKED(&ip_conntrack_lock);
++	ASSERT_READ_LOCK(&ip_conntrack_lock);
+ 	list_for_each_entry(h, &ip_conntrack_hash[hash], list) {
+ 		if (conntrack_tuple_cmp(h, tuple, ignored_conntrack)) {
+ 			CONNTRACK_STAT_INC(found);
+@@ -313,11 +313,11 @@ ip_conntrack_find_get(const struct ip_co
+ {
+ 	struct ip_conntrack_tuple_hash *h;
+ 
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 	h = __ip_conntrack_find(tuple, ignored_conntrack);
+ 	if (h)
+ 		atomic_inc(&tuplehash_to_ctrack(h)->ct_general.use);
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ 
+ 	return h;
+ }
+@@ -352,7 +352,7 @@ __ip_conntrack_confirm(struct sk_buff **
+ 	IP_NF_ASSERT(!is_confirmed(ct));
+ 	DEBUGP("Confirming conntrack %p\n", ct);
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 
+ 	/* See if there's one in the list already, including reverse:
+            NAT could have grabbed it without realizing, since we're
+@@ -380,12 +380,12 @@ __ip_conntrack_confirm(struct sk_buff **
+ 		atomic_inc(&ct->ct_general.use);
+ 		set_bit(IPS_CONFIRMED_BIT, &ct->status);
+ 		CONNTRACK_STAT_INC(insert);
+-		WRITE_UNLOCK(&ip_conntrack_lock);
++		write_unlock_bh(&ip_conntrack_lock);
+ 		return NF_ACCEPT;
+ 	}
+ 
+ 	CONNTRACK_STAT_INC(insert_failed);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	return NF_DROP;
+ }
+@@ -398,9 +398,9 @@ ip_conntrack_tuple_taken(const struct ip
+ {
+ 	struct ip_conntrack_tuple_hash *h;
+ 
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 	h = __ip_conntrack_find(tuple, ignored_conntrack);
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ 
+ 	return h != NULL;
+ }
+@@ -419,13 +419,13 @@ static int early_drop(struct list_head *
+ 	struct ip_conntrack *ct = NULL;
+ 	int dropped = 0;
+ 
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 	h = LIST_FIND_B(chain, unreplied, struct ip_conntrack_tuple_hash *);
+ 	if (h) {
+ 		ct = tuplehash_to_ctrack(h);
+ 		atomic_inc(&ct->ct_general.use);
+ 	}
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ 
+ 	if (!ct)
+ 		return dropped;
+@@ -508,7 +508,7 @@ init_conntrack(const struct ip_conntrack
+ 	conntrack->timeout.data = (unsigned long)conntrack;
+ 	conntrack->timeout.function = death_by_timeout;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	exp = find_expectation(tuple);
+ 
+ 	if (exp) {
+@@ -532,7 +532,7 @@ init_conntrack(const struct ip_conntrack
+ 	list_add(&conntrack->tuplehash[IP_CT_DIR_ORIGINAL].list, &unconfirmed);
+ 
+ 	atomic_inc(&ip_conntrack_count);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	if (exp) {
+ 		if (exp->expectfn)
+@@ -723,17 +723,17 @@ void ip_conntrack_unexpect_related(struc
+ {
+ 	struct ip_conntrack_expect *i;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	/* choose the the oldest expectation to evict */
+ 	list_for_each_entry_reverse(i, &ip_conntrack_expect_list, list) {
+ 		if (expect_matches(i, exp) && del_timer(&i->timeout)) {
+ 			unlink_expect(i);
+-			WRITE_UNLOCK(&ip_conntrack_lock);
++			write_unlock_bh(&ip_conntrack_lock);
+ 			destroy_expect(i);
+ 			return;
+ 		}
+ 	}
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ }
+ 
+ struct ip_conntrack_expect *ip_conntrack_expect_alloc(void)
+@@ -808,7 +808,7 @@ int ip_conntrack_expect_related(struct i
+ 	DEBUGP("tuple: "); DUMP_TUPLE(&expect->tuple);
+ 	DEBUGP("mask:  "); DUMP_TUPLE(&expect->mask);
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	list_for_each_entry(i, &ip_conntrack_expect_list, list) {
+ 		if (expect_matches(i, expect)) {
+ 			/* Refresh timer: if it's dying, ignore.. */
+@@ -832,7 +832,7 @@ int ip_conntrack_expect_related(struct i
+ 	ip_conntrack_expect_insert(expect);
+ 	ret = 0;
+ out:
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+  	return ret;
+ }
+ 
+@@ -841,7 +841,7 @@ out:
+ void ip_conntrack_alter_reply(struct ip_conntrack *conntrack,
+ 			      const struct ip_conntrack_tuple *newreply)
+ {
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	/* Should be unconfirmed, so not in hash table yet */
+ 	IP_NF_ASSERT(!is_confirmed(conntrack));
+ 
+@@ -851,15 +851,15 @@ void ip_conntrack_alter_reply(struct ip_
+ 	conntrack->tuplehash[IP_CT_DIR_REPLY].tuple = *newreply;
+ 	if (!conntrack->master && conntrack->expecting == 0)
+ 		conntrack->helper = ip_ct_find_helper(newreply);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ }
+ 
+ int ip_conntrack_helper_register(struct ip_conntrack_helper *me)
+ {
+ 	BUG_ON(me->timeout == 0);
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	list_prepend(&helpers, me);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	return 0;
+ }
+@@ -878,7 +878,7 @@ void ip_conntrack_helper_unregister(stru
+ 	struct ip_conntrack_expect *exp, *tmp;
+ 
+ 	/* Need write lock here, to delete helper. */
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	LIST_DELETE(&helpers, me);
+ 
+ 	/* Get rid of expectations */
+@@ -893,7 +893,7 @@ void ip_conntrack_helper_unregister(stru
+ 	for (i = 0; i < ip_conntrack_htable_size; i++)
+ 		LIST_FIND_W(&ip_conntrack_hash[i], unhelp,
+ 			    struct ip_conntrack_tuple_hash *, me);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	/* Someone could be still looking at the helper in a bh. */
+ 	synchronize_net();
+@@ -925,14 +925,14 @@ void ip_ct_refresh_acct(struct ip_conntr
+ 		ct->timeout.expires = extra_jiffies;
+ 		ct_add_counters(ct, ctinfo, skb);
+ 	} else {
+-		WRITE_LOCK(&ip_conntrack_lock);
++		write_lock_bh(&ip_conntrack_lock);
+ 		/* Need del_timer for race avoidance (may already be dying). */
+ 		if (del_timer(&ct->timeout)) {
+ 			ct->timeout.expires = jiffies + extra_jiffies;
+ 			add_timer(&ct->timeout);
+ 		}
+ 		ct_add_counters(ct, ctinfo, skb);
+-		WRITE_UNLOCK(&ip_conntrack_lock);
++		write_unlock_bh(&ip_conntrack_lock);
+ 	}
+ }
+ 
+@@ -997,7 +997,7 @@ get_next_corpse(int (*iter)(struct ip_co
+ {
+ 	struct ip_conntrack_tuple_hash *h = NULL;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	for (; *bucket < ip_conntrack_htable_size; (*bucket)++) {
+ 		h = LIST_FIND_W(&ip_conntrack_hash[*bucket], do_iter,
+ 				struct ip_conntrack_tuple_hash *, iter, data);
+@@ -1009,7 +1009,7 @@ get_next_corpse(int (*iter)(struct ip_co
+ 				struct ip_conntrack_tuple_hash *, iter, data);
+ 	if (h)
+ 		atomic_inc(&tuplehash_to_ctrack(h)->ct_general.use);
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	return h;
+ }
+@@ -1201,14 +1201,14 @@ int __init ip_conntrack_init(void)
+ 	}
+ 
+ 	/* Don't NEED lock here, but good form anyway. */
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	for (i = 0; i < MAX_IP_CT_PROTO; i++)
+ 		ip_ct_protos[i] = &ip_conntrack_generic_protocol;
+ 	/* Sew in builtin protocols. */
+ 	ip_ct_protos[IPPROTO_TCP] = &ip_conntrack_protocol_tcp;
+ 	ip_ct_protos[IPPROTO_UDP] = &ip_conntrack_protocol_udp;
+ 	ip_ct_protos[IPPROTO_ICMP] = &ip_conntrack_protocol_icmp;
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 
+ 	for (i = 0; i < ip_conntrack_htable_size; i++)
+ 		INIT_LIST_HEAD(&ip_conntrack_hash[i]);
+--- a/net/ipv4/netfilter/ip_conntrack_ftp.c
++++ b/net/ipv4/netfilter/ip_conntrack_ftp.c
+@@ -16,7 +16,6 @@
+ #include <net/checksum.h>
+ #include <net/tcp.h>
+ 
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_helper.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_ftp.h>
+ #include <linux/moduleparam.h>
+@@ -28,7 +27,7 @@ MODULE_DESCRIPTION("ftp connection track
+ /* This is slow, but it's simple. --RR */
+ static char ftp_buffer[65536];
+ 
+-static DECLARE_LOCK(ip_ftp_lock);
++static DEFINE_SPINLOCK(ip_ftp_lock);
+ 
+ #define MAX_PORTS 8
+ static int ports[MAX_PORTS];
+@@ -319,7 +318,7 @@ static int help(struct sk_buff **pskb,
+ 	}
+ 	datalen = (*pskb)->len - dataoff;
+ 
+-	LOCK_BH(&ip_ftp_lock);
++	spin_lock_bh(&ip_ftp_lock);
+ 	fb_ptr = skb_header_pointer(*pskb, dataoff,
+ 				    (*pskb)->len - dataoff, ftp_buffer);
+ 	BUG_ON(fb_ptr == NULL);
+@@ -442,7 +441,7 @@ out_update_nl:
+ 	if (ends_in_nl)
+ 		update_nl_seq(seq, ct_ftp_info,dir);
+  out:
+-	UNLOCK_BH(&ip_ftp_lock);
++	spin_unlock_bh(&ip_ftp_lock);
+ 	return ret;
+ }
+ 
+--- a/net/ipv4/netfilter/ip_conntrack_irc.c
++++ b/net/ipv4/netfilter/ip_conntrack_irc.c
+@@ -29,7 +29,6 @@
+ #include <net/checksum.h>
+ #include <net/tcp.h>
+ 
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_helper.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_irc.h>
+ #include <linux/moduleparam.h>
+@@ -41,7 +40,7 @@ static int max_dcc_channels = 8;
+ static unsigned int dcc_timeout = 300;
+ /* This is slow, but it's simple. --RR */
+ static char irc_buffer[65536];
+-static DECLARE_LOCK(irc_buffer_lock);
++static DEFINE_SPINLOCK(irc_buffer_lock);
+ 
+ unsigned int (*ip_nat_irc_hook)(struct sk_buff **pskb,
+ 				enum ip_conntrack_info ctinfo,
+@@ -141,7 +140,7 @@ static int help(struct sk_buff **pskb,
+ 	if (dataoff >= (*pskb)->len)
+ 		return NF_ACCEPT;
+ 
+-	LOCK_BH(&irc_buffer_lock);
++	spin_lock_bh(&irc_buffer_lock);
+ 	ib_ptr = skb_header_pointer(*pskb, dataoff,
+ 				    (*pskb)->len - dataoff, irc_buffer);
+ 	BUG_ON(ib_ptr == NULL);
+@@ -237,7 +236,7 @@ static int help(struct sk_buff **pskb,
+ 	} /* while data < ... */
+ 
+  out:
+-	UNLOCK_BH(&irc_buffer_lock);
++	spin_unlock_bh(&irc_buffer_lock);
+ 	return ret;
+ }
+ 
+--- a/net/ipv4/netfilter/ip_conntrack_proto_sctp.c
++++ b/net/ipv4/netfilter/ip_conntrack_proto_sctp.c
+@@ -26,7 +26,6 @@
+ 
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_protocol.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ #if 0
+ #define DEBUGP(format, ...) printk(format, ## __VA_ARGS__)
+@@ -35,7 +34,7 @@
+ #endif
+ 
+ /* Protects conntrack->proto.sctp */
+-static DECLARE_RWLOCK(sctp_lock);
++static DEFINE_RWLOCK(sctp_lock);
+ 
+ /* FIXME: Examine ipfilter's timeouts and conntrack transitions more
+    closely.  They're more complex. --RR 
+@@ -199,9 +198,9 @@ static int sctp_print_conntrack(struct s
+ 	DEBUGP(__FUNCTION__);
+ 	DEBUGP("\n");
+ 
+-	READ_LOCK(&sctp_lock);
++	read_lock_bh(&sctp_lock);
+ 	state = conntrack->proto.sctp.state;
+-	READ_UNLOCK(&sctp_lock);
++	read_unlock_bh(&sctp_lock);
+ 
+ 	return seq_printf(s, "%s ", sctp_conntrack_names[state]);
+ }
+@@ -343,13 +342,13 @@ static int sctp_packet(struct ip_conntra
+ 
+ 	oldsctpstate = newconntrack = SCTP_CONNTRACK_MAX;
+ 	for_each_sctp_chunk (skb, sch, _sch, offset, count) {
+-		WRITE_LOCK(&sctp_lock);
++		write_lock_bh(&sctp_lock);
+ 
+ 		/* Special cases of Verification tag check (Sec 8.5.1) */
+ 		if (sch->type == SCTP_CID_INIT) {
+ 			/* Sec 8.5.1 (A) */
+ 			if (sh->vtag != 0) {
+-				WRITE_UNLOCK(&sctp_lock);
++				write_unlock_bh(&sctp_lock);
+ 				return -1;
+ 			}
+ 		} else if (sch->type == SCTP_CID_ABORT) {
+@@ -357,7 +356,7 @@ static int sctp_packet(struct ip_conntra
+ 			if (!(sh->vtag == conntrack->proto.sctp.vtag[CTINFO2DIR(ctinfo)])
+ 				&& !(sh->vtag == conntrack->proto.sctp.vtag
+ 							[1 - CTINFO2DIR(ctinfo)])) {
+-				WRITE_UNLOCK(&sctp_lock);
++				write_unlock_bh(&sctp_lock);
+ 				return -1;
+ 			}
+ 		} else if (sch->type == SCTP_CID_SHUTDOWN_COMPLETE) {
+@@ -366,13 +365,13 @@ static int sctp_packet(struct ip_conntra
+ 				&& !(sh->vtag == conntrack->proto.sctp.vtag
+ 							[1 - CTINFO2DIR(ctinfo)] 
+ 					&& (sch->flags & 1))) {
+-				WRITE_UNLOCK(&sctp_lock);
++				write_unlock_bh(&sctp_lock);
+ 				return -1;
+ 			}
+ 		} else if (sch->type == SCTP_CID_COOKIE_ECHO) {
+ 			/* Sec 8.5.1 (D) */
+ 			if (!(sh->vtag == conntrack->proto.sctp.vtag[CTINFO2DIR(ctinfo)])) {
+-				WRITE_UNLOCK(&sctp_lock);
++				write_unlock_bh(&sctp_lock);
+ 				return -1;
+ 			}
+ 		}
+@@ -384,7 +383,7 @@ static int sctp_packet(struct ip_conntra
+ 		if (newconntrack == SCTP_CONNTRACK_MAX) {
+ 			DEBUGP("ip_conntrack_sctp: Invalid dir=%i ctype=%u conntrack=%u\n",
+ 			       CTINFO2DIR(ctinfo), sch->type, oldsctpstate);
+-			WRITE_UNLOCK(&sctp_lock);
++			write_unlock_bh(&sctp_lock);
+ 			return -1;
+ 		}
+ 
+@@ -396,7 +395,7 @@ static int sctp_packet(struct ip_conntra
+ 			ih = skb_header_pointer(skb, offset + sizeof(sctp_chunkhdr_t),
+ 			                        sizeof(_inithdr), &_inithdr);
+ 			if (ih == NULL) {
+-					WRITE_UNLOCK(&sctp_lock);
++					write_unlock_bh(&sctp_lock);
+ 					return -1;
+ 			}
+ 			DEBUGP("Setting vtag %x for dir %d\n", 
+@@ -405,7 +404,7 @@ static int sctp_packet(struct ip_conntra
+ 		}
+ 
+ 		conntrack->proto.sctp.state = newconntrack;
+-		WRITE_UNLOCK(&sctp_lock);
++		write_unlock_bh(&sctp_lock);
+ 	}
+ 
+ 	ip_ct_refresh_acct(conntrack, ctinfo, skb, *sctp_timeouts[newconntrack]);
+--- a/net/ipv4/netfilter/ip_conntrack_proto_tcp.c
++++ b/net/ipv4/netfilter/ip_conntrack_proto_tcp.c
+@@ -36,7 +36,6 @@
+ #include <linux/netfilter_ipv4.h>
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_protocol.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ #if 0
+ #define DEBUGP printk
+@@ -46,7 +45,7 @@
+ #endif
+ 
+ /* Protects conntrack->proto.tcp */
+-static DECLARE_RWLOCK(tcp_lock);
++static DEFINE_RWLOCK(tcp_lock);
+ 
+ /* "Be conservative in what you do, 
+     be liberal in what you accept from others." 
+@@ -330,9 +329,9 @@ static int tcp_print_conntrack(struct se
+ {
+ 	enum tcp_conntrack state;
+ 
+-	READ_LOCK(&tcp_lock);
++	read_lock_bh(&tcp_lock);
+ 	state = conntrack->proto.tcp.state;
+-	READ_UNLOCK(&tcp_lock);
++	read_unlock_bh(&tcp_lock);
+ 
+ 	return seq_printf(s, "%s ", tcp_conntrack_names[state]);
+ }
+@@ -738,14 +737,14 @@ void ip_conntrack_tcp_update(struct sk_b
+ 
+ 	end = segment_seq_plus_len(ntohl(tcph->seq), skb->len, iph, tcph);
+ 	
+-	WRITE_LOCK(&tcp_lock);
++	write_lock_bh(&tcp_lock);
+ 	/*
+ 	 * We have to worry for the ack in the reply packet only...
+ 	 */
+ 	if (after(end, conntrack->proto.tcp.seen[dir].td_end))
+ 		conntrack->proto.tcp.seen[dir].td_end = end;
+ 	conntrack->proto.tcp.last_end = end;
+-	WRITE_UNLOCK(&tcp_lock);
++	write_unlock_bh(&tcp_lock);
+ 	DEBUGP("tcp_update: sender end=%u maxend=%u maxwin=%u scale=%i "
+ 	       "receiver end=%u maxend=%u maxwin=%u scale=%i\n",
+ 		sender->td_end, sender->td_maxend, sender->td_maxwin,
+@@ -857,7 +856,7 @@ static int tcp_packet(struct ip_conntrac
+ 				sizeof(_tcph), &_tcph);
+ 	BUG_ON(th == NULL);
+ 	
+-	WRITE_LOCK(&tcp_lock);
++	write_lock_bh(&tcp_lock);
+ 	old_state = conntrack->proto.tcp.state;
+ 	dir = CTINFO2DIR(ctinfo);
+ 	index = get_conntrack_index(th);
+@@ -879,7 +878,7 @@ static int tcp_packet(struct ip_conntrac
+ 			 * that the client cannot but retransmit its SYN and 
+ 			 * thus initiate a clean new session.
+ 			 */
+-		    	WRITE_UNLOCK(&tcp_lock);
++		    	write_unlock_bh(&tcp_lock);
+ 			if (LOG_INVALID(IPPROTO_TCP))
+ 				nf_log_packet(PF_INET, 0, skb, NULL, NULL, 
+ 					  "ip_ct_tcp: killing out of sync session ");
+@@ -894,7 +893,7 @@ static int tcp_packet(struct ip_conntrac
+ 		conntrack->proto.tcp.last_end = 
+ 		    segment_seq_plus_len(ntohl(th->seq), skb->len, iph, th);
+ 		
+-		WRITE_UNLOCK(&tcp_lock);
++		write_unlock_bh(&tcp_lock);
+ 		if (LOG_INVALID(IPPROTO_TCP))
+ 			nf_log_packet(PF_INET, 0, skb, NULL, NULL, 
+ 				  "ip_ct_tcp: invalid packet ignored ");
+@@ -904,7 +903,7 @@ static int tcp_packet(struct ip_conntrac
+ 		DEBUGP("ip_ct_tcp: Invalid dir=%i index=%u ostate=%u\n",
+ 		       dir, get_conntrack_index(th),
+ 		       old_state);
+-		WRITE_UNLOCK(&tcp_lock);
++		write_unlock_bh(&tcp_lock);
+ 		if (LOG_INVALID(IPPROTO_TCP))
+ 			nf_log_packet(PF_INET, 0, skb, NULL, NULL, 
+ 				  "ip_ct_tcp: invalid state ");
+@@ -918,13 +917,13 @@ static int tcp_packet(struct ip_conntrac
+ 		    	     conntrack->proto.tcp.seen[dir].td_end)) {	
+ 		    	/* Attempt to reopen a closed connection.
+ 		    	* Delete this connection and look up again. */
+-		    	WRITE_UNLOCK(&tcp_lock);
++		    	write_unlock_bh(&tcp_lock);
+ 		    	if (del_timer(&conntrack->timeout))
+ 		    		conntrack->timeout.function((unsigned long)
+ 		    					    conntrack);
+ 		    	return -NF_REPEAT;
+ 		} else {
+-			WRITE_UNLOCK(&tcp_lock);
++			write_unlock_bh(&tcp_lock);
+ 			if (LOG_INVALID(IPPROTO_TCP))
+ 				nf_log_packet(PF_INET, 0, skb, NULL, NULL,
+ 				              "ip_ct_tcp: invalid SYN");
+@@ -949,7 +948,7 @@ static int tcp_packet(struct ip_conntrac
+ 
+ 	if (!tcp_in_window(&conntrack->proto.tcp, dir, index, 
+ 			   skb, iph, th)) {
+-		WRITE_UNLOCK(&tcp_lock);
++		write_unlock_bh(&tcp_lock);
+ 		return -NF_ACCEPT;
+ 	}
+     in_window:
+@@ -972,7 +971,7 @@ static int tcp_packet(struct ip_conntrac
+ 	timeout = conntrack->proto.tcp.retrans >= ip_ct_tcp_max_retrans
+ 		  && *tcp_timeouts[new_state] > ip_ct_tcp_timeout_max_retrans
+ 		  ? ip_ct_tcp_timeout_max_retrans : *tcp_timeouts[new_state];
+-	WRITE_UNLOCK(&tcp_lock);
++	write_unlock_bh(&tcp_lock);
+ 
+ 	if (!test_bit(IPS_SEEN_REPLY_BIT, &conntrack->status)) {
+ 		/* If only reply is a RST, we can consider ourselves not to
+--- a/net/ipv4/netfilter/ip_conntrack_standalone.c
++++ b/net/ipv4/netfilter/ip_conntrack_standalone.c
+@@ -28,8 +28,8 @@
+ #include <net/checksum.h>
+ #include <net/ip.h>
+ 
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_conntrack_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_conntrack_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_protocol.h>
+@@ -119,7 +119,7 @@ static struct list_head *ct_get_idx(stru
+ 
+ static void *ct_seq_start(struct seq_file *seq, loff_t *pos)
+ {
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 	return ct_get_idx(seq, *pos);
+ }
+ 
+@@ -131,7 +131,7 @@ static void *ct_seq_next(struct seq_file
+   
+ static void ct_seq_stop(struct seq_file *s, void *v)
+ {
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ }
+  
+ static int ct_seq_show(struct seq_file *s, void *v)
+@@ -140,7 +140,7 @@ static int ct_seq_show(struct seq_file *
+ 	const struct ip_conntrack *conntrack = tuplehash_to_ctrack(hash);
+ 	struct ip_conntrack_protocol *proto;
+ 
+-	MUST_BE_READ_LOCKED(&ip_conntrack_lock);
++	ASSERT_READ_LOCK(&ip_conntrack_lock);
+ 	IP_NF_ASSERT(conntrack);
+ 
+ 	/* we only want to print DIR_ORIGINAL */
+@@ -239,7 +239,7 @@ static void *exp_seq_start(struct seq_fi
+ 
+ 	/* strange seq_file api calls stop even if we fail,
+ 	 * thus we need to grab lock since stop unlocks */
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 
+ 	if (list_empty(e))
+ 		return NULL;
+@@ -267,7 +267,7 @@ static void *exp_seq_next(struct seq_fil
+ 
+ static void exp_seq_stop(struct seq_file *s, void *v)
+ {
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ }
+ 
+ static int exp_seq_show(struct seq_file *s, void *v)
+@@ -921,22 +921,22 @@ int ip_conntrack_protocol_register(struc
+ {
+ 	int ret = 0;
+ 
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	if (ip_ct_protos[proto->proto] != &ip_conntrack_generic_protocol) {
+ 		ret = -EBUSY;
+ 		goto out;
+ 	}
+ 	ip_ct_protos[proto->proto] = proto;
+  out:
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 	return ret;
+ }
+ 
+ void ip_conntrack_protocol_unregister(struct ip_conntrack_protocol *proto)
+ {
+-	WRITE_LOCK(&ip_conntrack_lock);
++	write_lock_bh(&ip_conntrack_lock);
+ 	ip_ct_protos[proto->proto] = &ip_conntrack_generic_protocol;
+-	WRITE_UNLOCK(&ip_conntrack_lock);
++	write_unlock_bh(&ip_conntrack_lock);
+ 	
+ 	/* Somebody could be still looking at the proto in bh. */
+ 	synchronize_net();
+--- a/net/ipv4/netfilter/ip_nat_core.c
++++ b/net/ipv4/netfilter/ip_nat_core.c
+@@ -22,8 +22,8 @@
+ #include <linux/udp.h>
+ #include <linux/jhash.h>
+ 
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_nat_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_nat_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_core.h>
+@@ -41,7 +41,7 @@
+ #define DEBUGP(format, args...)
+ #endif
+ 
+-DECLARE_RWLOCK(ip_nat_lock);
++DEFINE_RWLOCK(ip_nat_lock);
+ 
+ /* Calculated at init based on memory size */
+ static unsigned int ip_nat_htable_size;
+@@ -65,9 +65,9 @@ static void ip_nat_cleanup_conntrack(str
+ 	if (!(conn->status & IPS_NAT_DONE_MASK))
+ 		return;
+ 
+-	WRITE_LOCK(&ip_nat_lock);
++	write_lock_bh(&ip_nat_lock);
+ 	list_del(&conn->nat.info.bysource);
+-	WRITE_UNLOCK(&ip_nat_lock);
++	write_unlock_bh(&ip_nat_lock);
+ }
+ 
+ /* We do checksum mangling, so if they were wrong before they're still
+@@ -142,7 +142,7 @@ find_appropriate_src(const struct ip_con
+ 	unsigned int h = hash_by_src(tuple);
+ 	struct ip_conntrack *ct;
+ 
+-	READ_LOCK(&ip_nat_lock);
++	read_lock_bh(&ip_nat_lock);
+ 	list_for_each_entry(ct, &bysource[h], nat.info.bysource) {
+ 		if (same_src(ct, tuple)) {
+ 			/* Copy source part from reply tuple. */
+@@ -151,12 +151,12 @@ find_appropriate_src(const struct ip_con
+ 			result->dst = tuple->dst;
+ 
+ 			if (in_range(result, range)) {
+-				READ_UNLOCK(&ip_nat_lock);
++				read_unlock_bh(&ip_nat_lock);
+ 				return 1;
+ 			}
+ 		}
+ 	}
+-	READ_UNLOCK(&ip_nat_lock);
++	read_unlock_bh(&ip_nat_lock);
+ 	return 0;
+ }
+ 
+@@ -297,9 +297,9 @@ ip_nat_setup_info(struct ip_conntrack *c
+ 		unsigned int srchash
+ 			= hash_by_src(&conntrack->tuplehash[IP_CT_DIR_ORIGINAL]
+ 				      .tuple);
+-		WRITE_LOCK(&ip_nat_lock);
++		write_lock_bh(&ip_nat_lock);
+ 		list_add(&info->bysource, &bysource[srchash]);
+-		WRITE_UNLOCK(&ip_nat_lock);
++		write_unlock_bh(&ip_nat_lock);
+ 	}
+ 
+ 	/* It's done. */
+@@ -474,23 +474,23 @@ int ip_nat_protocol_register(struct ip_n
+ {
+ 	int ret = 0;
+ 
+-	WRITE_LOCK(&ip_nat_lock);
++	write_lock_bh(&ip_nat_lock);
+ 	if (ip_nat_protos[proto->protonum] != &ip_nat_unknown_protocol) {
+ 		ret = -EBUSY;
+ 		goto out;
+ 	}
+ 	ip_nat_protos[proto->protonum] = proto;
+  out:
+-	WRITE_UNLOCK(&ip_nat_lock);
++	write_unlock_bh(&ip_nat_lock);
+ 	return ret;
+ }
+ 
+ /* Noone stores the protocol anywhere; simply delete it. */
+ void ip_nat_protocol_unregister(struct ip_nat_protocol *proto)
+ {
+-	WRITE_LOCK(&ip_nat_lock);
++	write_lock_bh(&ip_nat_lock);
+ 	ip_nat_protos[proto->protonum] = &ip_nat_unknown_protocol;
+-	WRITE_UNLOCK(&ip_nat_lock);
++	write_unlock_bh(&ip_nat_lock);
+ 
+ 	/* Someone could be still looking at the proto in a bh. */
+ 	synchronize_net();
+@@ -509,13 +509,13 @@ int __init ip_nat_init(void)
+ 		return -ENOMEM;
+ 
+ 	/* Sew in builtin protocols. */
+-	WRITE_LOCK(&ip_nat_lock);
++	write_lock_bh(&ip_nat_lock);
+ 	for (i = 0; i < MAX_IP_NAT_PROTO; i++)
+ 		ip_nat_protos[i] = &ip_nat_unknown_protocol;
+ 	ip_nat_protos[IPPROTO_TCP] = &ip_nat_protocol_tcp;
+ 	ip_nat_protos[IPPROTO_UDP] = &ip_nat_protocol_udp;
+ 	ip_nat_protos[IPPROTO_ICMP] = &ip_nat_protocol_icmp;
+-	WRITE_UNLOCK(&ip_nat_lock);
++	write_unlock_bh(&ip_nat_lock);
+ 
+ 	for (i = 0; i < ip_nat_htable_size; i++) {
+ 		INIT_LIST_HEAD(&bysource[i]);
+--- a/net/ipv4/netfilter/ip_nat_helper.c
++++ b/net/ipv4/netfilter/ip_nat_helper.c
+@@ -28,8 +28,8 @@
+ #include <net/tcp.h>
+ #include <net/udp.h>
+ 
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_nat_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_nat_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+ #include <linux/netfilter_ipv4/ip_conntrack_helper.h>
+@@ -47,7 +47,7 @@
+ #define DUMP_OFFSET(x)
+ #endif
+ 
+-static DECLARE_LOCK(ip_nat_seqofs_lock);
++static DEFINE_SPINLOCK(ip_nat_seqofs_lock);
+ 
+ /* Setup TCP sequence correction given this change at this sequence */
+ static inline void 
+@@ -70,7 +70,7 @@ adjust_tcp_sequence(u32 seq,
+ 	DEBUGP("ip_nat_resize_packet: Seq_offset before: ");
+ 	DUMP_OFFSET(this_way);
+ 
+-	LOCK_BH(&ip_nat_seqofs_lock);
++	spin_lock_bh(&ip_nat_seqofs_lock);
+ 
+ 	/* SYN adjust. If it's uninitialized, or this is after last
+ 	 * correction, record it: we don't handle more than one
+@@ -82,7 +82,7 @@ adjust_tcp_sequence(u32 seq,
+ 		    this_way->offset_before = this_way->offset_after;
+ 		    this_way->offset_after += sizediff;
+ 	}
+-	UNLOCK_BH(&ip_nat_seqofs_lock);
++	spin_unlock_bh(&ip_nat_seqofs_lock);
+ 
+ 	DEBUGP("ip_nat_resize_packet: Seq_offset after: ");
+ 	DUMP_OFFSET(this_way);
+--- a/net/ipv4/netfilter/ip_nat_rule.c
++++ b/net/ipv4/netfilter/ip_nat_rule.c
+@@ -19,8 +19,8 @@
+ #include <net/route.h>
+ #include <linux/bitops.h>
+ 
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_nat_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_nat_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_tables.h>
+ #include <linux/netfilter_ipv4/ip_nat.h>
+--- a/net/ipv4/netfilter/ip_nat_standalone.c
++++ b/net/ipv4/netfilter/ip_nat_standalone.c
+@@ -31,8 +31,8 @@
+ #include <net/checksum.h>
+ #include <linux/spinlock.h>
+ 
+-#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ip_nat_lock)
+-#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ip_nat_lock)
++#define ASSERT_READ_LOCK(x)
++#define ASSERT_WRITE_LOCK(x)
+ 
+ #include <linux/netfilter_ipv4/ip_nat.h>
+ #include <linux/netfilter_ipv4/ip_nat_rule.h>
+@@ -373,7 +373,6 @@ static int init_or_cleanup(int init)
+  cleanup_rule_init:
+ 	ip_nat_rule_cleanup();
+  cleanup_nothing:
+-	MUST_BE_READ_WRITE_UNLOCKED(&ip_nat_lock);
+ 	return ret;
+ }
+ 
+--- a/net/ipv4/netfilter/ip_tables.c
++++ b/net/ipv4/netfilter/ip_tables.c
+@@ -67,7 +67,6 @@ static DECLARE_MUTEX(ipt_mutex);
+ /* Must have mutex */
+ #define ASSERT_READ_LOCK(x) IP_NF_ASSERT(down_trylock(&ipt_mutex) != 0)
+ #define ASSERT_WRITE_LOCK(x) IP_NF_ASSERT(down_trylock(&ipt_mutex) != 0)
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/listhelp.h>
+ 
+ #if 0
+--- a/net/ipv4/netfilter/ipt_CLUSTERIP.c
++++ b/net/ipv4/netfilter/ipt_CLUSTERIP.c
+@@ -29,7 +29,6 @@
+ #include <linux/netfilter_ipv4/ip_tables.h>
+ #include <linux/netfilter_ipv4/ipt_CLUSTERIP.h>
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ #define CLUSTERIP_VERSION "0.6"
+ 
+@@ -41,6 +40,8 @@
+ #define DEBUGP
+ #endif
+ 
++#define ASSERT_READ_LOCK(x)
++
+ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
+ MODULE_DESCRIPTION("iptables target for CLUSTERIP");
+@@ -67,7 +68,7 @@ static LIST_HEAD(clusterip_configs);
+ 
+ /* clusterip_lock protects the clusterip_configs list _AND_ the configurable
+  * data within all structurses (num_local_nodes, local_nodes[]) */
+-static DECLARE_RWLOCK(clusterip_lock);
++static DEFINE_RWLOCK(clusterip_lock);
+ 
+ #ifdef CONFIG_PROC_FS
+ static struct file_operations clusterip_proc_fops;
+@@ -82,9 +83,9 @@ clusterip_config_get(struct clusterip_co
+ static inline void
+ clusterip_config_put(struct clusterip_config *c) {
+ 	if (atomic_dec_and_test(&c->refcount)) {
+-		WRITE_LOCK(&clusterip_lock);
++		write_lock_bh(&clusterip_lock);
+ 		list_del(&c->list);
+-		WRITE_UNLOCK(&clusterip_lock);
++		write_unlock_bh(&clusterip_lock);
+ 		dev_mc_delete(c->dev, c->clustermac, ETH_ALEN, 0);
+ 		dev_put(c->dev);
+ 		kfree(c);
+@@ -97,7 +98,7 @@ __clusterip_config_find(u_int32_t cluste
+ {
+ 	struct list_head *pos;
+ 
+-	MUST_BE_READ_LOCKED(&clusterip_lock);
++	ASSERT_READ_LOCK(&clusterip_lock);
+ 	list_for_each(pos, &clusterip_configs) {
+ 		struct clusterip_config *c = list_entry(pos, 
+ 					struct clusterip_config, list);
+@@ -114,14 +115,14 @@ clusterip_config_find_get(u_int32_t clus
+ {
+ 	struct clusterip_config *c;
+ 
+-	READ_LOCK(&clusterip_lock);
++	read_lock_bh(&clusterip_lock);
+ 	c = __clusterip_config_find(clusterip);
+ 	if (!c) {
+-		READ_UNLOCK(&clusterip_lock);
++		read_unlock_bh(&clusterip_lock);
+ 		return NULL;
+ 	}
+ 	atomic_inc(&c->refcount);
+-	READ_UNLOCK(&clusterip_lock);
++	read_unlock_bh(&clusterip_lock);
+ 
+ 	return c;
+ }
+@@ -160,9 +161,9 @@ clusterip_config_init(struct ipt_cluster
+ 	c->pde->data = c;
+ #endif
+ 
+-	WRITE_LOCK(&clusterip_lock);
++	write_lock_bh(&clusterip_lock);
+ 	list_add(&c->list, &clusterip_configs);
+-	WRITE_UNLOCK(&clusterip_lock);
++	write_unlock_bh(&clusterip_lock);
+ 
+ 	return c;
+ }
+@@ -172,25 +173,25 @@ clusterip_add_node(struct clusterip_conf
+ {
+ 	int i;
+ 
+-	WRITE_LOCK(&clusterip_lock);
++	write_lock_bh(&clusterip_lock);
+ 
+ 	if (c->num_local_nodes >= CLUSTERIP_MAX_NODES
+ 	    || nodenum > CLUSTERIP_MAX_NODES) {
+-		WRITE_UNLOCK(&clusterip_lock);
++		write_unlock_bh(&clusterip_lock);
+ 		return 1;
+ 	}
+ 
+ 	/* check if we alrady have this number in our array */
+ 	for (i = 0; i < c->num_local_nodes; i++) {
+ 		if (c->local_nodes[i] == nodenum) {
+-			WRITE_UNLOCK(&clusterip_lock);
++			write_unlock_bh(&clusterip_lock);
+ 			return 1;
+ 		}
+ 	}
+ 
+ 	c->local_nodes[c->num_local_nodes++] = nodenum;
+ 
+-	WRITE_UNLOCK(&clusterip_lock);
++	write_unlock_bh(&clusterip_lock);
+ 	return 0;
+ }
+ 
+@@ -199,10 +200,10 @@ clusterip_del_node(struct clusterip_conf
+ {
+ 	int i;
+ 
+-	WRITE_LOCK(&clusterip_lock);
++	write_lock_bh(&clusterip_lock);
+ 
+ 	if (c->num_local_nodes <= 1 || nodenum > CLUSTERIP_MAX_NODES) {
+-		WRITE_UNLOCK(&clusterip_lock);
++		write_unlock_bh(&clusterip_lock);
+ 		return 1;
+ 	}
+ 		
+@@ -211,12 +212,12 @@ clusterip_del_node(struct clusterip_conf
+ 			int size = sizeof(u_int16_t)*(c->num_local_nodes-(i+1));
+ 			memmove(&c->local_nodes[i], &c->local_nodes[i+1], size);
+ 			c->num_local_nodes--;
+-			WRITE_UNLOCK(&clusterip_lock);
++			write_unlock_bh(&clusterip_lock);
+ 			return 0;
+ 		}
+ 	}
+ 
+-	WRITE_UNLOCK(&clusterip_lock);
++	write_unlock_bh(&clusterip_lock);
+ 	return 1;
+ }
+ 
+@@ -286,21 +287,21 @@ clusterip_responsible(struct clusterip_c
+ {
+ 	int i;
+ 
+-	READ_LOCK(&clusterip_lock);
++	read_lock_bh(&clusterip_lock);
+ 
+ 	if (config->num_local_nodes == 0) {
+-		READ_UNLOCK(&clusterip_lock);
++		read_unlock_bh(&clusterip_lock);
+ 		return 0;
+ 	}
+ 
+ 	for (i = 0; i < config->num_local_nodes; i++) {
+ 		if (config->local_nodes[i] == hash) {
+-			READ_UNLOCK(&clusterip_lock);
++			read_unlock_bh(&clusterip_lock);
+ 			return 1;
+ 		}
+ 	}
+ 
+-	READ_UNLOCK(&clusterip_lock);
++	read_unlock_bh(&clusterip_lock);
+ 
+ 	return 0;
+ }
+@@ -578,7 +579,7 @@ static void *clusterip_seq_start(struct 
+ 	struct clusterip_config *c = pde->data;
+ 	unsigned int *nodeidx;
+ 
+-	READ_LOCK(&clusterip_lock);
++	read_lock_bh(&clusterip_lock);
+ 	if (*pos >= c->num_local_nodes)
+ 		return NULL;
+ 
+@@ -608,7 +609,7 @@ static void clusterip_seq_stop(struct se
+ {
+ 	kfree(v);
+ 
+-	READ_UNLOCK(&clusterip_lock);
++	read_unlock_bh(&clusterip_lock);
+ }
+ 
+ static int clusterip_seq_show(struct seq_file *s, void *v)
+--- a/net/ipv4/netfilter/ipt_MASQUERADE.c
++++ b/net/ipv4/netfilter/ipt_MASQUERADE.c
+@@ -33,7 +33,7 @@ MODULE_DESCRIPTION("iptables MASQUERADE 
+ #endif
+ 
+ /* Lock protects masq region inside conntrack */
+-static DECLARE_RWLOCK(masq_lock);
++static DEFINE_RWLOCK(masq_lock);
+ 
+ /* FIXME: Multiple targets. --RR */
+ static int
+@@ -103,9 +103,9 @@ masquerade_target(struct sk_buff **pskb,
+ 		return NF_DROP;
+ 	}
+ 
+-	WRITE_LOCK(&masq_lock);
++	write_lock_bh(&masq_lock);
+ 	ct->nat.masq_index = out->ifindex;
+-	WRITE_UNLOCK(&masq_lock);
++	write_unlock_bh(&masq_lock);
+ 
+ 	/* Transfer from original range. */
+ 	newrange = ((struct ip_nat_range)
+@@ -122,9 +122,9 @@ device_cmp(struct ip_conntrack *i, void 
+ {
+ 	int ret;
+ 
+-	READ_LOCK(&masq_lock);
++	read_lock_bh(&masq_lock);
+ 	ret = (i->nat.masq_index == (int)(long)ifindex);
+-	READ_UNLOCK(&masq_lock);
++	read_unlock_bh(&masq_lock);
+ 
+ 	return ret;
+ }
+--- a/net/ipv4/netfilter/ipt_ULOG.c
++++ b/net/ipv4/netfilter/ipt_ULOG.c
+@@ -56,7 +56,6 @@
+ #include <linux/netfilter.h>
+ #include <linux/netfilter_ipv4/ip_tables.h>
+ #include <linux/netfilter_ipv4/ipt_ULOG.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <net/sock.h>
+ #include <linux/bitops.h>
+ 
+@@ -99,8 +98,8 @@ typedef struct {
+ 
+ static ulog_buff_t ulog_buffers[ULOG_MAXNLGROUPS];	/* array of buffers */
+ 
+-static struct sock *nflognl;	/* our socket */
+-static DECLARE_LOCK(ulog_lock);	/* spinlock */
++static struct sock *nflognl;		/* our socket */
++static DEFINE_SPINLOCK(ulog_lock);	/* spinlock */
+ 
+ /* send one ulog_buff_t to userspace */
+ static void ulog_send(unsigned int nlgroupnum)
+@@ -135,9 +134,9 @@ static void ulog_timer(unsigned long dat
+ 
+ 	/* lock to protect against somebody modifying our structure
+ 	 * from ipt_ulog_target at the same time */
+-	LOCK_BH(&ulog_lock);
++	spin_lock_bh(&ulog_lock);
+ 	ulog_send(data);
+-	UNLOCK_BH(&ulog_lock);
++	spin_unlock_bh(&ulog_lock);
+ }
+ 
+ static struct sk_buff *ulog_alloc_skb(unsigned int size)
+@@ -193,7 +192,7 @@ static void ipt_ulog_packet(unsigned int
+ 
+ 	ub = &ulog_buffers[groupnum];
+ 	
+-	LOCK_BH(&ulog_lock);
++	spin_lock_bh(&ulog_lock);
+ 
+ 	if (!ub->skb) {
+ 		if (!(ub->skb = ulog_alloc_skb(size)))
+@@ -278,7 +277,7 @@ static void ipt_ulog_packet(unsigned int
+ 		ulog_send(groupnum);
+ 	}
+ 
+-	UNLOCK_BH(&ulog_lock);
++	spin_unlock_bh(&ulog_lock);
+ 
+ 	return;
+ 
+@@ -288,7 +287,7 @@ nlmsg_failure:
+ alloc_failure:
+ 	PRINTR("ipt_ULOG: Error building netlink message\n");
+ 
+-	UNLOCK_BH(&ulog_lock);
++	spin_unlock_bh(&ulog_lock);
+ }
+ 
+ static unsigned int ipt_ulog_target(struct sk_buff **pskb,
+--- a/net/ipv4/netfilter/ipt_hashlimit.c
++++ b/net/ipv4/netfilter/ipt_hashlimit.c
+@@ -37,7 +37,6 @@
+ 
+ #include <linux/netfilter_ipv4/ip_tables.h>
+ #include <linux/netfilter_ipv4/ipt_hashlimit.h>
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ 
+ /* FIXME: this is just for IP_NF_ASSERRT */
+ #include <linux/netfilter_ipv4/ip_conntrack.h>
+@@ -92,7 +91,7 @@ struct ipt_hashlimit_htable {
+ 	struct hlist_head hash[0];	/* hashtable itself */
+ };
+ 
+-static DECLARE_LOCK(hashlimit_lock);	/* protects htables list */
++static DEFINE_SPINLOCK(hashlimit_lock);	/* protects htables list */
+ static DECLARE_MUTEX(hlimit_mutex);	/* additional checkentry protection */
+ static HLIST_HEAD(hashlimit_htables);
+ static kmem_cache_t *hashlimit_cachep;
+@@ -233,9 +232,9 @@ static int htable_create(struct ipt_hash
+ 	hinfo->timer.function = htable_gc;
+ 	add_timer(&hinfo->timer);
+ 
+-	LOCK_BH(&hashlimit_lock);
++	spin_lock_bh(&hashlimit_lock);
+ 	hlist_add_head(&hinfo->node, &hashlimit_htables);
+-	UNLOCK_BH(&hashlimit_lock);
++	spin_unlock_bh(&hashlimit_lock);
+ 
+ 	return 0;
+ }
+@@ -301,15 +300,15 @@ static struct ipt_hashlimit_htable *htab
+ 	struct ipt_hashlimit_htable *hinfo;
+ 	struct hlist_node *pos;
+ 
+-	LOCK_BH(&hashlimit_lock);
++	spin_lock_bh(&hashlimit_lock);
+ 	hlist_for_each_entry(hinfo, pos, &hashlimit_htables, node) {
+ 		if (!strcmp(name, hinfo->pde->name)) {
+ 			atomic_inc(&hinfo->use);
+-			UNLOCK_BH(&hashlimit_lock);
++			spin_unlock_bh(&hashlimit_lock);
+ 			return hinfo;
+ 		}
+ 	}
+-	UNLOCK_BH(&hashlimit_lock);
++	spin_unlock_bh(&hashlimit_lock);
+ 
+ 	return NULL;
+ }
+@@ -317,9 +316,9 @@ static struct ipt_hashlimit_htable *htab
+ static void htable_put(struct ipt_hashlimit_htable *hinfo)
+ {
+ 	if (atomic_dec_and_test(&hinfo->use)) {
+-		LOCK_BH(&hashlimit_lock);
++		spin_lock_bh(&hashlimit_lock);
+ 		hlist_del(&hinfo->node);
+-		UNLOCK_BH(&hashlimit_lock);
++		spin_unlock_bh(&hashlimit_lock);
+ 		htable_destroy(hinfo);
+ 	}
+ }
+--- a/net/ipv4/netfilter/ipt_helper.c
++++ b/net/ipv4/netfilter/ipt_helper.c
+@@ -53,7 +53,7 @@ match(const struct sk_buff *skb,
+ 		return ret;
+ 	}
+ 
+-	READ_LOCK(&ip_conntrack_lock);
++	read_lock_bh(&ip_conntrack_lock);
+ 	if (!ct->master->helper) {
+ 		DEBUGP("ipt_helper: master ct %p has no helper\n", 
+ 			exp->expectant);
+@@ -69,7 +69,7 @@ match(const struct sk_buff *skb,
+ 		ret ^= !strncmp(ct->master->helper->name, info->name, 
+ 		                strlen(ct->master->helper->name));
+ out_unlock:
+-	READ_UNLOCK(&ip_conntrack_lock);
++	read_unlock_bh(&ip_conntrack_lock);
+ 	return ret;
+ }
+ 
+--- a/net/ipv6/netfilter/ip6_tables.c
++++ b/net/ipv6/netfilter/ip6_tables.c
+@@ -71,7 +71,6 @@ static DECLARE_MUTEX(ip6t_mutex);
+ /* Must have mutex */
+ #define ASSERT_READ_LOCK(x) IP_NF_ASSERT(down_trylock(&ip6t_mutex) != 0)
+ #define ASSERT_WRITE_LOCK(x) IP_NF_ASSERT(down_trylock(&ip6t_mutex) != 0)
+-#include <linux/netfilter_ipv4/lockhelp.h>
+ #include <linux/netfilter_ipv4/listhelp.h>
+ 
+ #if 0
