@@ -1,22 +1,6 @@
-From: Greg Kroah-Hartman <gregkh@suse.de>
-Date: Thu, 2 Jun 2005 22:41:48 +0000 (-0700)
-Subject: [PATCH] PCI: Fix up PCI routing in parent bridge
-X-Git-Tag: v2.6.13-rc2
-X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=26f674ae0e37190bf61c988e52911e4372fdb5f5
-
-  [PATCH] PCI: Fix up PCI routing in parent bridge
-  
-  When the cardbus bridge is behind another bridge change the routing
-  in the parent bridge for new cards.  This fixes Cardbus on various AMD64
-  laptops.
-  
-  Signed-off-by: Andi Kleen <ak@suse.de>
-  Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
----
-
---- a/drivers/pci/probe.c
-+++ b/drivers/pci/probe.c
-@@ -398,6 +398,16 @@ static void pci_enable_crs(struct pci_de
+--- linux-2.6.12-gentoo-r8/drivers/pci/probe.c	2005-06-17 20:48:29.000000000 +0100
++++ linux-dsd/drivers/pci/probe.c	2005-08-09 21:44:41.000000000 +0100
+@@ -395,6 +395,16 @@ static void pci_enable_crs(struct pci_de
  	pci_write_config_word(dev, rpcap + PCI_EXP_RTCTL, rpctl);
  }
  
@@ -33,7 +17,7 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  unsigned int __devinit pci_scan_child_bus(struct pci_bus *bus);
  
  /*
-@@ -499,7 +509,13 @@ int __devinit pci_scan_bridge(struct pci
+@@ -492,7 +502,13 @@ int __devinit pci_scan_bridge(struct pci
  
  		if (!is_cardbus) {
  			child->bridge_ctl = PCI_BRIDGE_CTL_NO_ISA;
@@ -48,10 +32,10 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  			/* Now we can scan all subordinate buses... */
  			max = pci_scan_child_bus(child);
  		} else {
-@@ -513,6 +529,7 @@ int __devinit pci_scan_bridge(struct pci
- 							max+i+1))
- 					break;
- 			max += i;
+@@ -502,6 +518,7 @@ int __devinit pci_scan_bridge(struct pci
+ 			 * inserted later.
+ 			 */
+ 			max += CARDBUS_RESERVE_BUSNR;
 +			pci_fixup_parent_subordinate_busnr(child, max);
  		}
  		/*
