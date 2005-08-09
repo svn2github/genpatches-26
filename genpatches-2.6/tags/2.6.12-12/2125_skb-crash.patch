@@ -1,0 +1,60 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Tue, 5 Jul 2005 21:08:10 +0000 (-0700)
+Subject: [NET]: Fix signedness issues in net/core/filter.c
+X-Git-Tag: v2.6.13-rc2
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=55820ee2f8c767a2833b21bd365e5753f50bd8ce
+
+  [NET]: Fix signedness issues in net/core/filter.c
+  
+  This is the code to load packet data into a register:
+  
+                          k = fentry->k;
+                          if (k < 0) {
+  ...
+                          } else {
+                                  u32 _tmp, *p;
+                                  p = skb_header_pointer(skb, k, 4, &_tmp);
+                                  if (p != NULL) {
+                                          A = ntohl(*p);
+                                          continue;
+                                  }
+                          }
+  
+  skb_header_pointer checks if the requested data is within the
+  linear area:
+  
+          int hlen = skb_headlen(skb);
+  
+          if (offset + len <= hlen)
+                  return skb->data + offset;
+  
+  When offset is within [INT_MAX-len+1..INT_MAX] the addition will
+  result in a negative number which is <= hlen.
+  
+  I couldn't trigger a crash on my AMD64 with 2GB of memory, but a
+  coworker tried on his x86 machine and it crashed immediately.
+  
+  This patch fixes the check in skb_header_pointer to handle large
+  positive offsets similar to skb_copy_bits. Invalid data can still
+  be accessed using negative offsets (also similar to skb_copy_bits),
+  anyone using negative offsets needs to verify them himself.
+  
+  Thanks to Thomas Vögtle <thomas.voegtle@coreworks.de> for verifying the
+  problem by crashing his machine and providing me with an Oops.
+  
+  Signed-off-by: Patrick McHardy <kaber@trash.net>
+  Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
+  Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/include/linux/skbuff.h
++++ b/include/linux/skbuff.h
+@@ -1211,7 +1211,7 @@ static inline void *skb_header_pointer(c
+ {
+ 	int hlen = skb_headlen(skb);
+ 
+-	if (offset + len <= hlen)
++	if (hlen - offset >= len)
+ 		return skb->data + offset;
+ 
+ 	if (skb_copy_bits(skb, offset, buffer, len) < 0)
