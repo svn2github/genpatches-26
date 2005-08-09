@@ -64,6 +64,10 @@ Patch:	1310_amd64-memleak.patch
 From:	stable queue
 Desc:	Fix elf-related memory leak on amd64
 
+Patch:	1315_amd64-cardbus.patch
+From:	http://bugs.gentoo.org/100646
+Desc:	Fix PCMCIA for amd64 laptops
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
