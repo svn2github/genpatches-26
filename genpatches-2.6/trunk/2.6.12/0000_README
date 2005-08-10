@@ -52,17 +52,13 @@ Patch:	1003_linux-2.6.12.3.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1004_linux-2.6.12.4.patch
+From:	http://www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
-
-Patch:	1305_k8-powernow-oops.patch
-From:	http://bugs.gentoo.org/100132
-Desc:	Fix powernow-related oops on dual-core AMD64 systems
-
-Patch:	1310_amd64-memleak.patch
-From:	stable queue
-Desc:	Fix elf-related memory leak on amd64
 
 Patch:	1315_amd64-cardbus.patch
 From:	http://bugs.gentoo.org/100646
@@ -96,37 +92,9 @@ Patch:	1900_gconfig-crash.patch
 From:	http://bugs.gentoo.org/98410
 Desc:	Fix gconfig crash
 
-Patch:	1905_bio-clone-corruption.patch
-From:	stable queue
-Desc:	Fix possible corruption in bio-clone operation
-
 Patch:	1910_percpu-modalloc.patch
 From:	Rusty Russell
 Desc:	Fix a percpu_modalloc oops
-
-Patch:	2100_early-vlan.patch
-From:	http://bugs.gentoo.org/99479
-Desc:	Fix bringing up of VLANs
-
-Patch:	2105_ipsec-overflow.patch
-From:	stable queue
-Desc:	Fix possible IPSEC policy overflow
-
-Patch:	2110_memory-nat-corruption.patch
-From:	stable queue
-Desc:	Fix possible NAT memory corruption
-
-Patch:	2115_ipv6-deadlock.patch
-From:	stable queue
-Desc:	Fix deadlock in ip6_queue
-
-Patch:	2120_conntrack-unload-crash.patch
-From:	stable queue
-Desc:	Fixes a crash when unloading ip_conntrack
-
-Patch:	2125_skb-crash.patch
-From:	stable queue
-Desc:	Fix crash related to skb signedness
 
 Patch:	2130_netfilter-locking.patch
 From:	http://bugs.gentoo.org/86227
@@ -143,10 +111,6 @@ Desc:	Fix capacity handling for >2TB
 Patch:	2315_ide-no-lba.patch
 From:	Upstream 2.6.13
 Desc:	Fix ide-disk inability to handle LBA only devices. Reqd for it8212.
-
-Patch:	2320_qla2xxx-failure.patch
-From:	stable queue
-Desc:	Fix NULL dereference on qla2xxx port failure
 
 Patch:	2700_irqpoll.patch
 From:	Upstream 2.6.13
