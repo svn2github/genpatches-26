@@ -213,11 +213,19 @@ sub make_release_pages {
 	}
 }
 
+sub mysort {
+	$a =~ m/^\d\.\d\.(\d+)-(\d+)-info\.htm$/;
+	$mya = $2;
+	$b =~ m/^\d\.\d\.(\d+)-(\d+)-info\.htm$/;
+	$myb = $2;
+	return $mya - $myb;
+}
+
 sub make_releases_index {
 	my (%kernels, $info, @infopages, $kernel);
 	local (*DIR, *FILE, *INDEX);
 	opendir(DIR, $webscript_path.'/generated');
-	@infopages = grep { /-info\.htm$/ } sort readdir DIR;
+	@infopages = grep { /-info\.htm$/ } readdir DIR;
 	foreach $info (@infopages) {
 		$info =~ m/^(\d\.\d\.\d+)-\d+-info\.htm$/;
 		$kernels{$1} = 1;
@@ -232,7 +240,7 @@ sub make_releases_index {
 		open(FILE, '> '.$webscript_path.'/output/releases-'.$kernel.'.htm');
 		html_header(FILE, "$kernel Releases");
 		print FILE '<h1>'.$kernel.' Releases</h1>';
-		foreach (grep { /^$kernel-/ } @infopages) {
+		foreach (grep { /^$kernel-/ } sort mysort @infopages) {
 			include_generated(FILE, $_);
 		}
 		html_footer(FILE);
