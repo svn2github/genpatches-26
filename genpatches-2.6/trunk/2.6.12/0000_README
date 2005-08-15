@@ -56,6 +56,10 @@ Patch:	1004_linux-2.6.12.4.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1005_linux-2.6.12.5.patch
+From:	http://www.kernel.org
+Desc:	Misc fixes including some security patches
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
@@ -91,10 +95,6 @@ Desc:	Fix hme related lockup on u1s
 Patch:	1900_gconfig-crash.patch
 From:	http://bugs.gentoo.org/98410
 Desc:	Fix gconfig crash
-
-Patch:	1910_percpu-modalloc.patch
-From:	Rusty Russell
-Desc:	Fix a percpu_modalloc oops
 
 Patch:	2130_netfilter-locking.patch
 From:	http://bugs.gentoo.org/86227
