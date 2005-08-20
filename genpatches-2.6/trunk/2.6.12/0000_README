@@ -72,6 +72,10 @@ Patch:	1305_amd64-bios-mce.patch
 From:	http://bugs.gentoo.org/94097
 Desc:	Don't log machine check events left over from boot.
 
+Patch:	1310_amd64-semundo-locking.patch
+From:	http://bugs.gentoo.org/101807
+Desc:	Fix lock leakage causing preempt breakage
+
 Patch:	1315_amd64-cardbus.patch
 From:	http://bugs.gentoo.org/100646
 Desc:	Fix PCMCIA for amd64 laptops
