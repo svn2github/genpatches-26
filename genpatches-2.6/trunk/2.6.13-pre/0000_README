@@ -72,6 +72,10 @@ Patch:	2100_forcedeth-force-linkinit.patch
 From:	http://bugs.gentoo.org/90069
 Desc:	Fix intermittent network drop in forcedeth driver
 
+Patch:	2105_skge-sensor-interrupts.patch
+From:	http://bugs.gentoo.org/87182
+Desc:	Stop skge flooding the logs with bogus messages
+
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
