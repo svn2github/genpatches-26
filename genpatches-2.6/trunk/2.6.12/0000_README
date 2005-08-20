@@ -96,6 +96,10 @@ Patch:	1900_gconfig-crash.patch
 From:	http://bugs.gentoo.org/98410
 Desc:	Fix gconfig crash
 
+Patch:	2100_forcedeth-force-linkinit.patch
+From:	http://bugs.gentoo.org/90069
+Desc:	Fix intermittent network drop in forcedeth driver
+
 Patch:	2130_netfilter-locking.patch
 From:	http://bugs.gentoo.org/86227
 Desc:	Fix netfilter locking mechanism
