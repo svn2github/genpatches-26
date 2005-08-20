@@ -1,0 +1,85 @@
+From: Andi Kleen <ak@muc.de>
+Date: Sun, 7 Aug 2005 16:42:07 +0000 (-0700)
+Subject: [PATCH] x86_64: ignore machine checks from boot time
+X-Git-Tag: v2.6.13-rc6
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=d5172f263f76ca6d588f533c0989b22521fcbac2
+
+  [PATCH] x86_64: ignore machine checks from boot time
+  
+  Don't log machine check events left over from boot.  Too many BIOSes leave
+  bogus events in there.
+  
+  This unfortunately also makes it impossible to log events that caused a
+  reboot.  For people with non broken BIOS there is mce=bootlog
+  
+  Signed-off-by: Andi Kleen <ak@suse.de>
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/Documentation/x86_64/boot-options.txt
++++ b/Documentation/x86_64/boot-options.txt
+@@ -6,6 +6,11 @@ only the AMD64 specific ones are listed 
+ Machine check
+ 
+    mce=off disable machine check
++   mce=bootlog Enable logging of machine checks left over from booting.
++               Disabled by default because some BIOS leave bogus ones.
++               If your BIOS doesn't do that it's a good idea to enable though
++               to make sure you log even machine check events that result
++               in a reboot.
+ 
+    nomce (for compatibility with i386): same as mce=off
+ 
+--- a/arch/x86_64/kernel/mce.c
++++ b/arch/x86_64/kernel/mce.c
+@@ -36,6 +36,7 @@ static unsigned long bank[NR_BANKS] = { 
+ static unsigned long console_logged;
+ static int notify_user;
+ static int rip_msr;
++static int mce_bootlog;
+ 
+ /*
+  * Lockless MCE logging infrastructure.
+@@ -197,10 +198,11 @@ void do_machine_check(struct pt_regs * r
+ 			rdmsrl(MSR_IA32_MC0_ADDR + i*4, m.addr);
+ 
+ 		mce_get_rip(&m, regs);
+-		if (error_code != -1)
++		if (error_code >= 0)
+ 			rdtscll(m.tsc);
+ 		wrmsrl(MSR_IA32_MC0_STATUS + i*4, 0);
+-		mce_log(&m);
++		if (error_code != -2)
++			mce_log(&m);
+ 
+ 		/* Did this bank cause the exception? */
+ 		/* Assume that the bank with uncorrectable errors did it,
+@@ -315,7 +317,7 @@ static void mce_init(void *dummy)
+ 
+ 	/* Log the machine checks left over from the previous reset.
+ 	   This also clears all registers */
+-	do_machine_check(NULL, -1);
++	do_machine_check(NULL, mce_bootlog ? -1 : -2);
+ 
+ 	set_in_cr4(X86_CR4_MCE);
+ 
+@@ -476,11 +478,17 @@ static int __init mcheck_disable(char *s
+ }
+ 
+ /* mce=off disables machine check. Note you can reenable it later
+-   using sysfs */
++   using sysfs.
++   mce=bootlog Log MCEs from before booting. Disabled by default to work
++   around buggy BIOS that leave bogus MCEs.  */
+ static int __init mcheck_enable(char *str)
+ {
++	if (*str == '=')
++		str++;
+ 	if (!strcmp(str, "off"))
+ 		mce_dont_init = 1;
++	else if (!strcmp(str, "bootlog"))
++		mce_bootlog = 1;
+ 	else
+ 		printk("mce= argument %s ignored. Please use /sys", str); 
+ 	return 0;
