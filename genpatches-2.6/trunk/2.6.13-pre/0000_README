@@ -60,10 +60,6 @@ Patch:	1362_sparc-kconfig-fb.patch
 From:	eradicator@gentoo.org
 Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
 
-Patch:	1370_sparc-modpost_stt_reg.patch
-From:	Fabio Massimo Di Nitto <fabbione@fabbione.net>
-Desc:	Correct modpost to work with newer glibc on sparc
-
 Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
