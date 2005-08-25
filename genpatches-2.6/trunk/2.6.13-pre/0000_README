@@ -112,8 +112,8 @@ Patch:	4705_squashfs-2.2.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
-Patch:	4900_speakup-20050730-gregkh.patch
-From:	gregkh's driver tree
+Patch:	4900_speakup-20050825.patch
+From:	eradicator@gentoo.org from speakup cvs
 Desc:	Provides console speech to visually-impaired users
 
 Patch:	4905_alpha-sysctl-uac.patch
