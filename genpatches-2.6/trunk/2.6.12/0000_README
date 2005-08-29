@@ -60,9 +60,9 @@ Patch:	1005_linux-2.6.12.5.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes including some security patches
 
-Patch:	1100_ipsec-policy-bypass.patch
-From:	http://bugs.gentoo.org/102805
-Desc:	Fix possible ipsec policy bypass
+Patch:	1006_linux-2.6.12.6.patch
+From:	http://www.kernel.org
+Desc:	Misc fixes
 
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
