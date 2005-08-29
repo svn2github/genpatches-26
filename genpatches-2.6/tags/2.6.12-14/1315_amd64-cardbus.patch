@@ -1,0 +1,42 @@
+--- linux-2.6.12-gentoo-r8/drivers/pci/probe.c	2005-06-17 20:48:29.000000000 +0100
++++ linux-dsd/drivers/pci/probe.c	2005-08-09 21:44:41.000000000 +0100
+@@ -395,6 +395,16 @@ static void pci_enable_crs(struct pci_de
+ 	pci_write_config_word(dev, rpcap + PCI_EXP_RTCTL, rpctl);
+ }
+ 
++static void __devinit pci_fixup_parent_subordinate_busnr(struct pci_bus *child, int max)
++{
++	struct pci_bus *parent = child->parent;
++	while (parent->parent && parent->subordinate < max) {
++		parent->subordinate = max;
++		pci_write_config_byte(parent->self, PCI_SUBORDINATE_BUS, max);
++		parent = parent->parent;
++	}
++}
++
+ unsigned int __devinit pci_scan_child_bus(struct pci_bus *bus);
+ 
+ /*
+@@ -492,7 +502,13 @@ int __devinit pci_scan_bridge(struct pci
+ 
+ 		if (!is_cardbus) {
+ 			child->bridge_ctl = PCI_BRIDGE_CTL_NO_ISA;
+-
++			/*
++			 * Adjust subordinate busnr in parent buses.
++			 * We do this before scanning for children because
++			 * some devices may not be detected if the bios
++			 * was lazy.
++			 */
++			pci_fixup_parent_subordinate_busnr(child, max);
+ 			/* Now we can scan all subordinate buses... */
+ 			max = pci_scan_child_bus(child);
+ 		} else {
+@@ -502,6 +518,7 @@ int __devinit pci_scan_bridge(struct pci
+ 			 * inserted later.
+ 			 */
+ 			max += CARDBUS_RESERVE_BUSNR;
++			pci_fixup_parent_subordinate_busnr(child, max);
+ 		}
+ 		/*
+ 		 * Set the subordinate bus number to its real value.

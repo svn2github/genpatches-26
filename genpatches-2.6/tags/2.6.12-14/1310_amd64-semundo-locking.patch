@@ -1,0 +1,60 @@
+From: Ingo Molnar <mingo@elte.hu>
+Date: Fri, 5 Aug 2005 21:05:27 +0000 (+0200)
+Subject: [PATCH] Fix semundo lock leakage
+X-Git-Tag: v2.6.13-rc6
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=00a5dfdb93f74e4d95fb0d83c890728e331f8810
+
+  [PATCH] Fix semundo lock leakage
+  
+  semundo->lock can leak if semundo->refcount goes from 2 to 1 while
+  another thread has it locked.  This causes major problems for PREEMPT
+  kernels.
+  
+  The simplest fix for now is to undo the single-thread optimization.
+  
+  This bug was found via relentless testing by Dominik Karall.
+  
+  Signed-off-by: Ingo Molnar <mingo@elte.hu>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -895,7 +895,7 @@ static inline void lock_semundo(void)
+ 	struct sem_undo_list *undo_list;
+ 
+ 	undo_list = current->sysvsem.undo_list;
+-	if ((undo_list != NULL) && (atomic_read(&undo_list->refcnt) != 1))
++	if (undo_list)
+ 		spin_lock(&undo_list->lock);
+ }
+ 
+@@ -915,7 +915,7 @@ static inline void unlock_semundo(void)
+ 	struct sem_undo_list *undo_list;
+ 
+ 	undo_list = current->sysvsem.undo_list;
+-	if ((undo_list != NULL) && (atomic_read(&undo_list->refcnt) != 1))
++	if (undo_list)
+ 		spin_unlock(&undo_list->lock);
+ }
+ 
+@@ -943,9 +943,7 @@ static inline int get_undo_list(struct s
+ 		if (undo_list == NULL)
+ 			return -ENOMEM;
+ 		memset(undo_list, 0, size);
+-		/* don't initialize unodhd->lock here.  It's done
+-		 * in copy_semundo() instead.
+-		 */
++		spin_lock_init(&undo_list->lock);
+ 		atomic_set(&undo_list->refcnt, 1);
+ 		current->sysvsem.undo_list = undo_list;
+ 	}
+@@ -1231,8 +1229,6 @@ int copy_semundo(unsigned long clone_fla
+ 		error = get_undo_list(&undo_list);
+ 		if (error)
+ 			return error;
+-		if (atomic_read(&undo_list->refcnt) == 1)
+-			spin_lock_init(&undo_list->lock);
+ 		atomic_inc(&undo_list->refcnt);
+ 		tsk->sysvsem.undo_list = undo_list;
+ 	} else 

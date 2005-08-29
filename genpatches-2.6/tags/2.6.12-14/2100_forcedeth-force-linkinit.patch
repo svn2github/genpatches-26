@@ -1,0 +1,15 @@
+forcedeth 042:
+Fix lack of link speed initialization in the second (and later) nv_open call
+
+--- 2.6/drivers/net/forcedeth.c	2005-08-06 19:59:56.000000000 +0200
++++ build-2.6/drivers/net/forcedeth.c	2005-08-06 19:59:06.000000000 +0200
+@@ -2178,6 +2180,9 @@
+ 		writel(NVREG_MIISTAT_MASK, base + NvRegMIIStatus);
+ 		dprintk(KERN_INFO "startup: got 0x%08x.\n", miistat);
+ 	}
++	/* set linkspeed to invalid value, thus force nv_update_linkspeed
++	 * to init hw */
++	np->linkspeed = 0; 
+ 	ret = nv_update_linkspeed(dev);
+ 	nv_start_rx(dev);
+ 	nv_start_tx(dev);
