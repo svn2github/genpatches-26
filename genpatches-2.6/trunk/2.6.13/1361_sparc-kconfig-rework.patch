@@ -1,6 +1,6 @@
-diff -Naurp linux-2.6.13-rc4-git2/arch/sparc/Kconfig linux-2.6.13-rc4-git2-gentoo/arch/sparc/Kconfig
---- linux-2.6.13-rc4-git2/arch/sparc/Kconfig	2005-07-30 19:45:56.026773134 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/arch/sparc/Kconfig	2005-07-30 19:54:22.326031025 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/arch/sparc/Kconfig linux-dsd/arch/sparc/Kconfig
+--- linux-2.6.13-rc7/arch/sparc/Kconfig	2005-08-24 09:53:21.000000000 +0100
++++ linux-dsd/arch/sparc/Kconfig	2005-08-29 13:59:53.000000000 +0100
 @@ -5,15 +5,25 @@
  
  mainmenu "Linux/SPARC Kernel Configuration"
@@ -417,9 +417,9 @@ diff -Naurp linux-2.6.13-rc4-git2/arch/sparc/Kconfig linux-2.6.13-rc4-git2-gento
  source "fs/Kconfig"
  
  source "arch/sparc/Kconfig.debug"
-diff -Naurp linux-2.6.13-rc4-git2/arch/sparc64/Kconfig linux-2.6.13-rc4-git2-gentoo/arch/sparc64/Kconfig
---- linux-2.6.13-rc4-git2/arch/sparc64/Kconfig	2005-07-30 19:45:56.029772637 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/arch/sparc64/Kconfig	2005-07-30 19:54:22.349027257 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/arch/sparc64/Kconfig linux-dsd/arch/sparc64/Kconfig
+--- linux-2.6.13-rc7/arch/sparc64/Kconfig	2005-08-24 09:53:21.000000000 +0100
++++ linux-dsd/arch/sparc64/Kconfig	2005-08-29 13:59:53.000000000 +0100
 @@ -5,6 +5,17 @@
  
  mainmenu "Linux/UltraSPARC Kernel Configuration"
@@ -958,9 +958,9 @@ diff -Naurp linux-2.6.13-rc4-git2/arch/sparc64/Kconfig linux-2.6.13-rc4-git2-gen
  source "arch/sparc64/oprofile/Kconfig"
  
  source "arch/sparc64/Kconfig.debug"
-diff -Naurp linux-2.6.13-rc4-git2/drivers/char/drm/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/char/drm/Kconfig
---- linux-2.6.13-rc4-git2/drivers/char/drm/Kconfig	2005-07-30 19:46:00.126092873 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/drivers/char/drm/Kconfig	2005-07-30 19:54:22.350027093 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/drm/Kconfig linux-dsd/drivers/char/drm/Kconfig
+--- linux-2.6.13-rc7/drivers/char/drm/Kconfig	2005-08-24 09:53:25.000000000 +0100
++++ linux-dsd/drivers/char/drm/Kconfig	2005-08-29 13:59:53.000000000 +0100
 @@ -6,15 +6,15 @@
  #
  config DRM
@@ -1001,9 +1001,9 @@ diff -Naurp linux-2.6.13-rc4-git2/drivers/char/drm/Kconfig linux-2.6.13-rc4-git2
 +	  and frame buffer cards.  Product page at
 +	  <http://www.sun.com/desktop/products/Graphics/creator3d.html>.
 +
-diff -Naurp linux-2.6.13-rc4-git2/drivers/char/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/char/Kconfig
---- linux-2.6.13-rc4-git2/drivers/char/Kconfig	2005-07-30 19:46:00.115094698 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/drivers/char/Kconfig	2005-07-30 19:57:05.398307358 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/Kconfig linux-dsd/drivers/char/Kconfig
+--- linux-2.6.13-rc7/drivers/char/Kconfig	2005-08-24 09:53:25.000000000 +0100
++++ linux-dsd/drivers/char/Kconfig	2005-08-29 14:01:54.000000000 +0100
 @@ -345,6 +345,13 @@ config AU1000_SERIAL_CONSOLE
  	  If you have an Alchemy AU1000 processor (MIPS based) and you want
  	  to use a console on a serial port, say Y.  Otherwise, say N.
@@ -1035,8 +1035,8 @@ diff -Naurp linux-2.6.13-rc4-git2/drivers/char/Kconfig linux-2.6.13-rc4-git2-gen
 +
  config GEN_RTC
  	tristate "Generic /dev/rtc emulation"
--	depends on RTC!=y && !IA64 && !ARM && !PPC64
-+	depends on RTC!=y && !IA64 && !ARM && !PPC64 && SUN_MOSTEK_RTC!=y
+-	depends on RTC!=y && !IA64 && !ARM && !PPC64 && !M32R && !SPARC32
++	depends on RTC!=y && !IA64 && !ARM && !PPC64 && !M32R && !SPARC32 && SUN_MOSTEK_RTC!=y
  	---help---
  	  If you say Y here and create a character special file /dev/rtc with
  	  major number 10 and minor number 135 using mknod ("man mknod"), you
@@ -1071,9 +1071,9 @@ diff -Naurp linux-2.6.13-rc4-git2/drivers/char/Kconfig linux-2.6.13-rc4-git2-gen
  
  menu "Ftape, the floppy tape device driver"
  
-diff -Naurp linux-2.6.13-rc4-git2/drivers/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/Kconfig
---- linux-2.6.13-rc4-git2/drivers/Kconfig	2005-07-30 19:45:58.456369955 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/drivers/Kconfig	2005-07-30 19:54:22.352026766 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/Kconfig linux-dsd/drivers/Kconfig
+--- linux-2.6.13-rc7/drivers/Kconfig	2005-08-24 09:53:22.000000000 +0100
++++ linux-dsd/drivers/Kconfig	2005-08-29 13:59:53.000000000 +0100
 @@ -62,4 +62,9 @@ source "drivers/infiniband/Kconfig"
  
  source "drivers/sn/Kconfig"
@@ -1084,9 +1084,9 @@ diff -Naurp linux-2.6.13-rc4-git2/drivers/Kconfig linux-2.6.13-rc4-git2-gentoo/d
 +endif
 +
  endmenu
-diff -Naurp linux-2.6.13-rc4-git2/drivers/sbus/char/Kconfig linux-2.6.13-rc4-git2-gentoo/drivers/sbus/char/Kconfig
---- linux-2.6.13-rc4-git2/drivers/sbus/char/Kconfig	2005-07-30 19:46:09.698504394 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/drivers/sbus/char/Kconfig	2005-07-30 19:57:50.205963155 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/sbus/char/Kconfig linux-dsd/drivers/sbus/char/Kconfig
+--- linux-2.6.13-rc7/drivers/sbus/char/Kconfig	2005-08-24 09:53:41.000000000 +0100
++++ linux-dsd/drivers/sbus/char/Kconfig	2005-08-29 13:59:53.000000000 +0100
 @@ -13,15 +13,6 @@ config SUN_OPENPROMIO
  
  	  If unsure, say Y.
@@ -1115,19 +1115,19 @@ diff -Naurp linux-2.6.13-rc4-git2/drivers/sbus/char/Kconfig linux-2.6.13-rc4-git
 -
  endmenu
  
-diff -Naurp linux-2.6.13-rc4-git2/drivers/sbus/Makefile linux-2.6.13-rc4-git2-gentoo/drivers/sbus/Makefile
---- linux-2.6.13-rc4-git2/drivers/sbus/Makefile	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/drivers/sbus/Makefile	2005-07-30 19:54:22.354026438 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/sbus/Makefile linux-dsd/drivers/sbus/Makefile
+--- linux-2.6.13-rc7/drivers/sbus/Makefile	2005-06-17 20:48:29.000000000 +0100
++++ linux-dsd/drivers/sbus/Makefile	2005-08-29 13:59:53.000000000 +0100
 @@ -6,4 +6,4 @@ ifneq ($(ARCH),m68k)
  obj-y    := sbus.o dvma.o
  endif
  
 -obj-$(CONFIG_SBUSCHAR) += char/
 +obj-y += char/
-diff -Naurp linux-2.6.13-rc4-git2/fs/Kconfig linux-2.6.13-rc4-git2-gentoo/fs/Kconfig
---- linux-2.6.13-rc4-git2/fs/Kconfig	2005-07-30 19:46:15.724504429 -0700
-+++ linux-2.6.13-rc4-git2-gentoo/fs/Kconfig	2005-07-30 19:54:22.356026110 -0700
-@@ -856,6 +856,20 @@ config RAMFS
+diff -urNpX dontdiff linux-2.6.13-rc7/fs/Kconfig linux-dsd/fs/Kconfig
+--- linux-2.6.13-rc7/fs/Kconfig	2005-08-24 09:53:42.000000000 +0100
++++ linux-dsd/fs/Kconfig	2005-08-29 13:59:53.000000000 +0100
+@@ -859,6 +859,20 @@ config RAMFS
  	  To compile this as a module, choose M here: the module will be called
  	  ramfs.
  

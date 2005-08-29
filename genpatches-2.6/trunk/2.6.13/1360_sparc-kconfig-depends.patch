@@ -1,12 +1,12 @@
-diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig
---- linux-2.6.13-rc3-git4/drivers/char/Kconfig	2005-07-24 14:07:00.675871584 -0700
-+++ linux-2.6.13-rc3-git4-gentoo/drivers/char/Kconfig	2005-07-24 14:05:19.753572397 -0700
+diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/Kconfig linux-dsd/drivers/char/Kconfig
+--- linux-2.6.13-rc7/drivers/char/Kconfig	2005-08-24 09:53:25.000000000 +0100
++++ linux-dsd/drivers/char/Kconfig	2005-08-29 13:55:18.000000000 +0100
 @@ -80,7 +80,7 @@ config SERIAL_NONSTANDARD
  
  config COMPUTONE
  	tristate "Computone IntelliPort Plus serial support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (BROKEN || !SPARC32)
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA) && (BROKEN || !SPARC32)
  	---help---
  	  This driver supports the entire family of Intelliport II/Plus
  	  controllers with the exception of the MicroChannel controllers and
@@ -32,8 +32,8 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
  
  config DIGIEPCA
  	tristate "Digiboard Intelligent Async Support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (!64BIT || BROKEN)
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA) && (!64BIT || BROKEN)
  	---help---
  	  This is a driver for Digi International's Xx, Xeve, and Xem series
  	  of cards which provide multiple serial ports. You would need
@@ -59,8 +59,8 @@ diff -Naurp linux-2.6.13-rc3-git4/drivers/char/Kconfig linux-2.6.13-rc3-git4-gen
  
  config SYNCLINKMP
  	tristate "SyncLink Multiport support"
--	depends on SERIAL_NONSTANDARD
-+	depends on SERIAL_NONSTANDARD && (PCI || ISA)
+-	depends on SERIAL_NONSTANDARD && (BROKEN || !SPARC32)
++	depends on SERIAL_NONSTANDARD && (PCI || ISA) && (BROKEN || !SPARC32)
  	help
  	  Enable support for the SyncLink Multiport (2 or 4 ports)
  	  serial adapter, running asynchronous and HDLC communications up
