@@ -1,23 +1,28 @@
+From stable-bounces@linux.kernel.org  Sat Sep  3 15:29:40 2005
 From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Date: Wed, 31 Aug 2005 04:16:53 +0000 (+1000)
+To: stable@kernel.org
+Date: Sun, 04 Sep 2005 08:28:05 +1000
 Subject: [PATCH] Fix PCI ROM mapping
-X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=8085ce084c0f0144c353963853f81486fc331120
 
-  [PATCH] Fix PCI ROM mapping
-  
-  This fixes a problem with pci_map_rom() which doesn't properly
-  update the ROM BAR value with the address thas allocated for it by the
-  PCI code. This problem, among other, breaks boot on Mac laptops.
-  
-  It'ss a new version based on Linus latest one with better error
-  checking.
-  
-  Signed-off-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+This fixes a problem with pci_map_rom() which doesn't properly
+update the ROM BAR value with the address thas allocated for it by the
+PCI code. This problem, among other, breaks boot on Mac laptops.
+
+It'ss a new version based on Linus latest one with better error
+checking.
+
+Signed-off-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
+ drivers/pci/rom.c |   24 +++++++++++++++++-------
+ 1 files changed, 17 insertions(+), 7 deletions(-)
 
---- a/drivers/pci/rom.c
-+++ b/drivers/pci/rom.c
+Index: linux-2.6.13.y/drivers/pci/rom.c
+===================================================================
+--- linux-2.6.13.y.orig/drivers/pci/rom.c
++++ linux-2.6.13.y/drivers/pci/rom.c
 @@ -21,13 +21,21 @@
   * between the ROM and other resources, so enabling it may disable access
   * to MMIO registers or other card memory.

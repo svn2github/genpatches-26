@@ -40,6 +40,46 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1000_1_aacraid-bad-BUG_ON_fix.patch
+From:	2.6.13.1
+Desc:	aacraid bad BUG_ON fix
+
+Patch:	1001_1_fix-pci-rom-mapping.patch
+From:	2.6.13.1
+Desc:	Fix PCI ROM mapping
+
+Patch:	1002_1_fix-socket-filter-regression.patch
+From:	2.6.13.1
+Desc:	[NET] 2.6.13 breaks libpcap (and tcpdump)
+
+Patch:	1003_1_ipsec-oops-fix.patch
+From:	2.6.13.1
+Desc:	[CRYPTO] Fix boundary check in standard multi-block cipher processors
+
+Patch:	1004_1_ipv4-fragmentation-csum-handling.patch
+From:	2.6.13.1
+Desc:	[IPV4] Reassembly trim not clearing CHECKSUM_HW
+
+Patch:	1005_1_pci_assign_unassigned_resources-update.patch
+From:	2.6.13.1
+Desc:	x86: pci_assign_unassigned_resources() update
+
+Patch:	1006_1_saa7134-dvb-must-select-tda1004x.patch
+From:	2.6.13.1
+Desc:	Kconfig: saa7134-dvb must select tda1004x
+
+Patch:	1007_1_sendmsg-DoS.patch
+From:	2.6.13.1
+Desc:	raw_sendmsg DoS (CAN-2005-2492)
+
+Patch:	1008_1_sendmsg-stackoverflow.patch
+From:	2.6.13.1
+Desc:	32bit sendmsg() flaw (CAN-2005-2490)
+
+Patch:	1009_1_sparc-request_irq-in-RTC-fix.patch
+From:	2.6.13.1
+Desc:	[RTC] Use SA_SHIRQ in sparc specific code.
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
