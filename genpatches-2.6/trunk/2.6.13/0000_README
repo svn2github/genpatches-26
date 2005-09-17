@@ -80,6 +80,50 @@ Patch:	1009_1_sparc-request_irq-in-RTC-fix.patch
 From:	2.6.13.1
 Desc:	[RTC] Use SA_SHIRQ in sparc specific code.
 
+Patch:	1010_2_fix-more-byte-to-dword-writes-to-PCI_ROM_ADDRESS-config-word.patch
+From:	2.6.13.2
+Desc:	Fix up more strange byte writes to the PCI_ROM_ADDRESS config word
+
+Patch:	1011_2_fix-MPOL_F_VERIFY.patch
+From:	2.6.13.2
+Desc:	Fix MPOL_F_VERIFY
+
+Patch:	1012_2_forcedeth-init-link-settings-in-nv_open.patch
+From:	2.6.13.2
+Desc:	forcedeth: Initialize link settings in every nv_open()
+
+Patch:	1013_2_hpt366-write-dword-not-byte-for-ROM-resource.patch
+From:	2.6.13.2
+Desc:	hpt366: write the full 4 bytes of ROM address, not just low 1 byte
+
+Patch:	1014_2_jfs_delete_inode-must-call-clear_inode.patch
+From:	2.6.13.2
+Desc:	jfs: jfs_delete_inode must call clear_inode
+
+Patch:	1015_2_lost-fput-in-32bit-ioctl-on-x86-64.patch
+From:	2.6.13.2
+Desc:	lost fput in 32bit ioctl on x86-64
+
+Patch:	1016_2_lost-sockfd_put-in-32bit-compat-routing_ioctl.patch
+From:	2.6.13.2
+Desc:	Lost sockfd_put() in routing_ioctl()
+
+Patch:	1017_2_netfilter-fix-dhcp-masquerade-problem.patch
+From:	2.6.13.2
+Desc:	[NETFILTER]: Fix DHCP + MASQUERADE problem
+
+Patch:	1018_2_sungem-enable-and-map-pci-rom-properly.patch
+From:	2.6.13.2
+Desc:	Sun GEM ethernet: enable and map PCI ROM properly
+
+Patch:	1019_2_sunhme-enable-and-map-pci-rom-properly.patch
+From:	2.6.13.2
+Desc:	Sun HME: enable and map PCI ROM properly
+
+Patch:	1020_2_usb-ftdi_sio-baud-fix.patch
+From:	2.6.13.2
+Desc:	USB: ftdi_sio: custom baud rate fix
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
@@ -111,10 +155,6 @@ Desc:	Fix hme related lockup on u1s
 Patch:	1900_kallsyms-compression.patch
 From:	http://bugs.gentoo.org/104393
 Desc:	Stop kallsyms requiring an extra pass for some configs
-
-Patch:	2100_forcedeth-force-linkinit.patch
-From:	http://bugs.gentoo.org/90069
-Desc:	Fix intermittent network drop in forcedeth driver
 
 Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
