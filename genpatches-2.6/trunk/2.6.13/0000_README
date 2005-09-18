@@ -160,6 +160,10 @@ Patch:	1900_kallsyms-compression.patch
 From:	http://bugs.gentoo.org/104393
 Desc:	Stop kallsyms requiring an extra pass for some configs
 
+Patch:	1905_fs-exec-bug-on.patch
+From:	stable queue
+Desc:	Fix bad BUG_ON in de_thread
+
 Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
