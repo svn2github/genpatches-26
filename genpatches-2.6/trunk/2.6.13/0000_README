@@ -164,6 +164,10 @@ Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
 
+Patch:	2900_yenta-oops.patch
+From:	stable queue
+Desc:	Fix a yenta oops issue
+
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
