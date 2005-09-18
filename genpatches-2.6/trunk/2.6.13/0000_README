@@ -128,6 +128,10 @@ Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
 
+Patch:	1305_amd64-smp.patch
+From:	http://bugs.gentoo.org/104151
+Desc:	Hopeful fix for the AMD64 SMP userspace crash issues
+
 Patch:	1305_ppc-rom-mapping.patch
 From:	http://bugs.gentoo.org/104336
 Desc:	Fix bootup on mac laptops
