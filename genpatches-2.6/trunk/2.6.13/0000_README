@@ -168,6 +168,10 @@ Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
 
+Patch:	2300_scsi_execute-quiet.patch
+From:	https://bugs.gentoo.org/104017
+Desc:	Stop scsi_execute being so verbose
+
 Patch:	2900_yenta-oops.patch
 From:	stable queue
 Desc:	Fix a yenta oops issue
