@@ -124,6 +124,38 @@ Patch:	1020_2_usb-ftdi_sio-baud-fix.patch
 From:	2.6.13.2
 Desc:	USB: ftdi_sio: custom baud rate fix
 
+Patch:	1021_3_fix-de_thread-BUG_ON.patch
+From:	2.6.13.3
+Desc:	Fix fs/exec.c:788 (de_thread()) BUG_ON
+
+Patch:	1022_3_ipv6-fix-per-socket-multicast-filtering.patch
+From:	2.6.13.3
+Desc:	fix IPv6 per-socket multicast filtering in exact-match case
+
+Patch:	1023_3_ipvs-ip_vs_ftp-breaks-connections.patch
+From:	2.6.13.3
+Desc:	ipvs: ip_vs_ftp breaks connections using persistence
+
+Patch:	1024_3_skge-set-mac-address-oops-with-bonding.patch
+From:	2.6.13.3
+Desc:	skge: set mac address oops with bonding
+
+Patch:	1025_3_tcp-dont-over-clamp-window-in-tcp_clamp_window.patch
+From:	2.6.13.3
+Desc:	[TCP]: Don't over-clamp window in tcp_clamp_window()
+
+Patch:	1026_3_tcp-set-default-congestion-control-correctly.patch
+From:	2.6.13.3
+Desc:	tcp: set default congestion control correctly for incoming connections
+
+Patch:	1027_3_uml-fix-x86_64-page-leak.patch
+From:	2.6.13.3
+Desc:	uml - Fix x86_64 page leak
+
+Patch:	1028_3_yenta-oops-fix.patch
+From:	2.6.13.3
+Desc:	yenta oops fix
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
@@ -160,17 +192,9 @@ Patch:	1900_kallsyms-compression.patch
 From:	http://bugs.gentoo.org/104393
 Desc:	Stop kallsyms requiring an extra pass for some configs
 
-Patch:	1905_fs-exec-bug-on.patch
-From:	stable queue
-Desc:	Fix bad BUG_ON in de_thread
-
 Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
-
-Patch:	2900_yenta-oops.patch
-From:	stable queue
-Desc:	Fix a yenta oops issue
 
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org

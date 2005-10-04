@@ -38,7 +38,7 @@ Index: linux-2.6.13.y/drivers/pcmcia/yenta_socket.c
 +	 * Bail out if so.
 +	 */
 +	if (!dev->subordinate) {
-+		printk(KERN_ERR "Yenta: no bus associated with %s! ",
++		printk(KERN_ERR "Yenta: no bus associated with %s! "
 +			"(try 'pci=assign-busses')\n", pci_name(dev));
 +		return -ENODEV;
 +	}
