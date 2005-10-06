@@ -164,9 +164,9 @@ Patch:	1305_amd64-smp.patch
 From:	http://bugs.gentoo.org/104151
 Desc:	Hopeful fix for the AMD64 SMP userspace crash issues
 
-Patch:	1305_ppc-rom-mapping.patch
-From:	http://bugs.gentoo.org/104336
-Desc:	Fix bootup on mac laptops
+Patch:	1310_amd64-x2-tsc.patch
+From:	Upstream 2.6.14
+Desc:	Fix clock skew on AMD64 X2 cpu's
 
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
