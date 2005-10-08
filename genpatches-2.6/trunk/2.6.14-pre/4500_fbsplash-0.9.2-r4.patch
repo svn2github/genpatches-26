@@ -233,7 +233,7 @@ diff --git a/drivers/Makefile b/drivers/Makefile
 +# default.
 +obj-y				+= char/
  obj-y				+= video/
- obj-$(CONFIG_ACPI_BOOT)		+= acpi/
+ obj-$(CONFIG_ACPI)		+= acpi/
  # PnP must come after ACPI since it will eventually need to check if acpi
  # was used and do nothing if so
  obj-$(CONFIG_PNP)		+= pnp/
@@ -242,13 +242,13 @@ diff --git a/drivers/Makefile b/drivers/Makefile
 -# default.
 -obj-y				+= char/
 -
+ obj-$(CONFIG_CONNECTOR)		+= connector/
+ 
  # i810fb and intelfb depend on char/agp/
- obj-$(CONFIG_FB_I810)           += video/i810/
- obj-$(CONFIG_FB_INTEL)          += video/intelfb/
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -787,7 +787,6 @@ config FB_MATROX
+@@ -791,7 +791,6 @@ config FB_MATROX
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
  	select FB_SOFT_CURSOR
@@ -256,7 +256,7 @@ diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1517,5 +1516,15 @@ if FB && SYSFS
+@@ -1575,5 +1574,15 @@ if FB && SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -283,7 +283,7 @@ diff --git a/drivers/video/Makefile b/drivers/video/Makefile
 +obj-$(CONFIG_FB_SPLASH)           += fbsplash.o cfbsplash.o
  
  obj-$(CONFIG_FB)                  += fb.o
- fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o modedb.o
+ fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o \
 diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
 new file mode 100644
 --- /dev/null
@@ -786,7 +786,7 @@ diff --git a/drivers/video/console/bitblit.c b/drivers/video/console/bitblit.c
  	info->fbops->fb_copyarea(info, &area);
  }
  
-@@ -368,7 +376,11 @@ static void bit_cursor(struct vc_data *v
+@@ -408,7 +416,11 @@ static void bit_cursor(struct vc_data *v
  	cursor.image.depth = 1;
  	cursor.rop = ROP_XOR;
  
@@ -819,7 +819,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  static signed char con2fb_map_boot[MAX_NR_CONSOLES];
  static int logo_height;
  static int logo_lines;
-@@ -212,7 +213,7 @@ static inline int fbcon_is_inactive(stru
+@@ -211,7 +212,7 @@ static inline int fbcon_is_inactive(stru
  		vc->vc_mode != KD_TEXT || ops->graphics);
  }
  
@@ -827,8 +827,8 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
 +inline int get_color(struct vc_data *vc, struct fb_info *info,
  	      u16 c, int is_fg)
  {
- 	int depth = fb_get_color_depth(&info->var);
-@@ -285,6 +287,7 @@ static void fb_flashcursor(void *private
+ 	int depth = fb_get_color_depth(&info->var, &info->fix);
+@@ -305,6 +306,7 @@ static void fb_flashcursor(void *private
  		CM_ERASE : CM_DRAW;
  	ops->cursor(vc, info, p, mode, softback_lines, get_color(vc, info, c, 1),
  		    get_color(vc, info, c, 0));
@@ -836,7 +836,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	release_console_sem();
  }
  
-@@ -412,6 +415,8 @@ static int fbcon_takeover(int show_logo)
+@@ -461,6 +463,8 @@ static int fbcon_takeover(int show_logo)
  		info_idx = -1;
  	}
  
@@ -845,7 +845,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	return err;
  }
  
-@@ -816,6 +821,12 @@ static const char *fbcon_startup(void)
+@@ -847,6 +851,12 @@ static const char *fbcon_startup(void)
  
  	cols = info->var.xres / vc->vc_font.width;
  	rows = info->var.yres / vc->vc_font.height;
@@ -858,7 +858,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	vc_resize(vc, cols, rows);
  
  	DPRINTK("mode:   %s\n", info->fix.id);
-@@ -914,7 +925,7 @@ static void fbcon_init(struct vc_data *v
+@@ -929,7 +939,7 @@ static void fbcon_init(struct vc_data *v
  	cap = info->flags;
  
  	if (vc != svc || logo_shown == FBCON_LOGO_DONTSHOW ||
@@ -867,7 +867,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		logo = 0;
  
  	info->var.xoffset = info->var.yoffset = p->yscroll = 0;	/* reset wrap/pan */
-@@ -1062,6 +1073,11 @@ static void fbcon_clear(struct vc_data *
+@@ -1077,6 +1087,11 @@ static void fbcon_clear(struct vc_data *
  	if (!height || !width)
  		return;
  
@@ -879,7 +879,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	/* Split blits that cross physical y_wrap boundary */
  
  	y_break = p->vrows - p->yscroll;
-@@ -1081,10 +1097,15 @@ static void fbcon_putcs(struct vc_data *
+@@ -1096,10 +1111,15 @@ static void fbcon_putcs(struct vc_data *
  	struct display *p = &fb_display[vc->vc_num];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -899,7 +899,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  }
  
  static void fbcon_putc(struct vc_data *vc, int c, int ypos, int xpos)
-@@ -1100,8 +1121,13 @@ static void fbcon_clear_margins(struct v
+@@ -1115,8 +1135,13 @@ static void fbcon_clear_margins(struct v
  	struct fb_info *info = registered_fb[con2fb_map[vc->vc_num]];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -915,7 +915,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  }
  
  static void fbcon_cursor(struct vc_data *vc, int mode)
-@@ -1581,7 +1607,7 @@ static int fbcon_scroll(struct vc_data *
+@@ -1601,7 +1626,7 @@ static int fbcon_scroll(struct vc_data *
  			count = vc->vc_rows;
  		if (softback_top)
  			fbcon_softback_note(vc, t, count);
@@ -924,16 +924,16 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  			goto redraw_up;
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
-@@ -1667,6 +1693,8 @@ static int fbcon_scroll(struct vc_data *
- 	case SM_DOWN:
- 		if (count > vc->vc_rows)	/* Maximum realistic size */
+@@ -1689,6 +1714,8 @@ static int fbcon_scroll(struct vc_data *
  			count = vc->vc_rows;
+ 		if (logo_shown >= 0)
+ 			goto redraw_down;
 +		if (fbsplash_active(info, vc))
 +			goto redraw_down;
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			ops->bmove(vc, info, t, 0, t + count, 0,
-@@ -1809,6 +1837,13 @@ static void fbcon_bmove_rec(struct vc_da
+@@ -1831,6 +1858,13 @@ static void fbcon_bmove_rec(struct vc_da
  		}
  		return;
  	}
@@ -947,7 +947,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	ops->bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  		   height, width);
  }
-@@ -1863,7 +1898,8 @@ static int fbcon_resize(struct vc_data *
+@@ -1885,7 +1919,8 @@ static int fbcon_resize(struct vc_data *
  	var.yres = height * fh;
  	x_diff = info->var.xres - var.xres;
  	y_diff = info->var.yres - var.yres;
@@ -957,36 +957,47 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		struct fb_videomode *mode;
  
  		DPRINTK("attempting resize %ix%i\n", var.xres, var.yres);
-@@ -1909,7 +1945,17 @@ static int fbcon_switch(struct vc_data *
+@@ -1931,7 +1966,26 @@ static int fbcon_switch(struct vc_data *
  	int i, prev_console;
  
  	info = registered_fb[con2fb_map[vc->vc_num]];
+-
 +	prev_console = ((struct fbcon_ops *)info->fbcon_par)->currcon;
++	if (prev_console != -1)
++		old_info = registered_fb[con2fb_map[prev_console]];
 +	
 +	if (fbsplash_active_vc(vc)) {
 +		struct vc_data *vc_curr = vc_cons[prev_console].d;
- 
 +		if (!vc_curr->vc_splash.theme || strcmp(vc->vc_splash.theme, vc_curr->vc_splash.theme)) {
 +			if (fbsplash_call_helper("getpic", vc->vc_num))
 +				fbsplash_disable(vc, 0);
++		}
++	} else if (info->fix.visual == FB_VISUAL_DIRECTCOLOR) { 
++		struct vc_data *vc_curr = vc_cons[prev_console].d;
++		if (vc_curr && fbsplash_active_vc(vc_curr)) {
++			/* Clear the screen to avoid displaying funky colors during
++			 * palette updates. */ 
++			memset((u8*)info->screen_base + info->fix.line_length * info->var.yoffset,
++			       0, info->var.yres * info->fix.line_length);
 +		}
 +	}
 +	
  	if (softback_top) {
  		int l = fbcon_softback_size / vc->vc_size_row;
  		if (softback_lines)
-@@ -1935,8 +1981,6 @@ static int fbcon_switch(struct vc_data *
+@@ -1957,9 +2011,6 @@ static int fbcon_switch(struct vc_data *
  		logo_shown = FBCON_LOGO_CANSHOW;
  	}
  
 -	prev_console = ((struct fbcon_ops *)info->fbcon_par)->currcon;
--
+-	if (prev_console != -1)
+-		old_info = registered_fb[con2fb_map[prev_console]];
  	/*
  	 * FIXME: If we have multiple fbdev's loaded, we need to
  	 * update all info->currcon.  Perhaps, we can place this
-@@ -1969,6 +2013,11 @@ static int fbcon_switch(struct vc_data *
- 	    info->fbops->fb_set_par)
- 		info->fbops->fb_set_par(info);
+@@ -1994,6 +2045,11 @@ static int fbcon_switch(struct vc_data *
+ 		fbcon_add_cursor_timer(info);
+ 	}
  
 +	if (fbsplash_active_nores(info, vc) && !fbsplash_active(info, vc)) {
 +		if (fbsplash_call_helper("modechange", vc->vc_num))
@@ -996,7 +1007,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	set_blitting_type(vc, info, p);
  	((struct fbcon_ops *)info->fbcon_par)->cursor_reset = 1;
  
-@@ -2049,7 +2098,9 @@ static int fbcon_blank(struct vc_data *v
+@@ -2074,7 +2130,9 @@ static int fbcon_blank(struct vc_data *v
  			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  			ops->cursor_flash = (!blank);
  
@@ -1007,7 +1018,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  				fbcon_generic_blank(vc, info, blank);
  		}
  
-@@ -2203,8 +2254,14 @@ static int fbcon_do_set_font(struct vc_d
+@@ -2233,8 +2291,14 @@ static int fbcon_do_set_font(struct vc_d
  
  	if (resize) {
  		/* reset wrap/pan */
@@ -1024,7 +1035,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		if (CON_IS_VISIBLE(vc) && softback_buf) {
  			int l = fbcon_softback_size / vc->vc_size_row;
  			if (l > 5)
-@@ -2331,7 +2388,7 @@ static int fbcon_set_palette(struct vc_d
+@@ -2361,7 +2425,7 @@ static int fbcon_set_palette(struct vc_d
  	int i, j, k, depth;
  	u8 val;
  
@@ -1033,7 +1044,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2357,7 +2414,49 @@ static int fbcon_set_palette(struct vc_d
+@@ -2387,7 +2451,49 @@ static int fbcon_set_palette(struct vc_d
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1084,7 +1095,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2578,7 +2677,14 @@ static void fbcon_modechanged(struct fb_
+@@ -2608,7 +2714,14 @@ static void fbcon_modechanged(struct fb_
  		var_to_display(p, &info->var, info);
  		cols = info->var.xres / vc->vc_font.width;
  		rows = info->var.yres / vc->vc_font.height;
@@ -1111,6 +1122,36 @@ diff --git a/drivers/video/fbcmap.c b/drivers/video/fbcmap.c
  
  #include <asm/uaccess.h>
  
+@@ -235,14 +236,17 @@ int fb_set_cmap(struct fb_cmap *cmap, st
+ 			if (transp)
+ 				htransp = *transp++;
+ 			if (info->fbops->fb_setcolreg(start++,
+-						      hred, hgreen, hblue,
++						      hred, hgreen, hblue, 
+ 						      htransp, info))
+ 				break;
+ 		}
+ 	}
+-	if (rc == 0)
++	if (rc == 0) {
+ 		fb_copy_cmap(cmap, &info->cmap);
+-
++		if (fbsplash_active(info, vc_cons[fg_console].d) &&
++		    info->fix.visual == FB_VISUAL_DIRECTCOLOR)
++			fbsplash_fix_pseudo_pal(info, vc_cons[fg_console].d);
++	}
+ 	return rc;
+ }
+ 
+@@ -250,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user
+ {
+ 	int rc, size = cmap->len * sizeof(u16);
+ 	struct fb_cmap umap;
+-
++	
+ 	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
+ 			        !info->fbops->fb_setcmap))
+ 		return -EINVAL;
 diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
 new file mode 100644
 --- /dev/null
@@ -1675,7 +1716,7 @@ diff --git a/include/linux/fb.h b/include/linux/fb.h
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -732,6 +747,9 @@ struct fb_info {
+@@ -737,6 +752,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -1688,7 +1729,7 @@ diff --git a/include/linux/fb.h b/include/linux/fb.h
 diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -137,6 +137,7 @@ enum
+@@ -146,6 +146,7 @@ enum
  	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
  	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
@@ -1699,7 +1740,7 @@ diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -85,6 +85,9 @@ extern char modprobe_path[];
+@@ -86,6 +86,9 @@ extern char modprobe_path[];
  #ifdef CONFIG_HOTPLUG
  extern char hotplug_path[];
  #endif
@@ -1709,7 +1750,7 @@ diff --git a/kernel/sysctl.c b/kernel/sysctl.c
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -401,6 +404,17 @@ static ctl_table kern_table[] = {
+@@ -404,6 +407,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
