@@ -192,6 +192,10 @@ Patch:	1900_kallsyms-compression.patch
 From:	http://bugs.gentoo.org/104393
 Desc:	Stop kallsyms requiring an extra pass for some configs
 
+Patch:	2100_starfire-firmware.patch
+From:	http://bugs.gentoo.org/107734
+Desc:	Fix starfire driver panics
+
 Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
