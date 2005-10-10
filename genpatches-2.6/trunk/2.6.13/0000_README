@@ -156,6 +156,34 @@ Patch:	1028_3_yenta-oops-fix.patch
 From:	2.6.13.3
 Desc:	yenta oops fix
 
+Patch:	1029_4_drm-module_param-permissions-fix.patch
+From:	2.6.13.4
+Desc:	Fix drm 'debug' sysfs permissions
+
+Patch:	1030_4_fix-sparc64-fpu-register-corruption.patch
+From:	2.6.13.4
+Desc:	[SPARC64]: Fix userland FPU state corruption.
+
+Patch:	1031_4_ieee1394-sbp2-fixes.patch
+From:	2.6.13.4
+Desc:	ieee1394/sbp2: fixes for hot-unplug and module unloading
+
+Patch:	1032_4_key-rka-memleak.patch
+From:	2.6.13.4
+Desc:	key: plug request_key_auth memleak (CAN-2005-3119)
+
+Patch:	1033_4_orinoco-info-leak.patch
+From:	2.6.13.4
+Desc:	orinoco: Information leakage due to incorrect padding
+
+Patch:	1034_4_plug-names_cache-memleak.patch
+From:	2.6.13.4
+Desc:	Avoid 'names_cache' memory leak with CONFIG_AUDITSYSCALL
+
+Patch:	1035_4_tcp-congestion-control-bug.patch
+From:	2.6.13.4
+Desc:	[TCP]: BIC coding bug in Linux 2.6.13
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
