@@ -204,6 +204,10 @@ Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
 
+Patch:	1345_amd64-pageattr-flush.patch
+From:	http://bugs.gentoo.org/108909
+Desc:	Fix a page attr cache misoptimization
+
 Patch:	1360_sparc-kconfig-depends.patch
 From:	eradicator@gentoo.org
 Desc:	Fix depends statements for some drivers
