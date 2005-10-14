@@ -196,6 +196,10 @@ Patch:	1310_amd64-x2-tsc.patch
 From:	Upstream 2.6.14
 Desc:	Fix clock skew on AMD64 X2 cpu's
 
+Patch:	1315_ppc-ibook-g4.patch
+From:	http://bugs.gentoo.org/108990
+Desc:	Support new iBook series
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -227,6 +231,10 @@ Desc:	Fix starfire driver panics
 Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
+
+Patch:	2500_radeonfb-ibook-suspend.patch
+From:	http://bugs.gentoo.org/108990
+Desc:	Fix suspend on new iBooks
 
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
