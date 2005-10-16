@@ -1,6 +1,6 @@
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/DefaultKeyAssignments linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/DefaultKeyAssignments
---- linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/DefaultKeyAssignments	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/DefaultKeyAssignments	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/DefaultKeyAssignments linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/DefaultKeyAssignments
+--- linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/DefaultKeyAssignments	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/DefaultKeyAssignments	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,46 @@
 +This file is intended to give you an overview of the default keys used
 +by speakup for it's review functions.  You may change them to be
@@ -48,9 +48,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/DefaultKeyAssign
 +synth until it has caught up with what is being printed on the
 +console.
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/INSTALLATION linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/INSTALLATION
---- linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/INSTALLATION	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/INSTALLATION	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/INSTALLATION linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/INSTALLATION
+--- linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/INSTALLATION	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/INSTALLATION	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,108 @@
 +This document assumes you have had some experience with kernel
 +compilation and installation.  If you have not, I recommend you get
@@ -160,9 +160,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/INSTALLATION lin
 +email: kirk@braille.uwo.ca
 +phone: (519) 679-6845 (home)
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/README linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/README
---- linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/README	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/README	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/README linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/README
+--- linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/README	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/README	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,98 @@
 +Welcome to the speakup project for the Speakup speech package for Linux.
 +
@@ -262,9 +262,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/README linux-2.6
 +
 +  Kirk
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/keymap-tutorial linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/keymap-tutorial
---- linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/keymap-tutorial	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/keymap-tutorial	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/keymap-tutorial linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/keymap-tutorial
+--- linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/keymap-tutorial	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/keymap-tutorial	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,140 @@
 +		       Speakup Keymap Tutorial
 +
@@ -406,9 +406,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/keymap-tutorial 
 +SAY_FROM_LEFT 0x0d22
 +SAY_TO_RIGHT 0x0d23
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/spkguide.txt linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/spkguide.txt
---- linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/spkguide.txt	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/Documentation/speakup/spkguide.txt	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/spkguide.txt linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/spkguide.txt
+--- linux-2.6.14-rc4-git4-gentoo.orig/Documentation/speakup/spkguide.txt	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/Documentation/speakup/spkguide.txt	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,1279 @@
 +
 +The Speakup User's Guide
@@ -1689,10 +1689,10 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/Documentation/speakup/spkguide.txt lin
 +to permit their use in free software.
 +
 +The End.
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/MAINTAINERS linux-2.6.13-rc6-git13-gentoo-speakup/MAINTAINERS
---- linux-2.6.13-rc6-git13-gentoo/MAINTAINERS	2005-08-22 14:35:18.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/MAINTAINERS	2005-08-25 14:06:54.000000000 -0700
-@@ -2219,6 +2219,13 @@ M:	wli@holomorphy.com
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/MAINTAINERS linux-2.6.14-rc4-git4-gentoo/MAINTAINERS
+--- linux-2.6.14-rc4-git4-gentoo.orig/MAINTAINERS	2005-10-16 03:00:04.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/MAINTAINERS	2005-10-16 04:02:28.000000000 -0700
+@@ -2318,6 +2318,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1706,10 +1706,10 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/MAINTAINERS linux-2.6.13-rc6-git13-gen
  SPECIALIX IO8+ MULTIPORT SERIAL CARD DRIVER
  P:	Roger Wolff
  M:	R.E.Wolff@BitWizard.nl
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/arch/arm/Kconfig linux-2.6.13-rc6-git13-gentoo-speakup/arch/arm/Kconfig
---- linux-2.6.13-rc6-git13-gentoo/arch/arm/Kconfig	2005-08-22 14:35:00.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/arch/arm/Kconfig	2005-08-25 14:06:54.000000000 -0700
-@@ -755,6 +755,7 @@ source "drivers/misc/Kconfig"
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/arch/arm/Kconfig linux-2.6.14-rc4-git4-gentoo/arch/arm/Kconfig
+--- linux-2.6.14-rc4-git4-gentoo.orig/arch/arm/Kconfig	2005-10-16 02:54:25.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/arch/arm/Kconfig	2005-10-16 04:02:28.000000000 -0700
+@@ -724,6 +724,7 @@ source "drivers/mfd/Kconfig"
  source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
@@ -1717,10 +1717,10 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/arch/arm/Kconfig linux-2.6.13-rc6-git1
  
  source "sound/Kconfig"
  
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/arch/mips/Kconfig linux-2.6.13-rc6-git13-gentoo-speakup/arch/mips/Kconfig
---- linux-2.6.13-rc6-git13-gentoo/arch/mips/Kconfig	2005-08-22 14:35:01.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/arch/mips/Kconfig	2005-08-25 14:06:54.000000000 -0700
-@@ -839,6 +839,8 @@ config SIBYTE_STANDALONE
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/arch/mips/Kconfig linux-2.6.14-rc4-git4-gentoo/arch/mips/Kconfig
+--- linux-2.6.14-rc4-git4-gentoo.orig/arch/mips/Kconfig	2005-10-16 02:54:38.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/arch/mips/Kconfig	2005-10-16 04:02:28.000000000 -0700
+@@ -931,6 +931,8 @@ config SIBYTE_STANDALONE
  	depends on SIBYTE_SB1xxx_SOC && !SIBYTE_CFE
  	default y
  
@@ -1729,10 +1729,10 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/arch/mips/Kconfig linux-2.6.13-rc6-git
  config SIBYTE_STANDALONE_RAM_SIZE
  	int "Memory size (in megabytes)"
  	depends on SIBYTE_STANDALONE
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/Kconfig linux-2.6.13-rc6-git13-gentoo-speakup/drivers/Kconfig
---- linux-2.6.13-rc6-git13-gentoo/drivers/Kconfig	2005-08-22 14:38:22.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/Kconfig	2005-08-25 14:06:54.000000000 -0700
-@@ -52,6 +52,8 @@ source "drivers/media/Kconfig"
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/Kconfig linux-2.6.14-rc4-git4-gentoo/drivers/Kconfig
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/Kconfig	2005-10-16 02:55:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/Kconfig	2005-10-16 04:02:28.000000000 -0700
+@@ -56,6 +56,8 @@ source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
  
@@ -1741,24 +1741,24 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/Kconfig linux-2.6.13-rc6-git13
  source "sound/Kconfig"
  
  source "drivers/usb/Kconfig"
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/Makefile linux-2.6.13-rc6-git13-gentoo-speakup/drivers/Makefile
---- linux-2.6.13-rc6-git13-gentoo/drivers/Makefile	2005-08-22 14:40:26.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/Makefile	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/Makefile linux-2.6.14-rc4-git4-gentoo/drivers/Makefile
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/Makefile	2005-10-16 03:57:13.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/Makefile	2005-10-16 04:03:52.000000000 -0700
 @@ -1,4 +1,3 @@
 -#
  # Makefile for the Linux kernel device drivers.
  #
  # 15 Sep 2000, Christoph Hellwig <hch@infradead.org>
-@@ -25,6 +24,8 @@ obj-$(CONFIG_FB_INTEL)          += video
+@@ -27,6 +26,8 @@ obj-$(CONFIG_FB_INTEL)          += video
  obj-$(CONFIG_SERIO)		+= input/serio/
  obj-y				+= serial/
  obj-$(CONFIG_PARPORT)		+= parport/
 +# load keyboard early so speakup can be quieted
 +obj-$(CONFIG_INPUT)		+= input/
- obj-y				+= base/ block/ misc/ net/ media/
+ obj-y				+= base/ block/ misc/ mfd/ net/ media/
  obj-$(CONFIG_NUBUS)		+= nubus/
  obj-$(CONFIG_ATM)		+= atm/
-@@ -47,7 +48,6 @@ obj-$(CONFIG_TC)		+= tc/
+@@ -49,7 +50,6 @@ obj-$(CONFIG_TC)		+= tc/
  obj-$(CONFIG_USB)		+= usb/
  obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
  obj-$(CONFIG_GAMEPORT)		+= input/gameport/
@@ -1766,9 +1766,30 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/Makefile linux-2.6.13-rc6-git1
  obj-$(CONFIG_I2O)		+= message/
  obj-$(CONFIG_I2C)		+= i2c/
  obj-$(CONFIG_W1)		+= w1/
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/Makefile linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/Makefile
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/Makefile	2005-08-22 14:35:03.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/Makefile	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/Makefile.rej linux-2.6.14-rc4-git4-gentoo/drivers/Makefile.rej
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/Makefile.rej	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/Makefile.rej	2005-10-16 04:02:28.000000000 -0700
+@@ -0,0 +1,17 @@
++***************
++*** 25,30 ****
++  obj-$(CONFIG_SERIO)		+= input/serio/
++  obj-y				+= serial/
++  obj-$(CONFIG_PARPORT)		+= parport/
++  obj-y				+= base/ block/ misc/ net/ media/
++  obj-$(CONFIG_NUBUS)		+= nubus/
++  obj-$(CONFIG_ATM)		+= atm/
++--- 24,31 ----
++  obj-$(CONFIG_SERIO)		+= input/serio/
++  obj-y				+= serial/
++  obj-$(CONFIG_PARPORT)		+= parport/
+++ # load keyboard early so speakup can be quieted
+++ obj-$(CONFIG_INPUT)		+= input/
++  obj-y				+= base/ block/ misc/ net/ media/
++  obj-$(CONFIG_NUBUS)		+= nubus/
++  obj-$(CONFIG_ATM)		+= atm/
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/Makefile linux-2.6.14-rc4-git4-gentoo/drivers/char/Makefile
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/Makefile	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/Makefile	2005-10-16 04:02:28.000000000 -0700
 @@ -83,6 +83,7 @@ obj-$(CONFIG_SCx200_GPIO) += scx200_gpio
  obj-$(CONFIG_GPIO_VR41XX) += vr41xx_giu.o
  obj-$(CONFIG_TANBAC_TB0219) += tb0219.o
@@ -1777,17 +1798,17 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/Makefile linux-2.6.13-rc6
  obj-$(CONFIG_WATCHDOG)	+= watchdog/
  obj-$(CONFIG_MWAVE) += mwave/
  obj-$(CONFIG_AGP) += agp/
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/consolemap.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/consolemap.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/consolemap.c	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/consolemap.c	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/consolemap.c linux-2.6.14-rc4-git4-gentoo/drivers/char/consolemap.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/consolemap.c	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/consolemap.c	2005-10-16 04:02:28.000000000 -0700
 @@ -670,3 +670,4 @@ console_map_init(void)
  }
  
  EXPORT_SYMBOL(con_copy_unimap);
 +EXPORT_SYMBOL(inverse_translate);
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/keyboard.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c	2005-08-22 14:35:03.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/keyboard.c	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/keyboard.c linux-2.6.14-rc4-git4-gentoo/drivers/char/keyboard.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/keyboard.c	2005-10-16 02:55:11.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/keyboard.c	2005-10-16 04:02:28.000000000 -0700
 @@ -40,6 +40,13 @@
  #include <linux/sysrq.h>
  #include <linux/input.h>
@@ -1814,14 +1835,14 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  
  /*
 @@ -79,7 +90,7 @@ void compute_shiftstate(void);
- typedef void (k_handler_fn)(struct vc_data *vc, unsigned char value, 
+ typedef void (k_handler_fn)(struct vc_data *vc, unsigned char value,
  			    char up_flag, struct pt_regs *regs);
  static k_handler_fn K_HANDLERS;
 -static k_handler_fn *k_handler[16] = { K_HANDLERS };
 +k_handler_fn *k_handler[16] = { K_HANDLERS };
  
  #define FN_HANDLERS\
- 	fn_null, 	fn_enter,	fn_show_ptregs,	fn_show_mem,\
+ 	fn_null,	fn_enter,	fn_show_ptregs,	fn_show_mem,\
 @@ -100,15 +111,18 @@ static fn_handler_fn *fn_handler[] = { F
  const int max_vals[] = {
  	255, ARRAY_SIZE(func_table) - 1, ARRAY_SIZE(fn_handler) - 1, NR_PAD - 1,
@@ -1843,7 +1864,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  int spawnpid, spawnsig;
  
  /*
-@@ -256,12 +270,14 @@ void kd_mksound(unsigned int hz, unsigne
+@@ -255,12 +269,14 @@ void kd_mksound(unsigned int hz, unsigne
  				}
  			}
  		}
@@ -1860,14 +1881,14 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  /*
   * Setting the keyboard rate.
   */
-@@ -603,6 +619,7 @@ static void k_spec(struct vc_data *vc, u
+@@ -602,6 +618,7 @@ static void k_spec(struct vc_data *vc, u
  	if (up_flag)
  		return;
  	if (value >= ARRAY_SIZE(fn_handler))
 +		if (up_flag || (value >= ARRAY_SIZE(fn_handler)))
  		return;
- 	if ((kbd->kbdmode == VC_RAW || 
- 	     kbd->kbdmode == VC_MEDIUMRAW) && 
+ 	if ((kbd->kbdmode == VC_RAW ||
+ 	     kbd->kbdmode == VC_MEDIUMRAW) &&
 @@ -1119,6 +1136,13 @@ static void kbd_keycode(unsigned int key
  	key_map = key_maps[shift_final];
  
@@ -1882,7 +1903,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  		compute_shiftstate();
  		kbd->slockstate = 0;
  		return;
-@@ -1136,10 +1160,17 @@ static void kbd_keycode(unsigned int key
+@@ -1137,10 +1161,17 @@ static void kbd_keycode(unsigned int key
  	}
  
  	type -= 0xf0;
@@ -1902,7 +1923,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  	if (type == KT_LETTER) {
  		type = KT_LATIN;
  		if (vc_kbd_led(kbd, VC_CAPSLOCK)) {
-@@ -1148,7 +1179,6 @@ static void kbd_keycode(unsigned int key
+@@ -1149,7 +1180,6 @@ static void kbd_keycode(unsigned int key
  				keysym = key_map[keycode];
  		}
  	}
@@ -1910,9 +1931,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/keyboard.c linux-2.6.13-r
  	(*k_handler[type])(vc, keysym & 0xff, !down, regs);
  
  	if (type != KT_SLOCK)
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/BUGS linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/BUGS
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/BUGS	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/BUGS	2001-10-18 05:53:52.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/BUGS linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/BUGS
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/BUGS	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/BUGS	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,10 @@
 +Well, there are probably just thousands to squash, but these are the
 +ones I think of as bugs.
@@ -1924,9 +1945,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/BUGS linux-2.6.13
 +they've been implemented.  NOT features which haven't been added yet.
 +
 +  Kirk
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/ChangeLog linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/ChangeLog
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/ChangeLog	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/ChangeLog	2005-08-04 10:40:51.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/ChangeLog linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/ChangeLog
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/ChangeLog	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/ChangeLog	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,2649 @@
 +2005-08-04 Thursday 12:42  kirk
 +
@@ -4577,9 +4598,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/ChangeLog linux-2
 +
 +	Initial revision
 +	
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Changes linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Changes
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Changes	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Changes	2000-06-01 12:38:40.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Changes linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Changes
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Changes	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Changes	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,221 @@
 +version 0.09
 +
@@ -4802,9 +4823,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Changes linux-2.6
 +of a seperate variable.  Works independantly for each console
 +now. (kirk)
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Config.in linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Config.in
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Config.in	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Config.in	2003-12-10 07:29:56.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Config.in linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Config.in
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Config.in	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Config.in	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,26 @@
 +tristate 'Speakup console speech' CONFIG_SPEAKUP
 +if [ "$CONFIG_SPEAKUP" != "n" ]; then
@@ -4832,9 +4853,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Config.in linux-2
 +	comment 'Enter the three to six character synth string from above or none.'
 +	string "Default synthesizer for Speakup" CONFIG_SPEAKUP_DEFAULT "none"
 +fi
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Kconfig linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Kconfig
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Kconfig	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Kconfig	2003-12-10 07:29:56.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Kconfig linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Kconfig
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Kconfig	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Kconfig	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,210 @@
 +menu "Speakup console speech" 
 +config SPEAKUP
@@ -5046,9 +5067,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Kconfig linux-2.6
 +	default "none"
 +
 +endmenu
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Makefile linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Makefile
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Makefile	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/Makefile	2004-10-21 07:39:22.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Makefile linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Makefile
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/Makefile	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/Makefile	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,61 @@
 +#
 +# Makefile for the speakup speech output system.
@@ -5111,9 +5132,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/Makefile linux-2.
 +
 +HOSTCFLAGS := -Iinclude -I/usr/include
 +hostprogs-y := makemapdata genmap
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/TODO linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/TODO
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/TODO	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/TODO	2004-03-06 07:55:29.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/TODO linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/TODO
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/TODO	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/TODO	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,50 @@
 +The format of this file is getting organized to help me keep track of
 +where we are going.  I am organizing it into three sections.
@@ -5165,9 +5186,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/TODO linux-2.6.13
 +
 +The items in each list have no connection with the order of
 +implementation.  I just jotted them down as I thought of them.
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkclean linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkclean
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkclean	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkclean	2000-12-31 10:20:36.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkclean linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkclean
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkclean	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkclean	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,13 @@
 +#!/bin/bash
 +
@@ -5182,9 +5203,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkclean linux-
 +rm -rf	checkin checkorig checkclean *.o *~ \
 +	CVS diff-v22/CVS diff-v24/CVS cvsversion.h
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkin linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkin
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkin	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkin	2003-05-12 18:05:31.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkin linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkin
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkin	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkin	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,75 @@
 +#!/bin/bash
 +
@@ -5261,9 +5282,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkin linux-2.6
 +	cvs add diff-${VERSION}/* || exit
 +fi
 +cvs -Q ci || exit
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkout linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkout
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkout	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/checkout	2005-08-15 07:47:45.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkout linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkout
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/checkout	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/checkout	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,83 @@
 +#!/bin/bash
 +
@@ -5348,14 +5369,14 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/checkout linux-2.
 +done
 +echo '] done.'
 +
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/cvsversion.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/cvsversion.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/cvsversion.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/cvsversion.h	2005-08-16 12:57:05.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/cvsversion.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/cvsversion.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/cvsversion.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/cvsversion.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1 @@
 +#define CVSVERSION " CVS: Tue Aug 16 15:56:58 EDT 2005 "
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtload.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtload.c	2003-08-08 11:15:12.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtload.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtload.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtload.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtload.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,554 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -5911,9 +5932,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.c linux-2.
 +  if ( intest ) do_test( );
 +  exit( 0 );
 +}
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtload.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtload.h	2003-07-31 08:27:06.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtload.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtload.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtload.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtload.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,57 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -5972,9 +5993,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtload.h linux-2.
 +struct dos_reloc {
 +	short int offset, segment;
 +};
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtpc_reg.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtpc_reg.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtpc_reg.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/dtpc_reg.h	2003-07-31 08:27:06.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtpc_reg.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtpc_reg.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/dtpc_reg.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/dtpc_reg.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,132 @@
 +/*
 + * This is the DECtalk PC register constants (from DEC's DOS driver)
@@ -6108,9 +6129,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/dtpc_reg.h linux-
 +#define	DT_DIGITAL_IN		0x08
 +#define	DMA_sync		0x06
 +#define	DMA_sync_char		0x07
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/genmap.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/genmap.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/genmap.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/genmap.c	2003-07-21 05:26:38.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/genmap.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/genmap.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/genmap.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/genmap.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,204 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -6316,9 +6337,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/genmap.c linux-2.
 +	printf( "\n\t0, %d\n", map_ver );
 +	exit( 0 );
 +}
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/install linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/install
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/install	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/install	2005-04-19 09:26:21.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/install linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/install
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/install	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/install	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,57 @@
 +#!/bin/bash
 +
@@ -6377,9 +6398,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/install linux-2.6
 +	cp $i $writeloc
 +done
 +echo '] done.'
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/keyinfo.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/keyinfo.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/keyinfo.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/keyinfo.h	2003-11-12 12:41:34.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/keyinfo.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/keyinfo.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/keyinfo.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/keyinfo.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,119 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
@@ -6500,9 +6521,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/keyinfo.h linux-2
 +#define PUNCT_INC PUNCT_DEC+1
 +#define VOICE_DEC PUNCT_DEC+2
 +#define VOICE_INC VOICE_DEC+1
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/makemapdata.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/makemapdata.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/makemapdata.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/makemapdata.c	2003-07-18 07:08:34.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/makemapdata.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/makemapdata.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/makemapdata.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/makemapdata.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,156 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -6660,9 +6681,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/makemapdata.c lin
 +	printf( "\t\".\", 0, 0\n};\n" );
 +	exit( 0 );
 +}
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/mod_code.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/mod_code.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/mod_code.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/mod_code.c	2005-08-05 08:02:17.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/mod_code.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/mod_code.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/mod_code.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/mod_code.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,22 @@
 +/* this code is to modularize a synth specific file, included at the end */
 +
@@ -6686,9 +6707,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/mod_code.c linux-
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Synthesizer driver module for speakup for the  synth->long_name");
 +MODULE_LICENSE( "GPL" );
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/serialio.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/serialio.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/serialio.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/serialio.h	2003-05-05 06:56:33.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/serialio.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/serialio.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/serialio.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/serialio.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,18 @@
 +#ifndef SSPK_SERIAL
 +#define SSPK_SERIAL
@@ -6708,9 +6729,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/serialio.h linux-
 +#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
 +
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup.c	2005-08-16 12:57:05.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,2609 @@
 +/* speakup.c
 +   review functions for the speakup screen review package.
@@ -9321,9 +9342,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup.c linux-2
 +module_exit( mod_speakup_exit );
 +
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acnt.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acnt.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acnt.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acnt.h	2003-04-14 11:37:18.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acnt.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acnt.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acnt.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acnt.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,16 @@
 +/* speakup_acntpc.h - header file for speakups Accent-PC driver. */
 +
@@ -9341,9 +9362,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acnt.h li
 +#define SYNTH_FULL  'F' /* synth is full. */
 +#define SYNTH_ALMOST_EMPTY 'M' /* synth has les than 2 seconds of text left */
 +#define SYNTH_SPEAKING 's' /* synth is speaking and has a fare way to go */
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntpc.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acntpc.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntpc.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acntpc.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acntpc.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acntpc.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acntpc.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acntpc.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,160 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9505,9 +9526,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntpc.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntsa.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acntsa.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntsa.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_acntsa.c	2003-11-06 11:00:59.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acntsa.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acntsa.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_acntsa.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_acntsa.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,184 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9693,9 +9714,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_acntsa.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_apollo.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_apollo.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_apollo.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_apollo.c	2004-03-06 07:55:29.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_apollo.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_apollo.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_apollo.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_apollo.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,195 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9892,9 +9913,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_apollo.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_audptr.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_audptr.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_audptr.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_audptr.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_audptr.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_audptr.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_audptr.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_audptr.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,201 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10097,9 +10118,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_audptr.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_bns.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_bns.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_bns.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_bns.c	2003-11-06 11:00:59.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_bns.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_bns.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_bns.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_bns.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,174 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10275,9 +10296,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_bns.c lin
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decext.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_decext.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decext.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_decext.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_decext.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_decext.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_decext.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_decext.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,205 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10484,9 +10505,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decext.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decpc.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_decpc.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decpc.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_decpc.c	2003-10-28 08:15:27.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_decpc.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_decpc.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_decpc.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_decpc.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,242 @@
 +/*
 +* written by David Borowski, david575@golden.net
@@ -10730,9 +10751,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_decpc.c l
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dectlk.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dectlk.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dectlk.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dectlk.c	2005-03-30 11:02:02.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dectlk.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dectlk.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dectlk.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dectlk.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,221 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10955,9 +10976,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dectlk.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_drvcommon.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_drvcommon.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_drvcommon.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_drvcommon.c	2005-08-05 08:02:17.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_drvcommon.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_drvcommon.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_drvcommon.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_drvcommon.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,875 @@
 +#define KERNEL
 +#include <linux/config.h>
@@ -11834,9 +11855,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_drvcommon
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Speakup module required by all synthesizer specific modules");
 +MODULE_LICENSE("GPL");
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dtlk.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dtlk.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dtlk.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dtlk.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dtlk.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dtlk.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,219 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -12057,9 +12078,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.c li
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dtlk.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_dtlk.h	2003-04-22 08:06:47.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dtlk.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dtlk.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_dtlk.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_dtlk.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,54 @@
 +/* speakup_dtlk.h - header file for speakups DoubleTalk driver. */
 +
@@ -12115,9 +12136,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_dtlk.h li
 +	                                 parameter block */
 +	u_char has_indexing;	/* nonzero if indexing is implemented */
 +};
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keyhelp.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_keyhelp.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keyhelp.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_keyhelp.c	2005-08-05 08:02:17.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_keyhelp.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_keyhelp.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_keyhelp.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_keyhelp.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,288 @@
 +/* speakup_keyhelp.c
 +   help module for speakup
@@ -12407,9 +12428,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keyhelp.c
 +MODULE_AUTHOR("David Borowski");
 +MODULE_DESCRIPTION("Speakup keyboard help MODULE");
 +MODULE_LICENSE("GPL");
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keypc.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_keypc.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keypc.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_keypc.c	2004-03-10 11:56:25.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_keypc.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_keypc.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_keypc.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_keypc.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,189 @@
 +/*
 +* written by David Borowski
@@ -12600,9 +12621,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_keypc.c l
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_ltlk.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_ltlk.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_ltlk.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_ltlk.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_ltlk.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_ltlk.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_ltlk.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_ltlk.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,215 @@
 +/*
 + * originally written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -12819,9 +12840,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_ltlk.c li
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_sftsyn.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_sftsyn.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_sftsyn.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_sftsyn.c	2004-06-07 07:53:20.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_sftsyn.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_sftsyn.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_sftsyn.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_sftsyn.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,175 @@
 +/* speakup_sftsynth.c - speakup driver to register and make available
 + * a user space device for software synthesizers.  written by: Kirk
@@ -12998,9 +13019,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_sftsyn.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_spkout.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_spkout.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_spkout.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_spkout.c	2003-11-12 12:41:34.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_spkout.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_spkout.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_spkout.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_spkout.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,188 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -13190,9 +13211,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_spkout.c 
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_txprt.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_txprt.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_txprt.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakup_txprt.c	2003-10-07 18:04:35.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_txprt.c linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_txprt.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakup_txprt.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakup_txprt.c	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,195 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -13389,9 +13410,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakup_txprt.c l
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupconf linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupconf
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupconf	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupconf	2004-05-13 10:38:31.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupconf linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupconf
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupconf	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupconf	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,51 @@
 +#!/bin/sh
 +# script to load/save all the vars in speakup
@@ -13444,9 +13465,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupconf linux
 +  exit 1
 +;;
 +esac
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupmap.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupmap.h	2004-05-13 10:38:31.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupmap.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupmap.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupmap.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupmap.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,64 @@
 +	119, 61, 6,
 +	0, 16, 17, 32, 20, 48, 0,
@@ -13512,9 +13533,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.h linu
 +	109, 0, 7, 0, 0, 0, 0,
 +	125, 128, 128, 0, 0, 0, 0,
 +	0, 119
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.map linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupmap.map
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.map	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/speakupmap.map	2004-05-13 10:38:31.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupmap.map linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupmap.map
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/speakupmap.map	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/speakupmap.map	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,91 @@
 +spk key_f9 = punc_level_dec
 +spk key_f10 = punc_level_inc
@@ -13607,9 +13628,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/speakupmap.map li
 +spk key_8 = speakup_paste
 +shift spk key_m = say_first_char
 + ctrl spk key_semicolon = say_last_char
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_con_module.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/spk_con_module.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_con_module.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/spk_con_module.h	2003-05-09 12:17:56.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/spk_con_module.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/spk_con_module.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/spk_con_module.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/spk_con_module.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,43 @@
 +/* written bby David Borowski.
 +    Copyright (C ) 2003  David Borowski.
@@ -13654,9 +13675,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_con_module.h 
 +}
 +
 +EXPORT_SYMBOL(speakup_set_addresses);
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_priv.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/spk_priv.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_priv.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/spk_priv.h	2005-08-15 07:47:45.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/spk_priv.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/spk_priv.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/spk_priv.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/spk_priv.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,271 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
@@ -13929,9 +13950,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/spk_priv.h linux-
 +#endif
 +
 +#endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/synthlist.h linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/synthlist.h
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/synthlist.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/speakup/synthlist.h	2003-12-10 07:29:56.000000000 -0800
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/synthlist.h linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/synthlist.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/speakup/synthlist.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/speakup/synthlist.h	2005-10-16 04:02:28.000000000 -0700
 @@ -0,0 +1,54 @@
 +/* this is included two times */
 +#if defined(PASS2)
@@ -13987,9 +14008,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/speakup/synthlist.h linux
 +
 +#undef SYNTH_DECL
 +#undef CFG_TEST
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/vt.c
---- linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c	2005-08-22 14:35:04.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/drivers/char/vt.c	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/vt.c linux-2.6.14-rc4-git4-gentoo/drivers/char/vt.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/drivers/char/vt.c	2005-10-16 02:55:13.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/drivers/char/vt.c	2005-10-16 04:02:28.000000000 -0700
 @@ -98,6 +98,10 @@
  #include <asm/system.h>
  #include <asm/uaccess.h>
@@ -14001,7 +14022,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  
  const struct consw *conswitchp;
  
-@@ -720,6 +724,7 @@ int vc_allocate(unsigned int currcons)	/
+@@ -725,6 +729,7 @@ int vc_allocate(unsigned int currcons)	/
  	    }
  	    vc->vc_kmalloced = 1;
  	    vc_init(vc, vc->vc_rows, vc->vc_cols, 1);
@@ -14009,7 +14030,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	}
  	return 0;
  }
-@@ -947,6 +952,7 @@ static void lf(struct vc_data *vc)
+@@ -978,6 +983,7 @@ static void lf(struct vc_data *vc)
  		vc->vc_pos += vc->vc_size_row;
  	}
  	vc->vc_need_wrap = 0;
@@ -14017,7 +14038,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  }
  
  static void ri(struct vc_data *vc)
-@@ -975,6 +981,7 @@ static inline void bs(struct vc_data *vc
+@@ -1006,6 +1012,7 @@ static inline void bs(struct vc_data *vc
  		vc->vc_pos -= 2;
  		vc->vc_x--;
  		vc->vc_need_wrap = 0;
@@ -14025,7 +14046,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	}
  }
  
-@@ -1512,6 +1519,7 @@ static void do_con_trol(struct tty_struc
+@@ -1543,6 +1550,7 @@ static void do_con_trol(struct tty_struc
  				break;
  		}
  		vc->vc_pos += (vc->vc_x << 1);
@@ -14033,7 +14054,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  		return;
  	case 10: case 11: case 12:
  		lf(vc);
-@@ -2042,6 +2050,7 @@ static int do_con_write(struct tty_struc
+@@ -2073,6 +2081,7 @@ static int do_con_write(struct tty_struc
  			}
  			if (vc->vc_decim)
  				insert_char(vc, 1);
@@ -14041,7 +14062,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  			scr_writew(himask ?
  				     ((vc->vc_attr << 8) & ~himask) + ((tc & 0x100) ? himask : 0) + (tc & 0xff) :
  				     (vc->vc_attr << 8) + tc,
-@@ -2067,6 +2076,7 @@ static int do_con_write(struct tty_struc
+@@ -2098,6 +2107,7 @@ static int do_con_write(struct tty_struc
  	release_console_sem();
  
  out:
@@ -14049,7 +14070,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	return n;
  #undef FLUSH
  }
-@@ -2092,6 +2102,7 @@ static void console_callback(void *ignor
+@@ -2123,6 +2133,7 @@ static void console_callback(void *ignor
  			/* we only changed when the console had already
  			   been allocated - a new console is not created
  			   in an interrupt routine */
@@ -14057,7 +14078,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  		}
  		want_console = -1;
  	}
-@@ -2110,7 +2121,8 @@ static void console_callback(void *ignor
+@@ -2141,7 +2152,8 @@ static void console_callback(void *ignor
  		do_blank_screen(0);
  		blank_timer_expired = 0;
  	}
@@ -14067,7 +14088,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	release_console_sem();
  }
  
-@@ -2155,6 +2167,7 @@ static void vt_console_print(struct cons
+@@ -2186,6 +2198,7 @@ static void vt_console_print(struct cons
  		/* printk("vt_console_print: tty %d not allocated ??\n", currcons+1); */
  		goto quit;
  	}
@@ -14075,7 +14096,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  
  	if (vc->vc_mode != KD_TEXT)
  		goto quit;
-@@ -2167,6 +2180,7 @@ static void vt_console_print(struct cons
+@@ -2198,6 +2211,7 @@ static void vt_console_print(struct cons
  
  	/* Contrived structure to try to emulate original need_wrap behaviour
  	 * Problems caused when we have need_wrap set on '\n' character */
@@ -14083,7 +14104,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	while (count--) {
  		c = *b++;
  		if (c == 10 || c == 13 || c == 8 || vc->vc_need_wrap) {
-@@ -2211,6 +2225,7 @@ static void vt_console_print(struct cons
+@@ -2242,6 +2256,7 @@ static void vt_console_print(struct cons
  		}
  	}
  	set_cursor(vc);
@@ -14091,7 +14112,7 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  
  quit:
  	clear_bit(0, &printing);
-@@ -2552,6 +2567,7 @@ static int __init con_init(void)
+@@ -2587,6 +2602,7 @@ static int __init con_init(void)
  	master_display_fg = vc = vc_cons[currcons].d;
  	set_origin(vc);
  	save_screen(vc);
@@ -14099,14 +14120,14 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/drivers/char/vt.c linux-2.6.13-rc6-git
  	gotoxy(vc, vc->vc_x, vc->vc_y);
  	csi_J(vc, 0);
  	update_screen(vc);
-@@ -3244,3 +3260,4 @@ EXPORT_SYMBOL(vc_cons);
+@@ -3279,3 +3295,4 @@ EXPORT_SYMBOL(vc_cons);
  EXPORT_SYMBOL(take_over_console);
  EXPORT_SYMBOL(give_up_console);
  #endif
 +EXPORT_SYMBOL(screen_glyph);
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/fs/proc/root.c linux-2.6.13-rc6-git13-gentoo-speakup/fs/proc/root.c
---- linux-2.6.13-rc6-git13-gentoo/fs/proc/root.c	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/fs/proc/root.c	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/fs/proc/root.c linux-2.6.14-rc4-git4-gentoo/fs/proc/root.c
+--- linux-2.6.14-rc4-git4-gentoo.orig/fs/proc/root.c	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/fs/proc/root.c	2005-10-16 04:02:29.000000000 -0700
 @@ -73,6 +73,10 @@ void __init proc_root_init(void)
  	proc_mkdir("openprom", NULL);
  #endif
@@ -14118,9 +14139,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/fs/proc/root.c linux-2.6.13-rc6-git13-
  #ifdef CONFIG_PROC_DEVICETREE
  	proc_device_tree_init();
  #endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/keyboard.h linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/keyboard.h
---- linux-2.6.13-rc6-git13-gentoo/include/linux/keyboard.h	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/keyboard.h	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/include/linux/keyboard.h linux-2.6.14-rc4-git4-gentoo/include/linux/keyboard.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/include/linux/keyboard.h	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/include/linux/keyboard.h	2005-10-16 04:02:29.000000000 -0700
 @@ -44,6 +44,7 @@ extern unsigned short plain_map[NR_KEYS]
  #define KT_ASCII	9
  #define KT_LOCK		10
@@ -14137,9 +14158,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/keyboard.h linux-2.6.13-
  
  #define MAX_DIACR	256
  #endif
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/miscdevice.h linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/miscdevice.h
---- linux-2.6.13-rc6-git13-gentoo/include/linux/miscdevice.h	2005-06-17 12:48:29.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/miscdevice.h	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/include/linux/miscdevice.h linux-2.6.14-rc4-git4-gentoo/include/linux/miscdevice.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/include/linux/miscdevice.h	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/include/linux/miscdevice.h	2005-10-16 04:02:29.000000000 -0700
 @@ -12,6 +12,7 @@
  #define APOLLO_MOUSE_MINOR 7
  #define PC110PAD_MINOR 9
@@ -14148,9 +14169,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/miscdevice.h linux-2.6.1
  #define WATCHDOG_MINOR		130	/* Watchdog timer     */
  #define TEMP_MINOR		131	/* Temperature Sensor */
  #define RTC_MINOR 135
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/proc_fs.h linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/proc_fs.h
---- linux-2.6.13-rc6-git13-gentoo/include/linux/proc_fs.h	2005-08-22 14:35:11.000000000 -0700
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/proc_fs.h	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/include/linux/proc_fs.h linux-2.6.14-rc4-git4-gentoo/include/linux/proc_fs.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/include/linux/proc_fs.h	2005-08-28 16:41:01.000000000 -0700
++++ linux-2.6.14-rc4-git4-gentoo/include/linux/proc_fs.h	2005-10-16 04:02:29.000000000 -0700
 @@ -136,6 +136,10 @@ extern void proc_tty_init(void);
  extern void proc_tty_register_driver(struct tty_driver *driver);
  extern void proc_tty_unregister_driver(struct tty_driver *driver);
@@ -14162,9 +14183,9 @@ diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/proc_fs.h linux-2.6.13-r
  /*
   * proc_devtree.c
   */
-diff -Naurp linux-2.6.13-rc6-git13-gentoo/include/linux/speakup.h linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/speakup.h
---- linux-2.6.13-rc6-git13-gentoo/include/linux/speakup.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.13-rc6-git13-gentoo-speakup/include/linux/speakup.h	2005-08-25 14:06:54.000000000 -0700
+diff -Naurp linux-2.6.14-rc4-git4-gentoo.orig/include/linux/speakup.h linux-2.6.14-rc4-git4-gentoo/include/linux/speakup.h
+--- linux-2.6.14-rc4-git4-gentoo.orig/include/linux/speakup.h	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.14-rc4-git4-gentoo/include/linux/speakup.h	2005-10-16 04:02:29.000000000 -0700
 @@ -0,0 +1,33 @@
 +#ifndef __SPEAKUP_H
 +#define __SPEAKUP_H
