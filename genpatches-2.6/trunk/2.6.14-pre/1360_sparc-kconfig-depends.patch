@@ -1,12 +1,11 @@
-diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/Kconfig linux-dsd/drivers/char/Kconfig
---- linux-2.6.13-rc7/drivers/char/Kconfig	2005-08-24 09:53:25.000000000 +0100
-+++ linux-dsd/drivers/char/Kconfig	2005-08-29 13:55:18.000000000 +0100
+--- a/drivers/char/Kconfig	2005-10-16 02:55:08.000000000 -0700
++++ a/drivers/char/Kconfig	2005-10-16 03:13:59.000000000 -0700
 @@ -80,7 +80,7 @@ config SERIAL_NONSTANDARD
  
  config COMPUTONE
  	tristate "Computone IntelliPort Plus serial support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (BROKEN || !SPARC32)
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA) && (BROKEN || !SPARC32)
+-	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP
++	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA)
  	---help---
  	  This driver supports the entire family of Intelliport II/Plus
  	  controllers with the exception of the MicroChannel controllers and
@@ -32,8 +31,8 @@ diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/Kconfig linux-dsd/drivers/cha
  
  config DIGIEPCA
  	tristate "Digiboard Intelligent Async Support"
--	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (!64BIT || BROKEN)
-+	depends on SERIAL_NONSTANDARD && BROKEN_ON_SMP && (PCI || ISA) && (!64BIT || BROKEN)
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
  	---help---
  	  This is a driver for Digi International's Xx, Xeve, and Xem series
  	  of cards which provide multiple serial ports. You would need
@@ -59,8 +58,8 @@ diff -urNpX dontdiff linux-2.6.13-rc7/drivers/char/Kconfig linux-dsd/drivers/cha
  
  config SYNCLINKMP
  	tristate "SyncLink Multiport support"
--	depends on SERIAL_NONSTANDARD && (BROKEN || !SPARC32)
-+	depends on SERIAL_NONSTANDARD && (PCI || ISA) && (BROKEN || !SPARC32)
+-	depends on SERIAL_NONSTANDARD
++	depends on SERIAL_NONSTANDARD && (PCI || ISA)
  	help
  	  Enable support for the SyncLink Multiport (2 or 4 ports)
  	  serial adapter, running asynchronous and HDLC communications up

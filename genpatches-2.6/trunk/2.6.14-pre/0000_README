@@ -52,10 +52,6 @@ Patch:	1360_sparc-kconfig-depends.patch
 From:	eradicator@gentoo.org
 Desc:	Fix depends statements for some drivers
 
-Patch:	1361_sparc-kconfig-rework.patch
-From:	eradicator@gentoo.org
-Desc:	SPARC Kconfig reworked to be more similar to x86 layout
-
 Patch:	1362_sparc-kconfig-fb.patch
 From:	eradicator@gentoo.org
 Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
