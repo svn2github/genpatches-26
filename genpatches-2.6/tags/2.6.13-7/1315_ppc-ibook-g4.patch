@@ -1,0 +1,31 @@
+From: Sven Henkel <shenkel@gmail.com>
+Date: Sat, 1 Oct 2005 22:30:33 +0000 (+1000)
+Subject:     [PATCH] ppc32: Add new iBook 12" to PowerMac models table
+X-Git-Tag: v2.6.14-rc4
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=036bfdcb0dfa39fc1ff5ded196b5fd92f1bb9ea8
+
+  [PATCH] ppc32: Add new iBook 12" to PowerMac models table
+  
+  This adds the new iBook G4 (manufactured after July 2005) to the
+  PowerMac models table.  The model name (PowerBook6,7) is taken from a
+  12" iBook, I don't know if it also matches the 14" version.  The patch
+  applies to a vanilla 2.6.13.2 kernel.
+  
+  Signed-off-by: Sven Henkel <shenkel@gmail.com>
+  Signed-off-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/arch/ppc/platforms/pmac_feature.c
++++ b/arch/ppc/platforms/pmac_feature.c
+@@ -2337,6 +2337,10 @@ static struct pmac_mb_def pmac_mb_defs[]
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+ 		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
+ 	},
++	{	"PowerBook6,7",			"iBook G4",
++		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
++		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
++	},
+ 	{	"PowerBook6,8",			"PowerBook G4 12\"",
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+ 		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,

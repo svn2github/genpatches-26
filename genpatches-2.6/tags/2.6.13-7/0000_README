@@ -1,0 +1,302 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_1_aacraid-bad-BUG_ON_fix.patch
+From:	2.6.13.1
+Desc:	aacraid bad BUG_ON fix
+
+Patch:	1001_1_fix-pci-rom-mapping.patch
+From:	2.6.13.1
+Desc:	Fix PCI ROM mapping
+
+Patch:	1002_1_fix-socket-filter-regression.patch
+From:	2.6.13.1
+Desc:	[NET] 2.6.13 breaks libpcap (and tcpdump)
+
+Patch:	1003_1_ipsec-oops-fix.patch
+From:	2.6.13.1
+Desc:	[CRYPTO] Fix boundary check in standard multi-block cipher processors
+
+Patch:	1004_1_ipv4-fragmentation-csum-handling.patch
+From:	2.6.13.1
+Desc:	[IPV4] Reassembly trim not clearing CHECKSUM_HW
+
+Patch:	1005_1_pci_assign_unassigned_resources-update.patch
+From:	2.6.13.1
+Desc:	x86: pci_assign_unassigned_resources() update
+
+Patch:	1006_1_saa7134-dvb-must-select-tda1004x.patch
+From:	2.6.13.1
+Desc:	Kconfig: saa7134-dvb must select tda1004x
+
+Patch:	1007_1_sendmsg-DoS.patch
+From:	2.6.13.1
+Desc:	raw_sendmsg DoS (CAN-2005-2492)
+
+Patch:	1008_1_sendmsg-stackoverflow.patch
+From:	2.6.13.1
+Desc:	32bit sendmsg() flaw (CAN-2005-2490)
+
+Patch:	1009_1_sparc-request_irq-in-RTC-fix.patch
+From:	2.6.13.1
+Desc:	[RTC] Use SA_SHIRQ in sparc specific code.
+
+Patch:	1010_2_fix-more-byte-to-dword-writes-to-PCI_ROM_ADDRESS-config-word.patch
+From:	2.6.13.2
+Desc:	Fix up more strange byte writes to the PCI_ROM_ADDRESS config word
+
+Patch:	1011_2_fix-MPOL_F_VERIFY.patch
+From:	2.6.13.2
+Desc:	Fix MPOL_F_VERIFY
+
+Patch:	1012_2_forcedeth-init-link-settings-in-nv_open.patch
+From:	2.6.13.2
+Desc:	forcedeth: Initialize link settings in every nv_open()
+
+Patch:	1013_2_hpt366-write-dword-not-byte-for-ROM-resource.patch
+From:	2.6.13.2
+Desc:	hpt366: write the full 4 bytes of ROM address, not just low 1 byte
+
+Patch:	1014_2_jfs_delete_inode-must-call-clear_inode.patch
+From:	2.6.13.2
+Desc:	jfs: jfs_delete_inode must call clear_inode
+
+Patch:	1015_2_lost-fput-in-32bit-ioctl-on-x86-64.patch
+From:	2.6.13.2
+Desc:	lost fput in 32bit ioctl on x86-64
+
+Patch:	1016_2_lost-sockfd_put-in-32bit-compat-routing_ioctl.patch
+From:	2.6.13.2
+Desc:	Lost sockfd_put() in routing_ioctl()
+
+Patch:	1017_2_netfilter-fix-dhcp-masquerade-problem.patch
+From:	2.6.13.2
+Desc:	[NETFILTER]: Fix DHCP + MASQUERADE problem
+
+Patch:	1018_2_sungem-enable-and-map-pci-rom-properly.patch
+From:	2.6.13.2
+Desc:	Sun GEM ethernet: enable and map PCI ROM properly
+
+Patch:	1019_2_sunhme-enable-and-map-pci-rom-properly.patch
+From:	2.6.13.2
+Desc:	Sun HME: enable and map PCI ROM properly
+
+Patch:	1020_2_usb-ftdi_sio-baud-fix.patch
+From:	2.6.13.2
+Desc:	USB: ftdi_sio: custom baud rate fix
+
+Patch:	1021_3_fix-de_thread-BUG_ON.patch
+From:	2.6.13.3
+Desc:	Fix fs/exec.c:788 (de_thread()) BUG_ON
+
+Patch:	1022_3_ipv6-fix-per-socket-multicast-filtering.patch
+From:	2.6.13.3
+Desc:	fix IPv6 per-socket multicast filtering in exact-match case
+
+Patch:	1023_3_ipvs-ip_vs_ftp-breaks-connections.patch
+From:	2.6.13.3
+Desc:	ipvs: ip_vs_ftp breaks connections using persistence
+
+Patch:	1024_3_skge-set-mac-address-oops-with-bonding.patch
+From:	2.6.13.3
+Desc:	skge: set mac address oops with bonding
+
+Patch:	1025_3_tcp-dont-over-clamp-window-in-tcp_clamp_window.patch
+From:	2.6.13.3
+Desc:	[TCP]: Don't over-clamp window in tcp_clamp_window()
+
+Patch:	1026_3_tcp-set-default-congestion-control-correctly.patch
+From:	2.6.13.3
+Desc:	tcp: set default congestion control correctly for incoming connections
+
+Patch:	1027_3_uml-fix-x86_64-page-leak.patch
+From:	2.6.13.3
+Desc:	uml - Fix x86_64 page leak
+
+Patch:	1028_3_yenta-oops-fix.patch
+From:	2.6.13.3
+Desc:	yenta oops fix
+
+Patch:	1029_4_drm-module_param-permissions-fix.patch
+From:	2.6.13.4
+Desc:	Fix drm 'debug' sysfs permissions
+
+Patch:	1030_4_fix-sparc64-fpu-register-corruption.patch
+From:	2.6.13.4
+Desc:	[SPARC64]: Fix userland FPU state corruption.
+
+Patch:	1031_4_ieee1394-sbp2-fixes.patch
+From:	2.6.13.4
+Desc:	ieee1394/sbp2: fixes for hot-unplug and module unloading
+
+Patch:	1032_4_key-rka-memleak.patch
+From:	2.6.13.4
+Desc:	key: plug request_key_auth memleak (CAN-2005-3119)
+
+Patch:	1033_4_orinoco-info-leak.patch
+From:	2.6.13.4
+Desc:	orinoco: Information leakage due to incorrect padding
+
+Patch:	1034_4_plug-names_cache-memleak.patch
+From:	2.6.13.4
+Desc:	Avoid 'names_cache' memory leak with CONFIG_AUDITSYSCALL
+
+Patch:	1035_4_tcp-congestion-control-bug.patch
+From:	2.6.13.4
+Desc:	[TCP]: BIC coding bug in Linux 2.6.13
+
+Patch:	1300_ppc64-multilib.patch
+From:	dostrow@gentoo.org
+Desc:	PPC64 makefile fix for multilib stuff
+
+Patch:	1305_amd64-smp.patch
+From:	http://bugs.gentoo.org/104151
+Desc:	Hopeful fix for the AMD64 SMP userspace crash issues
+
+Patch:	1310_amd64-x2-tsc.patch
+From:	Upstream 2.6.14
+Desc:	Fix clock skew on AMD64 X2 cpu's
+
+Patch:	1315_ppc-ibook-g4.patch
+From:	http://bugs.gentoo.org/108990
+Desc:	Support new iBook series
+
+Patch:	1340_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1345_amd64-pageattr-flush.patch
+From:	http://bugs.gentoo.org/108909
+Desc:	Fix a page attr cache misoptimization
+
+Patch:	1360_sparc-kconfig-depends.patch
+From:	eradicator@gentoo.org
+Desc:	Fix depends statements for some drivers
+
+Patch:	1361_sparc-kconfig-rework.patch
+From:	eradicator@gentoo.org
+Desc:	SPARC Kconfig reworked to be more similar to x86 layout
+
+Patch:	1362_sparc-kconfig-fb.patch
+From:	eradicator@gentoo.org
+Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
+
+Patch:	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	1900_kallsyms-compression.patch
+From:	http://bugs.gentoo.org/104393
+Desc:	Stop kallsyms requiring an extra pass for some configs
+
+Patch:	1905_inotify-leak.patch
+From:	Andrew Morton
+Desc:	Fix inotify-related memory leak in the idr cache
+
+Patch:	2100_starfire-firmware.patch
+From:	http://bugs.gentoo.org/107734
+Desc:	Fix starfire driver panics
+
+Patch:	2105_skge-1.0.patch
+From:	http://bugs.gentoo.org/87182 and others
+Desc:	skge tree update
+
+Patch:	2500_radeonfb-ibook-suspend.patch
+From:	http://bugs.gentoo.org/108990
+Desc:	Fix suspend on new iBooks
+
+Patch:	2900_alsa-mandocs.patch
+From:	http://bugs.gentoo.org/108368
+Desc:	Fix "make mandocs" error
+
+Patch:	4101_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4300_via-vt6410.patch
+From:	ide-dev-2.6
+Desc:	Add support for VIA VT6410 IDE into vt82xx driver
+
+Patch:	4305_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4320_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4340_sata-nv-mcp5x.patch
+From:	libata-dev tree
+Desc:	Support MCP5x nvidia SATA controllers
+
+Patch:	4355_promise-tx4200.patch
+From:	dsd@gentoo.org
+Desc:	Support promise TX4200 hardware
+
+Patch:	4351_megaraid-compatibility.patch
+From:	dsd@gentoo.org
+Desc:	Allow both megaraid drivers to be built side-by-side
+
+Patch:	4500_fbsplash-0.9.2-r4.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4505_vesafb-tng-0.9-rc7-r1.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4705_squashfs-2.2.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4900_speakup-20050825.patch
+From:	eradicator@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4901_speakup-gameport.patch
+From:	http://bugs.gentoo.org/104609
+Desc:	Fix for gameport init
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
+

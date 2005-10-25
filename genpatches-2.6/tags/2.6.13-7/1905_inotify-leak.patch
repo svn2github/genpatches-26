@@ -1,0 +1,68 @@
+From: Andrew Morton <akpm@osdl.org>
+Date: Sun, 23 Oct 2005 19:57:18 +0000 (-0700)
+Subject:     [PATCH] inotify/idr leak fix
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=8d3b35914aa54232b27e6a2b57d84092aadc5e86
+
+  [PATCH] inotify/idr leak fix
+  
+  Fix a bug which was reported and diagnosed by
+  Stefan Jones <stefan.jones@churchillrandoms.co.uk>
+  
+  IDR trees include a cache of idr_layer objects.  There's no way to destroy
+  this cache, so when we discard an overall idr tree we end up leaking some
+  memory.
+  
+  Add and use idr_destroy() for this.  v9fs and infiniband also need to use
+  idr_destroy() to avoid leaks.
+  
+  Or, we make the cache global, like radix_tree_preload().  Which is probably
+  better.  Later.
+  
+  Cc: Eric Van Hensbergen <ericvh@ericvh.myip.org>
+  Cc: Roland Dreier <rolandd@cisco.com>
+  Cc: Robert Love <rml@novell.com>
+  Cc: John McCutchan <ttb@tentacle.dhs.org>
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/fs/inotify.c
++++ b/fs/inotify.c
+@@ -176,6 +176,7 @@ static inline void put_inotify_dev(struc
+ 	if (atomic_dec_and_test(&dev->count)) {
+ 		atomic_dec(&dev->user->inotify_devs);
+ 		free_uid(dev->user);
++		idr_destroy(&dev->idr);
+ 		kfree(dev);
+ 	}
+ }
+--- a/include/linux/idr.h
++++ b/include/linux/idr.h
+@@ -75,4 +75,5 @@ int idr_pre_get(struct idr *idp, unsigne
+ int idr_get_new(struct idr *idp, void *ptr, int *id);
+ int idr_get_new_above(struct idr *idp, void *ptr, int starting_id, int *id);
+ void idr_remove(struct idr *idp, int id);
++void idr_destroy(struct idr *idp);
+ void idr_init(struct idr *idp);
+--- a/lib/idr.c
++++ b/lib/idr.c
+@@ -346,6 +346,19 @@ void idr_remove(struct idr *idp, int id)
+ EXPORT_SYMBOL(idr_remove);
+ 
+ /**
++ * idr_destroy - release all cached layers within an idr tree
++ * idp: idr handle
++ */
++void idr_destroy(struct idr *idp)
++{
++	while (idp->id_free_cnt) {
++		struct idr_layer *p = alloc_layer(idp);
++		kmem_cache_free(idr_layer_cache, p);
++	}
++}
++EXPORT_SYMBOL(idr_destroy);
++
++/**
+  * idr_find - return pointer for given id
+  * @idp: idr handle
+  * @id: lookup key
