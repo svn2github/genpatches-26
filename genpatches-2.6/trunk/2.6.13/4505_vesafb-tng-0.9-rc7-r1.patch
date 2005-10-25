@@ -2276,7 +2276,7 @@ diff -urNpX dontdiff linux-2.6.13-rc5-gentoo/drivers/video/vesafb-tng.c linux-ds
 +		sprintf(entry, "fb%d", vesafb_info->node);
 +		remove_proc_entry(entry, NULL);
 +
-+		iounmap(info->screen_base); 
++		iounmap(vesafb_info->screen_base); 
 +		release_mem_region(vesafb_info->fix.smem_start, vesafb_info->fix.smem_len);
 +		fb_dealloc_cmap(&vesafb_info->cmap);
 +		framebuffer_release(vesafb_info);
