@@ -228,6 +228,10 @@ Patch:	1900_kallsyms-compression.patch
 From:	http://bugs.gentoo.org/104393
 Desc:	Stop kallsyms requiring an extra pass for some configs
 
+Patch:	1905_inotify-leak.patch
+From:	Andrew Morton
+Desc:	Fix inotify-related memory leak in the idr cache
+
 Patch:	2100_starfire-firmware.patch
 From:	http://bugs.gentoo.org/107734
 Desc:	Fix starfire driver panics
