@@ -244,6 +244,10 @@ Patch:	2500_radeonfb-ibook-suspend.patch
 From:	http://bugs.gentoo.org/108990
 Desc:	Fix suspend on new iBooks
 
+Patch:	2900_alsa-mandocs.patch
+From:	http://bugs.gentoo.org/108368
+Desc:	Fix "make mandocs" error
+
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
