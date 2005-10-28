@@ -60,6 +60,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1910_kconfig-no-nls.patch
+From:	http://bugs.gentoo.org/99810
+Desc:	Fix compilation on uclinux systems
+
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
