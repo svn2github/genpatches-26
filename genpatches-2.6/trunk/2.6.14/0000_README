@@ -96,13 +96,9 @@ Patch:	4705_squashfs-2.2.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
-Patch:	4900_speakup-20050825.patch
-From:	eradicator@gentoo.org from speakup cvs
+Patch:	4900_speakup-20051028.patch
+From:	dsd@gentoo.org from speakup cvs
 Desc:	Provides console speech to visually-impaired users
-
-Patch:	4901_speakup-gameport.patch
-From:	http://bugs.gentoo.org/104609
-Desc:	Fix for gameport init
 
 Patch:	4905_alpha-sysctl-uac.patch
 From:	
