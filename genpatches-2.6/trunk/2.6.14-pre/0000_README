@@ -88,7 +88,7 @@ Patch:	4500_fbsplash-0.9.2-r4.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
-Patch:	4505_vesafb-tng-1.0-rc1.patch
+Patch:	4505_vesafb-tng-1.0-rc1-r1.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
 
