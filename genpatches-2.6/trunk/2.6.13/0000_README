@@ -232,6 +232,10 @@ Patch:	1905_inotify-leak.patch
 From:	Andrew Morton
 Desc:	Fix inotify-related memory leak in the idr cache
 
+Patch:	1910_kconfig-no-nls.patch
+From:	http://bugs.gentoo.org/99810
+Desc:	Fix compilation on uclinux systems
+
 Patch:	2100_starfire-firmware.patch
 From:	http://bugs.gentoo.org/107734
 Desc:	Fix starfire driver panics
