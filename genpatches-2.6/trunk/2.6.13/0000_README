@@ -240,6 +240,10 @@ Patch:	2105_skge-1.0.patch
 From:	http://bugs.gentoo.org/87182 and others
 Desc:	skge tree update
 
+Patch:	2110_skge-a0.patch
+From:	http://bugs.gentoo.org/10586
+Desc:	Fix skge boot on revision A0 cards
+
 Patch:	2500_radeonfb-ibook-suspend.patch
 From:	http://bugs.gentoo.org/108990
 Desc:	Fix suspend on new iBooks
