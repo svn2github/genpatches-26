@@ -8,7 +8,7 @@ $output_path = $webscript_path.'/output';
 $website_base = 'http://dev.gentoo.org/~dsd/genpatches';
 
 $ebuild_base = '/usr/local/gentoo-x86';
-@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/ck-sources', 'sys-kernel/usermode-sources', 'sys-kernel/suspend2-sources');
+@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/ck-sources', 'sys-kernel/usermode-sources', 'sys-kernel/suspend2-sources', 'sys-kernel/vserver-sources');
 
 sub html_header {
 	local *FD = shift;
@@ -237,7 +237,7 @@ sub _get_genpatches_kernels {
 	my (%gp_kernels, $kernel);
 
 	foreach $kernel (@kernels) {
-		$kernel =~ m/^([a-z-]+)\/([a-z-]+)$/;
+		$kernel =~ m/^([a-z-]+)\/([a-z0-9-]+)$/;
 		my $cat = $1;
 		my $pkg = $2;
 		$cmd = 'egrep "^(K_GENPATCHES_VER|K_WANT_GENPATCHES)" '.$ebuild_base.'/'.$kernel.'/*.ebuild';
@@ -252,7 +252,7 @@ sub _get_genpatches_kernels {
 			my $ebuild = $pkg.'-'.$ver;
 			$ver =~ m/^(2\.6\.\d+)/;
 			my $orig_ver = $1;
-	
+
 			if ($var =~ /^K_WANT_GENPATCHES="(.*)"$/) {
 				$gp_kernels{$ebuild}{'pkg'} = $pkg;
 				$gp_kernels{$ebuild}{'ver'} = $ver;

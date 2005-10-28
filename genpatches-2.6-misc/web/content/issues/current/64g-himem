@@ -1,8 +1,0 @@
-System is unstable when 64GB HIGHMEM is enabled
-I have more than 4GB RAM and my system is unstable
---
-One of the patches in Gentoo's patchset seems to be causing problems. We are currently waiting for 2.6.13 to come out so that we can debug the issue with a smaller patchset. For now you can use 64GB highmem with vanilla-sources with no problems.
---
-#101359
-20050824
-2.6.12
