@@ -1,0 +1,37 @@
+diff -Naur linux-2.6.14_rc2.orig/scripts/kconfig/Makefile linux-2.6.14_rc2/scripts/kconfig/Makefile
+--- linux-2.6.14_rc2.orig/scripts/kconfig/Makefile	2005-11-06 04:13:01 +0000
++++ linux-2.6.14_rc2/scripts/kconfig/Makefile	2005-11-18 03:52:03 +0000
+@@ -116,6 +116,15 @@
+ clean-files	:= lkc_defs.h qconf.moc .tmp_qtcheck \
+ 		   .tmp_gtkcheck zconf.tab.c zconf.tab.h lex.zconf.c
+ 
++# Needed for systems without gettext
++KBUILD_HAVE_NLS := $(shell \
++     if echo "\#include <libint.h>" | $(HOSTCC) $(HOSTCFLAGS) -E - > /dev/null 2>&1 ; \
++     then echo yes ; \
++     else echo no ; fi)
++ifeq ($(KBUILD_HAVE_NLS),no)
++HOSTCFLAGS	+= -DKBUILD_NO_NLS
++endif
++
+ # generated files seem to need this to find local include files
+ HOSTCFLAGS_lex.zconf.o	:= -I$(src)
+ HOSTCFLAGS_zconf.tab.o	:= -I$(src)
+diff -Naur linux-2.6.14_rc2.orig/scripts/kconfig/lkc.h linux-2.6.14_rc2/scripts/kconfig/lkc.h
+--- linux-2.6.14_rc2.orig/scripts/kconfig/lkc.h	2005-11-06 04:13:01 +0000
++++ linux-2.6.14_rc2/scripts/kconfig/lkc.h	2005-11-18 02:23:07 +0000
+@@ -8,7 +8,13 @@
+ 
+ #include "expr.h"
+ 
+-#include <libintl.h>
++#ifndef KBUILD_NO_NLS
++# include <libintl.h>
++#else
++# define gettext(Msgid) ((const char *) (Msgid))
++# define textdomain(Domainname) ((const char *) (Domainname))
++# define bindtextdomain(Domainname, Dirname) ((const char *) (Dirname))
++#endif
+ 
+ #ifdef __cplusplus
+ extern "C" {
