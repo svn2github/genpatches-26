@@ -248,7 +248,7 @@ diff --git a/drivers/Makefile b/drivers/Makefile
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -791,7 +791,6 @@ config FB_MATROX
+@@ -792,7 +792,6 @@ config FB_MATROX
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
  	select FB_SOFT_CURSOR
@@ -256,7 +256,7 @@ diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1575,5 +1574,15 @@ if FB && SYSFS
+@@ -1576,5 +1575,15 @@ if FB && SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -1007,18 +1007,22 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  	set_blitting_type(vc, info, p);
  	((struct fbcon_ops *)info->fbcon_par)->cursor_reset = 1;
  
-@@ -2074,7 +2130,9 @@ static int fbcon_blank(struct vc_data *v
+@@ -2074,8 +2130,12 @@ static int fbcon_blank(struct vc_data *v
  			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  			ops->cursor_flash = (!blank);
  
 -			if (fb_blank(info, blank))
-+ 			if (fbsplash_active(info, vc))
-+				fbsplash_blank(vc, info, blank);
-+			else
- 				fbcon_generic_blank(vc, info, blank);
+-				fbcon_generic_blank(vc, info, blank);
++			if (fb_blank(info, blank)) {
++				if (fbsplash_active(info, vc))
++					fbsplash_blank(vc, info, blank);
++				else 
++					fbcon_generic_blank(vc, info, blank);
++			}
  		}
  
-@@ -2233,8 +2291,14 @@ static int fbcon_do_set_font(struct vc_d
+ 		if (!blank)
+@@ -2233,8 +2293,14 @@ static int fbcon_do_set_font(struct vc_d
  
  	if (resize) {
  		/* reset wrap/pan */
@@ -1035,7 +1039,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		if (CON_IS_VISIBLE(vc) && softback_buf) {
  			int l = fbcon_softback_size / vc->vc_size_row;
  			if (l > 5)
-@@ -2361,7 +2425,7 @@ static int fbcon_set_palette(struct vc_d
+@@ -2361,7 +2427,7 @@ static int fbcon_set_palette(struct vc_d
  	int i, j, k, depth;
  	u8 val;
  
@@ -1044,7 +1048,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2387,7 +2451,49 @@ static int fbcon_set_palette(struct vc_d
+@@ -2387,7 +2453,49 @@ static int fbcon_set_palette(struct vc_d
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1095,7 +1099,7 @@ diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2608,7 +2714,14 @@ static void fbcon_modechanged(struct fb_
+@@ -2608,7 +2716,14 @@ static void fbcon_modechanged(struct fb_
  		var_to_display(p, &info->var, info);
  		cols = info->var.xres / vc->vc_font.width;
  		rows = info->var.yres / vc->vc_font.height;
