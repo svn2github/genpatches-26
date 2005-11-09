@@ -40,6 +40,10 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1000_1_sysctl-unregistration.patch
+From:	Linux 2.6.14.1
+Desc:	Fix an oops on sysctl unregistration (CVE-2005-2709)
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
