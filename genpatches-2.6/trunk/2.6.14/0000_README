@@ -44,13 +44,57 @@ Patch:	1000_1_sysctl-unregistration.patch
 From:	Linux 2.6.14.1
 Desc:	Fix an oops on sysctl unregistration (CVE-2005-2709)
 
+Patch:	1001_2_airo_cs-correct-prototypes.patch
+From:	2.6.14.2
+Desc:	airo.c/airo_cs.c: correct prototypes
+
+Patch:	1002_2_cfq-io-sched-fix.patch
+From:	2.6.14.2
+Desc:	Oops on suspend after on-the-fly switch to anticipatory i/o scheduler
+
+Patch:	1003_2_fix-alpha-breakage.patch
+From:	2.6.14.2
+Desc:	fix alpha breakage
+
+Patch:	1004_2_thread-sendqueue-race.patch
+From:	2.6.14.2
+Desc:	fix de_thread() vs send_group_sigqueue() race
+
+Patch:	1005_2_ptrace-self-attach.patch
+From:	2.6.14.2
+Desc:	Fix ptrace self-attach rule
+
+Patch:	1006_2_signal-live-leak.patch
+From:	2.6.14.2
+Desc:	fix signal->live leak in copy_process()
+
+Patch:	1007_2_zero-size-datagram.patch
+From:	2.6.14.2
+Desc:	[NET] Fix zero-size datagram reception
+
+Patch:	1008_2_ipvs-connection-leak.patch
+From:	2.6.14.2
+Desc:	ipvs: fix connection leak if expire_nodest_conn=1
+
+Patch:	1009_2_prism54-frame-size.patch
+From:	2.6.14.2
+Desc:	prism54 : Fix frame length
+
+Patch:	1010_2_tcp-bic-max-increment.patch
+From:	2.6.14.2
+Desc:	tcp: BIC max increment too large
+
+Patch:	1011_2_usb-interface-modalias.patch
+From:	2.6.14.2
+Desc:	USB: always export interface information for modalias
+
+Patch:	1012_2_xfs-modular-quota.patch
+From:	2.6.14.2
+Desc:	fix XFS_QUOTA for modular XFS
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
-
-Patch:	1305_alpha-barrier-compile.patch
-From:	http://bugs.gentoo.org/111149
-Desc:	Fix compile on alpha
 
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
@@ -67,10 +111,6 @@ Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
 Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
-
-Patch:	2100_zero-size-datagram.patch
-From:	http://bugs.gentoo.org/111931
-Desc:	Fix a bug which caused BIND to fail after some time
 
 Patch:	1910_kconfig-no-nls.patch
 From:	http://bugs.gentoo.org/99810
