@@ -1,4 +1,5 @@
 diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
+index ee277dd..60f797e 100644
 --- a/Documentation/fb/vesafb.txt
 +++ b/Documentation/fb/vesafb.txt
 @@ -2,16 +2,18 @@
@@ -211,10 +212,10 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 -
 -mtrr:n	setup memory type range registers for the vesafb framebuffer
 -	where n:
--	      0 - disabled (equivalent to nomtrr)
+-	      0 - disabled (equivalent to nomtrr) (default)
 -	      1 - uncachable
 -	      2 - write-back
--	      3 - write-combining (default)
+-	      3 - write-combining
 -	      4 - write-through
 +The VESA BIOS provides protected mode interface for changing some parameters.
 +vesafb can use it for palette changes and to pan the display. It is turned
@@ -226,7 +227,7 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +"video=vesafb:ypan,1024x768-32@85"
 +
 +Note that vesafb-tng still uses the "video=vesafb:option" format of the
-+kernel command line video parameter. 'video=vesafb-tng:xxx" is incorrect.
++kernel command line video parameter. "video=vesafb-tng:xxx" is incorrect.
 +
 +Accepted options (both vesafb and vesafb-tng):
 +
@@ -255,15 +256,15 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +
 +mtrr:n  Setup memory type range registers for the vesafb framebuffer
 +        where n:
-+              0 - disabled (equivalent to nomtrr)
++              0 - disabled (equivalent to nomtrr) (default)
 +              1 - uncachable
 +              2 - write-back
-+              3 - write-combining (default)
++              3 - write-combining
 +              4 - write-through
  
 -	If you see the following in dmesg, choose the type that matches the
 -	old one. In this example, use "mtrr:2".
-+        If you see the following in dmesg, choose the type that matches
++	If you see the following in dmesg, choose the type that matches
 +        the old one. In this example, use "mtrr:2".
  ...
  mtrr: type mismatch for e0000000,8000000 old: write-back new: write-combining
@@ -347,6 +348,7 @@ diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 +Michal Januszewski <spock@gentoo.org>
 +
 diff --git a/arch/i386/boot/video.S b/arch/i386/boot/video.S
+index 92f6694..c4b29b0 100644
 --- a/arch/i386/boot/video.S
 +++ b/arch/i386/boot/video.S
 @@ -165,10 +165,12 @@ basret:	ret
@@ -410,18 +412,21 @@ diff --git a/arch/i386/boot/video.S b/arch/i386/boot/video.S
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
+index 25b6ca6..768fb08 100644
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -493,7 +493,7 @@ config FB_TGA
+@@ -454,8 +454,8 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
 -	bool "VESA VGA graphics support"
+-	depends on (FB = y) && X86
 +	tristate "VESA VGA graphics support"
- 	depends on (FB = y) && (X86 || X86_64)
++	depends on (FB = y) && (X86 || X86_64)
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
-@@ -505,6 +505,48 @@ config FB_VESA
+ 	select FB_CFB_IMAGEBLIT
+@@ -465,6 +465,48 @@ config FB_VESA
  	  You will get a boot time penguin logo at no additional cost. Please
  	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
  
@@ -471,9 +476,10 @@ diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
  	bool
  	depends on FB_VESA
 diff --git a/drivers/video/Makefile b/drivers/video/Makefile
+index aa434e7..247cfb3 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -97,7 +97,11 @@ obj-$(CONFIG_FB_IMX)              += imx
+@@ -96,7 +96,11 @@ obj-$(CONFIG_FB_IMX)              += imx
  obj-$(CONFIG_FB_S3C2410)	  += s3c2410fb.o
  
  # Platform or fallback drivers go here
@@ -486,22 +492,11 @@ diff --git a/drivers/video/Makefile b/drivers/video/Makefile
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
  
-diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
---- a/drivers/video/console/fbcon.c
-+++ b/drivers/video/console/fbcon.c
-@@ -2758,7 +2758,7 @@ static void fbcon_new_modelist(struct fb
- 			continue;
- 		vc = vc_cons[i].d;
- 		display_to_var(&var, &fb_display[i]);
--		mode = fb_find_nearest_mode(&var, &info->modelist);
-+		mode = fb_find_nearest_mode(fb_display[i].mode, &info->modelist);
- 		fb_videomode_to_var(&var, mode);
- 
- 		if (vc)
 diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
+index 9f18009..e3e5271 100644
 --- a/drivers/video/fbmem.c
 +++ b/drivers/video/fbmem.c
-@@ -1162,6 +1162,7 @@ fbmem_init(void)
+@@ -1403,6 +1403,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -510,9 +505,10 @@ diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
  }
  
 diff --git a/drivers/video/modedb.c b/drivers/video/modedb.c
+index 1da2f84..6755cb2 100644
 --- a/drivers/video/modedb.c
 +++ b/drivers/video/modedb.c
-@@ -663,6 +663,7 @@ void fb_var_to_videomode(struct fb_video
+@@ -667,6 +667,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
  
@@ -520,58 +516,12 @@ diff --git a/drivers/video/modedb.c b/drivers/video/modedb.c
  	mode->name = NULL;
  	mode->xres = var->xres;
  	mode->yres = var->yres;
-@@ -787,37 +788,37 @@ struct fb_videomode *fb_find_best_mode(s
- /**
-  * fb_find_nearest_mode - find mode closest video mode
-  *
-- * @var: pointer to struct fb_var_screeninfo
-+ * @mode: pointer to struct fb_videomode
-  * @head: pointer to modelist
-  *
-  * Finds best matching videomode, smaller or greater in dimension.
-  * If more than 1 videomode is found, will return the videomode with
-  * the closest refresh rate
-  */
--struct fb_videomode *fb_find_nearest_mode(struct fb_var_screeninfo *var,
-+struct fb_videomode *fb_find_nearest_mode(struct fb_videomode *mode,
- 					  struct list_head *head)
- {
- 	struct list_head *pos;
- 	struct fb_modelist *modelist;
--	struct fb_videomode *mode, *best = NULL;
-+	struct fb_videomode *cmode, *best = NULL;
- 	u32 diff = -1, diff_refresh = -1;
- 
- 	list_for_each(pos, head) {
- 		u32 d;
- 
- 		modelist = list_entry(pos, struct fb_modelist, list);
--		mode = &modelist->mode;
-+		cmode = &modelist->mode;
- 
--		d = abs(mode->xres - var->xres) +
--			abs(mode->yres - var->yres);
-+		d = abs(cmode->xres - mode->xres) +
-+			abs(cmode->yres - mode->yres);
- 		if (diff > d) {
- 			diff = d;
--			best = mode;
-+			best = cmode;
- 		} else if (diff == d) {
--			d = abs(mode->refresh - best->refresh);
-+			d = abs(cmode->refresh - mode->refresh);
- 			if (diff_refresh > d) {
- 				diff_refresh = d;
--				best = mode;
-+				best = cmode;
- 			}
- 		}
- 	}
 diff --git a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
 new file mode 100644
+index 0000000..249d794
 --- /dev/null
 +++ b/drivers/video/vesafb-thread.c
-@@ -0,0 +1,721 @@
+@@ -0,0 +1,722 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
 + * Kernel thread and vm86 routines.
@@ -1019,7 +969,7 @@ new file mode 100644
 +	vma->vm_mm = mm;
 +	vma->vm_start = start;
 +	vma->vm_end = end;
-+	vma->vm_flags = VM_READ | VM_WRITE | VM_EXEC | VM_RESERVED;
++	vma->vm_flags = VM_READ | VM_WRITE | VM_EXEC;
 +	vma->vm_flags |= mm->def_flags;
 +	vma->vm_page_prot.pgprot = prot;
 +	vma->vm_pgoff = pgoff;
@@ -1031,6 +981,7 @@ new file mode 100644
 +	}
 +
 +	if (type) {
++		vma->vm_flags |= VM_SHARED;
 +		ret = zeromap_page_range(vma,
 +					 vma->vm_start,
 +					 vma->vm_end - vma->vm_start,
@@ -1295,9 +1246,10 @@ new file mode 100644
 +
 diff --git a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 new file mode 100644
+index 0000000..4f98aea
 --- /dev/null
 +++ b/drivers/video/vesafb-tng.c
-@@ -0,0 +1,1485 @@
+@@ -0,0 +1,1478 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
 + *
@@ -1318,6 +1270,7 @@ new file mode 100644
 +#include <linux/init.h>
 +#include <linux/proc_fs.h>
 +#include <linux/completion.h>
++#include <linux/platform_device.h>
 +#include <video/edid.h>
 +#include <video/vesa.h>
 +#include <video/vga.h>
@@ -1352,7 +1305,7 @@ new file mode 100644
 +	.accel	= FB_ACCEL_NONE,
 +};
 +
-+static int  mtrr       = 3;	/* default to write-comb */
++static int  mtrr       = 0;	/* disable mtrr by default */
 +static int  ypan       = 0;	/* 0 - nothing, 1 - ypan, 2 - ywrap */
 +static int  pmi_setpal = 0;	/* pmi for palette changes */
 +static u16  *pmi_base  = NULL;  /* protected mode interface location */
@@ -1556,48 +1509,42 @@ new file mode 100644
 +	if (regno >= info->cmap.len)
 +		return -EINVAL;
 +
-+	switch (info->var.bits_per_pixel) {
-+	case 8:
++	if (info->var.bits_per_pixel == 8) {
 +		entry.red   = red   >> shift;
 +		entry.green = green >> shift;
 +		entry.blue  = blue  >> shift;
 +		entry.pad   = 0;
 +
 +		ret = vesafb_setpalette(&entry, 1, regno, info);
-+		break;
-+	case 16:
-+		if (info->var.red.offset == 10) {
-+			/* 1:5:5:5 */
-+			((u32*) (info->pseudo_palette))[regno] =
-+					((red   & 0xf800) >>  1) |
-+					((green & 0xf800) >>  6) |
-+					((blue  & 0xf800) >> 11);
-+		} else {
-+			/* 0:5:6:5 */
-+			((u32*) (info->pseudo_palette))[regno] =
-+					((red   & 0xf800)      ) |
-+					((green & 0xfc00) >>  5) |
-+					((blue  & 0xf800) >> 11);
++	} else if (regno < 16) {
++		switch (info->var.bits_per_pixel) {
++		case 16:
++			if (info->var.red.offset == 10) {
++				/* 1:5:5:5 */
++				((u32*) (info->pseudo_palette))[regno] =
++						((red   & 0xf800) >>  1) |
++						((green & 0xf800) >>  6) |
++						((blue  & 0xf800) >> 11);
++			} else {
++				/* 0:5:6:5 */
++				((u32*) (info->pseudo_palette))[regno] =
++						((red   & 0xf800)      ) |
++						((green & 0xfc00) >>  5) |
++						((blue  & 0xf800) >> 11);
++			}
++			break;
++
++		case 24:
++		case 32:
++			red   >>= 8;
++			green >>= 8;
++			blue  >>= 8;
++			((u32 *)(info->pseudo_palette))[regno] =
++				(red   << info->var.red.offset)   |
++				(green << info->var.green.offset) |
++				(blue  << info->var.blue.offset);
++			break;
 +		}
-+		break;
-+	case 24:
-+		red   >>= 8;
-+		green >>= 8;
-+		blue  >>= 8;
-+		((u32 *)(info->pseudo_palette))[regno] =
-+			(red   << info->var.red.offset)   |
-+			(green << info->var.green.offset) |
-+			(blue  << info->var.blue.offset);
-+		break;
-+	case 32:
-+		red   >>= 8;
-+		green >>= 8;
-+		blue  >>= 8;
-+		((u32 *)(info->pseudo_palette))[regno] =
-+			(red   << info->var.red.offset)   |
-+			(green << info->var.green.offset) |
-+			(blue  << info->var.blue.offset);
-+		break;
 +	}
 +	return ret;
 +}
@@ -1884,7 +1831,7 @@ new file mode 100644
 +	return;
 +}
 +
-+static int __init vesafb_probe(struct device *device);
++static int __init vesafb_probe(struct platform_device *device);
 +
 +static struct fb_ops vesafb_ops = {
 +	.owner		= THIS_MODULE,
@@ -1895,15 +1842,15 @@ new file mode 100644
 +	.fb_fillrect	= cfb_fillrect,
 +	.fb_copyarea	= cfb_copyarea,
 +	.fb_imageblit	= cfb_imageblit,
-+	.fb_cursor	= soft_cursor,
 +	.fb_check_var	= vesafb_check_var,
 +	.fb_set_par	= vesafb_set_par
 +};
 +
-+static struct device_driver vesafb_driver = {
-+	.name	= "vesafb",
-+	.bus	= &platform_bus_type,
++static struct platform_driver vesafb_driver = {
 +	.probe	= vesafb_probe,
++	.driver	= {
++		.name	= "vesafb",
++	},
 +};
 +
 +static struct platform_device vesafb_device = {
@@ -2453,10 +2400,9 @@ new file mode 100644
 +	return modeid;
 +}
 +
-+static int __init vesafb_probe(struct device *device)
++static int __init vesafb_probe(struct platform_device *dev)
 +{
 +	char entry[16];
-+	struct platform_device *dev = to_platform_device(device);
 +	struct fb_info *info;
 +	struct vesafb_mode_ib *mode = NULL;
 +	int err = 0, i, h;
@@ -2672,14 +2618,13 @@ new file mode 100644
 +		return -ENODEV;
 +	vesafb_setup(option);
 +#endif
-+	ret = driver_register(&vesafb_driver);
++	ret = platform_driver_register(&vesafb_driver);
 +
 +	if (!ret) {
 +		ret = platform_device_register(&vesafb_device);
 +		if (ret)
-+			driver_unregister(&vesafb_driver);
++			platform_driver_unregister(&vesafb_driver);
 +	}
-+
 +	return ret;
 +}
 +
@@ -2694,7 +2639,7 @@ new file mode 100644
 +		unregister_framebuffer(vesafb_info);
 +
 +	platform_device_unregister(&vesafb_device);
-+	driver_unregister(&vesafb_driver);
++	platform_driver_unregister(&vesafb_driver);
 +
 +	if (vesafb_info) {
 +		struct vesafb_par *par = (struct vesafb_par*)vesafb_info->par;
@@ -2783,22 +2728,11 @@ new file mode 100644
 +MODULE_AUTHOR("Michal Januszewski");
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphics boards");
 +
-diff --git a/include/linux/fb.h b/include/linux/fb.h
---- a/include/linux/fb.h
-+++ b/include/linux/fb.h
-@@ -898,7 +898,7 @@ extern struct fb_videomode *fb_match_mod
- 					  struct list_head *head);
- extern struct fb_videomode *fb_find_best_mode(struct fb_var_screeninfo *var,
- 					      struct list_head *head);
--extern struct fb_videomode *fb_find_nearest_mode(struct fb_var_screeninfo *var,
-+extern struct fb_videomode *fb_find_nearest_mode(struct fb_videomode *mode,
- 						 struct list_head *head);
- extern void fb_destroy_modelist(struct list_head *head);
- extern void fb_videomode_to_modelist(struct fb_videomode *modedb, int num,
 diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 2bbf968..0e263b7 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1086,6 +1086,8 @@ extern void mmput(struct mm_struct *);
+@@ -1137,6 +1137,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2809,6 +2743,7 @@ diff --git a/include/linux/sched.h b/include/linux/sched.h
  extern void flush_thread(void);
 diff --git a/include/video/vesa.h b/include/video/vesa.h
 new file mode 100644
+index 0000000..c274604
 --- /dev/null
 +++ b/include/video/vesa.h
 @@ -0,0 +1,146 @@
@@ -2959,9 +2894,10 @@ new file mode 100644
 +};
 +
 diff --git a/kernel/fork.c b/kernel/fork.c
+index 158710d..557b253 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -95,6 +95,7 @@ kmem_cache_t *fs_cachep;
+@@ -96,6 +96,7 @@ kmem_cache_t *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
  kmem_cache_t *vm_area_cachep;
@@ -2969,7 +2905,7 @@ diff --git a/kernel/fork.c b/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -386,6 +387,40 @@ void mmput(struct mm_struct *mm)
+@@ -384,6 +385,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
@@ -3011,10 +2947,11 @@ diff --git a/kernel/fork.c b/kernel/fork.c
   *
   * Returns %NULL if the task has no mm.  Checks PF_BORROWED_MM (meaning
 diff --git a/mm/memory.c b/mm/memory.c
+index 0f60baf..df9f20d 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -1093,6 +1093,7 @@ int zeromap_page_range(struct vm_area_st
- 	spin_unlock(&mm->page_table_lock);
+@@ -1090,6 +1090,7 @@ int zeromap_page_range(struct vm_area_st
+ 	} while (pgd++, addr = next, addr != end);
  	return err;
  }
 +EXPORT_SYMBOL_GPL(zeromap_page_range);
@@ -3022,9 +2959,10 @@ diff --git a/mm/memory.c b/mm/memory.c
  /*
   * maps a range of physical memory into the requested pages. the old
 diff --git a/mm/mmap.c b/mm/mmap.c
+index 6c997b1..aff02e8 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -1999,6 +1999,7 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2001,6 +2001,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }
