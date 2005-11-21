@@ -40,10 +40,6 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1300_ppc64-multilib.patch
-From:	dostrow@gentoo.org
-Desc:	PPC64 makefile fix for multilib stuff
-
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -60,17 +56,9 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1910_kconfig-no-nls.patch
-From:	http://bugs.gentoo.org/99810
-Desc:	Fix compilation on uclinux systems
-
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
-
-Patch:	4300_via-vt6410.patch
-From:	ide-dev-2.6
-Desc:	Add support for VIA VT6410 IDE into vt82xx driver
 
 Patch:	4305_dm-bbr.patch
 From:	EVMS 2.5.2
