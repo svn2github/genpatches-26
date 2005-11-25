@@ -92,6 +92,98 @@ Patch:	1012_2_xfs-modular-quota.patch
 From:	2.6.14.2
 Desc:	fix XFS_QUOTA for modular XFS
 
+Patch:	1013_3_4GB-memory-intel-dual-core.patch
+From:	2.6.14.3
+Desc:	x86_64/i386: Compute correct MTRR mask on early Noconas
+
+Patch:	1014_3_ctnetlink-protoinfo.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ctnetlink: check if protoinfo is present
+
+Patch:	1015_3_ctnetlink-no-icmp-oops.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ctnetlink: Fix oops when no ICMP ID info in message
+
+Patch:	1016_3_eicon-signature.patch
+From:	2.6.14.3
+Desc:	ISDN eicon/os_4bri.c: correct the xdiLoadFile() signature
+
+Patch:	1017_3_ipv6-ah-length.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix calculation of AH length during filling ancillary data.
+
+Patch:	1018_3_file-lease-leak.patch
+From:	2.6.14.3
+Desc:	VFS: Fix memory leak with file leases
+
+Patch:	1019_3_ipv6-advapi-memory.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix memory management error during setting up new advapi sockopts.
+
+Patch:	1020_3_ipv6-extension-headers.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix sending extension headers before and including routing header.
+
+Patch:	1021_3_alsa-rtc-soft-lockup.patch
+From:	2.6.14.3
+Desc:	Fix soft lockup with ALSA rtc-timer
+
+Patch:	1022_3_hdlc-netif-carrier.patch
+From:	2.6.14.3
+Desc:	Generic HDLC WAN drivers - disable netif_carrier_off()
+
+Patch:	1023_3_hwmon-it87-fan-speed-limits.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix missing it87 fan div init
+
+Patch:	1024_3_hwmon-lm78-vid.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix lm78 VID conversion
+
+Patch:	1025_3_hwmon-w83627hf-limits.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix missing boundary check when setting W83627THF in0 limits
+
+Patch:	1026_3_conntrack-high-ports.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ip_conntrack: fix ftp/irc/tftp helpers on ports >= 32768
+
+Patch:	1027_3_conntrack-syn-push.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ip_conntrack TCP: Accept SYN+PUSH like SYN
+
+Patch:	1028_3_nat-refcount.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] NAT: Fix module refcount dropping too far
+
+Patch:	1029_3_netfilter-queue-oops.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] nf_queue: Fix Ooops when no queue handler registered
+
+Patch:	1030_3_packet-writing-oops-fix.patch
+From:	2.6.14.3
+Desc:	packet writing oops fix
+
+Patch:	1031_3_ppc64-numa.patch
+From:	2.6.14.3
+Desc:	ppc64 memory model depends on NUMA
+
+Patch:	1032_3_pptp-endianness.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] PPTP helper: Fix endianness bug in GRE key / CallID NAT
+
+Patch:	1033_3_pptp-call-id.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] PPTP helper: fix PNS-PAC expectation call id
+
+Patch:	1034_3_trace-auto-reap.patch
+From:	2.6.14.3
+Desc:	Don't auto-reap traced children
+
+Patch:	1035_3_netfilter-refcount-leak.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] refcount leak of proto when ctnetlink dumping tuple
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
