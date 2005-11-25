@@ -212,6 +212,10 @@ Patch:	1910_kconfig-no-nls.patch
 From:	http://bugs.gentoo.org/99810
 Desc:	Fix compilation on uclinux systems
 
+Patch:	2900_microtek-fix.patch
+From:	http://bugs.gentoo.org/111650
+Desc:	Fix microtek regression
+
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
