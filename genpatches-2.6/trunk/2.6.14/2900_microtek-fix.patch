@@ -80,17 +80,6 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  };
  
  struct vendor_product
-@@ -771,8 +785,8 @@ static int mts_usb_probe(struct usb_inte
- 		MTS_WARNING( "couldn't find an output bulk endpoint. Bailing out.\n" );
- 		return -ENODEV;
- 	}
--	
--	
-+
-+
- 	new_desc = kzalloc(sizeof(struct mts_desc), GFP_KERNEL);
- 	if (!new_desc)
- 		goto out;
 @@ -781,6 +795,10 @@ static int mts_usb_probe(struct usb_inte
  	if (!new_desc->urb)
  		goto out_kfree;
