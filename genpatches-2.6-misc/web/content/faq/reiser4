@@ -1,2 +1,2 @@
 When will reiser4 be included?
-Ideally we'd like to wait for it to be included in the mainline kernel, at which time it would obviously be present in our releases. However, the upstream maintainers seem to be waiting for distributions to ship it first so that it gets enough testing. This *may* result in us including it earlier (no promises) but only once the code has seen more review and the patches become more manageable.
+See "Will you apply [some kernel patch]?"

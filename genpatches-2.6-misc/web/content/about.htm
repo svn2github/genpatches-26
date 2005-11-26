@@ -21,6 +21,18 @@ genpatches is mainly produced for <b>gentoo-sources</b>, which is the only
 kernel to include both base and extras.
 </p>
 
+<p>
+genpatches is maintained in Gentoo SVN. Unfortunately public access is not available, however it is <a href="http://viewcvstest.gentoo.org/viewcvs.py/linux-patches/genpatches-2.6/">browseable online</a> and the trunk contents are regularly mirrored <a href="trunk/">here</a>.
+</p>
+
+<p>
+genpatches is not specific to Gentoo at all, it can be viewed as a general purpose Linux patchset focusing on stability. Some other non-Gentoo projects use genpatches too, and that's great. If you want to use genpatches in your distro/project, please feel free, and do let me know.
+</p>
+
+<p>
+More information can be found in the <a href="faq.htm">FAQ</a>.
+</p>
+
 <h2>Patching policy</h2>
 
 <p>
@@ -30,18 +42,19 @@ We aim to keep genpatches as a minimal patchset for two reasons:
 <ol><li>Ease of maintenance and debugging</li>
 <li>Minimal deviation from upstream releases</li></ol>
 
-The second point being the most important - we don't want to be seen as one of those distro's that run a heavily patched kernel. We also want to be able to easily update our base to new stable kernel releases soon after they appear.
+The second point being the most important - we don't want to bloat our kernel and turn it into a stability and maintenance nightmare. We also want to be able to easily update our base to new stable kernel releases soon after they appear.
 
 With that in mind, here are the types of patches that we include:<br />
 <ol>
 <li>Bug fixes</li>
-
 <li>Security fixes</li>
 <li>Arch-specific compatibility</li>
 <li>Features required or beneficial for Gentoo LiveCDs</li>
 </ol>
 
-In general, we try to stick to only applying patches from the upstream Linux development branch.
+<p>
+In general, we try to stick to only applying patches from the upstream Linux development branch. We're not opposed to fancy new features, we just feel that they belong only in the official kernel.org releases so that every Linux distribution can benefit.
+</p>
 
 <h2>Roadmap</h2>
 

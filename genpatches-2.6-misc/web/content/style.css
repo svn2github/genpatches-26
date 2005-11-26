@@ -2,6 +2,24 @@ li {
 	padding-bottom: 10px;
 }
 
+h1,h2 {
+	margin: 0;
+	padding-bottom: 10px;
+}
+
+div.menu {
+	background-color: #CCCCCC;
+	float: right;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	margin-top: 0;
+}
+
+span.menu {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
 table {
 	border-width: 1px 1px 1px 1px;
 	border-spacing: 0px 0px;

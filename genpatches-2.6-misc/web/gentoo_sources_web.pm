@@ -21,6 +21,14 @@ sub html_header {
 	print FD '<link rel="stylesheet" href="style.css" />';
 	print FD '</head>';
 	print FD '<body>';
+	print FD '<div class="menu">';
+	print FD '<span class="menu"><a href="index.htm">Home</a></span>';
+	print FD '<span class="menu"><a href="about.htm">About</a></span>';
+	print FD '<span class="menu"><a href="faq.htm">FAQ</a></span>';
+	print FD '<span class="menu"><a href="releases.htm">Releases</a></span>';
+	print FD '<span class="menu"><a href="bugs.htm">Bugs</a></span>';
+	print FD '<span class="menu"><a href="issues.htm">Issues</a></span>';
+	print FD '</div>'
 }
 
 sub html_footer {
