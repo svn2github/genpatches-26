@@ -1,0 +1,36 @@
+From: Oleg Drokin <green@linuxhacker.ru>
+Date: Wed, 23 Nov 2005 21:37:47 +0000 (-0800)
+Subject:     [PATCH] 32bit integer overflow in invalidate_inode_pages2()
+X-Git-Tag: v2.6.15-rc3
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=479ef592f3664dd629417098c8599261c0f689ab
+
+  [PATCH] 32bit integer overflow in invalidate_inode_pages2()
+  
+  Fix a 32 bit integer overflow in invalidate_inode_pages2_range.
+  
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/mm/truncate.c
++++ b/mm/truncate.c
+@@ -282,8 +282,8 @@ int invalidate_inode_pages2_range(struct
+ 					 * Zap the rest of the file in one hit.
+ 					 */
+ 					unmap_mapping_range(mapping,
+-					    page_index << PAGE_CACHE_SHIFT,
+-					    (end - page_index + 1)
++					   (loff_t)page_index<<PAGE_CACHE_SHIFT,
++					   (loff_t)(end - page_index + 1)
+ 							<< PAGE_CACHE_SHIFT,
+ 					    0);
+ 					did_range_unmap = 1;
+@@ -292,7 +292,7 @@ int invalidate_inode_pages2_range(struct
+ 					 * Just zap this page
+ 					 */
+ 					unmap_mapping_range(mapping,
+-					  page_index << PAGE_CACHE_SHIFT,
++					  (loff_t)page_index<<PAGE_CACHE_SHIFT,
+ 					  PAGE_CACHE_SIZE, 0);
+ 				}
+ 			}

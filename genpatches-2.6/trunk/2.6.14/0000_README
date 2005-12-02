@@ -192,6 +192,10 @@ Patch:	1101_setkeys-read-ok.patch
 From:	http://bugs.gentoo.org/114227
 Desc:	Make patch 1100 less restrictive
 
+Patch:	1105_invalidate-inodes-overflow.patch
+From:	http://bugs.gentoo.org/114230
+Desc:	Fix an integer overflow
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
