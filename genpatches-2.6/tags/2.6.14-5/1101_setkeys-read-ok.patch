@@ -1,0 +1,37 @@
+From: Marcelo Tosatti <marcelo.tosatti@cyclades.com>
+Date: Mon, 7 Nov 2005 08:59:34 +0000 (-0800)
+Subject:     [PATCH] Only disallow _setting_ of function key string
+X-Git-Tag: v2.6.15-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=e3f17f0f6e98f58edb13cb38810d93e6d4808e68
+
+  [PATCH] Only disallow _setting_ of function key string
+  
+  Mikael Pettersson <mikpe@csd.uu.se> noted that the current 2.6-git (and 2.4)
+  patch to disallow KDSKBSENT for unpriviledged users should be less restrictive
+  allowing reading of current function key string entry, but not writing.
+  
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/drivers/char/vt_ioctl.c
++++ b/drivers/char/vt_ioctl.c
+@@ -80,6 +80,9 @@ do_kdsk_ioctl(int cmd, struct kbentry __
+ 	if (copy_from_user(&tmp, user_kbe, sizeof(struct kbentry)))
+ 		return -EFAULT;
+ 
++	if (!capable(CAP_SYS_TTY_CONFIG))
++		perm = 0;
++
+ 	switch (cmd) {
+ 	case KDGKBENT:
+ 		key_map = key_maps[s];
+@@ -193,7 +196,7 @@ do_kdgkb_ioctl(int cmd, struct kbsentry 
+ 	int ret;
+ 
+ 	if (!capable(CAP_SYS_TTY_CONFIG))
+-		return -EPERM;
++		perm = 0;
+ 
+ 	kbs = kmalloc(sizeof(*kbs), GFP_KERNEL);
+ 	if (!kbs) {

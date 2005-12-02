@@ -1,0 +1,290 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_1_sysctl-unregistration.patch
+From:	Linux 2.6.14.1
+Desc:	Fix an oops on sysctl unregistration (CVE-2005-2709)
+
+Patch:	1001_2_airo_cs-correct-prototypes.patch
+From:	2.6.14.2
+Desc:	airo.c/airo_cs.c: correct prototypes
+
+Patch:	1002_2_cfq-io-sched-fix.patch
+From:	2.6.14.2
+Desc:	Oops on suspend after on-the-fly switch to anticipatory i/o scheduler
+
+Patch:	1003_2_fix-alpha-breakage.patch
+From:	2.6.14.2
+Desc:	fix alpha breakage
+
+Patch:	1004_2_thread-sendqueue-race.patch
+From:	2.6.14.2
+Desc:	fix de_thread() vs send_group_sigqueue() race
+
+Patch:	1005_2_ptrace-self-attach.patch
+From:	2.6.14.2
+Desc:	Fix ptrace self-attach rule
+
+Patch:	1006_2_signal-live-leak.patch
+From:	2.6.14.2
+Desc:	fix signal->live leak in copy_process()
+
+Patch:	1007_2_zero-size-datagram.patch
+From:	2.6.14.2
+Desc:	[NET] Fix zero-size datagram reception
+
+Patch:	1008_2_ipvs-connection-leak.patch
+From:	2.6.14.2
+Desc:	ipvs: fix connection leak if expire_nodest_conn=1
+
+Patch:	1009_2_prism54-frame-size.patch
+From:	2.6.14.2
+Desc:	prism54 : Fix frame length
+
+Patch:	1010_2_tcp-bic-max-increment.patch
+From:	2.6.14.2
+Desc:	tcp: BIC max increment too large
+
+Patch:	1011_2_usb-interface-modalias.patch
+From:	2.6.14.2
+Desc:	USB: always export interface information for modalias
+
+Patch:	1012_2_xfs-modular-quota.patch
+From:	2.6.14.2
+Desc:	fix XFS_QUOTA for modular XFS
+
+Patch:	1013_3_4GB-memory-intel-dual-core.patch
+From:	2.6.14.3
+Desc:	x86_64/i386: Compute correct MTRR mask on early Noconas
+
+Patch:	1014_3_ctnetlink-protoinfo.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ctnetlink: check if protoinfo is present
+
+Patch:	1015_3_ctnetlink-no-icmp-oops.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ctnetlink: Fix oops when no ICMP ID info in message
+
+Patch:	1016_3_eicon-signature.patch
+From:	2.6.14.3
+Desc:	ISDN eicon/os_4bri.c: correct the xdiLoadFile() signature
+
+Patch:	1017_3_ipv6-ah-length.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix calculation of AH length during filling ancillary data.
+
+Patch:	1018_3_file-lease-leak.patch
+From:	2.6.14.3
+Desc:	VFS: Fix memory leak with file leases
+
+Patch:	1019_3_ipv6-advapi-memory.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix memory management error during setting up new advapi sockopts.
+
+Patch:	1020_3_ipv6-extension-headers.patch
+From:	2.6.14.3
+Desc:	[IPV6]: Fix sending extension headers before and including routing header.
+
+Patch:	1021_3_alsa-rtc-soft-lockup.patch
+From:	2.6.14.3
+Desc:	Fix soft lockup with ALSA rtc-timer
+
+Patch:	1022_3_hdlc-netif-carrier.patch
+From:	2.6.14.3
+Desc:	Generic HDLC WAN drivers - disable netif_carrier_off()
+
+Patch:	1023_3_hwmon-it87-fan-speed-limits.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix missing it87 fan div init
+
+Patch:	1024_3_hwmon-lm78-vid.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix lm78 VID conversion
+
+Patch:	1025_3_hwmon-w83627hf-limits.patch
+From:	2.6.14.3
+Desc:	hwmon: Fix missing boundary check when setting W83627THF in0 limits
+
+Patch:	1026_3_conntrack-high-ports.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ip_conntrack: fix ftp/irc/tftp helpers on ports >= 32768
+
+Patch:	1027_3_conntrack-syn-push.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] ip_conntrack TCP: Accept SYN+PUSH like SYN
+
+Patch:	1028_3_nat-refcount.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] NAT: Fix module refcount dropping too far
+
+Patch:	1029_3_netfilter-queue-oops.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] nf_queue: Fix Ooops when no queue handler registered
+
+Patch:	1030_3_packet-writing-oops-fix.patch
+From:	2.6.14.3
+Desc:	packet writing oops fix
+
+Patch:	1031_3_ppc64-numa.patch
+From:	2.6.14.3
+Desc:	ppc64 memory model depends on NUMA
+
+Patch:	1032_3_pptp-endianness.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] PPTP helper: Fix endianness bug in GRE key / CallID NAT
+
+Patch:	1033_3_pptp-call-id.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] PPTP helper: fix PNS-PAC expectation call id
+
+Patch:	1034_3_trace-auto-reap.patch
+From:	2.6.14.3
+Desc:	Don't auto-reap traced children
+
+Patch:	1035_3_netfilter-refcount-leak.patch
+From:	2.6.14.3
+Desc:	[NETFILTER] refcount leak of proto when ctnetlink dumping tuple
+
+Patch:	1100_setkeys-needs-root.patch
+From:	http://bugs.gentoo.org/114227
+Desc:	Don't allow normal users to use setkeys
+
+Patch:	1101_setkeys-read-ok.patch
+From:	http://bugs.gentoo.org/114227
+Desc:	Make patch 1100 less restrictive
+
+Patch:	1105_invalidate-inodes-overflow.patch
+From:	http://bugs.gentoo.org/114230
+Desc:	Fix an integer overflow
+
+Patch:	1300_ppc64-multilib.patch
+From:	dostrow@gentoo.org
+Desc:	PPC64 makefile fix for multilib stuff
+
+Patch:	1305_ppc-powerbook-5-8.patch
+From:	http://bugs.gentoo.org/110899
+Desc:	Support new hardware on (5,8) powerbooks
+
+Patch:	1340_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1360_sparc-kconfig-depends.patch
+From:	eradicator@gentoo.org
+Desc:	Fix depends statements for some drivers
+
+Patch:	1362_sparc-kconfig-fb.patch
+From:	eradicator@gentoo.org
+Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
+
+Patch:	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	1910_kconfig-no-nls.patch
+From:	http://bugs.gentoo.org/99810
+Desc:	Fix compilation on uclinux systems
+
+Patch:	2500_dvb-budget-ci-linking.patch
+From:	http://bugs.gentoo.org/112997
+Desc:	Fix budget-ci driver compile error
+
+Patch:	2505_cx88-quiet.patch
+From:	http://bugs.gentoo.org/112967
+Desc:	Quieten down the cx88 driver
+
+Patch:	2700_acpi-driver-binding-hp-boot-hang.patch
+From:	http://bugs.gentoo.org/112601
+Desc:	Fix an ACPI regression
+
+Patch:	2705_ht-slowdown.patch
+From:	http://bugs.gentoo.org/110661
+Desc:	Fix a problem where P4 HT's would run very slowly
+
+Patch:	2710_ht-slowdown-2.patch
+From:	http://bugs.gentoo.org/110661
+Desc:	Fix a problem where P4 HT's would run very slowly
+
+Patch:	2900_microtek-fix.patch
+From:	http://bugs.gentoo.org/111650
+Desc:	Fix microtek regression
+
+Patch:	4101_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4300_via-vt6410.patch
+From:	ide-dev-2.6
+Desc:	Add support for VIA VT6410 IDE into vt82xx driver
+
+Patch:	4305_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4320_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4351_megaraid-compatibility.patch
+From:	dsd@gentoo.org
+Desc:	Allow both megaraid drivers to be built side-by-side
+
+Patch:	4500_fbsplash-0.9.2-r4.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4505_vesafb-tng-1.0-rc1-r1.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4705_squashfs-2.2.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4900_speakup-20051028.patch
+From:	dsd@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
+
