@@ -232,6 +232,10 @@ Patch:	2505_cx88-quiet.patch
 From:	http://bugs.gentoo.org/112967
 Desc:	Quieten down the cx88 driver
 
+Patch:	2700_acpi-driver-binding-hp-boot-hang.patch
+From:	http://bugs.gentoo.org/112601
+Desc:	Fix an ACPI regression
+
 Patch:	2900_microtek-fix.patch
 From:	http://bugs.gentoo.org/111650
 Desc:	Fix microtek regression
