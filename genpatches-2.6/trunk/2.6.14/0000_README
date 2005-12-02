@@ -236,6 +236,14 @@ Patch:	2700_acpi-driver-binding-hp-boot-hang.patch
 From:	http://bugs.gentoo.org/112601
 Desc:	Fix an ACPI regression
 
+Patch:	2705_ht-slowdown.patch
+From:	http://bugs.gentoo.org/110661
+Desc:	Fix a problem where P4 HT's would run very slowly
+
+Patch:	2710_ht-slowdown-2.patch
+From:	http://bugs.gentoo.org/110661
+Desc:	Fix a problem where P4 HT's would run very slowly
+
 Patch:	2900_microtek-fix.patch
 From:	http://bugs.gentoo.org/111650
 Desc:	Fix microtek regression
