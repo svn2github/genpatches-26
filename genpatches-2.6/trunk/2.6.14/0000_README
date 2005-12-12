@@ -220,6 +220,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1900_listxattr-security.patch
+From:	http://bugs.gentoo.org/113138
+Desc:	Fix listxattr() with selinux
+
 Patch:	1910_kconfig-no-nls.patch
 From:	http://bugs.gentoo.org/99810
 Desc:	Fix compilation on uclinux systems
