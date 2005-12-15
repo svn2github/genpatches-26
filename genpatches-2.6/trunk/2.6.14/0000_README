@@ -204,6 +204,10 @@ Patch:	1305_ppc-powerbook-5-8.patch
 From:	http://bugs.gentoo.org/110899
 Desc:	Support new hardware on (5,8) powerbooks
 
+Patch:	1310_numa-early-panic.patch
+From:	http://bugs.gentoo.org/115620
+Desc:	Fix early NUMA/SPARSEMEM crash 
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
