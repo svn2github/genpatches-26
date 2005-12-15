@@ -184,17 +184,101 @@ Patch:	1035_3_netfilter-refcount-leak.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] refcount leak of proto when ctnetlink dumping tuple
 
-Patch:	1100_setkeys-needs-root.patch
-From:	http://bugs.gentoo.org/114227
-Desc:	Don't allow normal users to use setkeys
+Patch:	1036_4_acpi-nx8200-boot-hang.patch
+From:	2.6.14.4
+Desc:	ACPI: fix HP nx8220 boot hang regression
 
-Patch:	1101_setkeys-read-ok.patch
-From:	http://bugs.gentoo.org/114227
-Desc:	Make patch 1100 less restrictive
+Patch:	1037_4_invalidate-inode-pages-overflow.patch
+From:	2.6.14.4
+Desc:	32bit integer overflow in invalidate_inode_pages2()
 
-Patch:	1105_invalidate-inodes-overflow.patch
-From:	http://bugs.gentoo.org/114230
-Desc:	Fix an integer overflow
+Patch:	1038_4_kauditd-try-to-freeze.patch
+From:	2.6.14.4
+Desc:	Add try_to_freeze to kauditd
+
+Patch:	1039_4_bonding-features.patch
+From:	2.6.14.4
+Desc:	bonding: fix feature consolidation
+
+Patch:	1040_4_cciss-big-pass-thru.patch
+From:	2.6.14.4
+Desc:	cciss: bug fix for BIG_PASS_THRU
+
+Patch:	1041_4_cciss-hpacucli.patch
+From:	2.6.14.4
+Desc:	cciss: bug fix for hpacucli
+
+Patch:	1042_4_dpt-i20-null-deref.patch
+From:	2.6.14.4
+Desc:	drivers/scsi/dpt_i2o.c: fix a user-after-free
+
+Patch:	1043_4_dvb-budget-ci-depends.patch
+From:	2.6.14.4
+Desc:	DVB: BUDGET CI card depends on STV0297 demodulator
+
+Patch:	1044_4_ptrace-poke-hugepage.patch
+From:	2.6.14.4
+Desc:	Fix crash when ptrace poking hugepage areas
+
+Patch:	1045_4_listxattr-security-bounds.patch
+From:	2.6.14.4
+Desc:	Fix listxattr() for generic security attributes
+
+Patch:	1046_4_netlink-fib_lookup.patch
+From:	2.6.14.4
+Desc:	NETLINK: Fix processing of fib_lookup netlink messages
+
+Patch:	1047_4_serverworks-tlb-flush.patch
+From:	2.6.14.4
+Desc:	AGPGART: Fix serverworks TLB flush.
+
+Patch:	1048_4_i82365-resources.patch
+From:	2.6.14.4
+Desc:	i82365: release all resources if no devices are found
+
+Patch:	1049_4_i8k-blank-service-tags.patch
+From:	2.6.14.4
+Desc:	I8K: fix /proc reporting of blank service tags
+
+Patch:	1050_4_ls120-eject.patch
+From:	2.6.14.4
+Desc:	ide-floppy: software eject not working with LS-120 drive
+
+Patch:	1051_4_infiniband-null-deref.patch
+From:	2.6.14.4
+Desc:	drivers/infiniband/core/mad.c: fix a use-after-free
+
+Patch:	1052_4_libata-locking-rewrite.patch
+From:	2.6.14.4
+Desc:	libata: locking rewrite (== fix)
+
+Patch:	1053_4_i2o-pci-null-deref.patch
+From:	2.6.14.4
+Desc:	drivers/message/i2o/pci.c: fix a use-after-free
+
+Patch:	1054_4_nm256-reset-workaround.patch
+From:	2.6.14.4
+Desc:	ALSA: nm256: reset workaround for Latitude CSx
+
+Patch:	1055_4_bridge-features-recompute.patch
+From:	2.6.14.4
+Desc:	BRIDGE: recompute features when adding a new device
+
+Patch:	1056_4_setkeys-needs-root.patch
+From:	2.6.14.4
+Desc:	setkeys needs root
+
+Patch:	1057_4_microtek-scanner-scsi.patch
+From:	2.6.14.4
+Desc:	USB: Adapt microtek driver to new scsi features
+
+Patch:	1058_4_dtt761x-analog-ntsc.patch
+From:	2.6.14.4
+Desc:	V4L/DVB: Fix analog NTSC for Thomson DTT 761X hybrid tuner
+
+Patch:	1059_4_pinnacle-pctv-init.patch
+From:	2.6.14.4
+Desc:	V4L/DVB (3135) Fix tuner init for Pinnacle PCTV Stereo
 
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
@@ -224,25 +308,13 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1900_listxattr-security.patch
-From:	http://bugs.gentoo.org/113138
-Desc:	Fix listxattr() with selinux
-
 Patch:	1910_kconfig-no-nls.patch
 From:	http://bugs.gentoo.org/99810
 Desc:	Fix compilation on uclinux systems
 
-Patch:	2500_dvb-budget-ci-linking.patch
-From:	http://bugs.gentoo.org/112997
-Desc:	Fix budget-ci driver compile error
-
 Patch:	2505_cx88-quiet.patch
 From:	http://bugs.gentoo.org/112967
 Desc:	Quieten down the cx88 driver
-
-Patch:	2700_acpi-driver-binding-hp-boot-hang.patch
-From:	http://bugs.gentoo.org/112601
-Desc:	Fix an ACPI regression
 
 Patch:	2705_ht-slowdown.patch
 From:	http://bugs.gentoo.org/110661
@@ -255,10 +327,6 @@ Desc:	Fix a problem where P4 HT's would run very slowly
 Patch:	2710_ht-slowdown-3.patch
 From:	http://bugs.gentoo.org/110661
 Desc:	Fix a problem where P4 HT's would run very slowly
-
-Patch:	2900_microtek-fix.patch
-From:	http://bugs.gentoo.org/111650
-Desc:	Fix microtek regression
 
 Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org

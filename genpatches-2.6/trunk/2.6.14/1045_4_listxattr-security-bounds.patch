@@ -1,7 +1,13 @@
+From stable-bounces@linux.kernel.org Mon Dec 12 09:33:51 2005
+Message-ID: <439DB3FC.6040700@gentoo.org>
+Date: Mon, 12 Dec 2005 17:31:40 +0000
 From: Daniel Drake <dsd@gentoo.org>
-Date: Mon, 12 Dec 2005 08:37:08 +0000 (-0800)
-Subject: [PATCH] Fix listxattr() for generic security attributes
+To: stable@kernel.org
+Cc: 
+Subject: Fix listxattr() for generic security attributes
 X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=894ec8707ced240b96dc45944790fb35d9a6b03c
+
+From: Daniel Drake <dsd@gentoo.org>
 
 [PATCH] Fix listxattr() for generic security attributes
 
@@ -32,11 +38,14 @@ Acked-by: James Morris <jmorris@namei.org>
 Acked-by: Stephen Smalley <sds@tycho.nsa.gov>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
+ fs/xattr.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
---- a/fs/xattr.c
-+++ b/fs/xattr.c
-@@ -245,7 +245,7 @@ listxattr(struct dentry *d, char __user 
+--- linux-2.6.14.3.orig/fs/xattr.c
++++ linux-2.6.14.3/fs/xattr.c
+@@ -243,7 +243,7 @@ listxattr(struct dentry *d, char __user 
  		error = d->d_inode->i_op->listxattr(d, klist, size);
  	} else {
  		error = security_inode_listsecurity(d->d_inode, klist, size);

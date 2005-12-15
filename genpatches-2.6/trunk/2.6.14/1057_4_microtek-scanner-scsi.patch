@@ -1,21 +1,30 @@
-From: Oliver Neukum <oliver@neukum.org>
-Date: Thu, 17 Nov 2005 17:47:41 +0000 (-0800)
-Subject:     [PATCH] USB: Adapt microtek driver to new scsi features
+From stable-bounces@linux.kernel.org Fri Dec  2 12:50:00 2005
+Message-ID: <4390B2E1.5010507@gentoo.org>
+Date: Fri, 02 Dec 2005 20:47:29 +0000
+From: Daniel Drake <dsd@gentoo.org>
+To: stable@kernel.org
+Cc: oliver@neukum.org
+Subject: USB: Adapt microtek driver to new scsi features
 X-Git-Tag: v2.6.15-rc2
 X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9142d59a451731d23539d218c962418acc93283c
 
-  [PATCH] USB: Adapt microtek driver to new scsi features
-  
-  the scsi layer now uses very short sg lists. This breaks the microtek
-  driver. Here is a patch fixes this and some other issues.
-  
-  Signed-off-by: Oliver Neukum <oliver@neukum.name>
-  Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
----
+From: Oliver Neukum <oliver@neukum.org>
 
---- a/drivers/usb/image/microtek.c
-+++ b/drivers/usb/image/microtek.c
+[PATCH] USB: Adapt microtek driver to new scsi features
+
+the scsi layer now uses very short sg lists. This breaks the microtek
+driver. Here is a patch fixes this and some other issues.
+
+Signed-off-by: Oliver Neukum <oliver@neukum.name>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+ drivers/usb/image/microtek.c |   31 +++++++++++++++++++++++++------
+ drivers/usb/image/microtek.h |    2 +-
+ 2 files changed, 26 insertions(+), 7 deletions(-)
+
+--- linux-2.6.14.3.orig/drivers/usb/image/microtek.c
++++ linux-2.6.14.3/drivers/usb/image/microtek.c
 @@ -327,6 +327,18 @@ static inline void mts_urb_abort(struct 
  	usb_kill_urb( desc->urb );
  }
@@ -70,7 +79,7 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  out:
  	return err;
  }
-@@ -645,6 +656,9 @@ static struct scsi_host_template mts_scs
+@@ -645,6 +656,9 @@ static Scsi_Host_Template mts_scsi_host_
  	.cmd_per_lun =		1,
  	.use_clustering =	1,
  	.emulated =		1,
@@ -80,7 +89,7 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  };
  
  struct vendor_product
-@@ -781,6 +795,10 @@ static int mts_usb_probe(struct usb_inte
+@@ -782,6 +796,10 @@ static int mts_usb_probe(struct usb_inte
  	if (!new_desc->urb)
  		goto out_kfree;
  
@@ -91,7 +100,7 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  	new_desc->usb_dev = dev;
  	new_desc->usb_intf = intf;
  	init_MUTEX(&new_desc->lock);
-@@ -817,6 +835,8 @@ static int mts_usb_probe(struct usb_inte
+@@ -818,6 +836,8 @@ static int mts_usb_probe(struct usb_inte
  	usb_set_intfdata(intf, new_desc);
  	return 0;
  
@@ -100,7 +109,7 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
   out_free_urb:
  	usb_free_urb(new_desc->urb);
   out_kfree:
-@@ -836,6 +856,7 @@ static void mts_usb_disconnect (struct u
+@@ -837,6 +857,7 @@ static void mts_usb_disconnect (struct u
  
  	scsi_host_put(desc->host);
  	usb_free_urb(desc->urb);
@@ -108,14 +117,14 @@ X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linu
  	kfree(desc);
  }
  
-@@ -856,5 +877,3 @@ module_exit(microtek_drv_exit);
+@@ -857,5 +878,3 @@ module_exit(microtek_drv_exit);
  MODULE_AUTHOR( DRIVER_AUTHOR );
  MODULE_DESCRIPTION( DRIVER_DESC );
  MODULE_LICENSE("GPL");
 -
 -
---- a/drivers/usb/image/microtek.h
-+++ b/drivers/usb/image/microtek.h
+--- linux-2.6.14.3.orig/drivers/usb/image/microtek.h
++++ linux-2.6.14.3/drivers/usb/image/microtek.h
 @@ -22,7 +22,7 @@ struct mts_transfer_context
  	int data_pipe;
  	int fragment;
