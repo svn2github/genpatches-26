@@ -5,7 +5,8 @@
 cd ${WEB_LOCAL}
 ./makesite.pl
 
-rsync --delete -Cavze ssh ${WEB_LOCAL}/output/ ${WEB_GENPATCHES_BASE}
+rsync --exclude=/trunk --exclude=/tarballs --delete -Cavze ssh \
+	${WEB_LOCAL}/output/ ${WEB_GENPATCHES_BASE}
 rsync --delete -Cavze ssh ${GENPATCHES_TRUNK}/ ${WEB_GENPATCHES_BASE}/trunk
 rsync --delete -Cavze ssh ${WEB_LOCAL}/tarballs/ ${WEB_GENPATCHES_BASE}/tarballs
 

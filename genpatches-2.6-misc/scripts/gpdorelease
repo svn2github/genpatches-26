@@ -17,9 +17,13 @@ fi
 
 EXISTING_TAGS="$(svn ls svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags)"
 
+lastver=0
 for i in $EXISTING_TAGS ; do
 	tag="${i%/}"
-	[[ ${tag/-*} == $BRANCH ]] && lastrelease="${tag}"
+	if [[ ${tag/-*} == $BRANCH && ${tag#*-} -gt $lastver ]] ; then
+		lastrelease="${tag}"
+		lastver="${tag#*-}"
+	fi
 done
 
 if [[ -z $lastrelease ]] ; then
