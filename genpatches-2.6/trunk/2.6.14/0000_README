@@ -280,6 +280,70 @@ Patch:	1059_4_pinnacle-pctv-init.patch
 From:	2.6.14.4
 Desc:	V4L/DVB (3135) Fix tuner init for Pinnacle PCTV Stereo
 
+Patch:	1060_5_ctnetlink-attribute-size.patch
+From:	2.6.14.5
+Desc:	Fix CTA_PROTO_NUM attribute size in ctnetlink
+
+Patch:	1061_5_ctnetlink-read_unlock_bh.patch
+From:	2.6.14.5
+Desc:	Fix unbalanced read_unlock_bh in ctnetlink
+
+Patch:	1062_5_acpi-video-brightness-null-deref.patch
+From:	2.6.14.5
+Desc:	apci: fix NULL deref in video/lcd/brightness
+
+Patch:	1063_5_dpt_i20-deadlock.patch
+From:	2.6.14.5
+Desc:	dpt_i2o fix for deadlock condition
+
+Patch:	1064_5_skb_postpull_rcsum-fix.patch
+From:	2.6.14.5
+Desc:	Fix hardware checksum modification
+
+Patch:	1065_5_vlan-hardware-checksum.patch
+From:	2.6.14.5
+Desc:	Fix hardware rx csum errors
+
+Patch:	1066_5_nat-init-order-fix.patch
+From:	2.6.14.5
+Desc:	Fix NAT init order
+
+Patch:	1067_5_ip6_nf_target_nfqueue-depend-fix.patch
+From:	2.6.14.5
+Desc:	Fix incorrect dependency for IP6_NF_TARGET_NFQUEUE
+
+Patch:	1068_5_rtnlgrp-definitions-fix.patch
+From:	2.6.14.5
+Desc:	Fix RTNLGRP definitions in rtnetlink.h
+
+Patch:	1069_5_bridge-nf-ipv6-length-check.patch
+From:	2.6.14.5
+Desc:	Fix bridge-nf ipv6 length check
+
+Patch:	1070_5_route-lifetime-fix.patch
+From:	2.6.14.5
+Desc:	Perform SA switchover immediately
+
+Patch:	1071_5_hid-input-oops.patch
+From:	2.6.14.5
+Desc:	Input: fix an OOPS in HID driver
+
+Patch:	1072_5_params-sysfs-access.patch
+From:	2.6.14.5
+Desc:	kernel/params.c: fix sysfs access with CONFIG_MODULES=n
+
+Patch:	1073_5_scsi-transfer-direction-fix.patch
+From:	2.6.14.5
+Desc:	SCSI: fix transfer direction in sd (kernel panic when ejecting iPod)
+
+Patch:	1074_5_scsi_lib-st-transfer-direction-fix.patch
+From:	2.6.14.5
+Desc:	SCSI: fix transfer direction in scsi_lib and st
+
+Patch:	1075_5_nfs-setacl-check-fix.patch
+From:	2.6.14.5
+Desc:	setting ACLs on readonly mounted NFS filesystems (CVE-2005-3623)
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff

@@ -1,0 +1,26 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Tue, 20 Dec 2005 00:58:12 +0000 (-0800)
+Subject: [PATCH] Fix incorrect dependency for IP6_NF_TARGET_NFQUEUE
+X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/gregkh/linux-2.6.14.y.git;a=commitdiff;h=d7709473c4a79ea3e90a8e44d81733ec2dc302de
+
+[PATCH] Fix incorrect dependency for IP6_NF_TARGET_NFQUEUE
+
+IP6_NF_TARGET_NFQUEUE depends on IP6_NF_IPTABLES, not IP_NF_IPTABLES.
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/net/ipv6/netfilter/Kconfig
++++ b/net/ipv6/netfilter/Kconfig
+@@ -211,7 +211,7 @@ config IP6_NF_TARGET_REJECT
+ 
+ config IP6_NF_TARGET_NFQUEUE
+ 	tristate "NFQUEUE Target Support"
+-	depends on IP_NF_IPTABLES
++	depends on IP6_NF_IPTABLES
+ 	help
+ 	  This Target replaced the old obsolete QUEUE target.
+ 
