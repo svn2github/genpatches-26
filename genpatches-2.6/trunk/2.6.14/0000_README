@@ -360,6 +360,10 @@ Patch:	1315_ia64-assembler.patch
 From:	http://bugs.gentoo.org/116670
 Desc:	Compatibility with new binutils
 
+Patch:	1320_ppc-g5-overtemp.patch
+From:	http://bugs.gentoo.org/100023
+Desc:	Fix overtemp conditions on ppc g5
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
