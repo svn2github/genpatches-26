@@ -44,14 +44,6 @@ Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
 
-Patch:	1360_sparc-kconfig-depends.patch
-From:	eradicator@gentoo.org
-Desc:	Fix depends statements for some drivers
-
-Patch:	1362_sparc-kconfig-fb.patch
-From:	eradicator@gentoo.org
-Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
-
 Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
