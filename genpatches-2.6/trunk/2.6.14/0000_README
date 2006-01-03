@@ -344,6 +344,14 @@ Patch:	1075_5_nfs-setacl-check-fix.patch
 From:	2.6.14.5
 Desc:	setting ACLs on readonly mounted NFS filesystems (CVE-2005-3623)
 
+Patch:	1100_rose-locking-fix.patch
+From:	http://bugs.gentoo.org/103553
+Desc:	Security fix for ROSE hardware
+
+Patch:	1105_irda-locking-fix.patch
+From:	http://bugs.gentoo.org/103553
+Desc:	Security fix for donauboe irda hardware
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
