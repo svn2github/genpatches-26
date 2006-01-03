@@ -1,9 +1,8 @@
-This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
+Patch generated 2006-01-03
+Last commit: [PATCH] sky2: version 0.11
 
-	[PATCH] sky2: version 0.10
-
---- linux-dsd/drivers/net/Makefile	2005-12-13 17:42:58.000000000 +0000
-+++ linux-2.6.15-rc5/drivers/net/Makefile	2005-12-13 22:15:32.000000000 +0000
+--- linux-2.6.15/drivers/net/Makefile	2006-01-03 17:42:32.000000000 +0000
++++ linux-dsd/drivers/net/Makefile	2006-01-03 18:10:52.000000000 +0000
 @@ -59,6 +59,7 @@ spidernet-y += spider_net.o spider_net_e
  obj-$(CONFIG_SPIDER_NET) += spidernet.o
  obj-$(CONFIG_TC35815) += tc35815.o
@@ -12,8 +11,8 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
  obj-$(CONFIG_SK98LIN) += sk98lin/
  obj-$(CONFIG_SKFP) += skfp/
  obj-$(CONFIG_VIA_RHINE) += via-rhine.o
---- linux-dsd/drivers/net/Kconfig	2005-12-13 17:43:02.000000000 +0000
-+++ linux-2.6.15-rc5/drivers/net/Kconfig	2005-12-13 22:15:06.000000000 +0000
+--- linux-2.6.15/drivers/net/Kconfig	2006-01-03 17:42:32.000000000 +0000
++++ linux-dsd/drivers/net/Kconfig	2006-01-03 18:10:52.000000000 +0000
 @@ -2008,7 +2008,17 @@ config SKGE
  
  	  It does not support the link failover and network management 
@@ -33,9 +32,9 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
  config SK98LIN
  	tristate "Marvell Yukon Chipset / SysKonnect SK-98xx Support"
  	depends on PCI
---- linux-dsd/drivers/net/sky2.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.15-rc5/drivers/net/sky2.c	2005-12-13 22:16:12.000000000 +0000
-@@ -0,0 +1,3233 @@
+--- linux-2.6.15/drivers/net/sky2.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/net/sky2.c	2006-01-03 18:11:50.000000000 +0000
+@@ -0,0 +1,3262 @@
 +/*
 + * New driver for Marvell Yukon 2 chipset.
 + * Based on earlier sk98lin, and skge driver.
@@ -95,7 +94,7 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +#include "sky2.h"
 +
 +#define DRV_NAME		"sky2"
-+#define DRV_VERSION		"0.10"
++#define DRV_VERSION		"0.11"
 +#define PFX			DRV_NAME " "
 +
 +/*
@@ -517,6 +516,14 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +		gm_phy_write(hw, port, PHY_MARV_INT_MASK, PHY_M_IS_AN_COMPL);
 +	else
 +		gm_phy_write(hw, port, PHY_MARV_INT_MASK, PHY_M_DEF_MSK);
++}
++
++/* Force a renegotiation */
++static void sky2_phy_reinit(struct sky2_port *sky2)
++{
++	down(&sky2->phy_sema);
++	sky2_phy_init(sky2->hw, sky2->port);
++	up(&sky2->phy_sema);
 +}
 +
 +static void sky2_mac_init(struct sky2_hw *hw, unsigned port)
@@ -1052,18 +1059,22 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	return 0;
 +
 +err_out:
-+	if (sky2->rx_le)
++	if (sky2->rx_le) {
 +		pci_free_consistent(hw->pdev, RX_LE_BYTES,
 +				    sky2->rx_le, sky2->rx_le_map);
-+	if (sky2->tx_le)
++		sky2->rx_le = NULL;
++	}
++	if (sky2->tx_le) {
 +		pci_free_consistent(hw->pdev,
 +				    TX_RING_SIZE * sizeof(struct sky2_tx_le),
 +				    sky2->tx_le, sky2->tx_le_map);
-+	if (sky2->tx_ring)
-+		kfree(sky2->tx_ring);
-+	if (sky2->rx_ring)
-+		kfree(sky2->rx_ring);
++		sky2->tx_le = NULL;
++	}
++	kfree(sky2->tx_ring);
++	kfree(sky2->rx_ring);
 +
++	sky2->tx_ring = NULL;
++	sky2->rx_ring = NULL;
 +	return err;
 +}
 +
@@ -1329,6 +1340,10 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	unsigned port = sky2->port;
 +	u16 ctrl;
 +
++	/* Never really got started! */
++	if (!sky2->tx_le)
++		return 0;
++
 +	if (netif_msg_ifdown(sky2))
 +		printk(KERN_INFO PFX "%s: disabling interface\n", dev->name);
 +
@@ -1402,6 +1417,12 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +			    TX_RING_SIZE * sizeof(struct sky2_tx_le),
 +			    sky2->tx_le, sky2->tx_le_map);
 +	kfree(sky2->tx_ring);
++
++	sky2->tx_le = NULL;
++	sky2->rx_le = NULL;
++
++	sky2->rx_ring = NULL;
++	sky2->tx_ring = NULL;
 +
 +	return 0;
 +}
@@ -1493,8 +1514,6 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +			     gm_phy_read(hw, port, PHY_MARV_AUNE_ADV)
 +			     | PHY_M_AN_ASP);
 +	}
-+
-+	sky2_phy_reset(hw, port);
 +
 +	netif_carrier_off(sky2->netdev);
 +	netif_stop_queue(sky2->netdev);
@@ -1674,11 +1693,16 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	sky2_write8(hw, RB_ADDR(rxqaddr[sky2->port], RB_CTRL), RB_ENA_OP_MD);
 +
 +	err = sky2_rx_start(sky2);
-+	gma_write16(hw, sky2->port, GM_GP_CTRL, ctl);
-+
-+	netif_poll_disable(hw->dev[0]);
-+	netif_wake_queue(dev);
 +	sky2_write32(hw, B0_IMSK, hw->intr_mask);
++
++	if (err)
++		dev_close(dev);
++	else {
++		gma_write16(hw, sky2->port, GM_GP_CTRL, ctl);
++
++		netif_poll_enable(hw->dev[0]);
++		netif_wake_queue(dev);
++	}
 +
 +	return err;
 +}
@@ -1706,6 +1730,9 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +
 +	if (!(status & GMR_FS_RX_OK))
 +		goto resubmit;
++
++	if ((status >> 16) != length || length > sky2->rx_bufsize)
++		goto oversize;
 +
 +	if (length < copybreak) {
 +		skb = alloc_skb(length + 2, GFP_ATOMIC);
@@ -1748,7 +1775,13 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +
 +	return skb;
 +
++oversize:
++	++sky2->net_stats.rx_over_errors;
++	goto resubmit;
++
 +error:
++	++sky2->net_stats.rx_errors;
++
 +	if (netif_msg_rx_err(sky2))
 +		printk(KERN_INFO PFX "%s: rx error, status 0x%x length %d\n",
 +		       sky2->netdev->name, status, length);
@@ -2353,10 +2386,8 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	sky2->autoneg = ecmd->autoneg;
 +	sky2->advertising = ecmd->advertising;
 +
-+	if (netif_running(dev)) {
-+		sky2_down(dev);
-+		sky2_up(dev);
-+	}
++	if (netif_running(dev))
++		sky2_phy_reinit(sky2);
 +
 +	return 0;
 +}
@@ -2427,17 +2458,11 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +static int sky2_nway_reset(struct net_device *dev)
 +{
 +	struct sky2_port *sky2 = netdev_priv(dev);
-+	struct sky2_hw *hw = sky2->hw;
 +
 +	if (sky2->autoneg != AUTONEG_ENABLE)
 +		return -EINVAL;
 +
-+	netif_stop_queue(dev);
-+
-+	down(&sky2->phy_sema);
-+	sky2_phy_reset(hw, sky2->port);
-+	sky2_phy_init(hw, sky2->port);
-+	up(&sky2->phy_sema);
++	sky2_phy_reinit(sky2);
 +
 +	return 0;
 +}
@@ -2515,20 +2540,20 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +{
 +	struct sky2_port *sky2 = netdev_priv(dev);
 +	struct sockaddr *addr = p;
-+	int err = 0;
 +
 +	if (!is_valid_ether_addr(addr->sa_data))
 +		return -EADDRNOTAVAIL;
 +
-+	sky2_down(dev);
 +	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
 +	memcpy_toio(sky2->hw->regs + B2_MAC_1 + sky2->port * 8,
 +		    dev->dev_addr, ETH_ALEN);
 +	memcpy_toio(sky2->hw->regs + B2_MAC_2 + sky2->port * 8,
 +		    dev->dev_addr, ETH_ALEN);
-+	if (dev->flags & IFF_UP)
-+		err = sky2_up(dev);
-+	return err;
++
++	if (netif_running(dev))
++		sky2_phy_reinit(sky2);
++
++	return 0;
 +}
 +
 +static void sky2_set_multicast(struct net_device *dev)
@@ -2686,10 +2711,7 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	sky2->tx_pause = ecmd->tx_pause != 0;
 +	sky2->rx_pause = ecmd->rx_pause != 0;
 +
-+	if (netif_running(dev)) {
-+		sky2_down(dev);
-+		err = sky2_up(dev);
-+	}
++	sky2_phy_reinit(sky2);
 +
 +	return err;
 +}
@@ -2851,8 +2873,13 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	sky2->rx_pending = ering->rx_pending;
 +	sky2->tx_pending = ering->tx_pending;
 +
-+	if (netif_running(dev))
++	if (netif_running(dev)) {
 +		err = sky2_up(dev);
++		if (err)
++			dev_close(dev);
++		else
++			sky2_set_multicast(dev);
++	}
 +
 +	return err;
 +}
@@ -3233,7 +3260,8 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +		if (dev) {
 +			if (netif_running(dev)) {
 +				netif_device_attach(dev);
-+				sky2_up(dev);
++				if (sky2_up(dev))
++					dev_close(dev);
 +			}
 +		}
 +	}
@@ -3269,8 +3297,8 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +MODULE_AUTHOR("Stephen Hemminger <shemminger@osdl.org>");
 +MODULE_LICENSE("GPL");
 +MODULE_VERSION(DRV_VERSION);
---- linux-dsd/drivers/net/sky2.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.15-rc5/drivers/net/sky2.h	2005-12-13 22:16:31.000000000 +0000
+--- linux-2.6.15/drivers/net/sky2.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-dsd/drivers/net/sky2.h	2006-01-03 18:10:52.000000000 +0000
 @@ -0,0 +1,1922 @@
 +/*
 + * Definitions for the new Marvell Yukon 2 driver.
@@ -5194,8 +5222,8 @@ This is sky2 v0.10, last commit taken in this rollup is from 2005-12-09:
 +	gma_write16(hw, port, reg+8,(u16) addr[4] | ((u16) addr[5] << 8));
 +}
 +#endif
---- linux-dsd/include/linux/netdevice.h	2005-12-13 17:44:48.000000000 +0000
-+++ linux-2.6.15-rc5/include/linux/netdevice.h	2005-12-13 22:12:23.000000000 +0000
+--- linux-2.6.15/include/linux/netdevice.h	2006-01-03 17:42:43.000000000 +0000
++++ linux-dsd/include/linux/netdevice.h	2006-01-03 18:10:52.000000000 +0000
 @@ -801,12 +801,16 @@ static inline u32 netif_msg_init(int deb
  	return (1 << debug_value) - 1;
  }

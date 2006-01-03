@@ -56,7 +56,7 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	4100_sky2-0.10.patch
+Patch:	4100_sky2-0.11.patch
 From:	netdev-2.6 tree
 Desc:	Driver for Marvell Yukon-2 ethernet adapters
 
