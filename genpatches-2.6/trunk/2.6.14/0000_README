@@ -344,6 +344,30 @@ Patch:	1075_5_nfs-setacl-check-fix.patch
 From:	2.6.14.5
 Desc:	setting ACLs on readonly mounted NFS filesystems (CVE-2005-3623)
 
+Patch:	1076_6_gem_remove_one-no-devexit.patch
+From:	2.6.14.6
+Desc:	gem_remove_one() shouldn't be __devexit in drivers/net/sungem.c
+
+Patch:	1077_6_ieee80211_crypt_tkip-kconfig-depends.patch
+From:	2.6.14.6
+Desc:	ieee80211_crypt_tkip depends on NET_RADIO
+
+Patch:	1078_6_proc-insanity-avoidance.patch
+From:	2.6.14.6
+Desc:	Clean up legacy /proc interfaces (CVE-2005-4605)
+
+Patch:	1079_6_sysctl-string-termination.patch
+From:	2.6.14.6
+Desc:	sysctl: make sure to terminate strings with a NUL
+
+Patch:	1080_6_ufs-release-i_sem.patch
+From:	2.6.14.6
+Desc:	UFS: inode->i_sem is not released in error path
+
+Patch:	1081_6_sparc-blade-100-video-fix.patch
+From:	2.6.14.6
+Desc:	Fix onboard video on SPARC Blade 100
+
 Patch:	1100_rose-locking-fix.patch
 From:	http://bugs.gentoo.org/103553
 Desc:	Security fix for ROSE hardware
