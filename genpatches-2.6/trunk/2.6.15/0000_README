@@ -52,6 +52,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	2300_ata-piix-suspend.patch
+From:	http://bugs.gentoo.org/118284
+Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
+
 Patch:	4100_sky2-0.11.patch
 From:	netdev-2.6 tree
 Desc:	Driver for Marvell Yukon-2 ethernet adapters

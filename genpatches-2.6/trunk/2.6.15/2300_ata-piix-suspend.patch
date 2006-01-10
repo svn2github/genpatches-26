@@ -1,0 +1,302 @@
+From: Jens Axboe <axboe@suse.de>
+Date: Fri, 6 Jan 2006 08:28:07 +0000 (+0100)
+Subject: [PATCH] Suspend support for libata
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9b847548663ef1039dd49f0eb4463d001e596bc3
+
+[PATCH] Suspend support for libata
+
+This patch adds suspend patch to libata, and ata_piix in particular. For
+most low level drivers, they should just need to add the 4 hooks to
+work. As I can only test ata_piix, I didn't enable it for more
+though.
+
+Suspend support is the single most important feature on a notebook, and
+most new notebooks have sata drives. It's quite embarrassing that we
+_still_ do not support this. Right now, it's perfectly possible to
+suspend the drive in mid-transfer.
+
+Signed-off-by: Jens Axboe <axboe@suse.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/drivers/scsi/ata_piix.c
++++ b/drivers/scsi/ata_piix.c
+@@ -166,6 +166,8 @@ static struct pci_driver piix_pci_driver
+ 	.id_table		= piix_pci_tbl,
+ 	.probe			= piix_init_one,
+ 	.remove			= ata_pci_remove_one,
++	.suspend		= ata_pci_device_suspend,
++	.resume			= ata_pci_device_resume,
+ };
+ 
+ static struct scsi_host_template piix_sht = {
+@@ -186,6 +188,8 @@ static struct scsi_host_template piix_sh
+ 	.slave_configure	= ata_scsi_slave_config,
+ 	.bios_param		= ata_std_bios_param,
+ 	.ordered_flush		= 1,
++	.resume			= ata_scsi_device_resume,
++	.suspend		= ata_scsi_device_suspend,
+ };
+ 
+ static const struct ata_port_operations piix_pata_ops = {
+--- a/drivers/scsi/libata-core.c
++++ b/drivers/scsi/libata-core.c
+@@ -4154,6 +4154,96 @@ err_out:
+  *	Inherited from caller.
+  */
+ 
++/*
++ * Execute a 'simple' command, that only consists of the opcode 'cmd' itself,
++ * without filling any other registers
++ */
++static int ata_do_simple_cmd(struct ata_port *ap, struct ata_device *dev,
++			     u8 cmd)
++{
++	struct ata_taskfile tf;
++	int err;
++
++	ata_tf_init(ap, &tf, dev->devno);
++
++	tf.command = cmd;
++	tf.flags |= ATA_TFLAG_DEVICE;
++	tf.protocol = ATA_PROT_NODATA;
++
++	err = ata_exec_internal(ap, dev, &tf, DMA_NONE, NULL, 0);
++	if (err)
++		printk(KERN_ERR "%s: ata command failed: %d\n",
++				__FUNCTION__, err);
++
++	return err;
++}
++
++static int ata_flush_cache(struct ata_port *ap, struct ata_device *dev)
++{
++	u8 cmd;
++
++	if (!ata_try_flush_cache(dev))
++		return 0;
++
++	if (ata_id_has_flush_ext(dev->id))
++		cmd = ATA_CMD_FLUSH_EXT;
++	else
++		cmd = ATA_CMD_FLUSH;
++
++	return ata_do_simple_cmd(ap, dev, cmd);
++}
++
++static int ata_standby_drive(struct ata_port *ap, struct ata_device *dev)
++{
++	return ata_do_simple_cmd(ap, dev, ATA_CMD_STANDBYNOW1);
++}
++
++static int ata_start_drive(struct ata_port *ap, struct ata_device *dev)
++{
++	return ata_do_simple_cmd(ap, dev, ATA_CMD_IDLEIMMEDIATE);
++}
++
++/**
++ *	ata_device_resume - wakeup a previously suspended devices
++ *
++ *	Kick the drive back into action, by sending it an idle immediate
++ *	command and making sure its transfer mode matches between drive
++ *	and host.
++ *
++ */
++int ata_device_resume(struct ata_port *ap, struct ata_device *dev)
++{
++	if (ap->flags & ATA_FLAG_SUSPENDED) {
++		ap->flags &= ~ATA_FLAG_SUSPENDED;
++		ata_set_mode(ap);
++	}
++	if (!ata_dev_present(dev))
++		return 0;
++	if (dev->class == ATA_DEV_ATA)
++		ata_start_drive(ap, dev);
++
++	return 0;
++}
++
++/**
++ *	ata_device_suspend - prepare a device for suspend
++ *
++ *	Flush the cache on the drive, if appropriate, then issue a
++ *	standbynow command.
++ *
++ */
++int ata_device_suspend(struct ata_port *ap, struct ata_device *dev)
++{
++	if (!ata_dev_present(dev))
++		return 0;
++	if (dev->class == ATA_DEV_ATA)
++		ata_flush_cache(ap, dev);
++
++	ata_standby_drive(ap, dev);
++	ap->flags |= ATA_FLAG_SUSPENDED;
++	return 0;
++}
++
+ int ata_port_start (struct ata_port *ap)
+ {
+ 	struct device *dev = ap->host_set->dev;
+@@ -4902,6 +4992,23 @@ int pci_test_config_bits(struct pci_dev 
+ 
+ 	return (tmp == bits->val) ? 1 : 0;
+ }
++
++int ata_pci_device_suspend(struct pci_dev *pdev, pm_message_t state)
++{
++	pci_save_state(pdev);
++	pci_disable_device(pdev);
++	pci_set_power_state(pdev, PCI_D3hot);
++	return 0;
++}
++
++int ata_pci_device_resume(struct pci_dev *pdev)
++{
++	pci_set_power_state(pdev, PCI_D0);
++	pci_restore_state(pdev);
++	pci_enable_device(pdev);
++	pci_set_master(pdev);
++	return 0;
++}
+ #endif /* CONFIG_PCI */
+ 
+ 
+@@ -5005,4 +5112,11 @@ EXPORT_SYMBOL_GPL(ata_pci_host_stop);
+ EXPORT_SYMBOL_GPL(ata_pci_init_native_mode);
+ EXPORT_SYMBOL_GPL(ata_pci_init_one);
+ EXPORT_SYMBOL_GPL(ata_pci_remove_one);
++EXPORT_SYMBOL_GPL(ata_pci_device_suspend);
++EXPORT_SYMBOL_GPL(ata_pci_device_resume);
+ #endif /* CONFIG_PCI */
++
++EXPORT_SYMBOL_GPL(ata_device_suspend);
++EXPORT_SYMBOL_GPL(ata_device_resume);
++EXPORT_SYMBOL_GPL(ata_scsi_device_suspend);
++EXPORT_SYMBOL_GPL(ata_scsi_device_resume);
+--- a/drivers/scsi/libata-scsi.c
++++ b/drivers/scsi/libata-scsi.c
+@@ -396,6 +396,22 @@ void ata_dump_status(unsigned id, struct
+ 	}
+ }
+ 
++int ata_scsi_device_resume(struct scsi_device *sdev)
++{
++	struct ata_port *ap = (struct ata_port *) &sdev->host->hostdata[0];
++	struct ata_device *dev = &ap->device[sdev->id];
++
++	return ata_device_resume(ap, dev);
++}
++
++int ata_scsi_device_suspend(struct scsi_device *sdev)
++{
++	struct ata_port *ap = (struct ata_port *) &sdev->host->hostdata[0];
++	struct ata_device *dev = &ap->device[sdev->id];
++
++	return ata_device_suspend(ap, dev);
++}
++
+ /**
+  *	ata_to_sense_error - convert ATA error to SCSI error
+  *	@id: ATA device number
+--- a/drivers/scsi/scsi_sysfs.c
++++ b/drivers/scsi/scsi_sysfs.c
+@@ -263,9 +263,40 @@ static int scsi_bus_match(struct device 
+ 	return (sdp->inq_periph_qual == SCSI_INQ_PQ_CON)? 1: 0;
+ }
+ 
++static int scsi_bus_suspend(struct device * dev, pm_message_t state)
++{
++	struct scsi_device *sdev = to_scsi_device(dev);
++	struct scsi_host_template *sht = sdev->host->hostt;
++	int err;
++
++	err = scsi_device_quiesce(sdev);
++	if (err)
++		return err;
++
++	if (sht->suspend)
++		err = sht->suspend(sdev);
++
++	return err;
++}
++
++static int scsi_bus_resume(struct device * dev)
++{
++	struct scsi_device *sdev = to_scsi_device(dev);
++	struct scsi_host_template *sht = sdev->host->hostt;
++	int err = 0;
++
++	if (sht->resume)
++		err = sht->resume(sdev);
++
++	scsi_device_resume(sdev);
++	return err;
++}
++
+ struct bus_type scsi_bus_type = {
+         .name		= "scsi",
+         .match		= scsi_bus_match,
++	.suspend	= scsi_bus_suspend,
++	.resume		= scsi_bus_resume,
+ };
+ 
+ int scsi_sysfs_register(void)
+--- a/include/linux/ata.h
++++ b/include/linux/ata.h
+@@ -141,6 +141,8 @@ enum {
+ 	ATA_CMD_PACKET		= 0xA0,
+ 	ATA_CMD_VERIFY		= 0x40,
+ 	ATA_CMD_VERIFY_EXT	= 0x42,
++ 	ATA_CMD_STANDBYNOW1	= 0xE0,
++ 	ATA_CMD_IDLEIMMEDIATE	= 0xE1,
+ 	ATA_CMD_INIT_DEV_PARAMS	= 0x91,
+ 
+ 	/* SETFEATURES stuff */
+--- a/include/linux/libata.h
++++ b/include/linux/libata.h
+@@ -124,6 +124,8 @@ enum {
+ 	ATA_FLAG_DEBUGMSG	= (1 << 10),
+ 	ATA_FLAG_NO_ATAPI	= (1 << 11), /* No ATAPI support */
+ 
++	ATA_FLAG_SUSPENDED	= (1 << 12), /* port is suspended */
++
+ 	ATA_QCFLAG_ACTIVE	= (1 << 1), /* cmd not yet ack'd to scsi lyer */
+ 	ATA_QCFLAG_SG		= (1 << 3), /* have s/g table? */
+ 	ATA_QCFLAG_SINGLE	= (1 << 4), /* no s/g, just a single buffer */
+@@ -436,6 +438,8 @@ extern void ata_std_ports(struct ata_iop
+ extern int ata_pci_init_one (struct pci_dev *pdev, struct ata_port_info **port_info,
+ 			     unsigned int n_ports);
+ extern void ata_pci_remove_one (struct pci_dev *pdev);
++extern int ata_pci_device_suspend(struct pci_dev *pdev, pm_message_t state);
++extern int ata_pci_device_resume(struct pci_dev *pdev);
+ #endif /* CONFIG_PCI */
+ extern int ata_device_add(const struct ata_probe_ent *ent);
+ extern void ata_host_set_remove(struct ata_host_set *host_set);
+@@ -445,6 +449,10 @@ extern int ata_scsi_queuecmd(struct scsi
+ extern int ata_scsi_error(struct Scsi_Host *host);
+ extern int ata_scsi_release(struct Scsi_Host *host);
+ extern unsigned int ata_host_intr(struct ata_port *ap, struct ata_queued_cmd *qc);
++extern int ata_scsi_device_resume(struct scsi_device *);
++extern int ata_scsi_device_suspend(struct scsi_device *);
++extern int ata_device_resume(struct ata_port *, struct ata_device *);
++extern int ata_device_suspend(struct ata_port *, struct ata_device *);
+ extern int ata_ratelimit(void);
+ 
+ /*
+--- a/include/scsi/scsi_host.h
++++ b/include/scsi/scsi_host.h
+@@ -296,6 +296,12 @@ struct scsi_host_template {
+ 	int (*proc_info)(struct Scsi_Host *, char *, char **, off_t, int, int);
+ 
+ 	/*
++	 * suspend support
++	 */
++	int (*resume)(struct scsi_device *);
++	int (*suspend)(struct scsi_device *);
++
++	/*
+ 	 * Name of proc directory
+ 	 */
+ 	char *proc_name;
