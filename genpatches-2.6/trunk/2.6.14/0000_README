@@ -376,6 +376,10 @@ Patch:	1105_irda-locking-fix.patch
 From:	http://bugs.gentoo.org/103553
 Desc:	Security fix for donauboe irda hardware
 
+Patch:	1110_set-mempolicy-dos.patch
+From:	http://bugs.gentoo.org/117855
+Desc:	Local DoS through set_mempolicy (CVE-2005-3358)
+
 Patch:	1300_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
