@@ -40,6 +40,18 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1100_netlink-rcv-skb-dos.patch
+From:	stable queue
+Desc:	[AF_NETLINK]: Fix DoS in netlink_rcv_skb() (CVE-2006-0035)
+
+Patch:	1105_netfilter-pptp-crash.patch
+From:	stable queue
+Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp
+
+Patch:	1110_netfilter-pptp-crash-2.patch
+From:	stable queue
+Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
+
 Patch:	1300_sparc-atyfb-blade100.patch
 From:	http://bugs.gentoo.org/117917
 Desc:	Fix framebuffer on Sun Blade 100/150 workstations
@@ -47,6 +59,14 @@ Desc:	Fix framebuffer on Sun Blade 100/150 workstations
 Patch:	1305_sparc64-strace.patch
 From:	http://bugs.gentoo.org/118551
 Desc:	Fix ptrace/strace on sparc64
+
+Patch:	1310_ppc-ml300-ep405-boot.patch
+From:	stable queue
+Desc:	ppc32: Re-add embed_config.c to ml300/ep405
+
+Patch:	1315_sparc64-fstat64.patch
+From:	stable queue
+Desc:	[SPARC64]: Fix sys_fstat64() entry in 64-bit syscall table
 
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
@@ -56,9 +76,37 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1900_select-correct-bridge-id.patch
+From:	stable queue
+Desc:	BRIDGE: Fix faulty check in br_stp_recalculate_bridge_id()
+
+Patch:	1905_bridge-netfilter-ip-fragments.patch
+From:	stable queue
+Desc:	Don't match tcp/udp source/destination port for IP fragments
+
+Patch:	1910_workqueue-cpu-offline.patch
+From:	stable queue
+Desc:	fix workqueue oops during cpu offline
+
+Patch:	1915_netlink-oops.patch
+From:	stable queue
+Desc:	netlink oops fix due to incorrect error code
+
+Patch:	1920_ufs-inode-sem.patch
+From:	stable queue
+Desc:	UFS: inode->i_sem is not released in error path
+
+Patch:	2100_skge-memory-on-ring-changes.patch
+From:	stable queue
+Desc:	skge: handle out of memory on ring changes
+
 Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
 Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
+
+Patch:	2500_vgacon-doublescan.patch
+From:	stable queue
+Desc:	vgacon: fix doublescan mode
 
 Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
