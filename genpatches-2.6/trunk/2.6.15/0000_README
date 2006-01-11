@@ -44,11 +44,11 @@ Patch:	1100_netlink-rcv-skb-dos.patch
 From:	stable queue
 Desc:	[AF_NETLINK]: Fix DoS in netlink_rcv_skb() (CVE-2006-0035)
 
-Patch:	1105_netfilter-pptp-crash.patch
+Patch:	1105_netfilter-pptp-crash-1.patch
 From:	stable queue
-Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp
+Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
 
-Patch:	1110_netfilter-pptp-crash-2.patch
+Patch:	1110_netfilter-pptp-crash2.patch
 From:	stable queue
 Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
 
