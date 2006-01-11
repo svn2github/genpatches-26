@@ -112,7 +112,7 @@ Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
 Desc:	Support the upcoming Intel ICH8 chipset
 
-Patch:	4100_sky2-0.11.patch
+Patch:	4100_sky2-0.12.patch
 From:	netdev-2.6 tree
 Desc:	Driver for Marvell Yukon-2 ethernet adapters
 

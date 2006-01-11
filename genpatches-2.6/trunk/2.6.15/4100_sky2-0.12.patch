@@ -1,40 +1,8 @@
-Patch generated 2006-01-03
-Last commit: [PATCH] sky2: version 0.11
+Version 0.12 of sky2
 
---- linux-2.6.15/drivers/net/Makefile	2006-01-03 17:42:32.000000000 +0000
-+++ linux-dsd/drivers/net/Makefile	2006-01-03 18:10:52.000000000 +0000
-@@ -59,6 +59,7 @@ spidernet-y += spider_net.o spider_net_e
- obj-$(CONFIG_SPIDER_NET) += spidernet.o
- obj-$(CONFIG_TC35815) += tc35815.o
- obj-$(CONFIG_SKGE) += skge.o
-+obj-$(CONFIG_SKY2) += sky2.o
- obj-$(CONFIG_SK98LIN) += sk98lin/
- obj-$(CONFIG_SKFP) += skfp/
- obj-$(CONFIG_VIA_RHINE) += via-rhine.o
---- linux-2.6.15/drivers/net/Kconfig	2006-01-03 17:42:32.000000000 +0000
-+++ linux-dsd/drivers/net/Kconfig	2006-01-03 18:10:52.000000000 +0000
-@@ -2008,7 +2008,17 @@ config SKGE
- 
- 	  It does not support the link failover and network management 
- 	  features that "portable" vendor supplied sk98lin driver does.
--	
-+
-+config SKY2
-+	tristate "SysKonnect Yukon2 support (EXPERIMENTAL)"
-+	depends on PCI && EXPERIMENTAL
-+	select CRC32
-+	---help---
-+	  This driver support the Marvell Yukon 2 Gigabit Ethernet adapter.
-+
-+	  To compile this driver as a module, choose M here: the module
-+	  will be called sky2.  This is recommended.
-+
- config SK98LIN
- 	tristate "Marvell Yukon Chipset / SysKonnect SK-98xx Support"
- 	depends on PCI
 --- linux-2.6.15/drivers/net/sky2.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-dsd/drivers/net/sky2.c	2006-01-03 18:11:50.000000000 +0000
-@@ -0,0 +1,3262 @@
++++ linux-dsd/drivers/net/sky2.c	2006-01-11 21:23:15.000000000 +0000
+@@ -0,0 +1,3283 @@
 +/*
 + * New driver for Marvell Yukon 2 chipset.
 + * Based on earlier sk98lin, and skge driver.
@@ -94,7 +62,7 @@ Last commit: [PATCH] sky2: version 0.11
 +#include "sky2.h"
 +
 +#define DRV_NAME		"sky2"
-+#define DRV_VERSION		"0.11"
++#define DRV_VERSION		"0.12"
 +#define PFX			DRV_NAME " "
 +
 +/*
@@ -112,6 +80,7 @@ Last commit: [PATCH] sky2: version 0.11
 +#define RX_LE_BYTES		(RX_LE_SIZE*sizeof(struct sky2_rx_le))
 +#define RX_MAX_PENDING		(RX_LE_SIZE/2 - 2)
 +#define RX_DEF_PENDING		RX_MAX_PENDING
++#define RX_SKB_ALIGN		8
 +
 +#define TX_RING_SIZE		512
 +#define TX_DEF_PENDING		(TX_RING_SIZE - 1)
@@ -942,15 +911,30 @@ Last commit: [PATCH] sky2: version 0.11
 +#endif
 +
 +/*
++ * It appears the hardware has a bug in the FIFO logic that
++ * cause it to hang if the FIFO gets overrun and the receive buffer
++ * is not aligned. ALso alloc_skb() won't align properly if slab
++ * debugging is enabled.
++ */
++static inline struct sk_buff *sky2_alloc_skb(unsigned int size, gfp_t gfp_mask)
++{
++	struct sk_buff *skb;
++
++	skb = alloc_skb(size + RX_SKB_ALIGN, gfp_mask);
++	if (likely(skb)) {
++		unsigned long p	= (unsigned long) skb->data;
++		skb_reserve(skb,
++			((p + RX_SKB_ALIGN - 1) & ~(RX_SKB_ALIGN - 1)) - p);
++	}
++
++	return skb;
++}
++
++/*
 + * Allocate and setup receiver buffer pool.
 + * In case of 64 bit dma, there are 2X as many list elements
 + * available as ring entries
 + * and need to reserve one list element so we don't wrap around.
-+ *
-+ * It appears the hardware has a bug in the FIFO logic that
-+ * cause it to hang if the FIFO gets overrun and the receive buffer
-+ * is not aligned.  This means we can't use skb_reserve to align
-+ * the IP header.
 + */
 +static int sky2_rx_start(struct sky2_port *sky2)
 +{
@@ -966,7 +950,7 @@ Last commit: [PATCH] sky2: version 0.11
 +	for (i = 0; i < sky2->rx_pending; i++) {
 +		struct ring_info *re = sky2->rx_ring + i;
 +
-+		re->skb = dev_alloc_skb(sky2->rx_bufsize);
++		re->skb = sky2_alloc_skb(sky2->rx_bufsize, GFP_KERNEL);
 +		if (!re->skb)
 +			goto nomem;
 +
@@ -1750,7 +1734,7 @@ Last commit: [PATCH] sky2: version 0.11
 +	} else {
 +		struct sk_buff *nskb;
 +
-+		nskb = dev_alloc_skb(sky2->rx_bufsize);
++		nskb = sky2_alloc_skb(sky2->rx_bufsize, GFP_ATOMIC);
 +		if (!nskb)
 +			goto resubmit;
 +
@@ -3075,13 +3059,17 @@ Last commit: [PATCH] sky2: version 0.11
 +		goto err_out_free_regions;
 +	}
 +
-+	if (sizeof(dma_addr_t) > sizeof(u32)) {
-+		err = pci_set_dma_mask(pdev, DMA_64BIT_MASK);
-+		if (!err)
-+			using_dac = 1;
-+	}
++	if (sizeof(dma_addr_t) > sizeof(u32) &&
++	    !(err = pci_set_dma_mask(pdev, DMA_64BIT_MASK))) {
++		using_dac = 1;
++		err = pci_set_consistent_dma_mask(pdev, DMA_64BIT_MASK);
++		if (err < 0) {
++			printk(KERN_ERR PFX "%s unable to obtain 64 bit DMA "
++			       "for consistent allocations\n", pci_name(pdev));
++			goto err_out_free_regions;
++		}
 +
-+	if (!using_dac) {
++	} else {
 +		err = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
 +		if (err) {
 +			printk(KERN_ERR PFX "%s no usable DMA configuration\n",
@@ -3089,6 +3077,7 @@ Last commit: [PATCH] sky2: version 0.11
 +			goto err_out_free_regions;
 +		}
 +	}
++
 +#ifdef __BIG_ENDIAN
 +	/* byte swap descriptors in hardware */
 +	{
@@ -5222,7 +5211,38 @@ Last commit: [PATCH] sky2: version 0.11
 +	gma_write16(hw, port, reg+8,(u16) addr[4] | ((u16) addr[5] << 8));
 +}
 +#endif
---- linux-2.6.15/include/linux/netdevice.h	2006-01-03 17:42:43.000000000 +0000
+--- linux-2.6.15/drivers/net/Makefile	2006-01-03 03:21:10.000000000 +0000
++++ linux-dsd/drivers/net/Makefile	2006-01-03 18:10:52.000000000 +0000
+@@ -59,6 +59,7 @@ spidernet-y += spider_net.o spider_net_e
+ obj-$(CONFIG_SPIDER_NET) += spidernet.o
+ obj-$(CONFIG_TC35815) += tc35815.o
+ obj-$(CONFIG_SKGE) += skge.o
++obj-$(CONFIG_SKY2) += sky2.o
+ obj-$(CONFIG_SK98LIN) += sk98lin/
+ obj-$(CONFIG_SKFP) += skfp/
+ obj-$(CONFIG_VIA_RHINE) += via-rhine.o
+--- linux-2.6.15/drivers/net/Kconfig	2006-01-03 03:21:10.000000000 +0000
++++ linux-dsd/drivers/net/Kconfig	2006-01-03 18:10:52.000000000 +0000
+@@ -2008,7 +2008,17 @@ config SKGE
+ 
+ 	  It does not support the link failover and network management 
+ 	  features that "portable" vendor supplied sk98lin driver does.
+-	
++
++config SKY2
++	tristate "SysKonnect Yukon2 support (EXPERIMENTAL)"
++	depends on PCI && EXPERIMENTAL
++	select CRC32
++	---help---
++	  This driver support the Marvell Yukon 2 Gigabit Ethernet adapter.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called sky2.  This is recommended.
++
+ config SK98LIN
+ 	tristate "Marvell Yukon Chipset / SysKonnect SK-98xx Support"
+ 	depends on PCI
+--- linux-2.6.15/include/linux/netdevice.h	2006-01-03 03:21:10.000000000 +0000
 +++ linux-dsd/include/linux/netdevice.h	2006-01-03 18:10:52.000000000 +0000
 @@ -801,12 +801,16 @@ static inline u32 netif_msg_init(int deb
  	return (1 << debug_value) - 1;
