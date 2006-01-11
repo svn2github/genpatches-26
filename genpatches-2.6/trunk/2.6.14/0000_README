@@ -368,6 +368,22 @@ Patch:	1081_6_sparc-blade-100-video-fix.patch
 From:	2.6.14.6
 Desc:	Fix onboard video on SPARC Blade 100
 
+Patch:	1083_irq-affinity-broken-with-msi.patch
+From:	2.6.15 stable queue
+Desc:	setting irq affinity is broken in ia32 with MSI enabled
+
+Patch:	1084_bridge-netfilter-matching-ip-fragments.patch
+From:	2.6.15 stable queue
+Desc:	Don't match tcp/udp source/destination port for IP fragments
+
+Patch:	1087_fix-crash-in-ip_nat_pptp.patch
+From:	2.6.15 stable queue
+Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
+
+Patch:	1088_fix-another-crash-in-ip_nat_pptp.patch
+From:	2.6.15 stable queue
+Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp
+
 Patch:	1096_netlink-oops-fix.patch
 From:	2.6.15 stable queue
 Desc:	netlink oops fix due to incorrect error code
