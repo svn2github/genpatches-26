@@ -368,6 +368,10 @@ Patch:	1081_6_sparc-blade-100-video-fix.patch
 From:	2.6.14.6
 Desc:	Fix onboard video on SPARC Blade 100
 
+Patch:	1096_netlink-oops-fix.patch
+From:	2.6.15 stable queue
+Desc:	netlink oops fix due to incorrect error code
+
 Patch:	1100_rose-locking-fix.patch
 From:	http://bugs.gentoo.org/103553
 Desc:	Security fix for ROSE hardware
