@@ -108,6 +108,10 @@ Patch:	1016_1_vgacon-doublescan.patch
 From:	2.6.15.1
 Desc:	vgacon: fix doublescan mode
 
+Patch:	1100_mqueue-double-decrement.patch
+From:	http://bugs.gentoo.org/119087
+Desc:	mqueue security fix
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
