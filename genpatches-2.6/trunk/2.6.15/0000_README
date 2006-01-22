@@ -136,6 +136,10 @@ Patch:	4101_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
 
+Patch:	4300_libata-enable-atapi.patch
+From:	dsd@gentoo.org acked by Jeff Garzik
+Desc:	Enable libata ATAPI (i.e. SATA CDROM) support by default
+
 Patch:	4305_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
