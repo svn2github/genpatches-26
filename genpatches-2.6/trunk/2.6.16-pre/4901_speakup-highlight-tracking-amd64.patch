@@ -1,6 +1,8 @@
---- linux-orig/drivers/char/speakup/speakup.c	2005-12-15 16:26:21.000000000 +0000
-+++ linux/drivers/char/speakup/speakup.c	2006-01-02 23:27:15.000000000 +0000
-@@ -2148,19 +2155,20 @@ reset_highlight_buffers( struct vc_data 
+Index: linux-git/drivers/char/speakup/speakup.c
+===================================================================
+--- linux-git.orig/drivers/char/speakup/speakup.c
++++ linux-git/drivers/char/speakup/speakup.c
+@@ -2148,19 +2148,20 @@ reset_highlight_buffers( struct vc_data 
  static int
  count_highlight_color(struct vc_data *vc)
  {
@@ -13,7 +15,7 @@
 +	u16 *start = (u16 *) vc->vc_origin;
  
  	for ( i=0 ; i<8 ; i++ )
- 		speakup_console[vc_num]->ht.bgcount[i]=0;		
+ 		speakup_console[vc_num]->ht.bgcount[i]=0;
  
 -	start=vc->vc_origin;
  	for ( i=0 ; i<vc->vc_rows; i++ ){
@@ -27,4 +29,3 @@
  			bg = ( ch & 0x7000 ) >> 12;
  			speakup_console[vc_num]->ht.bgcount[bg]++;
  		}
- 
