@@ -1,7 +1,8 @@
-diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/Kconfig linux-dsd/arch/alpha/Kconfig
---- linux-2.6.13-rc4-gentoo/arch/alpha/Kconfig	2005-07-30 14:25:13.000000000 +0100
-+++ linux-dsd/arch/alpha/Kconfig	2005-07-30 17:38:12.000000000 +0100
-@@ -564,6 +564,32 @@ config VERBOSE_MCHECK_ON
+Index: linux-git/arch/alpha/Kconfig
+===================================================================
+--- linux-git.orig/arch/alpha/Kconfig
++++ linux-git/arch/alpha/Kconfig
+@@ -577,6 +577,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -34,9 +35,10 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/Kconfig linux-dsd/arch/a
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd/arch/alpha/kernel/traps.c
---- linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c	2005-07-30 14:25:13.000000000 +0100
-+++ linux-dsd/arch/alpha/kernel/traps.c	2005-07-30 17:38:12.000000000 +0100
+Index: linux-git/arch/alpha/kernel/traps.c
+===================================================================
+--- linux-git.orig/arch/alpha/kernel/traps.c
++++ linux-git/arch/alpha/kernel/traps.c
 @@ -15,6 +15,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -70,7 +72,7 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd
 +	enabled_sigbus = (test_thread_flag (TIF_UAC_SIGBUS)) ? 1 : 0;
 +	enabled_nofix = (test_thread_flag (TIF_UAC_NOFIX)) ? 1 : 0;
 +
-+	/* save this for later so we can clean up */	
++	/* save this for later so we can clean up */
 +	uac_sysctl_header = register_sysctl_table(uac_table, 0);
 +	return 0;
 +}
@@ -84,7 +86,7 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd
  static void
  dik_show_code(unsigned int *pc)
  {
-@@ -781,7 +814,11 @@ do_entUnaUser(void __user * va, unsigned
+@@ -780,7 +813,11 @@ do_entUnaUser(void __user * va, unsigned
  	/* Check the UAC bits to decide what the user wants us to do
  	   with the unaliged access.  */
  
@@ -96,7 +98,7 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd
  		if (cnt >= 5 && jiffies - last_time > 5*HZ) {
  			cnt = 0;
  		}
-@@ -792,10 +829,18 @@ do_entUnaUser(void __user * va, unsigned
+@@ -791,10 +828,18 @@ do_entUnaUser(void __user * va, unsigned
  		}
  		last_time = jiffies;
  	}
@@ -115,15 +117,16 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/arch/alpha/kernel/traps.c linux-dsd
  		return;
  
  	/* Don't bother reading ds in the access check since we already
-@@ -1090,3 +1135,5 @@ trap_init(void)
+@@ -1089,3 +1134,5 @@ trap_init(void)
  	wrent(entSys, 5);
  	wrent(entDbg, 6);
  }
 +
 +__initcall(init_uac_sysctl);
-diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/include/linux/sysctl.h linux-dsd/include/linux/sysctl.h
---- linux-2.6.13-rc4-gentoo/include/linux/sysctl.h	2005-07-30 17:15:44.000000000 +0100
-+++ linux-dsd/include/linux/sysctl.h	2005-07-30 17:39:01.000000000 +0100
+Index: linux-git/include/linux/sysctl.h
+===================================================================
+--- linux-git.orig/include/linux/sysctl.h
++++ linux-git/include/linux/sysctl.h
 @@ -147,6 +147,9 @@ enum
  	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
@@ -134,7 +137,7 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/include/linux/sysctl.h linux-dsd/in
  };
  
  
-@@ -224,6 +227,17 @@ enum
+@@ -229,6 +232,17 @@ enum
  	PTY_NR=2
  };
  
@@ -152,9 +155,10 @@ diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/include/linux/sysctl.h linux-dsd/in
  /* /proc/sys/bus/isa */
  enum
  {
-diff -urNpX dontdiff linux-2.6.13-rc4-gentoo/kernel/sysctl.c linux-dsd/kernel/sysctl.c
---- linux-2.6.13-rc4-gentoo/kernel/sysctl.c	2005-07-30 17:15:44.000000000 +0100
-+++ linux-dsd/kernel/sysctl.c	2005-07-30 17:38:12.000000000 +0100
+Index: linux-git/kernel/sysctl.c
+===================================================================
+--- linux-git.orig/kernel/sysctl.c
++++ linux-git/kernel/sysctl.c
 @@ -157,6 +157,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
