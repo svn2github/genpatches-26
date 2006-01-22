@@ -1,6 +1,7 @@
-diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.c linux-dsd/drivers/md/dm-bbr.c
---- linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-dsd/drivers/md/dm-bbr.c	2005-04-06 10:06:16.000000000 +0100
+Index: linux-git/drivers/md/dm-bbr.c
+===================================================================
+--- /dev/null
++++ linux-git/drivers/md/dm-bbr.c
 @@ -0,0 +1,1003 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -654,7 +655,7 @@ diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.c linux-dsd/drive
 +				}
 +				offset += (lsn << SECTOR_SHIFT);
 +			}
-+	
++
 +			/* Process the remapped sector. */
 +			job.sector = remapped_lsn;
 +			job.count = 1;
@@ -1005,9 +1006,10 @@ diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.c linux-dsd/drive
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.h linux-dsd/drivers/md/dm-bbr.h
---- linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-dsd/drivers/md/dm-bbr.h	2005-04-06 10:06:16.000000000 +0100
+Index: linux-git/drivers/md/dm-bbr.h
+===================================================================
+--- /dev/null
++++ linux-git/drivers/md/dm-bbr.h
 @@ -0,0 +1,125 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1134,9 +1136,10 @@ diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/dm-bbr.h linux-dsd/drive
 +	atomic_t			in_use_replacement_blks;
 +};
 +
-diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/Kconfig linux-dsd/drivers/md/Kconfig
---- linux-2.6.12-rc2-gentoo/drivers/md/Kconfig	2005-04-06 09:46:58.000000000 +0100
-+++ linux-dsd/drivers/md/Kconfig	2005-04-06 10:07:02.000000000 +0100
+Index: linux-git/drivers/md/Kconfig
+===================================================================
+--- linux-git.orig/drivers/md/Kconfig
++++ linux-git/drivers/md/Kconfig
 @@ -236,5 +236,16 @@ config DM_MULTIPATH_EMC
  	---help---
  	  Multipath support for EMC CX/AX series hardware.
@@ -1154,10 +1157,11 @@ diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/Kconfig linux-dsd/driver
 +
  endmenu
  
-diff -urNpX dontdiff linux-2.6.12-rc2-gentoo/drivers/md/Makefile linux-dsd/drivers/md/Makefile
---- linux-2.6.12-rc2-gentoo/drivers/md/Makefile	2005-04-06 09:46:58.000000000 +0100
-+++ linux-dsd/drivers/md/Makefile	2005-04-06 10:06:16.000000000 +0100
-@@ -36,6 +36,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
+Index: linux-git/drivers/md/Makefile
+===================================================================
+--- linux-git.orig/drivers/md/Makefile
++++ linux-git/drivers/md/Makefile
+@@ -37,6 +37,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
