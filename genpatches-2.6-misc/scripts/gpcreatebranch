@@ -6,7 +6,7 @@ if [[ ${#@} != 2 ]] ; then
 	echo ">>> USAGE: gpcreatebranch <old-minor> <new-minor>"
 	echo "This will create 2.6.<new-minor> from 2.6.<old-minor>"
 	exit -1
-exit
+fi
 
 echo ">>> Going to copy genpatches-2.6/trunk/2.6.$1 to genpatches-2.6/trunk/2.6.$2 and instant commit. Press enter to continue"
 read
