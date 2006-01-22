@@ -4,10 +4,11 @@ Workaround for the Ultra1E onboard HME lockup.
 
 -------------------------------------------------------------------------------
 
-diff -burN linux-2.6.5-rc1-70/drivers/net/sunhme.c linux-2.6.5-rc1-99/drivers/net/sunhme.c
---- linux-2.6.5-rc1-70/drivers/net/sunhme.c	2004-03-16 03:13:46.531387425 -0800
-+++ linux-2.6.5-rc1-99/drivers/net/sunhme.c	2004-03-16 03:16:14.005414541 -0800
-@@ -1986,6 +1986,7 @@
+Index: linux-git/drivers/net/sunhme.c
+===================================================================
+--- linux-git.orig/drivers/net/sunhme.c
++++ linux-git/drivers/net/sunhme.c
+@@ -1996,6 +1996,7 @@ static void happy_meal_tx(struct happy_m
  	}
  	hp->tx_old = elem;
  	TXD((">"));
