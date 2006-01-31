@@ -1,0 +1,32 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Tue, 13 Dec 2005 11:26:07 +0000 (+0100)
+Subject: [PATCH] Fix unbalanced read_unlock_bh in ctnetlink
+X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/gregkh/linux-2.6.14.y.git;a=commitdiff;h=b72c1d0c14634506a2ff740033ab1bda3c3d5d7f
+
+[PATCH] Fix unbalanced read_unlock_bh in ctnetlink
+
+NFA_NEST calls NFA_PUT which jumps to nfattr_failure if the skb has no
+room left. We call read_unlock_bh at nfattr_failure for the NFA_PUT
+inside the locked section, so move NFA_NEST inside the locked section
+too.
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Krzysztof Piotr Oledzki <ole@ans.pl>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/net/ipv4/netfilter/ip_conntrack_proto_tcp.c
++++ b/net/ipv4/netfilter/ip_conntrack_proto_tcp.c
+@@ -341,9 +341,10 @@ static int tcp_print_conntrack(struct se
+ static int tcp_to_nfattr(struct sk_buff *skb, struct nfattr *nfa,
+ 			 const struct ip_conntrack *ct)
+ {
+-	struct nfattr *nest_parms = NFA_NEST(skb, CTA_PROTOINFO_TCP);
++	struct nfattr *nest_parms;
+ 	
+ 	read_lock_bh(&tcp_lock);
++	nest_parms = NFA_NEST(skb, CTA_PROTOINFO_TCP);
+ 	NFA_PUT(skb, CTA_PROTOINFO_TCP_STATE, sizeof(u_int8_t),
+ 		&ct->proto.tcp.state);
+ 	read_unlock_bh(&tcp_lock);
