@@ -168,6 +168,10 @@ Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
 Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
 
+Patch:	2305_scsi-cmd-leak.patch
+From:	stable queue
+Desc:	Fix SCSI command leak
+
 Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
 Desc:	Support the upcoming Intel ICH8 chipset
