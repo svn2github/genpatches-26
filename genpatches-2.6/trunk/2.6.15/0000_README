@@ -108,9 +108,53 @@ Patch:	1016_1_vgacon-doublescan.patch
 From:	2.6.15.1
 Desc:	vgacon: fix doublescan mode
 
-Patch:	1100_mqueue-double-decrement.patch
-From:	http://bugs.gentoo.org/119087
-Desc:	mqueue security fix
+Patch:	1017_2_elevator-as-back-compatibility.patch
+From:	2.6.15.2
+Desc:	
+
+Patch:	1018_2_mqueue-double-decrement.patch
+From:	2.6.15.2
+Desc:	Fix double decrement of mqueue_mnt->mnt_count in sys_mq_open (CVE-2005-3356)
+
+Patch:	1019_2_i2o-scsi-oops-on-abort.patch
+From:	2.6.15.2
+Desc:	Fix i2o_scsi oops on abort
+
+Patch:	1020_2_mkiss-locking.patch
+From:	2.6.15.2
+Desc:	Fix mkiss locking bug
+
+Patch:	1021_2_ufs-mount-oops.patch
+From:	2.6.15.2
+Desc:	Fix oops in ufs_fill_super at mount time
+
+Patch:	1022_2_input-hid-pid-oops.patch
+From:	2.6.15.2
+Desc:	HID - fix an oops in PID initialization code
+
+Patch:	1023_2_kill-blk-attempt-remerge.patch
+From:	2.6.15.2
+Desc:	[BLOCK] Kill blk_attempt_remerge()
+
+Patch:	1024_2_swiotlb-alloc-mask-gfp.patch
+From:	2.6.15.2
+Desc:	Mask off GFP flags before swiotlb_alloc_coherent
+
+Patch:	1025_2_ppp-pon-sign.patch
+From:	2.6.15.2
+Desc:	[NET]: Make second arg to skb_reserved() signed.
+
+Patch:	1026_2_reiserfs-mount-options.patch
+From:	2.6.15.2
+Desc:	Someone broke reiserfs v3 mount options and this fixes it
+
+Patch:	1027_2_sparc64-ultra-iie-timekeeping.patch
+From:	2.6.15.2
+Desc:	Fix timekeeping on sparc64 ultra-IIe machines
+
+Patch:	1028_2_usb-audio-hang.patch
+From:	2.6.15.2
+Desc:	usb-audio: don't use empty packets at start of playback
 
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2

@@ -1,10 +1,7 @@
+From nobody Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Fix double decrement of mqueue_mnt->mnt_count in sys_mq_open (CVE-2005-3356)
 From: Alexander Viro <aviro@redhat.com>
-Date: Sat, 14 Jan 2006 20:29:55 +0000 (-0500)
-Subject: [PATCH] Fix double decrement of mqueue_mnt->mnt_count in sys_mq_open
-X-Git-Tag: v2.6.16-rc1
-X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=7c7dce9209161eb260cdf9e9172f72c3a02379e6
-
-[PATCH] Fix double decrement of mqueue_mnt->mnt_count in sys_mq_open
+Date: 1137270595 -0500
 
 Fixed the refcounting on failure exits in sys_mq_open() and
 cleaned the logics up.  Rules are actually pretty simple - dentry_open()
@@ -21,11 +18,15 @@ normal path.
 
 Signed-off-by: Al Viro <aviro@redhat.com>
 Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
+ ipc/mqueue.c |   59 +++++++++++++++++++++++++++++++++--------------------------
+ 1 file changed, 33 insertions(+), 26 deletions(-)
 
---- a/ipc/mqueue.c
-+++ b/ipc/mqueue.c
-@@ -599,15 +599,16 @@ static int mq_attr_ok(struct mq_attr *at
+--- linux-2.6.15.1.orig/ipc/mqueue.c
++++ linux-2.6.15.1/ipc/mqueue.c
+@@ -598,15 +598,16 @@ static int mq_attr_ok(struct mq_attr *at
  static struct file *do_create(struct dentry *dir, struct dentry *dentry,
  			int oflag, mode_t mode, struct mq_attr __user *u_attr)
  {
@@ -46,7 +47,7 @@ Signed-off-by: Linus Torvalds <torvalds@osdl.org>
  		/* store for use during create */
  		dentry->d_fsdata = &attr;
  	}
-@@ -616,13 +617,14 @@ static struct file *do_create(struct den
+@@ -615,13 +616,14 @@ static struct file *do_create(struct den
  	ret = vfs_create(dir->d_inode, dentry, mode, NULL);
  	dentry->d_fsdata = NULL;
  	if (ret)
@@ -66,7 +67,7 @@ Signed-off-by: Linus Torvalds <torvalds@osdl.org>
  }
  
  /* Opens existing queue */
-@@ -630,20 +632,20 @@ static struct file *do_open(struct dentr
+@@ -629,20 +631,20 @@ static struct file *do_open(struct dentr
  {
  static int oflag2acc[O_ACCMODE] = { MAY_READ, MAY_WRITE,
  					MAY_READ | MAY_WRITE };
@@ -96,7 +97,7 @@ Signed-off-by: Linus Torvalds <torvalds@osdl.org>
  }
  
  asmlinkage long sys_mq_open(const char __user *u_name, int oflag, mode_t mode,
-@@ -671,17 +673,20 @@ asmlinkage long sys_mq_open(const char _
+@@ -670,17 +672,20 @@ asmlinkage long sys_mq_open(const char _
  
  	if (oflag & O_CREAT) {
  		if (dentry->d_inode) {	/* entry already exists */
@@ -124,7 +125,7 @@ Signed-off-by: Linus Torvalds <torvalds@osdl.org>
  
  	if (IS_ERR(filp)) {
  		error = PTR_ERR(filp);
-@@ -692,8 +697,10 @@ asmlinkage long sys_mq_open(const char _
+@@ -691,8 +696,10 @@ asmlinkage long sys_mq_open(const char _
  	fd_install(fd, filp);
  	goto out_upsem;
  
