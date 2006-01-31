@@ -1,8 +1,7 @@
 README
 --------------------------------------------------------------------------
 This patchset is to be the 2.6 series of gentoo-sources.
-it is designed for cross-compatibility, fixes and stability, with performance and additional
-features/driver support being a second.
+it is designed for cross-compatibility, fixes and stability, with performance and additional features/driver support being a second.
 
 Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
 
@@ -10,8 +9,10 @@ Unless otherwise stated and marked as such, this kernel should be suitable for a
 Patchset Numbering Scheme
 --------------------------------------------------------------------------
 1XXX	critical fixes
- 1XX	 security
- 3XX	 arch-compat
+ 1XX	 stable releases
+ 4XX	 backported stable
+ 7XX	 security
+ 8XX	 arch-compat
  9XX	 other
 2XXX	driver related patches
  1XX	 network
@@ -40,399 +41,471 @@ Patchset Numbering Scheme
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_1_sysctl-unregistration.patch
+Patch:	1100_1_sysctl-unregistration.patch
 From:	Linux 2.6.14.1
 Desc:	Fix an oops on sysctl unregistration (CVE-2005-2709)
 
-Patch:	1001_2_airo_cs-correct-prototypes.patch
+Patch:	1101_2_airo_cs-correct-prototypes.patch
 From:	2.6.14.2
 Desc:	airo.c/airo_cs.c: correct prototypes
 
-Patch:	1002_2_cfq-io-sched-fix.patch
+Patch:	1102_2_cfq-io-sched-fix.patch
 From:	2.6.14.2
 Desc:	Oops on suspend after on-the-fly switch to anticipatory i/o scheduler
 
-Patch:	1003_2_fix-alpha-breakage.patch
+Patch:	1103_2_fix-alpha-breakage.patch
 From:	2.6.14.2
 Desc:	fix alpha breakage
 
-Patch:	1004_2_thread-sendqueue-race.patch
+Patch:	1104_2_thread-sendqueue-race.patch
 From:	2.6.14.2
 Desc:	fix de_thread() vs send_group_sigqueue() race
 
-Patch:	1005_2_ptrace-self-attach.patch
+Patch:	1105_2_ptrace-self-attach.patch
 From:	2.6.14.2
 Desc:	Fix ptrace self-attach rule
 
-Patch:	1006_2_signal-live-leak.patch
+Patch:	1106_2_signal-live-leak.patch
 From:	2.6.14.2
 Desc:	fix signal->live leak in copy_process()
 
-Patch:	1007_2_zero-size-datagram.patch
+Patch:	1107_2_zero-size-datagram.patch
 From:	2.6.14.2
 Desc:	[NET] Fix zero-size datagram reception
 
-Patch:	1008_2_ipvs-connection-leak.patch
+Patch:	1108_2_ipvs-connection-leak.patch
 From:	2.6.14.2
 Desc:	ipvs: fix connection leak if expire_nodest_conn=1
 
-Patch:	1009_2_prism54-frame-size.patch
+Patch:	1109_2_prism54-frame-size.patch
 From:	2.6.14.2
 Desc:	prism54 : Fix frame length
 
-Patch:	1010_2_tcp-bic-max-increment.patch
+Patch:	1110_2_tcp-bic-max-increment.patch
 From:	2.6.14.2
 Desc:	tcp: BIC max increment too large
 
-Patch:	1011_2_usb-interface-modalias.patch
+Patch:	1111_2_usb-interface-modalias.patch
 From:	2.6.14.2
 Desc:	USB: always export interface information for modalias
 
-Patch:	1012_2_xfs-modular-quota.patch
+Patch:	1112_2_xfs-modular-quota.patch
 From:	2.6.14.2
 Desc:	fix XFS_QUOTA for modular XFS
 
-Patch:	1013_3_4GB-memory-intel-dual-core.patch
+Patch:	1113_3_4GB-memory-intel-dual-core.patch
 From:	2.6.14.3
 Desc:	x86_64/i386: Compute correct MTRR mask on early Noconas
 
-Patch:	1014_3_ctnetlink-protoinfo.patch
+Patch:	1114_3_ctnetlink-protoinfo.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] ctnetlink: check if protoinfo is present
 
-Patch:	1015_3_ctnetlink-no-icmp-oops.patch
+Patch:	1115_3_ctnetlink-no-icmp-oops.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] ctnetlink: Fix oops when no ICMP ID info in message
 
-Patch:	1016_3_eicon-signature.patch
+Patch:	1116_3_eicon-signature.patch
 From:	2.6.14.3
 Desc:	ISDN eicon/os_4bri.c: correct the xdiLoadFile() signature
 
-Patch:	1017_3_ipv6-ah-length.patch
+Patch:	1117_3_ipv6-ah-length.patch
 From:	2.6.14.3
 Desc:	[IPV6]: Fix calculation of AH length during filling ancillary data.
 
-Patch:	1018_3_file-lease-leak.patch
+Patch:	1118_3_file-lease-leak.patch
 From:	2.6.14.3
 Desc:	VFS: Fix memory leak with file leases
 
-Patch:	1019_3_ipv6-advapi-memory.patch
+Patch:	1119_3_ipv6-advapi-memory.patch
 From:	2.6.14.3
 Desc:	[IPV6]: Fix memory management error during setting up new advapi sockopts.
 
-Patch:	1020_3_ipv6-extension-headers.patch
+Patch:	1120_3_ipv6-extension-headers.patch
 From:	2.6.14.3
 Desc:	[IPV6]: Fix sending extension headers before and including routing header.
 
-Patch:	1021_3_alsa-rtc-soft-lockup.patch
+Patch:	1121_3_alsa-rtc-soft-lockup.patch
 From:	2.6.14.3
 Desc:	Fix soft lockup with ALSA rtc-timer
 
-Patch:	1022_3_hdlc-netif-carrier.patch
+Patch:	1122_3_hdlc-netif-carrier.patch
 From:	2.6.14.3
 Desc:	Generic HDLC WAN drivers - disable netif_carrier_off()
 
-Patch:	1023_3_hwmon-it87-fan-speed-limits.patch
+Patch:	1123_3_hwmon-it87-fan-speed-limits.patch
 From:	2.6.14.3
 Desc:	hwmon: Fix missing it87 fan div init
 
-Patch:	1024_3_hwmon-lm78-vid.patch
+Patch:	1124_3_hwmon-lm78-vid.patch
 From:	2.6.14.3
 Desc:	hwmon: Fix lm78 VID conversion
 
-Patch:	1025_3_hwmon-w83627hf-limits.patch
+Patch:	1125_3_hwmon-w83627hf-limits.patch
 From:	2.6.14.3
 Desc:	hwmon: Fix missing boundary check when setting W83627THF in0 limits
 
-Patch:	1026_3_conntrack-high-ports.patch
+Patch:	1126_3_conntrack-high-ports.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] ip_conntrack: fix ftp/irc/tftp helpers on ports >= 32768
 
-Patch:	1027_3_conntrack-syn-push.patch
+Patch:	1127_3_conntrack-syn-push.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] ip_conntrack TCP: Accept SYN+PUSH like SYN
 
-Patch:	1028_3_nat-refcount.patch
+Patch:	1128_3_nat-refcount.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] NAT: Fix module refcount dropping too far
 
-Patch:	1029_3_netfilter-queue-oops.patch
+Patch:	1129_3_netfilter-queue-oops.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] nf_queue: Fix Ooops when no queue handler registered
 
-Patch:	1030_3_packet-writing-oops-fix.patch
+Patch:	1130_3_packet-writing-oops-fix.patch
 From:	2.6.14.3
 Desc:	packet writing oops fix
 
-Patch:	1031_3_ppc64-numa.patch
+Patch:	1131_3_ppc64-numa.patch
 From:	2.6.14.3
 Desc:	ppc64 memory model depends on NUMA
 
-Patch:	1032_3_pptp-endianness.patch
+Patch:	1132_3_pptp-endianness.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] PPTP helper: Fix endianness bug in GRE key / CallID NAT
 
-Patch:	1033_3_pptp-call-id.patch
+Patch:	1133_3_pptp-call-id.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] PPTP helper: fix PNS-PAC expectation call id
 
-Patch:	1034_3_trace-auto-reap.patch
+Patch:	1134_3_trace-auto-reap.patch
 From:	2.6.14.3
 Desc:	Don't auto-reap traced children
 
-Patch:	1035_3_netfilter-refcount-leak.patch
+Patch:	1135_3_netfilter-refcount-leak.patch
 From:	2.6.14.3
 Desc:	[NETFILTER] refcount leak of proto when ctnetlink dumping tuple
 
-Patch:	1036_4_acpi-nx8200-boot-hang.patch
+Patch:	1136_4_acpi-nx8200-boot-hang.patch
 From:	2.6.14.4
 Desc:	ACPI: fix HP nx8220 boot hang regression
 
-Patch:	1037_4_invalidate-inode-pages-overflow.patch
+Patch:	1137_4_invalidate-inode-pages-overflow.patch
 From:	2.6.14.4
 Desc:	32bit integer overflow in invalidate_inode_pages2()
 
-Patch:	1038_4_kauditd-try-to-freeze.patch
+Patch:	1138_4_kauditd-try-to-freeze.patch
 From:	2.6.14.4
 Desc:	Add try_to_freeze to kauditd
 
-Patch:	1039_4_bonding-features.patch
+Patch:	1139_4_bonding-features.patch
 From:	2.6.14.4
 Desc:	bonding: fix feature consolidation
 
-Patch:	1040_4_cciss-big-pass-thru.patch
+Patch:	1140_4_cciss-big-pass-thru.patch
 From:	2.6.14.4
 Desc:	cciss: bug fix for BIG_PASS_THRU
 
-Patch:	1041_4_cciss-hpacucli.patch
+Patch:	1141_4_cciss-hpacucli.patch
 From:	2.6.14.4
 Desc:	cciss: bug fix for hpacucli
 
-Patch:	1042_4_dpt-i20-null-deref.patch
+Patch:	1142_4_dpt-i20-null-deref.patch
 From:	2.6.14.4
 Desc:	drivers/scsi/dpt_i2o.c: fix a user-after-free
 
-Patch:	1043_4_dvb-budget-ci-depends.patch
+Patch:	1143_4_dvb-budget-ci-depends.patch
 From:	2.6.14.4
 Desc:	DVB: BUDGET CI card depends on STV0297 demodulator
 
-Patch:	1044_4_ptrace-poke-hugepage.patch
+Patch:	1144_4_ptrace-poke-hugepage.patch
 From:	2.6.14.4
 Desc:	Fix crash when ptrace poking hugepage areas
 
-Patch:	1045_4_listxattr-security-bounds.patch
+Patch:	1145_4_listxattr-security-bounds.patch
 From:	2.6.14.4
 Desc:	Fix listxattr() for generic security attributes
 
-Patch:	1046_4_netlink-fib_lookup.patch
+Patch:	1146_4_netlink-fib_lookup.patch
 From:	2.6.14.4
 Desc:	NETLINK: Fix processing of fib_lookup netlink messages
 
-Patch:	1047_4_serverworks-tlb-flush.patch
+Patch:	1147_4_serverworks-tlb-flush.patch
 From:	2.6.14.4
 Desc:	AGPGART: Fix serverworks TLB flush.
 
-Patch:	1048_4_i82365-resources.patch
+Patch:	1148_4_i82365-resources.patch
 From:	2.6.14.4
 Desc:	i82365: release all resources if no devices are found
 
-Patch:	1049_4_i8k-blank-service-tags.patch
+Patch:	1149_4_i8k-blank-service-tags.patch
 From:	2.6.14.4
 Desc:	I8K: fix /proc reporting of blank service tags
 
-Patch:	1050_4_ls120-eject.patch
+Patch:	1150_4_ls120-eject.patch
 From:	2.6.14.4
 Desc:	ide-floppy: software eject not working with LS-120 drive
 
-Patch:	1051_4_infiniband-null-deref.patch
+Patch:	1151_4_infiniband-null-deref.patch
 From:	2.6.14.4
 Desc:	drivers/infiniband/core/mad.c: fix a use-after-free
 
-Patch:	1052_4_libata-locking-rewrite.patch
+Patch:	1152_4_libata-locking-rewrite.patch
 From:	2.6.14.4
 Desc:	libata: locking rewrite (== fix)
 
-Patch:	1053_4_i2o-pci-null-deref.patch
+Patch:	1153_4_i2o-pci-null-deref.patch
 From:	2.6.14.4
 Desc:	drivers/message/i2o/pci.c: fix a use-after-free
 
-Patch:	1054_4_nm256-reset-workaround.patch
+Patch:	1154_4_nm256-reset-workaround.patch
 From:	2.6.14.4
 Desc:	ALSA: nm256: reset workaround for Latitude CSx
 
-Patch:	1055_4_bridge-features-recompute.patch
+Patch:	1155_4_bridge-features-recompute.patch
 From:	2.6.14.4
 Desc:	BRIDGE: recompute features when adding a new device
 
-Patch:	1056_4_setkeys-needs-root.patch
+Patch:	1156_4_setkeys-needs-root.patch
 From:	2.6.14.4
 Desc:	setkeys needs root
 
-Patch:	1057_4_microtek-scanner-scsi.patch
+Patch:	1157_4_microtek-scanner-scsi.patch
 From:	2.6.14.4
 Desc:	USB: Adapt microtek driver to new scsi features
 
-Patch:	1058_4_dtt761x-analog-ntsc.patch
+Patch:	1158_4_dtt761x-analog-ntsc.patch
 From:	2.6.14.4
 Desc:	V4L/DVB: Fix analog NTSC for Thomson DTT 761X hybrid tuner
 
-Patch:	1059_4_pinnacle-pctv-init.patch
+Patch:	1159_4_pinnacle-pctv-init.patch
 From:	2.6.14.4
 Desc:	V4L/DVB (3135) Fix tuner init for Pinnacle PCTV Stereo
 
-Patch:	1060_5_ctnetlink-attribute-size.patch
+Patch:	1160_5_ctnetlink-attribute-size.patch
 From:	2.6.14.5
 Desc:	Fix CTA_PROTO_NUM attribute size in ctnetlink
 
-Patch:	1061_5_ctnetlink-read_unlock_bh.patch
+Patch:	1161_5_ctnetlink-read_unlock_bh.patch
 From:	2.6.14.5
 Desc:	Fix unbalanced read_unlock_bh in ctnetlink
 
-Patch:	1062_5_acpi-video-brightness-null-deref.patch
+Patch:	1162_5_acpi-video-brightness-null-deref.patch
 From:	2.6.14.5
 Desc:	apci: fix NULL deref in video/lcd/brightness
 
-Patch:	1063_5_dpt_i20-deadlock.patch
+Patch:	1163_5_dpt_i20-deadlock.patch
 From:	2.6.14.5
 Desc:	dpt_i2o fix for deadlock condition
 
-Patch:	1064_5_skb_postpull_rcsum-fix.patch
+Patch:	1164_5_skb_postpull_rcsum-fix.patch
 From:	2.6.14.5
 Desc:	Fix hardware checksum modification
 
-Patch:	1065_5_vlan-hardware-checksum.patch
+Patch:	1165_5_vlan-hardware-checksum.patch
 From:	2.6.14.5
 Desc:	Fix hardware rx csum errors
 
-Patch:	1066_5_nat-init-order-fix.patch
+Patch:	1166_5_nat-init-order-fix.patch
 From:	2.6.14.5
 Desc:	Fix NAT init order
 
-Patch:	1067_5_ip6_nf_target_nfqueue-depend-fix.patch
+Patch:	1167_5_ip6_nf_target_nfqueue-depend-fix.patch
 From:	2.6.14.5
 Desc:	Fix incorrect dependency for IP6_NF_TARGET_NFQUEUE
 
-Patch:	1068_5_rtnlgrp-definitions-fix.patch
+Patch:	1168_5_rtnlgrp-definitions-fix.patch
 From:	2.6.14.5
 Desc:	Fix RTNLGRP definitions in rtnetlink.h
 
-Patch:	1069_5_bridge-nf-ipv6-length-check.patch
+Patch:	1169_5_bridge-nf-ipv6-length-check.patch
 From:	2.6.14.5
 Desc:	Fix bridge-nf ipv6 length check
 
-Patch:	1070_5_route-lifetime-fix.patch
+Patch:	1170_5_route-lifetime-fix.patch
 From:	2.6.14.5
 Desc:	Perform SA switchover immediately
 
-Patch:	1071_5_hid-input-oops.patch
+Patch:	1171_5_hid-input-oops.patch
 From:	2.6.14.5
 Desc:	Input: fix an OOPS in HID driver
 
-Patch:	1072_5_params-sysfs-access.patch
+Patch:	1172_5_params-sysfs-access.patch
 From:	2.6.14.5
 Desc:	kernel/params.c: fix sysfs access with CONFIG_MODULES=n
 
-Patch:	1073_5_scsi-transfer-direction-fix.patch
+Patch:	1173_5_scsi-transfer-direction-fix.patch
 From:	2.6.14.5
 Desc:	SCSI: fix transfer direction in sd (kernel panic when ejecting iPod)
 
-Patch:	1074_5_scsi_lib-st-transfer-direction-fix.patch
+Patch:	1174_5_scsi_lib-st-transfer-direction-fix.patch
 From:	2.6.14.5
 Desc:	SCSI: fix transfer direction in scsi_lib and st
 
-Patch:	1075_5_nfs-setacl-check-fix.patch
+Patch:	1175_5_nfs-setacl-check-fix.patch
 From:	2.6.14.5
 Desc:	setting ACLs on readonly mounted NFS filesystems (CVE-2005-3623)
 
-Patch:	1076_6_gem_remove_one-no-devexit.patch
+Patch:	1176_6_gem_remove_one-no-devexit.patch
 From:	2.6.14.6
 Desc:	gem_remove_one() shouldn't be __devexit in drivers/net/sungem.c
 
-Patch:	1077_6_ieee80211_crypt_tkip-kconfig-depends.patch
+Patch:	1177_6_ieee80211_crypt_tkip-kconfig-depends.patch
 From:	2.6.14.6
 Desc:	ieee80211_crypt_tkip depends on NET_RADIO
 
-Patch:	1078_6_proc-insanity-avoidance.patch
+Patch:	1178_6_proc-insanity-avoidance.patch
 From:	2.6.14.6
 Desc:	Clean up legacy /proc interfaces (CVE-2005-4605)
 
-Patch:	1079_6_sysctl-string-termination.patch
+Patch:	1179_6_sysctl-string-termination.patch
 From:	2.6.14.6
 Desc:	sysctl: make sure to terminate strings with a NUL
 
-Patch:	1080_6_ufs-release-i_sem.patch
+Patch:	1180_6_ufs-release-i_sem.patch
 From:	2.6.14.6
 Desc:	UFS: inode->i_sem is not released in error path
 
-Patch:	1081_6_sparc-blade-100-video-fix.patch
+Patch:	1181_6_sparc-blade-100-video-fix.patch
 From:	2.6.14.6
 Desc:	Fix onboard video on SPARC Blade 100
 
-Patch:	1083_irq-affinity-broken-with-msi.patch
-From:	2.6.15 stable queue
+Patch:	1182_7_irq-affinity-broken-with-msi.patch
+From:	2.6.14.7 
 Desc:	setting irq affinity is broken in ia32 with MSI enabled
 
-Patch:	1084_bridge-netfilter-matching-ip-fragments.patch
-From:	2.6.15 stable queue
+Patch:	1183_7_bridge-netfilter-ip-fragments.patch
+From:	2.6.14.7 
 Desc:	Don't match tcp/udp source/destination port for IP fragments
 
-Patch:	1087_fix-crash-in-ip_nat_pptp.patch
-From:	2.6.15 stable queue
-Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
+Patch:	1184_7_sparc64-ptrace.patch
+From:	2.6.14.7 
+Desc:	Don't clobber register %l0 in syscall return path
 
-Patch:	1088_fix-another-crash-in-ip_nat_pptp.patch
-From:	2.6.15 stable queue
-Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp
+Patch:	1185_7_sparc64-fstat64.patch
+From:	2.6.14.7 
+Desc:	Fix sys_fstat64() entry in 64-bit syscall table
 
-Patch:	1096_netlink-oops-fix.patch
-From:	2.6.15 stable queue
+Patch:	1186_7_netfilter-pptp-crash-1.patch
+From:	2.6.14.7 
+Desc:	[NETFILTER]: Fix crash in ip_nat_pptp (CVE-2006-0036)
+
+Patch:	1187_7_netfilter-pptp-crash-2.patch
+From:	2.6.14.7
+Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp (CVE-2006-0037)
+
+Patch:	1400_15.1_ppc-ml300-ep405-boot.patch 
+From:	2.6.15.1
+Desc:	ppc32: Re-add embed_config.c to ml300/ep405
+
+Patch:	1401_15.1_vgacon-doublescan.patch
+From:	2.6.15.1
+Desc:	vgacon: fix doublescan mode
+
+Patch:	1402_15.1_workqueue-oops-during-cpu-offline.patch
+From:	2.6.15.1 (backport)
+Desc:	fix workqueue oops during cpu offline
+
+Patch:	1403_15.1_netlink-oops-fix.patch
+From:	2.6.15.1
 Desc:	netlink oops fix due to incorrect error code
 
-Patch:	1100_rose-locking-fix.patch
+Patch:	1404_15.1_moxa-capability-check.patch
+From:	2.6.15.1
+Desc:	moxa serial: add proper capability check
+
+Patch:	1405_15.1_sparc64-64k-hugetlb-depends.patch
+From:	2.6.15.1
+Desc:	arch/sparc64/Kconfig: fix HUGETLB_PAGE_SIZE_64K dependencies
+
+Patch:	1406_15.2_kill-blk_attempt_remerge.patch
+From:	2.6.15.2 (backport)
+Desc:	Remove problematic blk_attempt_remerge() function (used by ide-cd)
+
+Patch:	1407_15.2_input-hid-oops-fix.patch
+From:	2.6.15.2 (backport)
+Desc:	fix an oops in PID initialization code
+
+Patch:	1408_15.2_sys_mq_open-double-decrement.patch
+From:	2.6.15.2 | http://bugs.gentoo.org/119087
+Desc:	double decrement in sys_mq_open (CVE-2005-3356)
+
+Patch:	1409_15.2_ufs-mount-oops-fix.patch
+From:	2.6.15.2
+Desc:	Fix oops in ufs_fill_super at mount time
+
+Patch:	1410_15.2_sparc64-timekeeping-fix.patch
+From:	2.6.15.2
+Desc:	Fix timekeeping on sparc64 ultra-IIe machines
+
+Patch:	1411_15.2_skb_reserve-signed-len.patch
+From:	2.6.15.2
+Desc:	Make second arg to skb_reserved() signed to fix issues on 64-bit arches
+
+Patch:	1412_15.2_pci-gart-mask-gfp-flags.patch
+From:	2.6.15.2 (backport)
+Desc:	Fix a gfp.h BUG due to passing bad gfp flags into gfp_zone
+
+Patch:	1413_15.2_reiserfs-mount-options-fix.patch
+From:	2.6.15.2
+Desc:	Fix reiserfs v3 mount options breakage
+
+Patch:	1414_15.2_i2o-scsi-abort-oops.patch
+From:	2.6.15.2
+Desc:	Fix i2o_scsi oops on abort
+
+Patch:	1700_rose-locking-fix.patch
 From:	http://bugs.gentoo.org/103553
 Desc:	Security fix for ROSE hardware
 
-Patch:	1105_irda-locking-fix.patch
+Patch:	1705_irda-locking-fix.patch
 From:	http://bugs.gentoo.org/103553
 Desc:	Security fix for donauboe irda hardware
 
-Patch:	1110_set-mempolicy-dos.patch
+Patch:	1710_set-mempolicy-dos.patch
 From:	http://bugs.gentoo.org/117855
 Desc:	Local DoS through set_mempolicy (CVE-2005-3358)
 
-Patch:	1300_ppc64-multilib.patch
+Patch:	1715_dm-crypt-zero-key-material.patch
+From:	http://bugs.gentoo.org/119562
+Desc:	dm-crypt module does not clear memory (CVE-2006-0095)
+
+Patch:	1720_dvb-dst-buffer-overflow-fix.patch
+From:	http://bugs.gentoo.org/119561
+Desc:	Buffer overflow in TwinHan DST DVB driver (CVE-2005-4639)
+
+Patch:	1800_ppc64-multilib.patch
 From:	dostrow@gentoo.org
 Desc:	PPC64 makefile fix for multilib stuff
 
-Patch:	1305_ppc-powerbook-5-8.patch
+Patch:	1805_ppc-powerbook-5-8.patch
 From:	http://bugs.gentoo.org/110899
 Desc:	Support new hardware on (5,8) powerbooks
 
-Patch:	1310_numa-early-panic.patch
+Patch:	1810_numa-early-panic.patch
 From:	http://bugs.gentoo.org/115620
 Desc:	Fix early NUMA/SPARSEMEM crash 
 
-Patch:	1315_ia64-assembler.patch
+Patch:	1815_ia64-assembler.patch
 From:	http://bugs.gentoo.org/116670
 Desc:	Compatibility with new binutils
 
-Patch:	1320_ppc-g5-overtemp.patch
+Patch:	1820_ppc-g5-overtemp.patch
 From:	http://bugs.gentoo.org/100023
 Desc:	Fix overtemp conditions on ppc g5
 
-Patch:	1340_sparc-obp64-naming.patch
+Patch:	1840_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
 
-Patch:	1360_sparc-kconfig-depends.patch
+Patch:	1860_sparc-kconfig-depends.patch
 From:	eradicator@gentoo.org
 Desc:	Fix depends statements for some drivers
 
-Patch:	1362_sparc-kconfig-fb.patch
+Patch:	1862_sparc-kconfig-fb.patch
 From:	eradicator@gentoo.org
 Desc:	SPARC Kconfig cleanups to the framebuffer Kconfig
 
-Patch:	1399_sparc-U1-hme-lockup.patch
+Patch:	1899_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
@@ -452,7 +525,7 @@ Patch:	2710_ht-slowdown-2.patch
 From:	http://bugs.gentoo.org/110661
 Desc:	Fix a problem where P4 HT's would run very slowly
 
-Patch:	2710_ht-slowdown-3.patch
+Patch:	2715_ht-slowdown-3.patch
 From:	http://bugs.gentoo.org/110661
 Desc:	Fix a problem where P4 HT's would run very slowly
 
