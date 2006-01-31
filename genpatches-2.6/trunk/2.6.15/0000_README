@@ -156,6 +156,10 @@ Patch:	1028_2_usb-audio-hang.patch
 From:	2.6.15.2
 Desc:	usb-audio: don't use empty packets at start of playback
 
+Patch:	1100_dm-crypt-zero-key.patch
+From:	http://bugs.gentoo.org/119562
+Desc:	dm-crypt module does not clear memory (CVE-2006-0095)
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems

@@ -1,0 +1,39 @@
+From: Stefan Rompf <stefan@loplof.de>
+Date: Fri, 6 Jan 2006 08:20:08 +0000 (-0800)
+Subject: [PATCH] dm-crypt: zero key before freeing it
+X-Git-Tag: v2.6.16-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9d3520a339d62f942085e9888f66905eb8b350bd
+
+[PATCH] dm-crypt: zero key before freeing it
+
+Zap the memory before freeing it so we don't leave crypto information
+around in memory.
+
+Signed-off-by: Stefan Rompf <stefan@loplof.de>
+Acked-by: Clemens Fruhwirth <clemens@endorphin.org>
+Acked-by: Alasdair G Kergon <agk@redhat.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -690,6 +690,8 @@ bad3:
+ bad2:
+ 	crypto_free_tfm(tfm);
+ bad1:
++	/* Must zero key material before freeing */
++	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
+ 	kfree(cc);
+ 	return -EINVAL;
+ }
+@@ -706,6 +708,9 @@ static void crypt_dtr(struct dm_target *
+ 		cc->iv_gen_ops->dtr(cc);
+ 	crypto_free_tfm(cc->tfm);
+ 	dm_put_device(ti, cc->dev);
++
++	/* Must zero key material before freeing */
++	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
+ 	kfree(cc);
+ }
+ 
