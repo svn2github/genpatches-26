@@ -180,6 +180,10 @@ Patch:	2305_scsi-cmd-leak.patch
 From:	stable queue
 Desc:	Fix SCSI command leak
 
+Patch:	2500_emu10k1-mixer-controls.patch
+From:	http://bugs.gentoo.org/120788
+Desc:	Fix emu10k1 sound driver
+
 Patch:	2700_bios-disable-processor.patch--22:57:23--
 From:	http://bugzilla.kernel.org/5930
 Desc:	Fix unused CPU on some SMP boards with broken BIOSes
