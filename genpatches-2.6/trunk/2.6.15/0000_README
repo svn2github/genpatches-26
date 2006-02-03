@@ -188,6 +188,10 @@ Patch:	2700_bios-disable-processor.patch--22:57:23--
 From:	http://bugzilla.kernel.org/5930
 Desc:	Fix unused CPU on some SMP boards with broken BIOSes
 
+Patch:	2705_dell-rbu-hang.patch
+From:	http://bugs.gentoo.org/121386
+Desc:	Fix hung dell_rbu firmware kernel thread
+
 Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
 Desc:	Support the upcoming Intel ICH8 chipset
