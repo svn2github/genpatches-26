@@ -160,6 +160,10 @@ Patch:	1100_dm-crypt-zero-key.patch
 From:	http://bugs.gentoo.org/119562
 Desc:	dm-crypt module does not clear memory (CVE-2006-0095)
 
+Patch:	1300_sparc64-set-date-hang.patch
+From:	http://bugs.gentoo.org/121331
+Desc:	Fix for setting date on sparc64 (CVE-2006-0482)
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
