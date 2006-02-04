@@ -1,9 +1,7 @@
 diff --git a/Documentation/fb/00-INDEX b/Documentation/fb/00-INDEX
 index 92e89ae..a6cfacc 100644
-Index: linux-2.6.16-rc1/Documentation/fb/00-INDEX
-===================================================================
---- linux-2.6.16-rc1.orig/Documentation/fb/00-INDEX
-+++ linux-2.6.16-rc1/Documentation/fb/00-INDEX
+--- a/Documentation/fb/00-INDEX
++++ b/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -13,10 +11,11 @@ Index: linux-2.6.16-rc1/Documentation/fb/00-INDEX
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
-===================================================================
+diff --git a/Documentation/fb/splash.txt b/Documentation/fb/splash.txt
+new file mode 100644
+index 0000000..5e3b009
 --- /dev/null
-+++ linux-2.6.16-rc1/Documentation/fb/splash.txt
++++ b/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -47,21 +46,21 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +kernel whenever an important event occurs and the kernel needs some kind of
 +job to be carried out. Important events include console switches and graphic
 +mode switches (the kernel requests background images and configuration
-+parameters for the current console). The splash helper must be accessible at
++parameters for the current console). The splash helper must be accessible at 
 +all times. If it's not, fbsplash will be switched off automatically.
 +
-+It's possible to set path to the splash helper by writing it to
++It's possible to set path to the splash helper by writing it to 
 +/proc/sys/kernel/fbsplash.
 +
 +*****************************************************************************
 +
-+The information below is mostly technical stuff. There's probably no need to
++The information below is mostly technical stuff. There's probably no need to 
 +read it unless you plan to develop a userspace helper.
 +
 +The splash protocol
 +-------------------
 +
-+The splash protocol defines a communication interface between the kernel and
++The splash protocol defines a communication interface between the kernel and 
 +the userspace splash helper.
 +
 +The kernel side is responsible for:
@@ -69,7 +68,7 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 + o rendering console text, using an image as a background (instead of a
 +   standard solid color fbcon uses),
 + o accepting commands from the user via ioctls on the fbsplash device,
-+ o calling the userspace helper to set things up as soon as the fb subsystem
++ o calling the userspace helper to set things up as soon as the fb subsystem 
 +   is initialized.
 +
 +The userspace helper is responsible for everything else, including parsing
@@ -78,7 +77,7 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +
 +The splash protocol specifies how communication is done in both ways:
 +kernel->userspace and userspace->helper.
-+
++  
 +Kernel -> Userspace
 +-------------------
 +
@@ -93,7 +92,7 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 + framebuffer number
 + theme
 +
-+Splash protocol v1 specified an additional 'fbsplash mode' after the
++Splash protocol v1 specified an additional 'fbsplash mode' after the 
 +framebuffer number. Splash protocol v1 is deprecated and should not be used.
 +
 +Splash protocol v2 specifies the following commands:
@@ -101,16 +100,16 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +getpic
 +------
 + The kernel issues this command to request image data. It's up to the userspace
-+ helper to find a background image appropriate for the specified theme and the
++ helper to find a background image appropriate for the specified theme and the 
 + current resolution. The userspace helper should respond by issuing the
 + FBIOSPLASH_SETPIC ioctl.
 +
 +init
 +----
 + The kernel issues this command after the fbsplash device is created and
-+ the fbsplash interface is initialized. Upon receiving 'init', the userspace
++ the fbsplash interface is initialized. Upon receiving 'init', the userspace 
 + helper should parse the kernel command line (/proc/cmdline) or otherwise
-+ decide whether fbsplash is to be activated.
++ decide whether fbsplash is to be activated. 
 +
 + To activate fbsplash on the first console the helper should issue the
 + FBIOSPLASH_SETCFG, FBIOSPLASH_SETPIC and FBIOSPLASH_SETSTATE commands,
@@ -118,10 +117,10 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +
 + When the userspace helper is called in an early phase of the boot process
 + (right after the initialization of fbcon), no filesystems will be mounted.
-+ The helper program should mount sysfs and then create the appropriate
-+ framebuffer, fbsplash and tty0 devices (if they don't already exist) to get
++ The helper program should mount sysfs and then create the appropriate 
++ framebuffer, fbsplash and tty0 devices (if they don't already exist) to get 
 + current display settings and to be able to communicate with the kernel side.
-+ It should probably also mount the procfs to be able to parse the kernel
++ It should probably also mount the procfs to be able to parse the kernel 
 + command line parameters.
 +
 + Note that the console sem is not held when the kernel calls splash_helper
@@ -139,32 +138,32 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +Userspace -> Kernel
 +-------------------
 +
-+Userspace programs can communicate with fbsplash via ioctls on the fbsplash
-+device. These ioctls are to be used by both the userspace helper (called
++Userspace programs can communicate with fbsplash via ioctls on the fbsplash 
++device. These ioctls are to be used by both the userspace helper (called 
 +only by the kernel) and userspace configuration tools (run by the users).
 +
-+The splash helper should set the origin field to FB_SPLASH_IO_ORIG_KERNEL
-+when doing the appropriate ioctls. All userspace configuration tools should
++The splash helper should set the origin field to FB_SPLASH_IO_ORIG_KERNEL 
++when doing the appropriate ioctls. All userspace configuration tools should 
 +use FB_SPLASH_IO_ORIG_USER. Failure to set the appropriate value in the origin
-+field when performing ioctls from the kernel helper will most likely result
++field when performing ioctls from the kernel helper will most likely result 
 +in a console deadlock.
 +
 +FB_SPLASH_IO_ORIG_KERNEL instructs fbsplash not to try to acquire the console
 +semaphore. Not surprisingly, FB_SPLASH_IO_ORIG_USER instructs it to acquire
 +the console sem.
 +
-+The framebuffer splash provides the following ioctls (all defined in
++The framebuffer splash provides the following ioctls (all defined in 
 +linux/fb.h):
 +
 +FBIOSPLASH_SETPIC
 +description: loads a background picture for a virtual console
 +argument: struct fb_splash_iowrapper*; data: struct fb_image*
-+notes:
-+If called for consoles other than the current foreground one, the picture data
++notes: 
++If called for consoles other than the current foreground one, the picture data 
 +will be ignored.
 +
 +If the current virtual console is running in a 8-bpp mode, the cmap substruct
-+of fb_image has to be filled appropriately: start should be set to 16 (first
++of fb_image has to be filled appropriately: start should be set to 16 (first 
 +16 colors are reserved for fbcon), len to a value <= 240 and red, green and
 +blue should point to valid cmap data. The transp field is ingored. The fields
 +dx, dy, bg_color, fg_color in fb_image are ignored as well.
@@ -192,23 +191,23 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +
 +Definition of struct vc_splash can be found in linux/console_splash.h. It's
 +heavily commented. Note that the 'theme' field should point to a string
-+no longer than FB_SPLASH_THEME_LEN. When FBIOSPLASH_GETCFG call is
++no longer than FB_SPLASH_THEME_LEN. When FBIOSPLASH_GETCFG call is 
 +performed, the theme field should point to a char buffer of length
 +FB_SPLASH_THEME_LEN.
 +
 +Definition of struct fb_splash_iowrapper can be found in linux/fb.h.
 +The fields in this struct have the following meaning:
 +
-+vc:
++vc: 
 +Virtual console number.
 +
-+origin:
++origin: 
 +Specifies if the ioctl is performed as a response to a kernel request. The
 +splash helper should set this field to FB_SPLASH_IO_ORIG_KERNEL, userspace
 +programs should set it to FB_SPLASH_IO_ORIG_USER. This field is necessary to
 +avoid console semaphore deadlocks.
 +
-+data:
++data: 
 +Pointer to a data structure appropriate for the performed ioctl. Type of
 +the data struct is specified in the ioctls description.
 +
@@ -225,10 +224,35 @@ Index: linux-2.6.16-rc1/Documentation/fb/splash.txt
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michael Januszewski <spock@gentoo.org>
 +
-Index: linux-2.6.16-rc1/drivers/video/Kconfig
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/video/Kconfig
-+++ linux-2.6.16-rc1/drivers/video/Kconfig
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 619dd96..54d2f29 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -8,6 +8,9 @@
+ obj-$(CONFIG_PCI)		+= pci/
+ obj-$(CONFIG_PARISC)		+= parisc/
+ obj-$(CONFIG_RAPIDIO)		+= rapidio/
++# char/ comes before serial/ etc so that the VT console is the boot-time
++# default.
++obj-y				+= char/
+ obj-y				+= video/
+ obj-$(CONFIG_ACPI)		+= acpi/
+ # PnP must come after ACPI since it will eventually need to check if acpi
+@@ -15,10 +18,6 @@ obj-$(CONFIG_ACPI)		+= acpi/
+ obj-$(CONFIG_PNP)		+= pnp/
+ obj-$(CONFIG_ARM_AMBA)		+= amba/
+ 
+-# char/ comes before serial/ etc so that the VT console is the boot-time
+-# default.
+-obj-y				+= char/
+-
+ obj-$(CONFIG_CONNECTOR)		+= connector/
+ 
+ # i810fb and intelfb depend on char/agp/
+diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
+index 3e153d3..9444a96 100644
+--- a/drivers/video/Kconfig
++++ b/drivers/video/Kconfig
 @@ -759,7 +759,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
@@ -249,15 +273,15 @@ Index: linux-2.6.16-rc1/drivers/video/Kconfig
 +	---help---
 +	  This option enables support for the Linux boot-up splash screen and
 +	  graphical backgrounds on consoles. Note that you will need userspace
-+	  splash utilities in order to take advantage of these features. Refer
++	  splash utilities in order to take advantage of these features. Refer 
 +	  to Documentation/fb/splash.txt for more information.
  
 +	  If unsure, say N.
 +endmenu
-Index: linux-2.6.16-rc1/drivers/video/Makefile
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/video/Makefile
-+++ linux-2.6.16-rc1/drivers/video/Makefile
+diff --git a/drivers/video/Makefile b/drivers/video/Makefile
+index aa434e7..8a74fce 100644
+--- a/drivers/video/Makefile
++++ b/drivers/video/Makefile
 @@ -7,6 +7,7 @@
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
@@ -266,17 +290,18 @@ Index: linux-2.6.16-rc1/drivers/video/Makefile
  
  obj-$(CONFIG_FB)                  += fb.o
  fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o \
-Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
-===================================================================
+diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
+new file mode 100644
+index 0000000..4adeb2e
 --- /dev/null
-+++ linux-2.6.16-rc1/drivers/video/cfbsplash.c
++++ b/drivers/video/cfbsplash.c
 @@ -0,0 +1,472 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
-+ *
++ *  
 + *  Copyright (C) 2004 Michal Januszewski <spock@gentoo.org>
 + *
-+ *  Code based upon "Bootsplash" (C) 2001-2003
++ *  Code based upon "Bootsplash" (C) 2001-2003 
 + *       Volker Poplawski <volker@poplawski.de>,
 + *       Stefan Reinauer <stepan@suse.de>,
 + *       Steffen Winterfeldt <snwint@suse.de>,
@@ -286,7 +311,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 + *  This file is subject to the terms and conditions of the GNU General Public
 + *  License.  See the file COPYING in the main directory of this archive for
 + *  more details.
-+ */
++ */ 
 +#include <linux/config.h>
 +#include <linux/module.h>
 +#include <linux/types.h>
@@ -314,26 +339,26 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +void fbsplash_fix_pseudo_pal(struct fb_info *info, struct vc_data *vc)
 +{
 +	int i, j, k;
-+	int minlen = min(min(info->var.red.length, info->var.green.length),
++	int minlen = min(min(info->var.red.length, info->var.green.length), 
 +			     info->var.blue.length);
 +	u32 col;
-+
++	
 +	for (j = i = 0; i < 16; i++) {
 +		k = color_table[i];
-+
-+		col = ((vc->vc_palette[j++]  >> (8-minlen))
++                      
++		col = ((vc->vc_palette[j++]  >> (8-minlen)) 
 +			<< info->var.red.offset);
-+		col |= ((vc->vc_palette[j++] >> (8-minlen))
++		col |= ((vc->vc_palette[j++] >> (8-minlen)) 
 +			<< info->var.green.offset);
-+		col |= ((vc->vc_palette[j++] >> (8-minlen))
++		col |= ((vc->vc_palette[j++] >> (8-minlen)) 
 +			<< info->var.blue.offset);
 +			((u32 *)info->pseudo_palette)[k] = col;
 +	}
 +}
-+
-+void fbsplash_renderc(struct fb_info *info, int ypos, int xpos, int height,
++				
++void fbsplash_renderc(struct fb_info *info, int ypos, int xpos, int height, 
 +		      int width, u8* src, u32 fgx, u32 bgx, u8 transparent)
-+{
++{	
 +	unsigned int x, y;
 +	u32 dd;
 +	int bytespp = ((info->var.bits_per_pixel + 7) >> 3);
@@ -346,10 +371,10 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +
 +	if ((ypos + height) > info->var.yres || (xpos + width) > info->var.xres)
 +		return;
-+
++	
 +	for (y = 0; y < height; y++) {
 +		switch (info->var.bits_per_pixel) {
-+
++	
 +		case 32:
 +			for (x = 0; x < width; x++) {
 +
@@ -358,9 +383,9 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +				if (d & 0x80)
 +					dd = fgx;
 +				else
-+					dd = transparent ?
++					dd = transparent ? 
 +					     *(u32 *)splash_src : bgx;
-+
++				
 +				d <<= 1;
 +				splash_src += 4;
 +				fb_writel(dd, dst);
@@ -375,9 +400,9 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +				if (d & 0x80)
 +					dd = fgx;
 +				else
-+					dd = transparent ?
++					dd = transparent ? 
 +					     (*(u32 *)splash_src & 0xffffff) : bgx;
-+
++				
 +				d <<= 1;
 +				splash_src += 3;
 +#ifdef __LITTLE_ENDIAN
@@ -414,12 +439,12 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +			for (x = 0; x < width; x += 4) {
 +				if ((x & 7) == 0)
 +					d = *src++;
-+
++	
 +				parse_pixel(0, 1, u8);
 +				parse_pixel(1, 1, u8);
 +				parse_pixel(2, 1, u8);
 +				parse_pixel(3, 1, u8);
-+
++		
 +#ifdef __LITTLE_ENDIAN
 +				dd = dd2[0] | (dd2[1] << 8) | (dd2[2] << 16) | (dd2[3] << 24);
 +#else
@@ -428,7 +453,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +				d <<= 4;
 +				fb_writel(dd, dst);
 +				dst += 4;
-+			}
++			}		
 +		}
 +
 +		dst += info->fix.line_length - width * bytespp;
@@ -453,9 +478,9 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +
 +	fg_color = get_color(vc, info, c, 1);
 +        bg_color = get_color(vc, info, c, 0);
-+
++	
 +	/* Don't paint the background image if console is blanked */
-+	transparent = ops->blank_state ? 0 :
++	transparent = ops->blank_state ? 0 : 
 +		(vc->vc_splash.bg_color == bg_color);
 +
 +	xx = xx * vc->vc_font.width + vc->vc_splash.tx;
@@ -469,7 +494,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +		src = vc->vc_font.data + (c & charmask) * vc->vc_font.height *
 +		      ((vc->vc_font.width + 7) >> 3);
 +
-+		fbsplash_renderc(info, yy, xx, vc->vc_font.height,
++		fbsplash_renderc(info, yy, xx, vc->vc_font.height, 
 +			       vc->vc_font.width, src, fgx, bgx, transparent);
 +		xx += vc->vc_font.width;
 +	}
@@ -480,7 +505,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +	int i;
 +	unsigned int dsize, s_pitch;
 +	struct fbcon_ops *ops = info->fbcon_par;
-+	struct vc_data* vc;
++	struct vc_data* vc;	
 +	u8 *src;
 +
 +	/* we really don't need any cursors while the console is blanked */
@@ -495,7 +520,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +
 +	s_pitch = (cursor->image.width + 7) >> 3;
 +	dsize = s_pitch * cursor->image.height;
-+	if (cursor->enable) {
++	if (cursor->enable) {	
 +		switch (cursor->rop) {
 +		case ROP_XOR:
 +			for (i = 0; i < dsize; i++)
@@ -523,27 +548,27 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +	kfree(src);
 +}
 +
-+static void splashset(u8 *dst, int height, int width, int dstbytes,
++static void splashset(u8 *dst, int height, int width, int dstbytes, 
 +		        u32 bgx, int bpp)
 +{
 +	int i;
-+
++	
 +	if (bpp == 8)
 +		bgx |= bgx << 8;
 +	if (bpp == 16 || bpp == 8)
 +		bgx |= bgx << 16;
-+
++	
 +	while (height-- > 0) {
 +		u8 *p = dst;
-+
++		
 +		switch (bpp) {
-+
++		
 +		case 32:
 +			for (i=0; i < width; i++) {
 +				fb_writel(bgx, p); p += 4;
 +			}
 +			break;
-+		case 24:
++		case 24:	
 +			for (i=0; i < width; i++) {
 +#ifdef __LITTLE_ENDIAN
 +				fb_writew((bgx & 0xffff),(u16*)p); p += 2;
@@ -568,7 +593,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +			for (i=0; i < width/4; i++) {
 +				fb_writel(bgx,p); p += 4;
 +			}
-+
++			
 +			if (width & 2) {
 +				fb_writew(bgx,p); p += 2;
 +			}
@@ -576,12 +601,12 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +				fb_writeb(bgx,(u8*)p);
 +			break;
 +
-+		}
++		}		
 +		dst += dstbytes;
 +	}
 +}
 +
-+void fbsplash_copy(u8 *dst, u8 *src, int height, int width, int linebytes,
++void fbsplash_copy(u8 *dst, u8 *src, int height, int width, int linebytes, 
 +		   int srclinebytes, int bpp)
 +{
 +	int i;
@@ -591,12 +616,12 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +		u32 *q = (u32 *)src;
 +
 +		switch (bpp) {
-+
++	
 +		case 32:
 +			for (i=0; i < width; i++)
 +				fb_writel(*q++, p++);
-+			break;
-+		case 24:
++			break;	
++		case 24:	
 +			for (i=0; i < (width*3/4); i++)
 +				fb_writel(*q++, p++);
 +			if ((width*3) % 4) {
@@ -619,11 +644,11 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +				fb_writew(*(u16*)q, (u16*)p);
 +			break;
 +		case 8:
-+			for (i=0; i < width/4; i++)
++			for (i=0; i < width/4; i++) 
 +				fb_writel(*q++, p++);
-+
++				
 +			if (width & 2) {
-+				fb_writew(*(u16*)q, (u16*)p);
++				fb_writew(*(u16*)q, (u16*)p); 
 +				q = (u32*) ((u16*)q + 1);
 +				p = (u32*) ((u16*)p + 1);
 +			}
@@ -637,8 +662,8 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +	}
 +}
 +
-+static void splashfill(struct fb_info *info, int sy, int sx, int height,
-+		       int width)
++static void splashfill(struct fb_info *info, int sy, int sx, int height, 
++		       int width) 
 +{
 +	int bytespp = ((info->var.bits_per_pixel + 7) >> 3);
 +	int d  = sy * info->fix.line_length + sx * bytespp;
@@ -649,7 +674,7 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +		    info->var.bits_per_pixel);
 +}
 +
-+void fbsplash_clear(struct vc_data *vc, struct fb_info *info, int sy, int sx,
++void fbsplash_clear(struct vc_data *vc, struct fb_info *info, int sy, int sx, 
 +		    int height, int width)
 +{
 +	int bgshift = (vc->vc_hi_font_mask) ? 13 : 12;
@@ -667,14 +692,14 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +	if (transparent && !ops->blank_state) {
 +		splashfill(info, sy, sx, height, width);
 +	} else {
-+		dst = (u8 *)(info->screen_base + sy * info->fix.line_length +
++		dst = (u8 *)(info->screen_base + sy * info->fix.line_length + 
 +			     sx * ((info->var.bits_per_pixel + 7) >> 3));
-+		splashset(dst, height, width, info->fix.line_length, cc2cx(bg_color),
++		splashset(dst, height, width, info->fix.line_length, cc2cx(bg_color), 
 +			  info->var.bits_per_pixel);
 +	}
 +}
 +
-+void fbsplash_clear_margins(struct vc_data *vc, struct fb_info *info,
++void fbsplash_clear_margins(struct vc_data *vc, struct fb_info *info, 
 +			    int bottom_only)
 +{
 +	unsigned int tw = vc->vc_cols*vc->vc_font.width;
@@ -686,14 +711,14 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +		/* left margin */
 +		splashfill(info, vc->vc_splash.ty, 0, th, vc->vc_splash.tx);
 +		/* right margin */
-+		splashfill(info, vc->vc_splash.ty, vc->vc_splash.tx + tw, th,
++		splashfill(info, vc->vc_splash.ty, vc->vc_splash.tx + tw, th, 
 +			   info->var.xres - vc->vc_splash.tx - tw);
 +	}
-+	splashfill(info, vc->vc_splash.ty + th, 0,
++	splashfill(info, vc->vc_splash.ty + th, 0, 
 +		   info->var.yres - vc->vc_splash.ty - th, info->var.xres);
 +}
 +
-+void fbsplash_bmove_redraw(struct vc_data *vc, struct fb_info *info, int y,
++void fbsplash_bmove_redraw(struct vc_data *vc, struct fb_info *info, int y, 
 +			   int sx, int dx, int width)
 +{
 +	u16 *d = (u16 *) (vc->vc_origin + vc->vc_size_row * y + dx * 2);
@@ -743,10 +768,10 @@ Index: linux-2.6.16-rc1/drivers/video/cfbsplash.c
 +	}
 +}
 +
-Index: linux-2.6.16-rc1/drivers/video/console/bitblit.c
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/video/console/bitblit.c
-+++ linux-2.6.16-rc1/drivers/video/console/bitblit.c
+diff --git a/drivers/video/console/bitblit.c b/drivers/video/console/bitblit.c
+index eea422e..f7eb288 100644
+--- a/drivers/video/console/bitblit.c
++++ b/drivers/video/console/bitblit.c
 @@ -18,6 +18,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
@@ -789,10 +814,10 @@ Index: linux-2.6.16-rc1/drivers/video/console/bitblit.c
  
  	ops->cursor_reset = 0;
  }
-Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/video/console/fbcon.c
-+++ linux-2.6.16-rc1/drivers/video/console/fbcon.c
+diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
+index 041d069..945b5b0 100644
+--- a/drivers/video/console/fbcon.c
++++ b/drivers/video/console/fbcon.c
 @@ -93,6 +93,7 @@
  #endif
  
@@ -823,7 +848,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
  		CM_ERASE : CM_DRAW;
  	ops->cursor(vc, info, mode, softback_lines, get_color(vc, info, c, 1),
  		    get_color(vc, info, c, 0));
-+
++	
  	release_console_sem();
  }
  
@@ -866,7 +891,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 + 		fbsplash_clear(vc, info, sy, sx, height, width);
 + 		return;
 + 	}
-+
++ 	
  	/* Split blits that cross physical y_wrap boundary */
  
  	y_break = p->vrows - p->yscroll;
@@ -879,7 +904,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 -			   get_color(vc, info, scr_readw(s), 1),
 -			   get_color(vc, info, scr_readw(s), 0));
 +	if (!fbcon_is_inactive(vc, info)) {
-+
++		
 +		if (fbsplash_active(info, vc))
 +			fbsplash_putcs(vc, info, s, count, ypos, xpos);
 +		else
@@ -934,7 +959,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 + 		fbsplash_bmove_redraw(vc, info, sy, sx, dx, width);
 + 		return;
 + 	}
-+
++	
  	ops->bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  		   height, width);
  }
@@ -958,23 +983,23 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 +	prev_console = ops->currcon;
 +	if (prev_console != -1)
 +		old_info = registered_fb[con2fb_map[prev_console]];
-+
++	
 +	if (fbsplash_active_vc(vc)) {
 +		struct vc_data *vc_curr = vc_cons[prev_console].d;
 +		if (!vc_curr->vc_splash.theme || strcmp(vc->vc_splash.theme, vc_curr->vc_splash.theme)) {
 +			if (fbsplash_call_helper("getpic", vc->vc_num))
 +				fbsplash_disable(vc, 0);
 +		}
-+	} else if (info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
++	} else if (info->fix.visual == FB_VISUAL_DIRECTCOLOR) { 
 +		struct vc_data *vc_curr = vc_cons[prev_console].d;
 +		if (vc_curr && fbsplash_active_vc(vc_curr)) {
 +			/* Clear the screen to avoid displaying funky colors during
-+			 * palette updates. */
++			 * palette updates. */ 
 +			memset((u8*)info->screen_base + info->fix.line_length * info->var.yoffset,
 +			       0, info->var.yres * info->fix.line_length);
 +		}
 +	}
-+
++	
  	if (softback_top) {
  		if (softback_lines)
  			fbcon_set_origin(vc);
@@ -1009,7 +1034,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 +			if (fb_blank(info, blank)) {
 +				if (fbsplash_active(info, vc))
 +					fbsplash_blank(vc, info, blank);
-+				else
++				else 
 +					fbcon_generic_blank(vc, info, blank);
 +			}
  		}
@@ -1056,7 +1081,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 +	    info->fix.visual == FB_VISUAL_DIRECTCOLOR) {
 +
 +		u16 *red, *green, *blue;
-+		int minlen = min(min(info->var.red.length, info->var.green.length),
++		int minlen = min(min(info->var.red.length, info->var.green.length), 
 +				     info->var.blue.length);
 +		int h;
 +
@@ -1070,16 +1095,16 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 +		};
 +
 +		red = kmalloc(256 * sizeof(u16) * 3, GFP_KERNEL);
-+
++	
 +		if (!red)
-+			goto out;
-+
++			goto out;		
++	
 +		green = red + 256;
 +		blue = green + 256;
 +		cmap.red = red;
 +		cmap.green = green;
 +		cmap.blue = blue;
-+
++		
 +		for (i = 0; i < cmap.len; i++) {
 +			red[i] = green[i] = blue[i] = (0xffff * i)/(cmap.len-1);
 +		}
@@ -1087,13 +1112,13 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
 +		h = fb_set_cmap(&cmap, info);
 +		fbsplash_fix_pseudo_pal(info, vc_cons[fg_console].d);
 +		kfree(red);
-+
++		
 +		return h;
-+
-+	} else if (fbsplash_active(info, vc_cons[fg_console].d) &&
-+		   info->var.bits_per_pixel == 8 && info->splash.cmap.red != NULL)
++		
++	} else if (fbsplash_active(info, vc_cons[fg_console].d) && 
++		   info->var.bits_per_pixel == 8 && info->splash.cmap.red != NULL) 
 +		fb_set_cmap(&info->splash.cmap, info);
-+
++		
 +out:	return fb_set_cmap(&palette_cmap, info);
  }
  
@@ -1103,7 +1128,7 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
 -		vc_resize(vc, cols, rows);
-+
++				
 +		if (!fbsplash_active_nores(info, vc)) {
 +			vc_resize(vc, cols, rows);
 +		} else {
@@ -1114,10 +1139,10 @@ Index: linux-2.6.16-rc1/drivers/video/console/fbcon.c
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-Index: linux-2.6.16-rc1/drivers/video/fbcmap.c
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/video/fbcmap.c
-+++ linux-2.6.16-rc1/drivers/video/fbcmap.c
+diff --git a/drivers/video/fbcmap.c b/drivers/video/fbcmap.c
+index c32a2a5..3a227fa 100644
+--- a/drivers/video/fbcmap.c
++++ b/drivers/video/fbcmap.c
 @@ -16,6 +16,7 @@
  #include <linux/tty.h>
  #include <linux/fb.h>
@@ -1131,7 +1156,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbcmap.c
  				htransp = *transp++;
  			if (info->fbops->fb_setcolreg(start++,
 -						      hred, hgreen, hblue,
-+						      hred, hgreen, hblue,
++						      hred, hgreen, hblue, 
  						      htransp, info))
  				break;
  		}
@@ -1152,21 +1177,22 @@ Index: linux-2.6.16-rc1/drivers/video/fbcmap.c
  	int rc, size = cmap->len * sizeof(u16);
  	struct fb_cmap umap;
 -
-+
++	
  	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
  			        !info->fbops->fb_setcmap))
  		return -EINVAL;
-Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
-===================================================================
+diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
+new file mode 100644
+index 0000000..a12d5b8
 --- /dev/null
-+++ linux-2.6.16-rc1/drivers/video/fbsplash.c
++++ b/drivers/video/fbsplash.c
 @@ -0,0 +1,406 @@
-+/*
++/* 
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
 + *
 + *  Copyright (C) 2004 Michal Januszewski <spock@gentoo.org>
 + *
-+ *  Code based upon "Bootsplash" (C) 2001-2003
++ *  Code based upon "Bootsplash" (C) 2001-2003 
 + *       Volker Poplawski <volker@poplawski.de>,
 + *       Stefan Reinauer <stepan@suse.de>,
 + *       Steffen Winterfeldt <snwint@suse.de>,
@@ -1174,11 +1200,11 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 + *       Ken Wimer <wimer@suse.de>.
 + *
 + *  Splash render routines are located in /linux/drivers/video/cfbsplash.c
-+ *
++ * 
 + *  This file is subject to the terms and conditions of the GNU General Public
 + *  License.  See the file COPYING in the main directory of this archive for
 + *  more details.
-+ *
++ * 
 + */
 +#include <linux/config.h>
 +#include <linux/module.h>
@@ -1252,18 +1278,18 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	if (info == NULL)
 +		return -EINVAL;
 +
-+	vc->vc_splash.state = 0;
-+	vc_resize(vc, info->var.xres / vc->vc_font.width,
++	vc->vc_splash.state = 0; 
++	vc_resize(vc, info->var.xres / vc->vc_font.width, 
 +		  info->var.yres / vc->vc_font.height);
 +
 +	if (fg_console == vc->vc_num && redraw) {
 +		redraw_screen(vc, 0);
-+		update_region(vc, vc->vc_origin +
-+			      vc->vc_size_row * vc->vc_top,
++		update_region(vc, vc->vc_origin + 
++			      vc->vc_size_row * vc->vc_top, 
 +			      vc->vc_size_row * (vc->vc_bottom - vc->vc_top) / 2);
 +	}
 +
-+	printk(KERN_INFO "fbsplash: switched splash state to 'off' on console %d\n",
++	printk(KERN_INFO "fbsplash: switched splash state to 'off' on console %d\n", 
 +			 vc->vc_num);
 +
 +	return 0;
@@ -1275,25 +1301,25 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	struct fb_info* info;
 +
 +	info = registered_fb[(int) con2fb_map[vc->vc_num]];
-+
-+	if (vc->vc_splash.twidth == 0 || vc->vc_splash.theight == 0 ||
++		
++	if (vc->vc_splash.twidth == 0 || vc->vc_splash.theight == 0 || 
 +	    info == NULL || vc->vc_splash.state || (!info->splash.data &&
 +	    vc->vc_num == fg_console))
 +		return -EINVAL;
-+
++	
 +	vc->vc_splash.state = 1;
-+	vc_resize(vc, vc->vc_splash.twidth / vc->vc_font.width,
++	vc_resize(vc, vc->vc_splash.twidth / vc->vc_font.width, 
 +		  vc->vc_splash.theight / vc->vc_font.height);
 +
 +	if (fg_console == vc->vc_num) {
 +		redraw_screen(vc, 0);
-+		update_region(vc, vc->vc_origin +
-+			      vc->vc_size_row * vc->vc_top,
++		update_region(vc, vc->vc_origin + 
++			      vc->vc_size_row * vc->vc_top, 
 +			      vc->vc_size_row * (vc->vc_bottom - vc->vc_top) / 2);
 +		fbsplash_clear_margins(vc, info, 0);
 +	}
 +
-+	printk(KERN_INFO "fbsplash: switched splash state to 'on' on console %d\n",
++	printk(KERN_INFO "fbsplash: switched splash state to 'on' on console %d\n", 
 +			 vc->vc_num);
 +
 +	return 0;
@@ -1329,12 +1355,12 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	struct fb_info *info;
 +	int len;
 +	char *tmp;
-+
++	
 +	info = registered_fb[(int) con2fb_map[vc->vc_num]];
 +
 +	if (copy_from_user(&cfg, arg, sizeof(struct vc_splash)))
 +		return -EFAULT;
-+	if (info == NULL || !cfg.twidth || !cfg.theight ||
++	if (info == NULL || !cfg.twidth || !cfg.theight || 
 +	    cfg.tx + cfg.twidth  > info->var.xres ||
 +	    cfg.ty + cfg.theight > info->var.yres)
 +		return -EINVAL;
@@ -1352,7 +1378,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +
 +	/* If this ioctl is a response to a request from kernel, the console sem
 +	 * is already held; we also don't need to disable splash because either the
-+	 * new config and background picture will be successfully loaded, and the
++	 * new config and background picture will be successfully loaded, and the 
 +	 * splash will stay on, or in case of a failure it'll be turned off in fbcon. */
 +	if (origin == FB_SPLASH_IO_ORIG_USER) {
 +		acquire_console_sem();
@@ -1368,9 +1394,9 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	if (origin == FB_SPLASH_IO_ORIG_USER)
 +		release_console_sem();
 +
-+	printk(KERN_INFO "fbsplash: console %d using theme '%s'\n",
++	printk(KERN_INFO "fbsplash: console %d using theme '%s'\n", 
 +			 vc->vc_num, vc->vc_splash.theme);
-+	return 0;
++	return 0;	
 +}
 +
 +static int fbsplash_ioctl_dogetcfg(struct vc_data *vc, struct vc_splash __user *arg)
@@ -1380,7 +1406,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +
 +	if (get_user(tmp, &arg->theme))
 +		return -EFAULT;
-+
++	
 +	splash = vc->vc_splash;
 +	splash.theme = tmp;
 +
@@ -1403,18 +1429,18 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	struct fb_info *info;
 +	int len;
 +	u8 *tmp;
-+
-+	if (vc->vc_num != fg_console)
++	
++	if (vc->vc_num != fg_console) 
 +		return -EINVAL;
 +
 +	info = registered_fb[(int) con2fb_map[vc->vc_num]];
-+
++	
 +	if (info == NULL)
 +		return -EINVAL;
-+
++	
 +	if (copy_from_user(&img, arg, sizeof(struct fb_image)))
 +		return -EFAULT;
-+
++	
 +	if (img.width != info->var.xres || img.height != info->var.yres) {
 +		printk(KERN_ERR "fbsplash: picture dimensions mismatch\n");
 +		return -EINVAL;
@@ -1424,12 +1450,12 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +		printk(KERN_ERR "fbsplash: picture depth mismatch\n");
 +		return -EINVAL;
 +	}
-+
++		
 +	if (img.depth == 8) {
-+		if (!img.cmap.len || !img.cmap.red || !img.cmap.green ||
++		if (!img.cmap.len || !img.cmap.red || !img.cmap.green || 
 +		    !img.cmap.blue)
 +			return -EINVAL;
-+
++		
 +		tmp = vmalloc(img.cmap.len * 3 * 2);
 +		if (!tmp)
 +			return -ENOMEM;
@@ -1442,7 +1468,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +			vfree(tmp);
 +			return -EFAULT;
 +		}
-+
++			
 +		img.cmap.transp = NULL;
 +		img.cmap.red = (u16*)tmp;
 +		img.cmap.green = img.cmap.red + img.cmap.len;
@@ -1450,7 +1476,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	} else {
 +		img.cmap.red = NULL;
 +	}
-+
++		
 +	len = ((img.depth + 7) >> 3) * img.width * img.height;
 +	tmp = vmalloc(len);
 +
@@ -1459,19 +1485,19 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +
 +	if (copy_from_user(tmp, (void __user*)img.data, len))
 +		goto out;
-+
++		
 +	img.data = tmp;
 +
 +	/* If this ioctl is a response to a request from kernel, the console sem
 +	 * is already held. */
 +	if (origin == FB_SPLASH_IO_ORIG_USER)
 +		acquire_console_sem();
-+
++	
 +	if (info->splash.data)
 +		vfree((u8*)info->splash.data);
 +	if (info->splash.cmap.red)
 +		vfree(info->splash.cmap.red);
-+
++	
 +	info->splash = img;
 +
 +	if (origin == FB_SPLASH_IO_ORIG_USER)
@@ -1486,7 +1512,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	return -ENOMEM;
 +}
 +
-+static int splash_ioctl(struct inode * inode, struct file *filp, u_int cmd,
++static int splash_ioctl(struct inode * inode, struct file *filp, u_int cmd, 
 +			u_long arg)
 +{
 +	struct fb_splash_iowrapper __user *wrapper = (void __user*) arg;
@@ -1494,20 +1520,20 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	unsigned short vc_num = 0;
 +	unsigned char origin = 0;
 +	void __user *data = NULL;
-+
-+	if (!access_ok(VERIFY_READ, wrapper,
++	
++	if (!access_ok(VERIFY_READ, wrapper, 
 +			sizeof(struct fb_splash_iowrapper)))
 +		return -EFAULT;
-+
++	
 +	__get_user(vc_num, &wrapper->vc);
 +	__get_user(origin, &wrapper->origin);
 +	__get_user(data, &wrapper->data);
-+
++		
 +	if (!vc_cons_allocated(vc_num))
 +		return -EINVAL;
 +
 +	vc = vc_cons[vc_num].d;
-+
++	
 +	switch (cmd) {
 +	case FBIOSPLASH_SETPIC:
 +		return fbsplash_ioctl_dosetpic(vc, (struct fb_image __user*)data, origin);
@@ -1521,7 +1547,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +		return fbsplash_ioctl_dogetstate(vc, (unsigned int *)data);
 +	default:
 +		return -ENOIOCTLCMD;
-+	}
++	}	
 +}
 +
 +static struct file_operations splash_ops = {
@@ -1540,7 +1566,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	struct fb_info *info;
 +	struct vc_data *vc;
 +	int i;
-+
++	
 +	vc = vc_cons[0].d;
 +	info = registered_fb[0];
 +
@@ -1550,7 +1576,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	}
 +
 +	for (i = 0; i < MAX_NR_CONSOLES && vc_cons[i].d; i++) {
-+		vc_cons[i].d->vc_splash.state = vc_cons[i].d->vc_splash.twidth =
++		vc_cons[i].d->vc_splash.state = vc_cons[i].d->vc_splash.twidth = 
 +						vc_cons[i].d->vc_splash.theight = 0;
 +		vc_cons[i].d->vc_splash.theme = NULL;
 +	}
@@ -1562,17 +1588,18 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.c
 +	}
 +
 +	fbsplash_call_helper("init", 0);
-+
++	
 +	return 0;
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-Index: linux-2.6.16-rc1/drivers/video/fbsplash.h
-===================================================================
+diff --git a/drivers/video/fbsplash.h b/drivers/video/fbsplash.h
+new file mode 100644
+index 0000000..211fa23
 --- /dev/null
-+++ linux-2.6.16-rc1/drivers/video/fbsplash.h
++++ b/drivers/video/fbsplash.h
 @@ -0,0 +1,76 @@
-+/*
++/* 
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
 + *
 + *  Copyright (C) 2004 Michal Januszewski <spock@gentoo.org>
@@ -1615,7 +1642,7 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.h
 +void do_unblank_screen(int entering_gfx);
 +
 +/* struct vc_data *y */
-+#define fbsplash_active_vc(y) (y->vc_splash.state && y->vc_splash.theme)
++#define fbsplash_active_vc(y) (y->vc_splash.state && y->vc_splash.theme) 
 +
 +/* struct fb_info *x, struct vc_data *y */
 +#define fbsplash_active_nores(x,y) (x->splash.data && fbsplash_active_vc(y))
@@ -1648,10 +1675,11 @@ Index: linux-2.6.16-rc1/drivers/video/fbsplash.h
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-Index: linux-2.6.16-rc1/include/linux/console_splash.h
-===================================================================
+diff --git a/include/linux/console_splash.h b/include/linux/console_splash.h
+new file mode 100644
+index 0000000..c448dd2
 --- /dev/null
-+++ linux-2.6.16-rc1/include/linux/console_splash.h
++++ b/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1666,10 +1694,10 @@ Index: linux-2.6.16-rc1/include/linux/console_splash.h
 +};
 +
 +#endif
-Index: linux-2.6.16-rc1/include/linux/console_struct.h
-===================================================================
---- linux-2.6.16-rc1.orig/include/linux/console_struct.h
-+++ linux-2.6.16-rc1/include/linux/console_struct.h
+diff --git a/include/linux/console_struct.h b/include/linux/console_struct.h
+index f8e5587..3e7f476 100644
+--- a/include/linux/console_struct.h
++++ b/include/linux/console_struct.h
 @@ -14,6 +14,7 @@
  struct vt_struct;
  
@@ -1687,10 +1715,10 @@ Index: linux-2.6.16-rc1/include/linux/console_struct.h
  	/* additional information is in vt_kern.h */
  };
  
-Index: linux-2.6.16-rc1/include/linux/fb.h
-===================================================================
---- linux-2.6.16-rc1.orig/include/linux/fb.h
-+++ linux-2.6.16-rc1/include/linux/fb.h
+diff --git a/include/linux/fb.h b/include/linux/fb.h
+index 2cb19e6..c45e177 100644
+--- a/include/linux/fb.h
++++ b/include/linux/fb.h
 @@ -8,6 +8,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
@@ -1732,10 +1760,10 @@ Index: linux-2.6.16-rc1/include/linux/fb.h
  	/* From here on everything is device dependent */
  	void *par;	
  };
-Index: linux-2.6.16-rc1/include/linux/sysctl.h
-===================================================================
---- linux-2.6.16-rc1.orig/include/linux/sysctl.h
-+++ linux-2.6.16-rc1/include/linux/sysctl.h
+diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
+index 32a4139..506a18d 100644
+--- a/include/linux/sysctl.h
++++ b/include/linux/sysctl.h
 @@ -146,6 +146,7 @@ enum
  	KERN_RANDOMIZE=68, /* int: randomize virtual address space */
  	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
@@ -1744,10 +1772,10 @@ Index: linux-2.6.16-rc1/include/linux/sysctl.h
  };
  
  
-Index: linux-2.6.16-rc1/kernel/sysctl.c
-===================================================================
---- linux-2.6.16-rc1.orig/kernel/sysctl.c
-+++ linux-2.6.16-rc1/kernel/sysctl.c
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 71dd6f6..4ab6989 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
 @@ -88,6 +88,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
