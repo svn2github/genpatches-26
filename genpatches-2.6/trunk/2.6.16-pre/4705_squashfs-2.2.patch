@@ -1,8 +1,8 @@
-Index: linux-git/fs/Kconfig
+Index: linux/fs/Kconfig
 ===================================================================
---- linux-git.orig/fs/Kconfig
-+++ linux-git/fs/Kconfig
-@@ -1195,6 +1195,69 @@ config CRAMFS
+--- linux.orig/fs/Kconfig
++++ linux/fs/Kconfig
+@@ -1193,6 +1193,69 @@ config CRAMFS
  
  	  If unsure, say N.
  
@@ -72,10 +72,10 @@ Index: linux-git/fs/Kconfig
  config VXFS_FS
  	tristate "FreeVxFS file system support (VERITAS VxFS(TM) compatible)"
  	help
-Index: linux-git/fs/Makefile
+Index: linux/fs/Makefile
 ===================================================================
---- linux-git.orig/fs/Makefile
-+++ linux-git/fs/Makefile
+--- linux.orig/fs/Makefile
++++ linux/fs/Makefile
 @@ -55,6 +55,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
  obj-$(CONFIG_JBD)		+= jbd/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
@@ -84,10 +84,10 @@ Index: linux-git/fs/Makefile
  obj-$(CONFIG_RAMFS)		+= ramfs/
  obj-$(CONFIG_HUGETLBFS)		+= hugetlbfs/
  obj-$(CONFIG_CODA_FS)		+= coda/
-Index: linux-git/fs/squashfs/inode.c
+Index: linux/fs/squashfs/inode.c
 ===================================================================
 --- /dev/null
-+++ linux-git/fs/squashfs/inode.c
++++ linux/fs/squashfs/inode.c
 @@ -0,0 +1,1803 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
@@ -1892,10 +1892,10 @@ Index: linux-git/fs/squashfs/inode.c
 +MODULE_DESCRIPTION("squashfs, a compressed read-only filesystem");
 +MODULE_AUTHOR("Phillip Lougher <phillip@lougher.demon.co.uk>");
 +MODULE_LICENSE("GPL");
-Index: linux-git/fs/squashfs/Makefile
+Index: linux/fs/squashfs/Makefile
 ===================================================================
 --- /dev/null
-+++ linux-git/fs/squashfs/Makefile
++++ linux/fs/squashfs/Makefile
 @@ -0,0 +1,7 @@
 +#
 +# Makefile for the linux squashfs routines.
@@ -1904,10 +1904,10 @@ Index: linux-git/fs/squashfs/Makefile
 +obj-$(CONFIG_SQUASHFS) += squashfs.o
 +
 +squashfs-objs := inode.o
-Index: linux-git/include/linux/squashfs_fs.h
+Index: linux/include/linux/squashfs_fs.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/linux/squashfs_fs.h
++++ linux/include/linux/squashfs_fs.h
 @@ -0,0 +1,519 @@
 +#ifndef SQUASHFS_FS
 +#define SQUASHFS_FS
@@ -2428,10 +2428,10 @@ Index: linux-git/include/linux/squashfs_fs.h
 +#define SQUASHFS_MEMSET(s, d, n)	memset(s, 0, n);
 +#endif
 +#endif
-Index: linux-git/include/linux/squashfs_fs_i.h
+Index: linux/include/linux/squashfs_fs_i.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/linux/squashfs_fs_i.h
++++ linux/include/linux/squashfs_fs_i.h
 @@ -0,0 +1,43 @@
 +#ifndef SQUASHFS_FS_I
 +#define SQUASHFS_FS_I
@@ -2476,10 +2476,10 @@ Index: linux-git/include/linux/squashfs_fs_i.h
 +	struct inode	vfs_inode;
 +	} squashfs_inode_info;
 +#endif
-Index: linux-git/include/linux/squashfs_fs_sb.h
+Index: linux/include/linux/squashfs_fs_sb.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/linux/squashfs_fs_sb.h
++++ linux/include/linux/squashfs_fs_sb.h
 @@ -0,0 +1,65 @@
 +#ifndef SQUASHFS_FS_SB
 +#define SQUASHFS_FS_SB
@@ -2546,10 +2546,10 @@ Index: linux-git/include/linux/squashfs_fs_sb.h
 +					char *block_list, unsigned short **block_p, unsigned int *bsize);
 +	} squashfs_sb_info;
 +#endif
-Index: linux-git/init/do_mounts_rd.c
+Index: linux/init/do_mounts_rd.c
 ===================================================================
---- linux-git.orig/init/do_mounts_rd.c
-+++ linux-git/init/do_mounts_rd.c
+--- linux.orig/init/do_mounts_rd.c
++++ linux/init/do_mounts_rd.c
 @@ -5,6 +5,7 @@
  #include <linux/ext2_fs.h>
  #include <linux/romfs_fs.h>

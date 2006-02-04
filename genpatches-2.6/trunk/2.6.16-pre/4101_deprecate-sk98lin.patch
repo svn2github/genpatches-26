@@ -1,8 +1,8 @@
-Index: linux-git/drivers/net/Kconfig
+Index: linux/drivers/net/Kconfig
 ===================================================================
---- linux-git.orig/drivers/net/Kconfig
-+++ linux-git/drivers/net/Kconfig
-@@ -2046,9 +2046,13 @@ config SKY2
+--- linux.orig/drivers/net/Kconfig
++++ linux/drivers/net/Kconfig
+@@ -2061,9 +2061,13 @@ config SKY2
  	  will be called sky2.  This is recommended.
  
  config SK98LIN
@@ -15,5 +15,5 @@ Index: linux-git/drivers/net/Kconfig
 +	  If you do not rely on features of this driver, please use SKGE instead.
 +
  	  Say Y here if you have a Marvell Yukon or SysKonnect SK-98xx/SK-95xx
- 	  compliant Gigabit Ethernet Adapter. The following adapters are supported
- 	  by this driver:
+ 	  compliant Gigabit Ethernet Adapter.
+ 
