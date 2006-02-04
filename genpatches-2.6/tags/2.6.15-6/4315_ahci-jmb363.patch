@@ -1,0 +1,19 @@
+From: Jeff Garzik <jgarzik@pobox.com>
+Date: Sun, 29 Jan 2006 17:40:57 +0000 (-0500)
+Subject: [libata ahci] add another JMicron pci id
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9220a2d0daa1e6782f02d47303340d7b5ca62ac0
+
+[libata ahci] add another JMicron pci id
+---
+
+--- a/drivers/scsi/ahci.c
++++ b/drivers/scsi/ahci.c
+@@ -288,6 +288,8 @@ static const struct pci_device_id ahci_p
+ 	  board_ahci }, /* ICH8M */
+ 	{ 0x197b, 0x2360, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+ 	  board_ahci }, /* JMicron JMB360 */
++	{ 0x197b, 0x2363, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
++	  board_ahci }, /* JMicron JMB363 */
+ 	{ }	/* terminate list */
+ };
+ 

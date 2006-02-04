@@ -1,0 +1,17 @@
+--- linux/drivers/net/Kconfig.orig	2005-03-16 15:28:43.000000000 +0000
++++ linux/drivers/net/Kconfig	2005-03-16 15:29:53.000000000 +0000
+@@ -1994,9 +1994,13 @@ config SKGE
+ 	  features that "portable" vendor supplied sk98lin driver does.
+ 	
+ config SK98LIN
+-	tristate "Marvell Yukon Chipset / SysKonnect SK-98xx Support"
++	tristate "Marvell Yukon Chipset / SysKonnect SK-98xx Support (DEPRECATED)"
+ 	depends on PCI
+ 	---help---
++	  This driver has been marked deprecated for Gentoo users, as it seems
++	  problematic and the new skge driver (CONFIG_SKGE) works much better.
++	  If you do not rely on features of this driver, please use SKGE instead.
++	  
+ 	  Say Y here if you have a Marvell Yukon or SysKonnect SK-98xx/SK-95xx
+ 	  compliant Gigabit Ethernet Adapter. The following adapters are supported
+ 	  by this driver:

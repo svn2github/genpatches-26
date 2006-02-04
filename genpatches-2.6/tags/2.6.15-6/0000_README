@@ -1,0 +1,262 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+1XXX	critical fixes
+ 1XX	 security
+ 3XX	 arch-compat
+ 9XX	 other
+2XXX	driver related patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 motherboard
+ 9XX	 other
+3XXX	performance patches
+ 1XX	 cpu-task schedular & related
+ 3XX	 disk/memory/swap I/O and management
+ 5XX	 graphics/sound
+ 9XX	 other
+4XXX	additional features.
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+5XXX	experimental patches
+ 1XX	 network
+ 3XX	 raid/storage
+ 5XX	 graphics/sound
+ 7XX	 filesystem
+ 9XX	 other
+ 
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_1_select-correct-bridge-id.patch
+From:	2.6.15.1
+Desc:	BRIDGE: Fix faulty check in br_stp_recalculate_bridge_id()
+
+Patch:	1001_1_sparc-atyfb-blade100.patch
+From:	2.6.15.1
+Desc:	[ATYFB]: Fix onboard video on SPARC Blade 100 for 2.6.{13,14,15}
+
+Patch:	1002_1_workqueue-cpu-offline.patch
+From:	2.6.15.1
+Desc:	fix workqueue oops during cpu offline
+
+Patch:	1003_1_bridge-netfilter-ip-fragments.patch
+From:	2.6.15.1
+Desc:	[EBTABLES] Don't match tcp/udp source/destination port for IP fragments
+
+Patch:	1004_1_netlink-rcv-skb-dos.patch
+From:	2.6.15.1
+Desc:	[AF_NETLINK]: Fix DoS in netlink_rcv_skb() (CVE-2006-0035)
+
+Patch:	1005_1_sys-class-net-wireless-stats.patch
+From:	2.6.15.1
+Desc:	fix /sys/class/net/<if>/wireless without dev->get_wireless_stats
+
+Patch:	1006_1_moxa-capability-check.patch
+From:	2.6.15.1
+Desc:	moxa serial: add proper capability check
+
+Patch:	1007_1_netfilter-pptp-crash-1.patch
+From:	2.6.15.1
+Desc:	[NETFILTER]: Fix crash in ip_nat_pptp
+
+Patch:	1008_1_netfilter-pptp-crash-2.patch
+From:	2.6.15.1
+Desc:	[NETFILTER]: Fix another crash in ip_nat_pptp
+
+Patch:	1009_1_netlink-oops.patch
+From:	2.6.15.1
+Desc:	netlink oops fix due to incorrect error code
+
+Patch:	1010_1_ppc-ml300-ep405-boot.patch
+From:	2.6.15.1
+Desc:	ppc32: Re-add embed_config.c to ml300/ep405
+
+Patch:	1011_1_skge-memory-on-ring-changes.patch
+From:	2.6.15.1
+Desc:	skge: handle out of memory on ring changes
+
+Patch:	1012_1_sparc64-64k-hugetlb-depends.patch
+From:	2.6.15.1
+Desc:	arch/sparc64/Kconfig: fix HUGETLB_PAGE_SIZE_64K dependencies
+
+Patch:	1013_1_sparc64-strace.patch
+From:	2.6.15.1
+Desc:	[SPARC64]: Fix ptrace/strace
+
+Patch:	1014_1_sparc64-fstat64.patch
+From:	2.6.15.1
+Desc:	[SPARC64]: Fix sys_fstat64() entry in 64-bit syscall table.
+
+Patch:	1015_1_ufs-inode-sem.patch
+From:	2.6.15.1
+Desc:	UFS: inode->i_sem is not released in error path
+
+Patch:	1016_1_vgacon-doublescan.patch
+From:	2.6.15.1
+Desc:	vgacon: fix doublescan mode
+
+Patch:	1017_2_elevator-as-back-compatibility.patch
+From:	2.6.15.2
+Desc:	
+
+Patch:	1018_2_mqueue-double-decrement.patch
+From:	2.6.15.2
+Desc:	Fix double decrement of mqueue_mnt->mnt_count in sys_mq_open (CVE-2005-3356)
+
+Patch:	1019_2_i2o-scsi-oops-on-abort.patch
+From:	2.6.15.2
+Desc:	Fix i2o_scsi oops on abort
+
+Patch:	1020_2_mkiss-locking.patch
+From:	2.6.15.2
+Desc:	Fix mkiss locking bug
+
+Patch:	1021_2_ufs-mount-oops.patch
+From:	2.6.15.2
+Desc:	Fix oops in ufs_fill_super at mount time
+
+Patch:	1022_2_input-hid-pid-oops.patch
+From:	2.6.15.2
+Desc:	HID - fix an oops in PID initialization code
+
+Patch:	1023_2_kill-blk-attempt-remerge.patch
+From:	2.6.15.2
+Desc:	[BLOCK] Kill blk_attempt_remerge()
+
+Patch:	1024_2_swiotlb-alloc-mask-gfp.patch
+From:	2.6.15.2
+Desc:	Mask off GFP flags before swiotlb_alloc_coherent
+
+Patch:	1025_2_ppp-pon-sign.patch
+From:	2.6.15.2
+Desc:	[NET]: Make second arg to skb_reserved() signed.
+
+Patch:	1026_2_reiserfs-mount-options.patch
+From:	2.6.15.2
+Desc:	Someone broke reiserfs v3 mount options and this fixes it
+
+Patch:	1027_2_sparc64-ultra-iie-timekeeping.patch
+From:	2.6.15.2
+Desc:	Fix timekeeping on sparc64 ultra-IIe machines
+
+Patch:	1028_2_usb-audio-hang.patch
+From:	2.6.15.2
+Desc:	usb-audio: don't use empty packets at start of playback
+
+Patch:	1100_dm-crypt-zero-key.patch
+From:	http://bugs.gentoo.org/119562
+Desc:	dm-crypt module does not clear memory (CVE-2006-0095)
+
+Patch:	1300_sparc64-set-date-hang.patch
+From:	http://bugs.gentoo.org/121331
+Desc:	Fix for setting date on sparc64 (CVE-2006-0482)
+
+Patch:	1340_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1399_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	2300_ata-piix-suspend.patch
+From:	http://bugs.gentoo.org/118284
+Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
+
+Patch:	2305_scsi-cmd-leak.patch
+From:	stable queue
+Desc:	Fix SCSI command leak
+
+Patch:	2500_emu10k1-mixer-controls.patch
+From:	http://bugs.gentoo.org/120788
+Desc:	Fix emu10k1 sound driver
+
+Patch:	2700_bios-disable-processor.patch
+From:	http://bugzilla.kernel.org/5930
+Desc:	Fix unused CPU on some SMP boards with broken BIOSes
+
+Patch:	2705_dell-rbu-hang.patch
+From:	http://bugs.gentoo.org/121386
+Desc:	Fix hung dell_rbu firmware kernel thread
+
+Patch:	2710_mmconfig-bad-mcfg.patch
+From:	Stephen Hemminger/Andi Kleen
+Desc:	mmconfig fix for broken BIOSes
+
+Patch:	4000_intel-ich8.patch
+From:	Jason Gaston @ Intel
+Desc:	Support the upcoming Intel ICH8 chipset
+
+Patch:	4100_sky2-0.15.patch
+From:	netdev-2.6 tree
+Desc:	Driver for Marvell Yukon-2 ethernet adapters
+
+Patch:	4101_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4300_libata-enable-atapi.patch
+From:	dsd@gentoo.org acked by Jeff Garzik
+Desc:	Enable libata ATAPI (i.e. SATA CDROM) support by default
+
+Patch:	4305_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4310_ahci-jmb360.patch
+From:	2.6.16
+Desc:	Add JMicron JMB360 support
+
+Patch:	4310_ahci-jmb363.patch
+From:	2.6.16
+Desc:	Add JMicron JMB363 support
+
+Patch:	4320_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4351_megaraid-compatibility.patch
+From:	dsd@gentoo.org
+Desc:	Allow both megaraid drivers to be built side-by-side
+
+Patch:	4500_fbsplash-0.9.2-r5.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4501_fbsplash-early-splash-fix.patch
+From:	http://bugs.gentoo.org/119268
+Desc:	Fix early splash image
+
+Patch:	4505_vesafb-tng-1.0-rc1-r3.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4705_squashfs-2.2.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4900_speakup-20060103.patch
+From:	dsd@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4901_speakup-highlight-tracking-amd64.patch
+From:	dsd@gentoo.org
+Desc:	Experimental fix for speakup highlight tracking on amd64
+
+Patch:	4905_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
+
