@@ -1,0 +1,38 @@
+Some broken BIOS's had processors disabled, but 
+same apic id as a valid processor. This causes
+acpi_processor_start() to think this disabled 
+cpu is ok, and croak. So we dont record bad
+apicid's anymore.
+
+http://bugzilla.kernel.org/show_bug.cgi?id=5930
+
+Signed-off-by: Ashok Raj <ashok.raj@intel.com>
+------------------------------------------------------
+ arch/i386/kernel/acpi/boot.c |   13 ++++++++++---
+ 1 files changed, 10 insertions(+), 3 deletions(-)
+
+Index: linux-2.6.16-rc1-mm2/arch/i386/kernel/acpi/boot.c
+===================================================================
+--- linux-2.6.16-rc1-mm2.orig/arch/i386/kernel/acpi/boot.c
++++ linux-2.6.16-rc1-mm2/arch/i386/kernel/acpi/boot.c
+@@ -248,10 +248,17 @@ acpi_parse_lapic(acpi_table_entry_header
+ 
+ 	acpi_table_print_madt_entry(header);
+ 
+-	/* Register even disabled CPUs for cpu hotplug */
+-
+-	x86_acpiid_to_apicid[processor->acpi_id] = processor->id;
++	/* Dont record local apic id when disabled */
++	if (processor->flags.enabled)
++		x86_acpiid_to_apicid[processor->acpi_id] = processor->id;
+ 
++	/*
++	 * We need to register disabled CPU as well to permit
++	 * counting disabled CPUs. This allows us to size
++	 * cpus_possible_map more accurately, to permit
++	 * to not preallocating memory for all NR_CPUS
++	 * when we use CPU hotplug.
++	 */
+ 	mp_register_lapic(processor->id,	/* APIC ID */
+ 			  processor->flags.enabled);	/* Enabled? */
+ 

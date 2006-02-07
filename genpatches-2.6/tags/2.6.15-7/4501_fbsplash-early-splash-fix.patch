@@ -1,0 +1,22 @@
+--- linux-2.6.15-gentoo-r1/drivers/Makefile.orig	2006-01-17 10:36:22.000000000 +0100
++++ linux-2.6.15-gentoo-r1/drivers/Makefile	2006-01-17 10:37:54.000000000 +0100
+@@ -8,16 +8,15 @@
+ obj-$(CONFIG_PCI)		+= pci/
+ obj-$(CONFIG_PARISC)		+= parisc/
+ obj-$(CONFIG_RAPIDIO)		+= rapidio/
++# char/ comes before serial/ etc so that the VT console is the boot-time
++# default, and before video/ so that silent fbsplash does not disappear.
++obj-y				+= char/
+ obj-y				+= video/
+ obj-$(CONFIG_ACPI)		+= acpi/
+ # PnP must come after ACPI since it will eventually need to check if acpi
+ # was used and do nothing if so
+ obj-$(CONFIG_PNP)		+= pnp/
+ 
+-# char/ comes before serial/ etc so that the VT console is the boot-time
+-# default.
+-obj-y				+= char/
+-
+ obj-$(CONFIG_CONNECTOR)		+= connector/
+ 
+ # i810fb and intelfb depend on char/agp/
