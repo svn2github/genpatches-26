@@ -16,15 +16,16 @@ is very easy to trigger just by switching between VT1 and VT7...
 Signed-off-by: Pete Zaitcev <zaitcev@redhat.com>
 Signed-off-by: Dmitry Torokhov <dtor@mail.ru>
 Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
  drivers/input/mousedev.c |    9 +++------
  1 files changed, 3 insertions(+), 6 deletions(-)
 
-Index: linux-2.6.15.2/drivers/input/mousedev.c
+Index: linux-2.6.15.3/drivers/input/mousedev.c
 ===================================================================
---- linux-2.6.15.2.orig/drivers/input/mousedev.c
-+++ linux-2.6.15.2/drivers/input/mousedev.c
+--- linux-2.6.15.3.orig/drivers/input/mousedev.c
++++ linux-2.6.15.3/drivers/input/mousedev.c
 @@ -356,7 +356,7 @@ static void mousedev_free(struct mousede
  	kfree(mousedev);
  }

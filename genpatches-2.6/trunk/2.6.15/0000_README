@@ -110,7 +110,7 @@ Desc:	vgacon: fix doublescan mode
 
 Patch:	1017_2_elevator-as-back-compatibility.patch
 From:	2.6.15.2
-Desc:	
+Desc:	elevator=as back-compatibility
 
 Patch:	1018_2_mqueue-double-decrement.patch
 From:	2.6.15.2
@@ -160,13 +160,101 @@ Patch:	1029_3_dst-release.patch
 From:	2.6.15.3
 Desc:	[ICMP]: Fix extra dst release when ip_options_echo fails
 
-Patch:	1100_dm-crypt-zero-key.patch
-From:	http://bugs.gentoo.org/119562
-Desc:	dm-crypt module does not clear memory (CVE-2006-0095)
+Patch:	1030_4_bridge-rcu-race.patch
+From:	2.6.15.4
+Desc:	[PATCH] bridge: fix RCU race on device removal
 
-Patch:	1300_sparc64-set-date-hang.patch
-From:	http://bugs.gentoo.org/121331
-Desc:	Fix for setting date on sparc64 (CVE-2006-0482)
+Patch:	1031_4_bridge-netfilter-race.patch
+From:	2.6.15.4
+Desc:	bridge: netfilter races on device removal
+
+Patch:	1032_4_cmpxchg-inline.patch
+From:	2.6.15.4
+Desc:	[alpha] __cmpxchg() must really always be inlined
+
+Patch:	1033_4_nfs-inode-leakage.patch
+From:	2.6.15.4
+Desc:	 d_instantiate_unique / NFS inode leakage
+
+Patch:	1034_4_dm-crypt-zero-key.patch
+From:	2.6.15.4
+Desc:	dm-crypt: zero key before freeing it
+
+Patch:	1035_4_emu10k1-mixer.patch
+From:	2.6.15.4
+Desc:	emu10k1 - Fix the confliction of 'Front' control
+
+Patch:	1036_4_ppp-rx-csum.patch
+From:	2.6.15.4
+Desc:	[PPP]: Fixed hardware RX checksum handling
+
+Patch:	1037_4_keyctl-strnlen.patch
+From:	2.6.15.4
+Desc:	Fix keyctl usage of strnlen_user()
+
+Patch:	1038_4_xfs-buffer-hashing.patch
+From:	2.6.15.4
+Desc:	[XFS] fix regression in xfs_buf_rele
+
+Patch:	1039_4_grip-crash.patch
+From:	2.6.15.4
+Desc:	Input: grip - fix crash when accessing device
+
+Patch:	1040_4_db9-crash.patch
+From:	2.6.15.4
+Desc:	Input: db9 - fix possible crash with Saturn gamepads
+
+Patch:	1041_4_iforce-allocation.patch
+From:	2.6.15.4
+Desc:	Input: iforce - do not return ENOMEM upon successful allocation
+
+Patch:	1042_4_iforce-usb.patch
+From:	2.6.15.4
+Desc:	Input: iforce - fix detection of USB devices
+
+Patch:	1043_4_sidewinder-oops.patch
+From:	2.6.15.4
+Desc:	Input: sidewinder - fix an oops
+
+Patch:	1044_4_sparc64-settime-stub.patch
+From:	2.6.15.4
+Desc:	[SPARC64]: Kill compat_sys_clock_settime sign extension stub
+
+Patch:	1045_4_md-sysfs-names.patch
+From:	2.6.15.4
+Desc:	md: remove slashes from disk names when creation dev names in sysfs
+
+Patch:	1046_4_mousedev-leak.patch
+From:	2.6.15.4
+Desc:	Input: mousedev - fix memory leak
+
+Patch:	1047_4_pcmcia-hostap-compile.patch
+From:	2.6.15.4
+Desc:	PCMCIA=m, HOSTAP_CS=y is not a legal configuration
+
+Patch:	1048_4_scsi-barrier-leak.patch
+From:	2.6.15.4
+Desc:	SCSI: turn off ordered flush barriers
+
+Patch:	1049_4_seclvl-settime.patch
+From:	2.6.15.4
+Desc:	seclvl settime fix
+
+Patch:	1050_4_selinux-slab-leak.patch
+From:	2.6.15.4
+Desc:	SELinux: fix size-128 slab leak
+
+Patch:	1051_4_x86_64-pxm-boot-failure.patch
+From:	2.6.15.4
+Desc:	x86_64: Clear more state when ignoring empty node in SRAT parsing
+
+Patch:	1052_4_smp-cpu-unused.patch
+From:	2.6.15.4
+Desc:	x86_64: Dont record local apic ids when they are disabled in MADT
+
+Patch:	1053_4_x86_64-cpu-refs.patch
+From:	2.6.15.4
+Desc:	x86_64: Let impossible CPUs point to reference per cpu data
 
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
@@ -176,29 +264,9 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1900_selinux-slab-leak.patch
-From:	stable queue
-Desc:	Fix SELinux slab leak
-
-Patch:	2100_ppp-checksum.patch
-From:	stable queue
-Desc:	Fix hardware RX checksum handling in PPP
-
 Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
 Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
-
-Patch:	2305_scsi-cmd-leak.patch
-From:	stable queue
-Desc:	Fix SCSI command leak
-
-Patch:	2500_emu10k1-mixer-controls.patch
-From:	http://bugs.gentoo.org/120788
-Desc:	Fix emu10k1 sound driver
-
-Patch:	2700_bios-disable-processor.patch
-From:	http://bugzilla.kernel.org/5930
-Desc:	Fix unused CPU on some SMP boards with broken BIOSes
 
 Patch:	2705_dell-rbu-hang.patch
 From:	http://bugs.gentoo.org/121386
@@ -207,10 +275,6 @@ Desc:	Fix hung dell_rbu firmware kernel thread
 Patch:	2710_mmconfig-bad-mcfg.patch
 From:	Stephen Hemminger/Andi Kleen
 Desc:	mmconfig fix for broken BIOSes
-
-Patch:	2900_mousedev-leak.patch
-From:	stable queue
-Desc:	Fix /dev/input/mice leak
 
 Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
