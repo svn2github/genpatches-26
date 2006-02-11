@@ -280,6 +280,10 @@ Patch:	2710_mmconfig-bad-mcfg.patch
 From:	Stephen Hemminger/Andi Kleen
 Desc:	mmconfig fix for broken BIOSes
 
+Patch:	2900_bt3c-cs-crash.patch
+From:	http://bugs.gentoo.org/120937
+Desc:	Fix a crash when a bluetooth card is inserted
+
 Patch:	4000_intel-ich8.patch
 From:	Jason Gaston @ Intel
 Desc:	Support the upcoming Intel ICH8 chipset
