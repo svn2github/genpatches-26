@@ -268,6 +268,10 @@ Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
 Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
 
+Patch:	2700_cpufreq-frequency-change.patch
+From:	2.6.16
+Desc:	Fix a bug where cpufreq-ondemand was locking to the lowest speed setting
+
 Patch:	2705_dell-rbu-hang.patch
 From:	http://bugs.gentoo.org/121386
 Desc:	Fix hung dell_rbu firmware kernel thread
