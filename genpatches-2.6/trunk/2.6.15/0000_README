@@ -284,6 +284,14 @@ Patch:	2710_mmconfig-bad-mcfg.patch
 From:	Stephen Hemminger/Andi Kleen
 Desc:	mmconfig fix for broken BIOSes
 
+Patch:	2715_usb-ehci-early-handoff.patch
+From:	http://bugs.gentoo.org/119978
+Desc:	Fix EHCI early handoff
+
+Patch:	2720_usb-ehci-early-handoff-smi.patch
+From:	http://bugs.gentoo.org/119978
+Desc:	Fix SMI issues in EHCI early handoff
+
 Patch:	2900_bt3c-cs-crash.patch
 From:	http://bugs.gentoo.org/120937
 Desc:	Fix a crash when a bluetooth card is inserted
