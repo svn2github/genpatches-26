@@ -1,8 +1,8 @@
-Index: linux/drivers/net/Kconfig
+Index: linux-git/drivers/net/Kconfig
 ===================================================================
 --- linux.orig/drivers/net/Kconfig
-+++ linux/drivers/net/Kconfig
-@@ -2061,9 +2061,13 @@ config SKY2
++++ linux-git/drivers/net/Kconfig
+@@ -2058,9 +2058,13 @@ config SKY2
  	  will be called sky2.  This is recommended.
  
  config SK98LIN

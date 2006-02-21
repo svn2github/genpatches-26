@@ -1,8 +1,8 @@
-Index: linux-git/drivers/scsi/libata-core.c
+Index: linux/drivers/scsi/libata-core.c
 ===================================================================
---- linux-git.orig/drivers/scsi/libata-core.c
-+++ linux-git/drivers/scsi/libata-core.c
-@@ -4423,6 +4423,7 @@ static void ata_host_init(struct ata_por
+--- linux.orig/drivers/scsi/libata-core.c
++++ linux/drivers/scsi/libata-core.c
+@@ -4424,6 +4424,7 @@ static void ata_host_init(struct ata_por
  	ap->mwdma_mask = ent->mwdma_mask;
  	ap->udma_mask = ent->udma_mask;
  	ap->flags |= ent->host_flags;
@@ -10,10 +10,10 @@ Index: linux-git/drivers/scsi/libata-core.c
  	ap->ops = ent->port_ops;
  	ap->cbl = ATA_CBL_NONE;
  	ap->active_tag = ATA_TAG_POISON;
-Index: linux-git/include/linux/libata.h
+Index: linux/include/linux/libata.h
 ===================================================================
---- linux-git.orig/include/linux/libata.h
-+++ linux-git/include/linux/libata.h
+--- linux.orig/include/linux/libata.h
++++ linux/include/linux/libata.h
 @@ -237,6 +237,7 @@ struct ata_probe_ent {
  	unsigned long		irq;
  	unsigned int		irq_flags;
@@ -22,10 +22,10 @@ Index: linux-git/include/linux/libata.h
  	void __iomem		*mmio_base;
  	void			*private_data;
  };
-Index: linux-git/drivers/scsi/sata_promise.c
+Index: linux/drivers/scsi/sata_promise.c
 ===================================================================
---- linux-git.orig/drivers/scsi/sata_promise.c
-+++ linux-git/drivers/scsi/sata_promise.c
+--- linux.orig/drivers/scsi/sata_promise.c
++++ linux/drivers/scsi/sata_promise.c
 @@ -89,6 +89,7 @@ static irqreturn_t pdc_interrupt (int ir
  static void pdc_eng_timeout(struct ata_port *ap);
  static int pdc_port_start(struct ata_port *ap);

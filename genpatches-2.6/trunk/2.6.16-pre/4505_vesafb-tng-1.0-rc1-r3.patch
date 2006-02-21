@@ -1,9 +1,9 @@
 diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
 index ee277dd..60f797e 100644
-Index: linux-git/Documentation/fb/vesafb.txt
+Index: linux/Documentation/fb/vesafb.txt
 ===================================================================
---- linux-git.orig/Documentation/fb/vesafb.txt
-+++ linux-git/Documentation/fb/vesafb.txt
+--- linux.orig/Documentation/fb/vesafb.txt
++++ linux/Documentation/fb/vesafb.txt
 @@ -2,16 +2,18 @@
  What is vesafb?
  ===============
@@ -349,10 +349,10 @@ Index: linux-git/Documentation/fb/vesafb.txt
 +Extended documentation for vm86, VBE3.0 and vesafb-tng by
 +Michal Januszewski <spock@gentoo.org>
 +
-Index: linux-git/arch/i386/boot/video.S
+Index: linux/arch/i386/boot/video.S
 ===================================================================
---- linux-git.orig/arch/i386/boot/video.S
-+++ linux-git/arch/i386/boot/video.S
+--- linux.orig/arch/i386/boot/video.S
++++ linux/arch/i386/boot/video.S
 @@ -164,10 +164,12 @@ basret:	ret
  # parameters in the default 80x25 mode -- these are set directly,
  # because some very obscure BIOSes supply insane values.
@@ -413,10 +413,10 @@ Index: linux-git/arch/i386/boot/video.S
  
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
-Index: linux-git/drivers/video/Kconfig
+Index: linux/drivers/video/Kconfig
 ===================================================================
---- linux-git.orig/drivers/video/Kconfig
-+++ linux-git/drivers/video/Kconfig
+--- linux.orig/drivers/video/Kconfig
++++ linux/drivers/video/Kconfig
 @@ -454,8 +454,8 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
@@ -477,10 +477,10 @@ Index: linux-git/drivers/video/Kconfig
  config VIDEO_SELECT
  	bool
  	depends on FB_VESA
-Index: linux-git/drivers/video/Makefile
+Index: linux/drivers/video/Makefile
 ===================================================================
---- linux-git.orig/drivers/video/Makefile
-+++ linux-git/drivers/video/Makefile
+--- linux.orig/drivers/video/Makefile
++++ linux/drivers/video/Makefile
 @@ -97,7 +97,11 @@ obj-$(CONFIG_FB_IMX)              += imx
  obj-$(CONFIG_FB_S3C2410)	  += s3c2410fb.o
  
@@ -494,10 +494,10 @@ Index: linux-git/drivers/video/Makefile
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
  
-Index: linux-git/drivers/video/fbmem.c
+Index: linux/drivers/video/fbmem.c
 ===================================================================
---- linux-git.orig/drivers/video/fbmem.c
-+++ linux-git/drivers/video/fbmem.c
+--- linux.orig/drivers/video/fbmem.c
++++ linux/drivers/video/fbmem.c
 @@ -1430,6 +1430,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
@@ -506,10 +506,10 @@ Index: linux-git/drivers/video/fbmem.c
  	return 0;
  }
  
-Index: linux-git/drivers/video/modedb.c
+Index: linux/drivers/video/modedb.c
 ===================================================================
---- linux-git.orig/drivers/video/modedb.c
-+++ linux-git/drivers/video/modedb.c
+--- linux.orig/drivers/video/modedb.c
++++ linux/drivers/video/modedb.c
 @@ -667,6 +667,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
@@ -518,10 +518,10 @@ Index: linux-git/drivers/video/modedb.c
  	mode->name = NULL;
  	mode->xres = var->xres;
  	mode->yres = var->yres;
-Index: linux-git/drivers/video/vesafb-thread.c
+Index: linux/drivers/video/vesafb-thread.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/vesafb-thread.c
++++ linux/drivers/video/vesafb-thread.c
 @@ -0,0 +1,722 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
@@ -1245,10 +1245,10 @@ Index: linux-git/drivers/video/vesafb-thread.c
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Michal Januszewski");
 +
-Index: linux-git/drivers/video/vesafb-tng.c
+Index: linux/drivers/video/vesafb-tng.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/vesafb-tng.c
++++ linux/drivers/video/vesafb-tng.c
 @@ -0,0 +1,1478 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
@@ -2728,11 +2728,11 @@ Index: linux-git/drivers/video/vesafb-tng.c
 +MODULE_AUTHOR("Michal Januszewski");
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphics boards");
 +
-Index: linux-git/include/linux/sched.h
+Index: linux/include/linux/sched.h
 ===================================================================
---- linux-git.orig/include/linux/sched.h
-+++ linux-git/include/linux/sched.h
-@@ -1143,6 +1143,8 @@ extern void mmput(struct mm_struct *);
+--- linux.orig/include/linux/sched.h
++++ linux/include/linux/sched.h
+@@ -1140,6 +1140,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2741,10 +2741,10 @@ Index: linux-git/include/linux/sched.h
  
  extern int  copy_thread(int, unsigned long, unsigned long, unsigned long, struct task_struct *, struct pt_regs *);
  extern void flush_thread(void);
-Index: linux-git/include/video/vesa.h
+Index: linux/include/video/vesa.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/video/vesa.h
++++ linux/include/video/vesa.h
 @@ -0,0 +1,146 @@
 +#if 0
 +#define DPRINTK(fmt, args...)	printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , \
@@ -2892,10 +2892,10 @@ Index: linux-git/include/video/vesa.h
 +	struct vesafb_crtc_ib crtc;
 +};
 +
-Index: linux-git/kernel/fork.c
+Index: linux/kernel/fork.c
 ===================================================================
---- linux-git.orig/kernel/fork.c
-+++ linux-git/kernel/fork.c
+--- linux.orig/kernel/fork.c
++++ linux/kernel/fork.c
 @@ -97,6 +97,7 @@ kmem_cache_t *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
@@ -2945,11 +2945,11 @@ Index: linux-git/kernel/fork.c
   * get_task_mm - acquire a reference to the task's mm
   *
   * Returns %NULL if the task has no mm.  Checks PF_BORROWED_MM (meaning
-Index: linux-git/mm/memory.c
+Index: linux/mm/memory.c
 ===================================================================
---- linux-git.orig/mm/memory.c
-+++ linux-git/mm/memory.c
-@@ -1097,6 +1097,7 @@ static int zeromap_pte_range(struct mm_s
+--- linux.orig/mm/memory.c
++++ linux/mm/memory.c
+@@ -1107,6 +1107,7 @@ static int zeromap_pte_range(struct mm_s
  	pte_unmap_unlock(pte - 1, ptl);
  	return 0;
  }
@@ -2957,10 +2957,10 @@ Index: linux-git/mm/memory.c
  
  static inline int zeromap_pmd_range(struct mm_struct *mm, pud_t *pud,
  			unsigned long addr, unsigned long end, pgprot_t prot)
-Index: linux-git/mm/mmap.c
+Index: linux/mm/mmap.c
 ===================================================================
---- linux-git.orig/mm/mmap.c
-+++ linux-git/mm/mmap.c
+--- linux.orig/mm/mmap.c
++++ linux/mm/mmap.c
 @@ -1991,6 +1991,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
