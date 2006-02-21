@@ -127,17 +127,17 @@ Index: linux/include/linux/sysctl.h
 ===================================================================
 --- linux.orig/include/linux/sysctl.h
 +++ linux/include/linux/sysctl.h
-@@ -147,6 +147,9 @@ enum
- 	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
+@@ -148,6 +148,9 @@ enum
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
- 	KERN_FBSPLASH=71,	/* string: path to fbsplash helper */
+ 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+ 	KERN_FBSPLASH=72,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=72,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=73,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
  
-@@ -230,6 +233,17 @@ enum
+@@ -231,6 +234,17 @@ enum
  	PTY_NR=2
  };
  
@@ -159,7 +159,7 @@ Index: linux/kernel/sysctl.c
 ===================================================================
 --- linux.orig/kernel/sysctl.c
 +++ linux/kernel/sysctl.c
-@@ -157,6 +157,9 @@ extern ctl_table inotify_table[];
+@@ -153,6 +153,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -169,7 +169,7 @@ Index: linux/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -225,7 +228,14 @@ static ctl_table root_table[] = {
+@@ -221,7 +224,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
