@@ -256,6 +256,10 @@ Patch:	1053_4_x86_64-cpu-refs.patch
 From:	2.6.15.4
 Desc:	x86_64: Let impossible CPUs point to reference per cpu data
 
+Patch:	1054_linux-2.6.15.5.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.15.5 - misc fixes
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -263,10 +267,6 @@ Desc:	Fix OBP naming on some sparc systems
 Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
-
-Patch:	2100_ipv6-autoconfiguration.patch
-From:	brix@gentoo.org
-Desc:	Fix ipv6 autoconfiguration after down/up cycle
 
 Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
