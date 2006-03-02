@@ -260,6 +260,14 @@ Patch:	1054_linux-2.6.15.5.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.15.5 - misc fixes
 
+Patch:	1100_die-if-kernel-privs.patch
+From:	gentoo security
+Desc:	Privilege-related security fix
+
+Patch:	1105_s390-strnlen-user.patch
+From:	gentoo security
+Desc:	s390 security fix
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
