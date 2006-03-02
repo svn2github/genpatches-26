@@ -1,0 +1,17 @@
+From unknown
+
+Workaround for the Ultra1E onboard HME lockup.
+
+-------------------------------------------------------------------------------
+
+diff -burN linux-2.6.5-rc1-70/drivers/net/sunhme.c linux-2.6.5-rc1-99/drivers/net/sunhme.c
+--- linux-2.6.5-rc1-70/drivers/net/sunhme.c	2004-03-16 03:13:46.531387425 -0800
++++ linux-2.6.5-rc1-99/drivers/net/sunhme.c	2004-03-16 03:16:14.005414541 -0800
+@@ -1986,6 +1986,7 @@
+ 	}
+ 	hp->tx_old = elem;
+ 	TXD((">"));
++	udelay(1);
+ 
+ 	if (netif_queue_stopped(dev) &&
+ 	    TX_BUFFS_AVAIL(hp) > (MAX_SKB_FRAGS + 1))

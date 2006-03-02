@@ -1,0 +1,41 @@
+From: David Brownell <david-b@pacbell.net>
+Date: Sat, 25 Feb 2006 00:55:52 +0000 (-0800)
+Subject: [PATCH] USB: fix EHCI BIOS handshake
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=8c450802a3abf0e8a45238fcb7d22ed9d6f191ce
+
+[PATCH] USB: fix EHCI BIOS handshake
+
+Fix http://bugzilla.kernel.org/show_bug.cgi?id=6128
+
+Finish morphing the "early handoff" version of the EHCI BIOS handshake over
+to match the previous implementation inside the EHCI driver (except that
+now we forcibly disable the SMI).  The version that had been with the PCI
+code was surprisingly full of bugs.
+
+Signed-off-by: David Brownell <dbrownell@users.sourceforge.net>
+Cc: <yazar256@gmail.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/drivers/usb/host/pci-quirks.c
++++ b/drivers/usb/host/pci-quirks.c
+@@ -260,12 +260,13 @@ static void __devinit quirk_usb_disable_
+ 						offset + EHCI_USBLEGCTLSTS,
+ 						val | EHCI_USBLEGCTLSTS_SOOE);
+ #endif
+-			}
+ 
+-			/* always say Linux will own the hardware
+-			 * by setting EHCI_USBLEGSUP_OS.
+-			 */
+-			pci_write_config_byte(pdev, offset + 3, 1);
++				/* some systems get upset if this semaphore is
++				 * set for any other reason than forcing a BIOS
++				 * handoff..
++				 */
++				pci_write_config_byte(pdev, offset + 3, 1);
++			}
+ 
+ 			/* if boot firmware now owns EHCI, spin till
+ 			 * it hands it over.

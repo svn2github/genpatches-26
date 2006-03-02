@@ -1,0 +1,27 @@
+From: Tony Luck <tony.luck@intel.com>
+Date: Tue, 28 Feb 2006 00:18:58 +0000 (-0800)
+Subject: [IA64] die_if_kernel() can return
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=e963701a761aede31c9c1bfc74cf8e0ec671f0f4
+
+[IA64] die_if_kernel() can return
+
+arch/ia64/kernel/unaligned.c erroneously marked die_if_kernel()
+with a "noreturn" attribute ... which is silly (it returns whenever
+the argument regs say that the fault happened in user mode, as one
+might expect given the "if_kernel" part of its name!).  Thanks to
+Alan and Gareth for pointing this out.
+
+Signed-off-by: Tony Luck <tony.luck@intel.com>
+---
+
+--- a/arch/ia64/kernel/unaligned.c
++++ b/arch/ia64/kernel/unaligned.c
+@@ -24,7 +24,7 @@
+ #include <asm/uaccess.h>
+ #include <asm/unaligned.h>
+ 
+-extern void die_if_kernel(char *str, struct pt_regs *regs, long err) __attribute__ ((noreturn));
++extern void die_if_kernel(char *str, struct pt_regs *regs, long err);
+ 
+ #undef DEBUG_UNALIGNED_TRAP
+ 

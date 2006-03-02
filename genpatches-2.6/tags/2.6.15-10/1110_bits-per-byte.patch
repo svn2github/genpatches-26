@@ -1,0 +1,27 @@
+From: Bryan O'Sullivan <bos@pathscale.com>
+Date: Wed, 1 Feb 2006 11:05:15 +0000 (-0800)
+Subject: [PATCH] Define BITS_PER_BYTE
+X-Git-Tag: v2.6.16-rc2
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=f7589f28d7dd4586b4e90ac3b2a180409669053a
+
+[PATCH] Define BITS_PER_BYTE
+
+This can make the intent behind some arithmetic expressions clearer.
+
+Signed-off-by: Bryan O'Sullivan <bos@pathscale.com>
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/include/linux/types.h
++++ b/include/linux/types.h
+@@ -8,6 +8,8 @@
+ 	(((bits)+BITS_PER_LONG-1)/BITS_PER_LONG)
+ #define DECLARE_BITMAP(name,bits) \
+ 	unsigned long name[BITS_TO_LONGS(bits)]
++
++#define BITS_PER_BYTE 8
+ #endif
+ 
+ #include <linux/posix_types.h>

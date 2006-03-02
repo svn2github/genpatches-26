@@ -1,0 +1,28 @@
+--- linux-2.6.9/arch/s390/lib/uaccess.S.orig	2006-02-16 20:10:02.000000000 +0000
++++ linux-2.6.9/arch/s390/lib/uaccess.S	2006-02-16 20:10:41.000000000 +0000
+@@ -198,9 +198,9 @@ __strnlen_user_asm:
+ 0:	srst	%r2,%r1
+ 	jo	0b
+ 	sacf	0
+-	jh	1f		# \0 found in string ?
+ 	ahi	%r2,1		# strnlen_user result includes the \0
+-1:	slr	%r2,%r3
++				# also advance the result to >maxlen if not found
++	slr	%r2,%r3
+ 	br	%r14
+ 2:	sacf	0
+ 	lhi	%r2,-EFAULT
+--- linux-2.6.9/arch/s390/lib/uaccess64.S.orig	2006-02-16 20:11:51.000000000 +0000
++++ linux-2.6.9/arch/s390/lib/uaccess64.S	2006-02-16 20:12:03.000000000 +0000
+@@ -194,9 +194,9 @@ __strnlen_user_asm:
+ 0:	srst	%r2,%r1
+ 	jo	0b
+ 	sacf	0
+-	jh	1f		# \0 found in string ?
+ 	aghi	%r2,1		# strnlen_user result includes the \0
+-1:	slgr	%r2,%r3
++				# also advance the result to >maxlen if not found
++	slgr	%r2,%r3
+ 	br	%r14
+ 2:	sacf	0
+ 	lghi	%r2,-EFAULT

@@ -1,0 +1,60 @@
+From: Jeff Garzik <jgarzik@pobox.com>
+Date: Sun, 29 Jan 2006 07:47:03 +0000 (-0500)
+Subject: [libata ahci] Isolate Intel-ism, add JMicron JMB360 support
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=bd12097c7415c13aff53aed473eec92acd15712a
+
+[libata ahci] Isolate Intel-ism, add JMicron JMB360 support
+
+Isolate some PCI config register bitbanging to Intel hardware, as it
+should have been all along.
+
+Add support for JMicron JMB360.
+---
+
+--- a/drivers/scsi/ahci.c
++++ b/drivers/scsi/ahci.c
+@@ -286,6 +286,8 @@ static const struct pci_device_id ahci_p
+ 	  board_ahci }, /* ICH8M */
+ 	{ PCI_VENDOR_ID_INTEL, 0x282a, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
+ 	  board_ahci }, /* ICH8M */
++	{ 0x197b, 0x2360, PCI_ANY_ID, PCI_ANY_ID, 0, 0,
++	  board_ahci }, /* JMicron JMB360 */
+ 	{ }	/* terminate list */
+ };
+ 
+@@ -802,7 +804,6 @@ static int ahci_host_init(struct ata_pro
+ 	struct pci_dev *pdev = to_pci_dev(probe_ent->dev);
+ 	void __iomem *mmio = probe_ent->mmio_base;
+ 	u32 tmp, cap_save;
+-	u16 tmp16;
+ 	unsigned int i, j, using_dac;
+ 	int rc;
+ 	void __iomem *port_mmio;
+@@ -836,9 +837,13 @@ static int ahci_host_init(struct ata_pro
+ 	writel(0xf, mmio + HOST_PORTS_IMPL);
+ 	(void) readl(mmio + HOST_PORTS_IMPL);	/* flush */
+ 
+-	pci_read_config_word(pdev, 0x92, &tmp16);
+-	tmp16 |= 0xf;
+-	pci_write_config_word(pdev, 0x92, tmp16);
++	if (pdev->vendor == PCI_VENDOR_ID_INTEL) {
++		u16 tmp16;
++
++		pci_read_config_word(pdev, 0x92, &tmp16);
++		tmp16 |= 0xf;
++		pci_write_config_word(pdev, 0x92, tmp16);
++	}
+ 
+ 	hpriv->cap = readl(mmio + HOST_CAP);
+ 	hpriv->port_map = readl(mmio + HOST_PORTS_IMPL);
+@@ -1082,6 +1087,10 @@ static int ahci_init_one (struct pci_dev
+ 	if (have_msi)
+ 		hpriv->flags |= AHCI_FLAG_MSI;
+ 
++	/* JMicron-specific fixup: make sure we're in AHCI mode */
++	if (pdev->vendor == 0x197b)
++		pci_write_config_byte(pdev, 0x41, 0xa1);
++
+ 	/* initialize adapter */
+ 	rc = ahci_host_init(probe_ent);
+ 	if (rc)
