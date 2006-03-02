@@ -272,6 +272,10 @@ Patch:	1110_bits-per-byte.patch
 From:	http://bugs.gentoo.org/124666
 Desc:	2.6.15.5 compile fix
 
+Patch:	1115_nfs-client-compile.patch
+From:	Linux kernel list
+Desc:	2.6.15.5 compile fix
+
 Patch:	1340_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
