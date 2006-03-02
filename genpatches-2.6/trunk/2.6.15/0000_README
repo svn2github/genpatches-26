@@ -300,6 +300,10 @@ Patch:	2720_usb-ehci-early-handoff-smi.patch
 From:	http://bugs.gentoo.org/119978
 Desc:	Fix SMI issues in EHCI early handoff
 
+Patch:	2725_usb-ehci-early-handoff-handshake.patch
+From:	2.6.16
+Desc:	Another EHCI handoff fix
+
 Patch:	2900_bt3c-cs-crash.patch
 From:	http://bugs.gentoo.org/120937
 Desc:	Fix a crash when a bluetooth card is inserted
