@@ -1,7 +1,7 @@
-Index: linux/arch/alpha/Kconfig
+Index: linux-git/arch/alpha/Kconfig
 ===================================================================
---- linux.orig/arch/alpha/Kconfig
-+++ linux/arch/alpha/Kconfig
+--- linux-git.orig/arch/alpha/Kconfig
++++ linux-git/arch/alpha/Kconfig
 @@ -577,6 +577,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
@@ -35,10 +35,10 @@ Index: linux/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux/arch/alpha/kernel/traps.c
+Index: linux-git/arch/alpha/kernel/traps.c
 ===================================================================
---- linux.orig/arch/alpha/kernel/traps.c
-+++ linux/arch/alpha/kernel/traps.c
+--- linux-git.orig/arch/alpha/kernel/traps.c
++++ linux-git/arch/alpha/kernel/traps.c
 @@ -15,6 +15,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -123,21 +123,22 @@ Index: linux/arch/alpha/kernel/traps.c
  }
 +
 +__initcall(init_uac_sysctl);
-Index: linux/include/linux/sysctl.h
+Index: linux-git/include/linux/sysctl.h
 ===================================================================
---- linux.orig/include/linux/sysctl.h
-+++ linux/include/linux/sysctl.h
-@@ -148,6 +148,9 @@ enum
- 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
+--- linux-git.orig/include/linux/sysctl.h
++++ linux-git/include/linux/sysctl.h
+@@ -149,6 +149,10 @@ enum
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
- 	KERN_FBSPLASH=72,	/* string: path to fbsplash helper */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+ 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=73,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=74,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
++  };
  };
  
  
-@@ -231,6 +234,17 @@ enum
+@@ -232,6 +236,17 @@ enum
  	PTY_NR=2
  };
  
@@ -155,11 +156,11 @@ Index: linux/include/linux/sysctl.h
  /* /proc/sys/bus/isa */
  enum
  {
-Index: linux/kernel/sysctl.c
+Index: linux-git/kernel/sysctl.c
 ===================================================================
---- linux.orig/kernel/sysctl.c
-+++ linux/kernel/sysctl.c
-@@ -153,6 +153,9 @@ extern ctl_table inotify_table[];
+--- linux-git.orig/kernel/sysctl.c
++++ linux-git/kernel/sysctl.c
+@@ -160,6 +160,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -169,7 +170,7 @@ Index: linux/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -221,7 +224,14 @@ static ctl_table root_table[] = {
+@@ -228,7 +231,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},

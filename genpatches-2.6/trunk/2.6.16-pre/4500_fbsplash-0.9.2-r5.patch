@@ -1,9 +1,7 @@
-diff --git a/Documentation/fb/00-INDEX b/Documentation/fb/00-INDEX
-index 92e89ae..a6cfacc 100644
-Index: linux/Documentation/fb/00-INDEX
+Index: linux-git/Documentation/fb/00-INDEX
 ===================================================================
---- linux.orig/Documentation/fb/00-INDEX
-+++ linux/Documentation/fb/00-INDEX
+--- linux-git.orig/Documentation/fb/00-INDEX
++++ linux-git/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -13,10 +11,10 @@ Index: linux/Documentation/fb/00-INDEX
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-Index: linux/Documentation/fb/splash.txt
+Index: linux-git/Documentation/fb/splash.txt
 ===================================================================
 --- /dev/null
-+++ linux/Documentation/fb/splash.txt
++++ linux-git/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -225,10 +223,10 @@ Index: linux/Documentation/fb/splash.txt
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michael Januszewski <spock@gentoo.org>
 +
-Index: linux/drivers/Makefile
+Index: linux-git/drivers/Makefile
 ===================================================================
---- linux.orig/drivers/Makefile
-+++ linux/drivers/Makefile
+--- linux-git.orig/drivers/Makefile
++++ linux-git/drivers/Makefile
 @@ -8,6 +8,9 @@
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
@@ -250,10 +248,10 @@ Index: linux/drivers/Makefile
  obj-$(CONFIG_CONNECTOR)		+= connector/
  
  # i810fb and intelfb depend on char/agp/
-Index: linux/drivers/video/Kconfig
+Index: linux-git/drivers/video/Kconfig
 ===================================================================
---- linux.orig/drivers/video/Kconfig
-+++ linux/drivers/video/Kconfig
+--- linux-git.orig/drivers/video/Kconfig
++++ linux-git/drivers/video/Kconfig
 @@ -754,7 +754,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
@@ -279,10 +277,10 @@ Index: linux/drivers/video/Kconfig
  
 +	  If unsure, say N.
 +endmenu
-Index: linux/drivers/video/Makefile
+Index: linux-git/drivers/video/Makefile
 ===================================================================
---- linux.orig/drivers/video/Makefile
-+++ linux/drivers/video/Makefile
+--- linux-git.orig/drivers/video/Makefile
++++ linux-git/drivers/video/Makefile
 @@ -7,6 +7,7 @@
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
@@ -291,10 +289,10 @@ Index: linux/drivers/video/Makefile
  
  obj-$(CONFIG_FB)                  += fb.o
  fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o \
-Index: linux/drivers/video/cfbsplash.c
+Index: linux-git/drivers/video/cfbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux/drivers/video/cfbsplash.c
++++ linux-git/drivers/video/cfbsplash.c
 @@ -0,0 +1,472 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
@@ -768,10 +766,10 @@ Index: linux/drivers/video/cfbsplash.c
 +	}
 +}
 +
-Index: linux/drivers/video/console/bitblit.c
+Index: linux-git/drivers/video/console/bitblit.c
 ===================================================================
---- linux.orig/drivers/video/console/bitblit.c
-+++ linux/drivers/video/console/bitblit.c
+--- linux-git.orig/drivers/video/console/bitblit.c
++++ linux-git/drivers/video/console/bitblit.c
 @@ -18,6 +18,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
@@ -814,10 +812,10 @@ Index: linux/drivers/video/console/bitblit.c
  
  	ops->cursor_reset = 0;
  }
-Index: linux/drivers/video/console/fbcon.c
+Index: linux-git/drivers/video/console/fbcon.c
 ===================================================================
---- linux.orig/drivers/video/console/fbcon.c
-+++ linux/drivers/video/console/fbcon.c
+--- linux-git.orig/drivers/video/console/fbcon.c
++++ linux-git/drivers/video/console/fbcon.c
 @@ -93,6 +93,7 @@
  #endif
  
@@ -1137,10 +1135,10 @@ Index: linux/drivers/video/console/fbcon.c
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-Index: linux/drivers/video/fbcmap.c
+Index: linux-git/drivers/video/fbcmap.c
 ===================================================================
---- linux.orig/drivers/video/fbcmap.c
-+++ linux/drivers/video/fbcmap.c
+--- linux-git.orig/drivers/video/fbcmap.c
++++ linux-git/drivers/video/fbcmap.c
 @@ -16,6 +16,7 @@
  #include <linux/tty.h>
  #include <linux/fb.h>
@@ -1164,10 +1162,10 @@ Index: linux/drivers/video/fbcmap.c
  	return rc;
  }
  
-Index: linux/drivers/video/fbsplash.c
+Index: linux-git/drivers/video/fbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux/drivers/video/fbsplash.c
++++ linux-git/drivers/video/fbsplash.c
 @@ -0,0 +1,406 @@
 +/*
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
@@ -1575,10 +1573,10 @@ Index: linux/drivers/video/fbsplash.c
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-Index: linux/drivers/video/fbsplash.h
+Index: linux-git/drivers/video/fbsplash.h
 ===================================================================
 --- /dev/null
-+++ linux/drivers/video/fbsplash.h
++++ linux-git/drivers/video/fbsplash.h
 @@ -0,0 +1,76 @@
 +/*
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
@@ -1656,10 +1654,10 @@ Index: linux/drivers/video/fbsplash.h
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-Index: linux/include/linux/console_splash.h
+Index: linux-git/include/linux/console_splash.h
 ===================================================================
 --- /dev/null
-+++ linux/include/linux/console_splash.h
++++ linux-git/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1674,10 +1672,10 @@ Index: linux/include/linux/console_splash.h
 +};
 +
 +#endif
-Index: linux/include/linux/console_struct.h
+Index: linux-git/include/linux/console_struct.h
 ===================================================================
---- linux.orig/include/linux/console_struct.h
-+++ linux/include/linux/console_struct.h
+--- linux-git.orig/include/linux/console_struct.h
++++ linux-git/include/linux/console_struct.h
 @@ -14,6 +14,7 @@
  struct vt_struct;
  
@@ -1695,10 +1693,10 @@ Index: linux/include/linux/console_struct.h
  	/* additional information is in vt_kern.h */
  };
  
-Index: linux/include/linux/fb.h
+Index: linux-git/include/linux/fb.h
 ===================================================================
---- linux.orig/include/linux/fb.h
-+++ linux/include/linux/fb.h
+--- linux-git.orig/include/linux/fb.h
++++ linux-git/include/linux/fb.h
 @@ -8,6 +8,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
@@ -1740,23 +1738,23 @@ Index: linux/include/linux/fb.h
  	/* From here on everything is device dependent */
  	void *par;	
  };
-Index: linux/include/linux/sysctl.h
+Index: linux-git/include/linux/sysctl.h
 ===================================================================
---- linux.orig/include/linux/sysctl.h
-+++ linux/include/linux/sysctl.h
-@@ -147,6 +147,7 @@ enum
- 	KERN_SETUID_DUMPABLE=69, /* int: behaviour of dumps for setuid core */
+--- linux-git.orig/include/linux/sysctl.h
++++ linux-git/include/linux/sysctl.h
+@@ -148,6 +148,7 @@ enum
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
-+	KERN_FBSPLASH=72,	/* string: path to fbsplash helper */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
++	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
  };
  
  
-Index: linux/kernel/sysctl.c
+Index: linux-git/kernel/sysctl.c
 ===================================================================
---- linux.orig/kernel/sysctl.c
-+++ linux/kernel/sysctl.c
-@@ -86,6 +86,9 @@ static int ngroups_max = NGROUPS_MAX;
+--- linux-git.orig/kernel/sysctl.c
++++ linux-git/kernel/sysctl.c
+@@ -89,6 +89,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
  #endif
@@ -1766,7 +1764,7 @@ Index: linux/kernel/sysctl.c
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -402,6 +405,17 @@ static ctl_table kern_table[] = {
+@@ -409,6 +412,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
