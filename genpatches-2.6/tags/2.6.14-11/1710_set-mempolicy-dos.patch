@@ -1,0 +1,32 @@
+This patch is a backport of the following patch from the 2.6.15 branch
+for 2.6.14 by Tim Yamin (plasmaroo@gentoo.org). See gentoo bug #117855.
+
+---
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=8f493d797bc1fe470377adc9d8775845427e240e
+
+[PATCH] Make sure interleave masks have at least one node set
+
+Otherwise a bad mem policy system call can confuse the interleaving
+code into referencing undefined nodes.
+
+Originally reported by Doug Chapman
+
+I was told it's CVE-2005-3358
+(one has to love these security people - they make everything sound important)
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+--- linux-2.6.14.orig/mm/mempolicy.c	2005-10-28 01:02:08.000000000 +0100
++++ linux-2.6.14/mm/mempolicy.c	2006-01-10 21:37:14.000000000 +0000
+@@ -219,6 +219,10 @@
+ 	switch (mode) {
+ 	case MPOL_INTERLEAVE:
+ 		bitmap_copy(policy->v.nodes, nodes, MAX_NUMNODES);
++		if (bitmap_weight(nodes, MAX_NUMNODES) == 0) {
++			kmem_cache_free(policy_cache, policy);
++			return ERR_PTR(-EINVAL);
++		}
+ 		break;
+ 	case MPOL_PREFERRED:
+ 		policy->v.preferred_node = find_first_bit(nodes, MAX_NUMNODES);

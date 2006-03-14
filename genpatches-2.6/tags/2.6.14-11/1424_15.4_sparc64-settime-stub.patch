@@ -1,0 +1,35 @@
+Re-diffed for 2.6.14.7 by Kerin Millar <kerframil@gmail.com>:
+
+From: David S. Miller <davem@sunset.davemloft.net>
+Date: Mon, 30 Jan 2006 09:31:09 +0000 (-0800)
+Subject: [SPARC64]: Kill compat_sys_clock_settime sign extension stub.
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=cddfc12e2513a4229bad0d05fde2d40a75c3e197
+
+[SPARC64]: Kill compat_sys_clock_settime sign extension stub.
+
+It's wrong and totally unneeded.
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- linux-2.6.14.7.orig/arch/sparc64/kernel/sys32.S	2005-10-27 19:02:08.000000000 -0500
++++ linux-2.6.14.7/arch/sparc64/kernel/sys32.S	2006-03-08 02:56:33.000000000 -0500
+@@ -84,7 +84,6 @@ SIGN2(sys32_fadvise64_64, compat_sys_fad
+ SIGN2(sys32_bdflush, sys_bdflush, %o0, %o1)
+ SIGN1(sys32_mlockall, sys_mlockall, %o0)
+ SIGN1(sys32_nfsservctl, compat_sys_nfsservctl, %o0)
+-SIGN1(sys32_clock_settime, compat_sys_clock_settime, %o1)
+ SIGN1(sys32_clock_nanosleep, compat_sys_clock_nanosleep, %o1)
+ SIGN1(sys32_timer_settime, compat_sys_timer_settime, %o1)
+ SIGN1(sys32_io_submit, compat_sys_io_submit, %o1)
+--- linux-2.6.14.7.orig/arch/sparc64/kernel/systbls.S	2006-03-08 02:49:32.000000000 -0500
++++ linux-2.6.14.7/arch/sparc64/kernel/systbls.S	2006-03-08 02:57:56.000000000 -0500
+@@ -71,7 +71,7 @@ sys_call_table32:
+ /*240*/	.word sys_munlockall, sys32_sched_setparam, sys32_sched_getparam, sys32_sched_setscheduler, sys32_sched_getscheduler
+ 	.word sys_sched_yield, sys32_sched_get_priority_max, sys32_sched_get_priority_min, sys32_sched_rr_get_interval, compat_sys_nanosleep
+ /*250*/	.word sys32_mremap, sys32_sysctl, sys32_getsid, sys_fdatasync, sys32_nfsservctl
+-	.word sys_ni_syscall, sys32_clock_settime, compat_sys_clock_gettime, compat_sys_clock_getres, sys32_clock_nanosleep
++	.word sys_ni_syscall, compat_sys_clock_settime, compat_sys_clock_gettime, compat_sys_clock_getres, sys32_clock_nanosleep
+ /*260*/	.word compat_sys_sched_getaffinity, compat_sys_sched_setaffinity, sys32_timer_settime, compat_sys_timer_gettime, sys_timer_getoverrun
+ 	.word sys_timer_delete, sys32_timer_create, sys_ni_syscall, compat_sys_io_setup, sys_io_destroy
+ /*270*/	.word sys32_io_submit, sys_io_cancel, compat_sys_io_getevents, sys32_mq_open, sys_mq_unlink

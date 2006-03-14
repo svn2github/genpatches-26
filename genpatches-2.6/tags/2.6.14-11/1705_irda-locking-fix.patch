@@ -1,0 +1,53 @@
+From: Andrew Morton <akpm@osdl.org>
+Date: Tue, 8 Nov 2005 17:41:13 +0000 (-0800)
+Subject: [IRDA] donauboe: locking fix
+X-Git-Tag: v2.6.15-rc1
+X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=ac7c98eca88a854755475fcfe1b2bf5f97f90d99
+
+[IRDA] donauboe: locking fix
+
+From: Andrew Morton <akpm@osdl.org>
+
+Two missing unlocks, as noted by Ted Unangst <tedu@coverity.com>
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/drivers/net/irda/donauboe.c
++++ b/drivers/net/irda/donauboe.c
+@@ -1459,8 +1459,10 @@ toshoboe_net_ioctl (struct net_device *d
+        */
+       IRDA_DEBUG (1, "%s(BANDWIDTH), %s, (%X/%ld\n", __FUNCTION__
+           ,dev->name, INB (OBOE_STATUS), irq->ifr_baudrate );
+-      if (!in_interrupt () && !capable (CAP_NET_ADMIN))
+-        return -EPERM;
++      if (!in_interrupt () && !capable (CAP_NET_ADMIN)) {
++	ret = -EPERM;
++	goto out;
++      }
+ 
+       /* self->speed=irq->ifr_baudrate; */
+       /* toshoboe_setbaud(self); */
+@@ -1470,8 +1472,10 @@ toshoboe_net_ioctl (struct net_device *d
+     case SIOCSMEDIABUSY:       /* Set media busy */
+       IRDA_DEBUG (1, "%s(MEDIABUSY), %s, (%X/%x)\n", __FUNCTION__
+           ,dev->name, INB (OBOE_STATUS), capable (CAP_NET_ADMIN) );
+-      if (!capable (CAP_NET_ADMIN))
+-        return -EPERM;
++      if (!capable (CAP_NET_ADMIN)) {
++	ret = -EPERM;
++	goto out;
++      }
+       irda_device_set_media_busy (self->netdev, TRUE);
+       break;
+     case SIOCGRECEIVING:       /* Check if we are receiving right now */
+@@ -1483,7 +1487,7 @@ toshoboe_net_ioctl (struct net_device *d
+       IRDA_DEBUG (1, "%s(?), %s, (cmd=0x%X)\n", __FUNCTION__, dev->name, cmd);
+       ret = -EOPNOTSUPP;
+     }
+-
++out:
+   spin_unlock_irqrestore(&self->spinlock, flags);
+   return ret;
+ 

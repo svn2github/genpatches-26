@@ -1,0 +1,28 @@
+From: Dave Jones <davej@redhat.com>
+Date: Fri, 10 Feb 2006 21:27:11 +0000 (-0500)
+Subject: [PATCH] Fix s390 build failure.
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=c295b4b9b5b554283b15dca58d23110fdde5e9c9
+
+[PATCH] Fix s390 build failure.
+
+arch/s390/kernel/compat_signal.c:199: error: conflicting types for 'do_sigaction'
+include/linux/sched.h:1115: error: previous declaration of 'do_sigaction' was here
+
+Signed-off-by: Dave Jones <davej@redhat.com>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/arch/s390/kernel/compat_signal.c
++++ b/arch/s390/kernel/compat_signal.c
+@@ -258,9 +258,6 @@ sys32_sigaction(int sig, const struct ol
+ 	return ret;
+ }
+ 
+-int
+-do_sigaction(int sig, const struct k_sigaction *act, struct k_sigaction *oact);
+-
+ asmlinkage long
+ sys32_rt_sigaction(int sig, const struct sigaction32 __user *act,
+ 	   struct sigaction32 __user *oact,  size_t sigsetsize)

@@ -1,0 +1,34 @@
+From stable-bounces@linux.kernel.org  Tue Nov 15 04:32:56 2005
+Date: Tue, 15 Nov 2005 13:32:36 +0100
+Message-ID: <20051115133236.610397000@hanuman.de.gnumonks.org>
+From: Harald Welte <laforge@netfilter.org>
+To: Stable Kernel <stable@kernel.org>
+Cc: 
+Subject: [PATCH] [NETFILTER] PPTP helper: Fix endianness bug in GRE key / CallID NAT
+
+This endianness bug slipped through while changing the 'gre.key' field in
+the conntrack tuple from 32bit to 16bit.
+
+None of my tests caught the problem, since the linux pptp client always has
+'0' as call id / gre key.  Only windows clients actually trigger the bug.
+
+Signed-off-by: Harald Welte <laforge@netfilter.org>
+Signed-off-by: Chris Wright <chrisw@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ net/ipv4/netfilter/ip_nat_proto_gre.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- linux-2.6.14.2.orig/net/ipv4/netfilter/ip_nat_proto_gre.c
++++ linux-2.6.14.2/net/ipv4/netfilter/ip_nat_proto_gre.c
+@@ -139,8 +139,8 @@ gre_manip_pkt(struct sk_buff **pskb,
+ 			break;
+ 		case GRE_VERSION_PPTP:
+ 			DEBUGP("call_id -> 0x%04x\n", 
+-				ntohl(tuple->dst.u.gre.key));
+-			pgreh->call_id = htons(ntohl(tuple->dst.u.gre.key));
++				ntohs(tuple->dst.u.gre.key));
++			pgreh->call_id = tuple->dst.u.gre.key;
+ 			break;
+ 		default:
+ 			DEBUGP("can't nat unknown GRE version\n");

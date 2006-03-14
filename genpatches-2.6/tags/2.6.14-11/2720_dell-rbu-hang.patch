@@ -1,0 +1,98 @@
+Re-diffed for 2.6.14.7 by Kerin Millar <kerframi@gmail.com>:
+
+From: Abhay Salunke <Abhay_Salunke@dell.com>
+Date: Sat, 14 Jan 2006 21:21:14 +0000 (-0800)
+Subject: [PATCH] dell_rbu: fix Bug 5854
+X-Git-Tag: v2.6.16-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=2c5608404e66047bbcd9b7788e7f3ee2555c8639
+
+[PATCH] dell_rbu: fix Bug 5854
+
+This fixes http://bugzilla.kernel.org/show_bug.cgi?id=5854
+
+Root cause:
+
+The dell_rbu driver creates entries in /sys/class/firmware/dell_rbu/ by
+calling request_firmware_nowait (without hotplug ) this function inturn
+starts a kernel thread which creates the entries in
+/sys/class/firmware/dell_rbu/loading , data and the thread waits on the
+user action to return control back to the callback fucntion of dell_rbu.
+The thread calls wait_on_completion which puts it in a D state until the
+user action happens.  If there is no user action happening the load average
+goes up as the thread D state is taken in to account.  Also after
+downloading the BIOS image the enrties go away momentarily but they are
+recreated from the callback function in dell_rbu.  This causes the thread
+to get recreated causing the load average to permenently stay around 1.
+
+Fix:
+
+The dell_rbu also creates the entry
+/sys/devices/platform/dell_rbu/image_type at driver load time.  The image
+type by default is mono if required the user can echo packet to image_type
+to make the BIOS update mechanism using packets.  Also by echoing init in
+to image_type the /sys/class/firmware/dell_rbu entries can be created.
+
+The driver code was changed to not create /sys/class/firmware/dell_rbu
+entries during load time, and also to not create the above entries from the
+callback function.  The entries are only created by echoing init to
+/sys/devices/platform/dell_rbu/image_type The user now needs to create the
+entries to download the image monolithic or packet.  This fixes the issue
+since the kernel thread only is created when ever the user is ready to
+download the BIOS image; this minimizes the life span of the kernel thread
+and the load average goes back to normal.
+
+Signed off by Abhay Salunke <abhay_salunke@dell.com>
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- linux-2.6.14.7.orig/drivers/firmware/dell_rbu.c	2005-10-27 19:02:08.000000000 -0500
++++ linux-2.6.14.7/drivers/firmware/dell_rbu.c	2006-03-08 04:02:44.000000000 -0500
+@@ -499,12 +499,10 @@ static ssize_t read_rbu_data(struct kobj
+ 
+ static void callbackfn_rbu(const struct firmware *fw, void *context)
+ {
+-	int rc = 0;
++	rbu_data.entry_created = 0;
+ 
+-	if (!fw || !fw->size) {
+-		rbu_data.entry_created = 0;
++	if (!fw || !fw->size)
+ 		return;
+-	}
+ 
+ 	spin_lock(&rbu_data.lock);
+ 	if (!strcmp(image_type, "mono")) {
+@@ -527,15 +525,6 @@ static void callbackfn_rbu(const struct 
+ 	} else
+ 		pr_debug("invalid image type specified.\n");
+ 	spin_unlock(&rbu_data.lock);
+-
+-	rc = request_firmware_nowait(THIS_MODULE, FW_ACTION_NOHOTPLUG,
+-		"dell_rbu", &rbu_device->dev, &context, callbackfn_rbu);
+-	if (rc)
+-		printk(KERN_ERR
+-			"dell_rbu:%s request_firmware_nowait failed"
+-			" %d\n", __FUNCTION__, rc);
+-	else
+-		rbu_data.entry_created = 1;
+ }
+ 
+ static ssize_t read_rbu_image_type(struct kobject *kobj, char *buffer,
+@@ -670,14 +659,7 @@ static int __init dcdrbu_init(void)
+ 	sysfs_create_bin_file(&rbu_device->dev.kobj,
+ 		&rbu_packet_size_attr);
+ 
+-	rc = request_firmware_nowait(THIS_MODULE, FW_ACTION_NOHOTPLUG,
+-		"dell_rbu", &rbu_device->dev, &context, callbackfn_rbu);
+-	if (rc)
+-		printk(KERN_ERR "dell_rbu:%s:request_firmware_nowait"
+-			" failed %d\n", __FUNCTION__, rc);
+-	else
+-		rbu_data.entry_created = 1;
+-
++	rbu_data.entry_created = 0;
+ 	return rc;
+ 
+ }
