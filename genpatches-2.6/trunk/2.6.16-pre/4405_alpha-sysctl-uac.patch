@@ -127,18 +127,17 @@ Index: linux-git/include/linux/sysctl.h
 ===================================================================
 --- linux-git.orig/include/linux/sysctl.h
 +++ linux-git/include/linux/sysctl.h
-@@ -149,6 +149,10 @@ enum
+@@ -149,6 +149,9 @@ enum
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
  	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +	KERN_UAC_POLICY=74,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
-+  };
  };
  
  
-@@ -232,6 +236,17 @@ enum
+@@ -232,6 +235,17 @@ enum
  	PTY_NR=2
  };
  
