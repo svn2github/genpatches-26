@@ -107,7 +107,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
 +
 +			pdc_ata_setup_port(&probe_ent->port[2], base +0x300);
 +
-+			probe_ent->probe_flags[2] = ATA_FLAG_SLAVE_POSS;
++			probe_ent->port_flags[2] = ATA_FLAG_SLAVE_POSS;
 +
 +			printk(KERN_INFO DRV_NAME " PATA port found\n");
 +		}
