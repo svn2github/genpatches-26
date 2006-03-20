@@ -1,0 +1,51 @@
+diff-tree 7670f023aabd976c25862e4c6fb9f6d9d2758153 (from 85c6932ef0c7a82c309f8728ddf29768001d794e)
+Author: Sam Ravnborg <sam@ravnborg.org>
+Date:   Thu Mar 16 23:04:08 2006 -0800
+
+    [PATCH] kbuild: fix buffer overflow in modpost
+    
+    Jiri Benc <jbenc@suse.cz> reported that modpost would stop with SIGABRT if
+    used with long filepaths.
+    The error looked like:
+    >   Building modules, stage 2.
+    >   MODPOST
+    > *** glibc detected *** scripts/mod/modpost: realloc(): invalid next size:
+    +0x0809f588 ***
+    > [...]
+    
+    Fix this by allocating at least the required memory + SZ bytes each time.
+    Before we sometimes ended up allocating too little memory resuting in the
+    glibc detected bug above.  Based on patch originally submitted by: Jiri
+    Benc <jbenc@suse.cz>
+    
+    Signed-off-by: Sam Ravnborg <sam@ravnborg.org>
+    Signed-off-by: Andrew Morton <akpm@osdl.org>
+    Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+diff --git a/scripts/mod/modpost.c b/scripts/mod/modpost.c
+index f70ff13..b8b2a56 100644
+--- a/scripts/mod/modpost.c
++++ b/scripts/mod/modpost.c
+@@ -508,12 +508,7 @@ buf_printf(struct buffer *buf, const cha
+ 	
+ 	va_start(ap, fmt);
+ 	len = vsnprintf(tmp, SZ, fmt, ap);
+-	if (buf->size - buf->pos < len + 1) {
+-		buf->size += 128;
+-		buf->p = realloc(buf->p, buf->size);
+-	}
+-	strncpy(buf->p + buf->pos, tmp, len + 1);
+-	buf->pos += len;
++	buf_write(buf, tmp, len);
+ 	va_end(ap);
+ }
+ 
+@@ -521,7 +516,7 @@ void
+ buf_write(struct buffer *buf, const char *s, int len)
+ {
+ 	if (buf->size - buf->pos < len) {
+-		buf->size += len;
++		buf->size += len + SZ;
+ 		buf->p = realloc(buf->p, buf->size);
+ 	}
+ 	strncpy(buf->p + buf->pos, s, len);
