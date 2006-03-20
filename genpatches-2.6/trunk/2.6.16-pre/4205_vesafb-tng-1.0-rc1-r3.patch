@@ -2947,7 +2947,7 @@ Index: linux-git/mm/memory.c
 ===================================================================
 --- linux-git.orig/mm/memory.c
 +++ linux-git/mm/memory.c
-@@ -1107,6 +1107,7 @@ static int zeromap_pte_range(struct mm_s
+@@ -1108,6 +1108,7 @@ static int zeromap_pte_range(struct mm_s
  	pte_unmap_unlock(pte - 1, ptl);
  	return 0;
  }
