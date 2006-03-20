@@ -4042,7 +4042,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +      continue;
 +    }
 +    count = sel_buffer_lth - pasted;
-+    count = MIN(count, tty->ldisc.receive_room(tty));
++    count = MIN(count, tty->receive_room);
 +    tty->ldisc.receive_buf(tty, sel_buffer + pasted, 0, count);
 +    pasted += count;
 +  }
