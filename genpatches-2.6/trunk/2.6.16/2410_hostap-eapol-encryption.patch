@@ -1,0 +1,23 @@
+Replace-Subject: hostap: Fix EAPOL frame encryption
+Fixed encrypted of EAPOL frames from wlan#ap interface (hostapd). This
+was broken when moving to use new frame control field defines in
+net/ieee80211.h. hostapd uses Protected flag, not protocol version
+(which was cleared in this function anyway). This fixes WPA group key
+handshake and re-authentication.
+
+Signed-off-by: Jouni Malinen <jkmaline@cc.hut.fi>
+
+
+Index: linux-2.6.16/drivers/net/wireless/hostap/hostap_80211_tx.c
+===================================================================
+--- linux-2.6.16.orig/drivers/net/wireless/hostap/hostap_80211_tx.c
++++ linux-2.6.16/drivers/net/wireless/hostap/hostap_80211_tx.c
+@@ -469,7 +469,7 @@ int hostap_master_start_xmit(struct sk_b
+ 	}
+ 
+ 	if (local->ieee_802_1x && meta->ethertype == ETH_P_PAE && tx.crypt &&
+-	    !(fc & IEEE80211_FCTL_VERS)) {
++	    !(fc & IEEE80211_FCTL_PROTECTED)) {
+ 		no_encrypt = 1;
+ 		PDEBUG(DEBUG_EXTRA2, "%s: TX: IEEE 802.1X - passing "
+ 		       "unencrypted EAPOL frame\n", dev->name);

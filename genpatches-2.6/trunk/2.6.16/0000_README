@@ -58,6 +58,10 @@ Patch:	2405_skge-1.5.patch
 From:	Stephen Hemminger
 Desc:	skge update, hopefully solves performance issues
 
+Patch:	2410_hostap-eapol-encryption.patch
+From:	http://bugs.gentoo.org/127546
+Desc:	Fix disconnect when renewing keys with hostap driver
+
 Patch:	2600_input-h-bits-per-long.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
