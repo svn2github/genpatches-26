@@ -54,6 +54,10 @@ Patch:	2400_sky2-1.1.patch
 From:	Stephen Hemminger
 Desc:	sky2 update, hopefully solves stability issues
 
+Patch:	2405_skge-1.5.patch
+From:	Stephen Hemminger
+Desc:	skge update, hopefully solves performance issues
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
