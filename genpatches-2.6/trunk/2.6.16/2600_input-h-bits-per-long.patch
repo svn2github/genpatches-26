@@ -1,0 +1,20 @@
+[PATCH] input.h should always include asm/types.h
+
+Commit 1d8f430c15b3a345db990e285742c67c2f52f9a6 added modalias support to the
+input subsystem. Now that input.h uses BITS_PER_LONG, asm/types.h should be
+included even in __KERNEL__ space.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+
+--- linux/include/linux/input.h.orig	2006-03-27 13:09:50.000000000 +0100
++++ linux/include/linux/input.h	2006-03-27 13:10:03.000000000 +0100
+@@ -17,8 +17,8 @@
+ #else
+ #include <sys/time.h>
+ #include <sys/ioctl.h>
+-#include <asm/types.h>
+ #endif
++#include <asm/types.h>
+ 
+ /*
+  * The event structure itself
