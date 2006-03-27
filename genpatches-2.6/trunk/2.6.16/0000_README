@@ -50,6 +50,10 @@ Patch:	1710_sparc-sparsemem.patch
 From:	http://bugs.gentoo.org/127095
 Desc:	Use sparsemem for ultrasparc machines
 
+Patch:	2400_sky2-1.1.patch
+From:	Stephen Hemminger
+Desc:	sky2 update, hopefully solves stability issues
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
