@@ -260,9 +260,13 @@ Patch:	1054_linux-2.6.15.5.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.15.5 - misc fixes
 
-Patch:	1054_linux-2.6.15.6.patch
+Patch:	1055_linux-2.6.15.6.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.15.6 - misc fixes
+
+Patch:	1056_linux-2.6.15.7.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.15.7 - misc fixes
 
 Patch:	1105_s390-strnlen-user.patch
 From:	gentoo security
