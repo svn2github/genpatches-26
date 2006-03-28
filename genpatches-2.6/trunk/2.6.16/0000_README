@@ -38,6 +38,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1000_linux-2.6.16.1.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
