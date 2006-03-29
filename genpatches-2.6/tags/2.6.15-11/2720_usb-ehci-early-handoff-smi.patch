@@ -1,0 +1,63 @@
+From: David Brownell <david-b@pacbell.net>
+Date: Thu, 9 Feb 2006 21:35:31 +0000 (-0500)
+Subject: [PATCH] USB: fix up the usb early handoff logic for EHCI
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=a38408cd8d6bc0e5d16e609d4b1fdf9ba2e099ce
+
+[PATCH] USB: fix up the usb early handoff logic for EHCI
+
+Disable some dubious "early" USB handoff code that allegedly works around bugs
+on some systems (we don't know which ones) but rudely breaks some others.
+
+Also make the kernel warnings reporting BIOS handoff problems be more useful,
+reporting the register whose value displays the trouble.
+
+Signed-off-by: David Brownell <dbrownell@users.sourceforge.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/drivers/usb/host/pci-quirks.c
++++ b/drivers/usb/host/pci-quirks.c
+@@ -191,8 +191,9 @@ static void __devinit quirk_usb_handoff_
+ 		}
+ 		if (wait_time <= 0)
+ 			printk(KERN_WARNING "%s %s: BIOS handoff "
+-					"failed (BIOS bug ?)\n",
+-					pdev->dev.bus_id, "OHCI");
++					"failed (BIOS bug ?) %08x\n",
++					pdev->dev.bus_id, "OHCI",
++					readl(base + OHCI_CONTROL));
+ 
+ 		/* reset controller, preserving RWC */
+ 		writel(control & OHCI_CTRL_RWC, base + OHCI_CONTROL);
+@@ -243,6 +244,12 @@ static void __devinit quirk_usb_disable_
+ 				pr_debug("%s %s: BIOS handoff\n",
+ 						pdev->dev.bus_id, "EHCI");
+ 
++#if 0
++/* aleksey_gorelov@phoenix.com reports that some systems need SMI forced on,
++ * but that seems dubious in general (the BIOS left it off intentionally)
++ * and is known to prevent some systems from booting.  so we won't do this
++ * unless maybe we can determine when we're on a system that needs SMI forced.
++ */
+ 				/* BIOS workaround (?): be sure the
+ 				 * pre-Linux code receives the SMI
+ 				 */
+@@ -252,6 +259,7 @@ static void __devinit quirk_usb_disable_
+ 				pci_write_config_dword(pdev,
+ 						offset + EHCI_USBLEGCTLSTS,
+ 						val | EHCI_USBLEGCTLSTS_SOOE);
++#endif
+ 			}
+ 
+ 			/* always say Linux will own the hardware
+@@ -274,8 +282,8 @@ static void __devinit quirk_usb_disable_
+ 				 * it down, and hope nothing goes too wrong
+ 				 */
+ 				printk(KERN_WARNING "%s %s: BIOS handoff "
+-						"failed (BIOS bug ?)\n",
+-					pdev->dev.bus_id, "EHCI");
++						"failed (BIOS bug ?) %08x\n",
++					pdev->dev.bus_id, "EHCI", cap);
+ 				pci_write_config_byte(pdev, offset + 2, 0);
+ 			}
+ 
