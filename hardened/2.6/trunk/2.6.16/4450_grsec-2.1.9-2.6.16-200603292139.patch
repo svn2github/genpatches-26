@@ -21884,11 +21884,6 @@ diff -urNp linux-2.6.16/kernel/time.c linux-2.6.16/kernel/time.c
  	return do_sys_settimeofday(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
  }
  
-diff -urNp linux-2.6.16/localversion-grsec linux-2.6.16/localversion-grsec
---- linux-2.6.16/localversion-grsec	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.16/localversion-grsec	2006-03-27 19:14:44.000000000 -0500
-@@ -0,0 +1 @@
-+-grsec
 diff -urNp linux-2.6.16/Makefile linux-2.6.16/Makefile
 --- linux-2.6.16/Makefile	2006-03-20 00:53:29.000000000 -0500
 +++ linux-2.6.16/Makefile	2006-03-27 19:15:25.000000000 -0500
