@@ -38,10 +38,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_linux-2.6.16.1.patch
-From:	www.kernel.org
-Desc:	Misc fixes
-
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -50,22 +46,6 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1710_sparc-sparsemem.patch
-From:	http://bugs.gentoo.org/127095
-Desc:	Use sparsemem for ultrasparc machines
-
-Patch:	2400_sky2-1.1.patch
-From:	Stephen Hemminger
-Desc:	sky2 update, hopefully solves stability issues
-
-Patch:	2405_skge-1.5.patch
-From:	Stephen Hemminger
-Desc:	skge update, hopefully solves performance issues
-
-Patch:	2410_hostap-eapol-encryption.patch
-From:	http://bugs.gentoo.org/127546
-Desc:	Fix disconnect when renewing keys with hostap driver
-
 Patch:	2600_input-h-bits-per-long.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
@@ -73,10 +53,6 @@ Desc:	input.h header fix for splashutils compile
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
-
-Patch:	4100_libata-enable-atapi.patch
-From:	dsd@gentoo.org acked by Jeff Garzik
-Desc:	Enable libata ATAPI (i.e. SATA CDROM) support by default
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
