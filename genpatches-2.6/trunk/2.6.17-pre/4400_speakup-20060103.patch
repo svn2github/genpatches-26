@@ -1698,7 +1698,7 @@ Index: linux-git/MAINTAINERS
 ===================================================================
 --- linux-git.orig/MAINTAINERS
 +++ linux-git/MAINTAINERS
-@@ -2501,6 +2501,13 @@ M:	wli@holomorphy.com
+@@ -2549,6 +2549,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1716,7 +1716,7 @@ Index: linux-git/arch/arm/Kconfig
 ===================================================================
 --- linux-git.orig/arch/arm/Kconfig
 +++ linux-git/arch/arm/Kconfig
-@@ -810,6 +810,7 @@ source "drivers/mfd/Kconfig"
+@@ -844,6 +844,7 @@ source "drivers/leds/Kconfig"
  source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
@@ -1758,20 +1758,20 @@ Index: linux-git/drivers/Makefile
 -obj-$(CONFIG_GAMEPORT)		+= input/gameport/
 -obj-$(CONFIG_INPUT)		+= input/
  obj-$(CONFIG_I2O)		+= message/
+ obj-$(CONFIG_RTC_LIB)		+= rtc/
  obj-$(CONFIG_I2C)		+= i2c/
- obj-$(CONFIG_W1)		+= w1/
 Index: linux-git/drivers/char/Makefile
 ===================================================================
 --- linux-git.orig/drivers/char/Makefile
 +++ linux-git/drivers/char/Makefile
-@@ -86,6 +86,7 @@ obj-$(CONFIG_GPIO_VR41XX) += vr41xx_giu.
- obj-$(CONFIG_TANBAC_TB0219) += tb0219.o
- obj-$(CONFIG_TELCLOCK) += tlclk.o
+@@ -88,6 +88,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
+ obj-$(CONFIG_TANBAC_TB0219)	+= tb0219.o
+ obj-$(CONFIG_TELCLOCK)		+= tlclk.o
  
-+obj-$(CONFIG_SPEAKUP) += speakup/
- obj-$(CONFIG_WATCHDOG)	+= watchdog/
- obj-$(CONFIG_MWAVE) += mwave/
- obj-$(CONFIG_AGP) += agp/
++obj-$(CONFIG_SPEAKUP)		+= speakup/
+ obj-$(CONFIG_WATCHDOG)		+= watchdog/
+ obj-$(CONFIG_MWAVE)		+= mwave/
+ obj-$(CONFIG_AGP)		+= agp/
 Index: linux-git/drivers/char/consolemap.c
 ===================================================================
 --- linux-git.orig/drivers/char/consolemap.c
@@ -11369,7 +11369,7 @@ Index: linux-git/drivers/char/vt.c
  
  quit:
  	clear_bit(0, &printing);
-@@ -2587,6 +2602,7 @@ static int __init con_init(void)
+@@ -2591,6 +2606,7 @@ static int __init con_init(void)
  	master_display_fg = vc = vc_cons[currcons].d;
  	set_origin(vc);
  	save_screen(vc);
@@ -11377,7 +11377,7 @@ Index: linux-git/drivers/char/vt.c
  	gotoxy(vc, vc->vc_x, vc->vc_y);
  	csi_J(vc, 0);
  	update_screen(vc);
-@@ -3253,3 +3269,4 @@ EXPORT_SYMBOL(vc_cons);
+@@ -3265,3 +3281,4 @@ EXPORT_SYMBOL(vc_cons);
  EXPORT_SYMBOL(take_over_console);
  EXPORT_SYMBOL(give_up_console);
  #endif
