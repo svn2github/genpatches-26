@@ -8,9 +8,11 @@ Cheetah/Jalapeno however.
 -------------------------------------------------------------------------------
 
 ===== arch/sparc64/prom/tree.c 1.1 vs edited =====
---- 1.1/arch/sparc64/prom/tree.c	Tue Feb  5 09:40:29 2002
-+++ edited/arch/sparc64/prom/tree.c	Mon Mar 29 11:57:44 2004
-@@ -196,6 +196,7 @@
+Index: linux-git/arch/sparc64/prom/tree.c
+===================================================================
+--- linux-git.orig/arch/sparc64/prom/tree.c
++++ linux-git/arch/sparc64/prom/tree.c
+@@ -199,6 +199,7 @@ prom_getname (int node, char *buffer, in
  {
  	int i, sbus = 0;
  	int pci = 0, ebus = 0, ide = 0;
@@ -18,7 +20,7 @@ Cheetah/Jalapeno however.
  	struct linux_prom_registers *reg;
  	struct linux_prom64_registers reg64[PROMREG_MAX];
  	
-@@ -241,6 +242,7 @@
+@@ -244,6 +245,7 @@ getit:
  		return -1;
  	}
  	buffer [i] = 0;
@@ -26,7 +28,7 @@ Cheetah/Jalapeno however.
  	len -= i;
  	i = prom_getproperty (node, "reg", (char *)reg64, sizeof (reg64));
  	if (i <= 0) return 0;
-@@ -267,9 +269,15 @@
+@@ -270,9 +272,15 @@ getit:
  	} else if (i == 4) {	/* Happens on 8042's children on Ultra/PCI. */
  		reg = (struct linux_prom_registers *)reg64;
  		sprintf (buffer, "@%x", reg[0].which_io);

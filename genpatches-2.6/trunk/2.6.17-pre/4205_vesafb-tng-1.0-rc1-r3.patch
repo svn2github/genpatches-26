@@ -415,7 +415,7 @@ Index: linux-git/drivers/video/Kconfig
 ===================================================================
 --- linux-git.orig/drivers/video/Kconfig
 +++ linux-git/drivers/video/Kconfig
-@@ -454,8 +454,8 @@ config FB_TGA
+@@ -470,8 +470,8 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -426,7 +426,7 @@ Index: linux-git/drivers/video/Kconfig
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -465,6 +465,48 @@ config FB_VESA
+@@ -481,6 +481,48 @@ config FB_VESA
  	  You will get a boot time penguin logo at no additional cost. Please
  	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
  
@@ -496,7 +496,7 @@ Index: linux-git/drivers/video/fbmem.c
 ===================================================================
 --- linux-git.orig/drivers/video/fbmem.c
 +++ linux-git/drivers/video/fbmem.c
-@@ -1430,6 +1430,7 @@ fbmem_init(void)
+@@ -1427,6 +1427,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -508,7 +508,7 @@ Index: linux-git/drivers/video/modedb.c
 ===================================================================
 --- linux-git.orig/drivers/video/modedb.c
 +++ linux-git/drivers/video/modedb.c
-@@ -667,6 +667,7 @@ void fb_var_to_videomode(struct fb_video
+@@ -671,6 +671,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
  
@@ -2730,7 +2730,7 @@ Index: linux-git/include/linux/sched.h
 ===================================================================
 --- linux-git.orig/include/linux/sched.h
 +++ linux-git/include/linux/sched.h
-@@ -1140,6 +1140,8 @@ extern void mmput(struct mm_struct *);
+@@ -1154,6 +1154,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2902,7 +2902,7 @@ Index: linux-git/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -385,6 +386,40 @@ void mmput(struct mm_struct *mm)
+@@ -390,6 +391,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
@@ -2947,7 +2947,7 @@ Index: linux-git/mm/memory.c
 ===================================================================
 --- linux-git.orig/mm/memory.c
 +++ linux-git/mm/memory.c
-@@ -1108,6 +1108,7 @@ static int zeromap_pte_range(struct mm_s
+@@ -1107,6 +1107,7 @@ static int zeromap_pte_range(struct mm_s
  	pte_unmap_unlock(pte - 1, ptl);
  	return 0;
  }
@@ -2959,7 +2959,7 @@ Index: linux-git/mm/mmap.c
 ===================================================================
 --- linux-git.orig/mm/mmap.c
 +++ linux-git/mm/mmap.c
-@@ -1991,6 +1991,7 @@ int insert_vm_struct(struct mm_struct * 
+@@ -1981,6 +1981,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }

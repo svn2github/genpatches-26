@@ -2,7 +2,7 @@ Index: linux-git/arch/alpha/Kconfig
 ===================================================================
 --- linux-git.orig/arch/alpha/Kconfig
 +++ linux-git/arch/alpha/Kconfig
-@@ -577,6 +577,32 @@ config VERBOSE_MCHECK_ON
+@@ -585,6 +585,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -137,7 +137,7 @@ Index: linux-git/include/linux/sysctl.h
  };
  
  
-@@ -232,6 +235,17 @@ enum
+@@ -233,6 +236,17 @@ enum
  	PTY_NR=2
  };
  
