@@ -46,6 +46,10 @@ Patch:	1001_linux-2.6.16.2.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1002_linux-2.6.16.3.patch
+From:	www.kernel.org
+Desc:	Fix a keyctl-related security problem
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
