@@ -9,8 +9,8 @@
 +# a modified cc-option macro for this task.
 +# Usage: cflags-y += $(call cc-option-crosscc, -march=winchip-c6, -march=i586)
 +
-+c-option-crosscc = $(shell if $(CROSS32CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null \
-+                    > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
++cc-option-crosscc = $(shell if $(CROSS32CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null \
++                     > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
  
  HOSTCC		:= gcc
  BOOTCFLAGS	:= $(HOSTCFLAGS) -fno-builtin -nostdinc -isystem \
