@@ -1,23 +1,23 @@
---- a/arch/powerpc/boot/Makefile	2006-04-03 17:33:44.000000000 +0000
-+++ b/arch/powerpc/boot/Makefile	2006-04-04 08:51:13.000000000 +0000
-@@ -21,9 +21,19 @@
+--- a/arch/powerpc/boot/Makefile	2006-04-11 12:50:11.000000000 +0100
++++ b/arch/powerpc/boot/Makefile	2006-04-11 12:51:49.000000000 +0100
+@@ -20,10 +20,19 @@
+ #	CROSS32_COMPILE is setup as a prefix just like CROSS_COMPILE
  #	in the toplevel makefile.
- 
  
 +# cc-option-crosscc
 +# We can't rely on the host compiler in this situation, so we define
 +# a modified cc-option macro for this task.
 +# Usage: cflags-y += $(call cc-option-crosscc, -march=winchip-c6, -march=i586)
 +
-+cc-option-crosscc = $(shell if $(CROSS32CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null \
-+                     > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
-+
++c-option-crosscc = $(shell if $(CROSS32CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null \
++                    > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+ 
  HOSTCC		:= gcc
  BOOTCFLAGS	:= $(HOSTCFLAGS) -fno-builtin -nostdinc -isystem \
 -		   $(shell $(CROSS32CC) -print-file-name=include) -fPIC
 +		   $(shell $(CROSS32CC) -print-file-name=include) -fPIC \
 +		   $(call cc-option-crosscc, -fno-stack-protector) \
 +		   $(call cc-option-crosscc, -fno-stack-protector-all)
- BOOTAFLAGS	:= -D__ASSEMBLY__ $(BOOTCFLAGS) -traditional -nostdinc 
+ BOOTAFLAGS	:= -D__ASSEMBLY__ $(BOOTCFLAGS) -traditional -nostdinc
  OBJCOPYFLAGS    := contents,alloc,load,readonly,data
  OBJCOPY_COFF_ARGS := -O aixcoff-rs6000 --set-start 0x500000
