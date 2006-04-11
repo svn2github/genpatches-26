@@ -1,0 +1,27 @@
+From: Jean Delvare <khali@linux-fr.org>
+Date: Sun, 19 Feb 2006 14:18:04 +0000 (+0100)
+Subject: [PATCH] it87: Fix oops on removal
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=a8c4e1c4d248f300c2ab6d6b5e9e1b78ebb212fd
+
+[PATCH] it87: Fix oops on removal
+
+Fix an oops on it87 module removal when no supported hardware was
+found.
+
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/drivers/hwmon/it87.c
++++ b/drivers/hwmon/it87.c
+@@ -1180,7 +1180,8 @@ static int __init sm_it87_init(void)
+ 
+ static void __exit sm_it87_exit(void)
+ {
+-	i2c_isa_del_driver(&it87_isa_driver);
++	if (isa_address)
++		i2c_isa_del_driver(&it87_isa_driver);
+ 	i2c_del_driver(&it87_driver);
+ }
+ 

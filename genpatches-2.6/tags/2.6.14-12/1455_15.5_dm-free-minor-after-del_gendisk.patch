@@ -1,0 +1,38 @@
+From: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Date: Fri, 24 Feb 2006 21:04:25 +0000 (-0800)
+Subject: [PATCH] dm: free minor after unlink gendisk
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=e5a78bb9935a635ebcb71c10899c53bfc99f8c7f
+
+[PATCH] dm: free minor after unlink gendisk
+
+Minor number should be freed after del_gendisk().  Otherwise, there could
+be a window where 2 registered gendisk has same minor number.
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Acked-by: Alasdair G Kergon <agk@redhat.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+[chrisw: backport to 2.6.15]
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -812,14 +812,16 @@ static struct mapped_device *alloc_dev(u
+ 
+ static void free_dev(struct mapped_device *md)
+ {
++	unsigned int minor = md->disk->first_minor;
++
+ 	if (md->frozen_bdev) {
+ 		thaw_bdev(md->frozen_bdev, NULL);
+ 		bdput(md->frozen_bdev);
+ 	}
+-	free_minor(md->disk->first_minor);
+ 	mempool_destroy(md->tio_pool);
+ 	mempool_destroy(md->io_pool);
+ 	del_gendisk(md->disk);
++	free_minor(minor);
+ 	put_disk(md->disk);
+ 	blk_put_queue(md->queue);
+ 	kfree(md);
