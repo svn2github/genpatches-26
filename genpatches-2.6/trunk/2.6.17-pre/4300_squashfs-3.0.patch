@@ -2,7 +2,7 @@ Index: linux-git/fs/Kconfig
 ===================================================================
 --- linux-git.orig/fs/Kconfig
 +++ linux-git/fs/Kconfig
-@@ -1181,6 +1181,71 @@ config CRAMFS
+@@ -1182,6 +1182,71 @@ config CRAMFS
  
  	  If unsure, say N.
  

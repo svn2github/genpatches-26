@@ -2,7 +2,7 @@ Index: linux-git/arch/alpha/Kconfig
 ===================================================================
 --- linux-git.orig/arch/alpha/Kconfig
 +++ linux-git/arch/alpha/Kconfig
-@@ -585,6 +585,32 @@ config VERBOSE_MCHECK_ON
+@@ -590,6 +590,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  

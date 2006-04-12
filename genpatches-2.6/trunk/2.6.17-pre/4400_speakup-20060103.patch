@@ -1698,7 +1698,7 @@ Index: linux-git/MAINTAINERS
 ===================================================================
 --- linux-git.orig/MAINTAINERS
 +++ linux-git/MAINTAINERS
-@@ -2555,6 +2555,13 @@ M:	wli@holomorphy.com
+@@ -2553,6 +2553,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1716,7 +1716,7 @@ Index: linux-git/arch/arm/Kconfig
 ===================================================================
 --- linux-git.orig/arch/arm/Kconfig
 +++ linux-git/arch/arm/Kconfig
-@@ -852,6 +852,7 @@ source "drivers/leds/Kconfig"
+@@ -858,6 +858,7 @@ source "drivers/leds/Kconfig"
  source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
@@ -1755,7 +1755,7 @@ Index: linux-git/drivers/char/Makefile
 ===================================================================
 --- linux-git.orig/drivers/char/Makefile
 +++ linux-git/drivers/char/Makefile
-@@ -88,6 +88,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
+@@ -87,6 +87,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
  obj-$(CONFIG_TANBAC_TB0219)	+= tb0219.o
  obj-$(CONFIG_TELCLOCK)		+= tlclk.o
  

@@ -22,7 +22,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  static void pdc_pata_phy_reset(struct ata_port *ap);
  static void pdc_sata_phy_reset(struct ata_port *ap);
  static void pdc_qc_prep(struct ata_queued_cmd *qc);
-@@ -172,7 +173,7 @@ static const struct ata_port_info pdc_po
+@@ -171,7 +172,7 @@ static const struct ata_port_info pdc_po
  	/* board_2037x */
  	{
  		.sht		= &pdc_ata_sht,
@@ -31,7 +31,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
-@@ -361,17 +362,34 @@ static void pdc_reset_port(struct ata_po
+@@ -360,17 +361,34 @@ static void pdc_reset_port(struct ata_po
  static void pdc_sata_phy_reset(struct ata_port *ap)
  {
  	pdc_reset_port(ap);
@@ -71,7 +71,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  	ata_bus_reset(ap);
  }
  
-@@ -673,6 +691,7 @@ static int pdc_ata_init_one (struct pci_
+@@ -672,6 +690,7 @@ static int pdc_ata_init_one (struct pci_
  	unsigned int board_idx = (unsigned int) ent->driver_data;
  	int pci_dev_busy = 0;
  	int rc;
@@ -79,7 +79,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  
  	if (!printed_version++)
  		dev_printk(KERN_DEBUG, &pdev->dev, "version " DRV_VERSION "\n");
-@@ -741,6 +760,9 @@ static int pdc_ata_init_one (struct pci_
+@@ -740,6 +759,9 @@ static int pdc_ata_init_one (struct pci_
  	probe_ent->port[0].scr_addr = base + 0x400;
  	probe_ent->port[1].scr_addr = base + 0x500;
  
@@ -89,7 +89,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  	/* notice 4-port boards */
  	switch (board_idx) {
  	case board_40518:
-@@ -755,13 +777,29 @@ static int pdc_ata_init_one (struct pci_
+@@ -754,13 +776,29 @@ static int pdc_ata_init_one (struct pci_
  
  		probe_ent->port[2].scr_addr = base + 0x600;
  		probe_ent->port[3].scr_addr = base + 0x700;

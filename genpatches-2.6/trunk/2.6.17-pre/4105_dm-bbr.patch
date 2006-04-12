@@ -2,7 +2,7 @@ Index: linux-git/drivers/md/Kconfig
 ===================================================================
 --- linux-git.orig/drivers/md/Kconfig
 +++ linux-git/drivers/md/Kconfig
-@@ -262,5 +262,16 @@ config DM_MULTIPATH_EMC
+@@ -263,5 +263,16 @@ config DM_MULTIPATH_EMC
  	---help---
  	  Multipath support for EMC CX/AX series hardware.
  
