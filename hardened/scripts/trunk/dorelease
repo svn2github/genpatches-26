@@ -38,7 +38,7 @@ svntrunk=./trunk/
 branch_root=../
 branch_prefix=
 output_dir=/tmp/
-announce_mailto=johnm@gentoo.org
+announce_mailto=${webuser}@gentoo.org
 
 # Source options
 [[ -f ${release_conf} ]] && source ${release_conf}
