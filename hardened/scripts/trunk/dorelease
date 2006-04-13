@@ -1,0 +1,225 @@
+#!/bin/bash
+##############################################
+#
+#	John Mylchreest, 2006-04-13.
+#
+#	The default settings expect CWD to be
+#	the branch root (directly below tags/trunk)
+#
+#	Modified from Daniel Drakes original
+#	svn release script to suit my needs.
+#	This should also provide more flexibilty
+#
+##############################################
+
+# Get options
+while getopts "f:t:d" opts; do
+	case ${opts} in
+		f) release_conf="${OPTARG}";;
+		t) target=${OPTARG};;
+		d) release_debug=1;;
+	esac
+done
+release_cwd=`pwd`
+
+# Source config
+release_conf="${release_conf:-".release"}"
+
+if [[ ! -f "${release_conf}" ]]; then
+	echo "WARNING: Unable to find release config. Using defaults."
+fi
+
+# Setup Defaults
+webuser=${GENTOO_USER:-${USER}}
+webrelease=0
+webpath="~${GENTOO_USER}/public_html/"
+svntags=./tags/
+svntrunk=./trunk/
+branch_root=../
+branch_prefix=
+output_dir=/tmp/
+announce_mailto=johnm@gentoo.org
+
+# Source options
+[[ -f ${release_conf} ]] && source ${release_conf}
+
+# Sanitise as neccessary
+if [[ -n "$(svn status ${svntrunk})" ]] ; then
+	echo "FATAL: There are files in conflict with SVN in ${svntrunk},"
+	echo "FATAL: Please make sure it is up to date, with no outstanding changes."
+	exit -1
+fi
+
+echo "ACTION: Performing svn up."
+svn up ${svntags}/../ >/dev/null
+
+# Compute targets
+echo "ACTION: Tracing Previous Releases..."
+# Sorry for all the pipes, its just easier to read :)
+release_history="$(svn ls ${svntags} | sort -n | sed -e 's:/::g')"
+release_targets="$(svn ls ${svntags} | sort -n | sed -e 's:/::g')"
+
+# Find target
+if [[ -z ${target} ]]; then
+	# Since all we need is the last release, lets do that.
+	for i in ${release_targets}; do
+		target=${i%-*}
+	done
+fi
+
+# Set target release
+for i in ${release_history}; do
+	if [[ -z ${i/*${target}*} ]]; then
+		lasttag=${i//*-}
+		target_release=${target}-$((${lasttag} + 1));
+	fi
+done
+[[ -z "${target_release}" ]] && target_release=${target}-1
+
+# replace branch prefix?
+if [[ -z "${branch_prefix}" ]]; then
+	pushd ${branch_root} >/dev/null
+	branch_prefix=`pwd`
+	branch_prefix=${branch_prefix/*\/}-patches
+	popd >/dev/null
+fi
+
+# Print Debug
+if [[ ${release_debug} -gt 0 ]]; then
+	for var in \
+		release_conf \
+		release_cwd \
+		branch_root \
+		branch_prefix \
+		release_history \
+		release_targets \
+		target \
+		target_release \
+		output_dir \
+		svntags \
+		svntrunk \
+		webrelease \
+		webuser \
+		webpath; do
+
+		spacing="                  "
+		len=$((${#spacing} - ${#var}))
+		spacing=${spacing:0:${len}}
+		echo -e "${var}${spacing}= ${!var}"
+	done
+fi;
+
+echo "ACTION: Rolling release tarballs..."
+tarball_prefix="${output_dir}/${branch_prefix}-${target_release}"
+if (ls ${svntrunk}/${target}/[123]* 1>/dev/null 2>&1); then
+	pushd ${svntrunk} >/dev/null
+	tar -cjf ${tarball_prefix}.base.tar.bz2 --exclude=".svn" ${target}
+	popd >/dev/null
+	echo "md5: $(md5sum ${tarball_prefix}.base.tar.bz2)"
+fi
+
+if (ls ${svntrunk}/${target}/[45]* 1>/dev/null 2>&1); then
+	pushd ${svntrunk} >/dev/null
+	tar -cjf ${tarball_prefix}.extras.tar.bz2 --exclude=".svn" ${target}
+	popd >/dev/null
+	echo "md5: $(md5sum ${tarball_prefix}.extras.tar.bz2)"
+fi
+
+cat << EOF
+
+We have the tarballs, so we're ready to go.
+
+I will now:
+
+1.	Tag a new ${target_release} branch
+2.	Upload the tarballs to d.g.o:/space/distfiles-local
+EOF
+
+if [[ ${webrelease} -gt 0 ]]; then
+	cat << EOF
+3.	Create a release shortlog
+4.	Upload the release shortlog to ${webpath}
+5.	Upload the broken-out patches and tarballs 
+	to ${webpath}/{broken-out,releases}
+EOF
+fi
+
+[[ -x /bin/mail/ ]] && echo "And then finally, send an email to ${announce_mailto}"
+
+echo "To continue, Hit enter."
+read
+
+echo "ACTION: Tagging release in svn"
+svn cp \
+	${svntrunk}/${target} \
+	${svntags}/${target_release} \
+	>/dev/null
+
+echo "ACTION: Comitting release..."
+svn ci ${svntags}/${target_release} -m "Releasing ${target_release}"
+
+echo "ACTION: Uploading tarballs to distfiles"
+scp ${tarball_prefix}* \
+	${webuser}@dev.gentoo.org:/space/distfiles-local \
+	>/dev/null
+
+if [[ ${webrelease} -gt 0 ]]; then
+	echo "ACTION: Creating Shortlog..."
+	shortlog=$(mktemp /tmp/myshortlog-XXXXXXX)
+	if [[ ${target_release//*-} == 1 ]]; then
+		echo "Initial Import" > ${shortlog}
+	else
+		checktag=$((${lasttag} - 1))
+		lastrev=$(svn info ${svntags}/${target}-${lasttag}/ \
+			| grep "Last Changed Rev")
+		lastrev=${lastrev//*:}
+
+		svn log -v -r ${lastrev}:HEAD \
+			${svntrunk}/${target} \
+			> ${shortlog}
+	fi
+
+	#make directories
+	ssh ${webuser}@dev.gentoo.org \
+		mkdir -p ${webpath}/broken-out/ \
+		${webpath}/releases \
+		${webpath}/logs/ \
+		>/dev/null
+	
+	echo "ACTION: Uploading Shortlog"
+	scp ${shortlog} \
+		${webuser}@dev.gentoo.org:${webpath}/logs/shortlog-${target_release} \
+		>/dev/null
+	ssh ${webuser}@dev.gentoo.org chmod a+r \
+		${webpath}/logs/shortlog-${target_release} \
+		>/dev/null
+
+	#upload broken patches
+	echo "ACTION: Uploading broken-out patches"
+	scp -r ${svntags}/${target_release} \
+		${webuser}@dev.gentoo.org:${webpath}/broken-out/ \
+		>/dev/null
+
+	#upload release tarballs
+	echo "ACTION: Uploading release tarballs"
+	scp ${tarball_prefix}* \
+		${webuser}@dev.gentoo.org:${webpath}/releases/ \
+		>/dev/null
+fi
+
+if [[ -x /bin/mail ]]; then
+	tmpfile=$(mktemp /tmp/myemail-XXXXXXX)
+	cat << EOF > ${tmpfile}
+This is an automated email to say that ${branch_prefix}-${target_release}
+has just been released.
+
+Changes since ${target}-${lasttag} are as follows:
+
+EOF
+	cat < ${shortlog} >> ${tmpfile}
+	cat ${tmpfile} | mail \
+		-s "${branch_prefix}-${target_release} Release" \
+		${announce_mailto}
+	rm ${tmpfile}
+fi
+rm ${shortlog}
