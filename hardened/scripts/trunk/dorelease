@@ -57,12 +57,11 @@ svn up ${svntags}/../ >/dev/null
 echo "ACTION: Tracing Previous Releases..."
 # Sorry for all the pipes, its just easier to read :)
 release_history="$(svn ls ${svntags} | sort -n | sed -e 's:/::g')"
-release_targets="$(svn ls ${svntags} | sort -n | sed -e 's:/::g')"
 
 # Find target
 if [[ -z ${target} ]]; then
 	# Since all we need is the last release, lets do that.
-	for i in ${release_targets}; do
+	for i in ${release_history}; do
 		target=${i%-*}
 	done
 fi
@@ -92,7 +91,6 @@ if [[ ${release_debug} -gt 0 ]]; then
 		branch_root \
 		branch_prefix \
 		release_history \
-		release_targets \
 		target \
 		target_release \
 		output_dir \
