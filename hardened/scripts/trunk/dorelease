@@ -142,7 +142,7 @@ if [[ ${webrelease} -gt 0 ]]; then
 EOF
 fi
 
-[[ -x /bin/mail/ ]] && echo "And then finally, send an email to ${announce_mailto}"
+[[ -x /bin/mail ]] && echo "And then finally, send an email to ${announce_mailto}"
 
 echo "To continue, Hit enter."
 read
