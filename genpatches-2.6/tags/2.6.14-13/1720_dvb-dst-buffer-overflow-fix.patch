@@ -1,0 +1,32 @@
+From: Manu Abraham <manu@linuxtv.org>
+Date: Wed, 9 Nov 2005 05:35:24 +0000 (-0800)
+Subject: [PATCH] dvb: dst: Fix possible buffer overflow
+X-Git-Tag: v2.6.15-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=5c15c0b4fa850543b8ccfcf93686d24456cc384d
+
+[PATCH] dvb: dst: Fix possible buffer overflow
+
+Fixes a possible buffer overflow due to reading more than 8 bytes into an 8
+byte long array
+
+Thanks to Perceval Anichini <perceval.anichini@streamvision.fr> for pointing
+out the bug.
+
+Signed-off-by: Manu Abraham <manu@linuxtv.org>
+Signed-off-by: Michael Krufky <mkrufky@linuxtv.org>
+Cc: Johannes Stezenbach <js@linuxtv.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/drivers/media/dvb/bt8xx/dst_ca.c
++++ b/drivers/media/dvb/bt8xx/dst_ca.c
+@@ -196,7 +196,7 @@ static int ca_get_slot_info(struct dst_s
+ 	int i;
+ 	static u8 slot_command[8] = {0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff};
+ 
+-	u8 *slot_info = state->rxbuffer;
++	u8 *slot_info = state->messages;
+ 
+ 	put_checksum(&slot_command[0], 7);
+ 	if ((dst_put_ci(state, slot_command, sizeof (slot_command), slot_info, GET_REPLY)) < 0) {

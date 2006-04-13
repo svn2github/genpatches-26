@@ -1,0 +1,29 @@
+From: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
+Date: Wed, 4 Jan 2006 01:59:19 +0000 (-0800)
+Subject: [PATCH] UFS: inode->i_sem is not released in error path
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.14.y.git;a=commitdiff;h=a8c6aa8791db53edbe27e6a4ae57ef95fc2c01c6
+
+[PATCH] UFS: inode->i_sem is not released in error path
+
+Signed-off-by: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
+Cc: <stable@kernel.org>
+akpm: obviously correct, OK for -stable immediately.
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/fs/ufs/super.c
++++ b/fs/ufs/super.c
+@@ -1294,8 +1294,10 @@ static ssize_t ufs_quota_write(struct su
+ 		blk++;
+ 	}
+ out:
+-	if (len == towrite)
++	if (len == towrite) {
++		up(&inode->i_sem);
+ 		return err;
++	}
+ 	if (inode->i_size < off+len-towrite)
+ 		i_size_write(inode, off+len-towrite);
+ 	inode->i_version++;
