@@ -211,12 +211,22 @@ if [[ -x /bin/mail ]]; then
 This is an automated email to say that ${branch_prefix}-${target_release}
 has just been released.
 
-Changes since ${target}-${lasttag} are as follows:
+EOF
+
+	if [[ ${webrelease} -gt 0 ]]; then
+		tmpath=${webpath%*\/}
+		tmppath=${tmppath/*\/}
+		cat << EOF >> ${tmpfile}
+You can find a shortlog, broken out patches and release tarballs at:
+http://dev.gentoo.org/~${webuser}/${tmppath}
 
 EOF
+	fi
+
+	echo "Changes since ${target}-${lasttag} are as follows:" >> ${tmpfile}
 	cat < ${shortlog} >> ${tmpfile}
 	cat ${tmpfile} | mail \
-		-s "${branch_prefix}-${target_release} Release" \
+		-s "[gentoo-kernel] [ANNOUNCE] ${branch_prefix}-${target_release} Release" \
 		${announce_mailto}
 	rm ${tmpfile}
 fi
