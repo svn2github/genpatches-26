@@ -2730,7 +2730,7 @@ Index: linux-git/include/linux/sched.h
 ===================================================================
 --- linux-git.orig/include/linux/sched.h
 +++ linux-git/include/linux/sched.h
-@@ -1160,6 +1160,8 @@ extern void mmput(struct mm_struct *);
+@@ -1159,6 +1159,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2902,7 +2902,7 @@ Index: linux-git/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -390,6 +391,40 @@ void mmput(struct mm_struct *mm)
+@@ -384,6 +385,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
