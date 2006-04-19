@@ -123,6 +123,13 @@ if (ls ${svntrunk}/${target}/[45]* 1>/dev/null 2>&1); then
 	echo "md5: $(md5sum ${tarball_prefix}.extras.tar.bz2)"
 fi
 
+if (ls ${svntrunk}/${target}/[678]* 1>/dev/null 2>&1); then
+	pushd ${svntrunk} >/dev/null
+	tar -cjf ${tarball_prefix}.experimental.tar.bz2 --exclude=".svn" ${target}
+	popd >/dev/null
+	echo "md5: $(md5sum ${tarball_prefix}.experimental.tar.bz2)"
+fi
+
 cat << EOF
 
 We have the tarballs, so we're ready to go.
