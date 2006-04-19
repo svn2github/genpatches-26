@@ -47,7 +47,7 @@ echo "Press enter to continue."
 
 read
 
-svn copy svn+ssh://dsd@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/${BRANCH} svn+ssh://dsd@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags/${newfullver} -m "${newfullver} release"
+svn copy svn+ssh://${USERNAME}svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/${BRANCH} svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags/${newfullver} -m "${newfullver} release"
 
 file_base="/tmp/genpatches-$newfullver.base.tar.bz2"
 file_extras="/tmp/genpatches-$newfullver.extras.tar.bz2"

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 . ~/.genpatchesrc
-
 if [[ ${#@} != 2 ]] ; then
 	echo ">>> USAGE: gpcreatebranch <old-minor> <new-minor>"
 	echo "This will create 2.6.<new-minor> from 2.6.<old-minor>"
