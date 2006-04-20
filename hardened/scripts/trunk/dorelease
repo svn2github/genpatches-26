@@ -78,6 +78,7 @@ for i in ${release_history}; do
 		fi
 	fi
 done
+[[ -n "${lasttag}" ]] && lasttag=$((${hightarget} - 1))
 [[ -z "${target_release}" ]] && target_release=${target}-1
 
 # replace branch prefix?
@@ -96,6 +97,7 @@ if [[ ${release_debug} -gt 0 ]]; then
 		branch_root \
 		branch_prefix \
 		release_history \
+		lasttag \
 		target \
 		target_release \
 		output_dir \
