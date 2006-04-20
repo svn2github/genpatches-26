@@ -229,7 +229,7 @@ has just been released.
 You can find a shortlog, broken out patches and release tarballs at:
 http://dev.gentoo.org/~${webuser}/${tmppath}
 
-Changes since ${target}-${lasttag} are as follows:"
+Changes since ${target}-${lasttag} are as follows:
 EOF
 
 	cat < ${shortlog} >> ${tmpfile}
