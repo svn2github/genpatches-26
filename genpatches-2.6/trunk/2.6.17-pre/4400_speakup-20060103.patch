@@ -1698,7 +1698,7 @@ Index: linux-git/MAINTAINERS
 ===================================================================
 --- linux-git.orig/MAINTAINERS
 +++ linux-git/MAINTAINERS
-@@ -2553,6 +2553,13 @@ M:	wli@holomorphy.com
+@@ -2556,6 +2556,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  

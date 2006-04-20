@@ -496,7 +496,7 @@ Index: linux-git/drivers/video/fbmem.c
 ===================================================================
 --- linux-git.orig/drivers/video/fbmem.c
 +++ linux-git/drivers/video/fbmem.c
-@@ -1432,6 +1432,7 @@ fbmem_init(void)
+@@ -1438,6 +1438,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
