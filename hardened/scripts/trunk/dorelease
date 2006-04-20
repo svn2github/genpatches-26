@@ -38,6 +38,7 @@ svntrunk=./trunk/
 branch_root=../
 branch_prefix=
 output_dir=/tmp/
+mailvia=ssh
 announce_mailto=${webuser}@gentoo.org
 
 # Source options
@@ -97,6 +98,8 @@ if [[ ${release_debug} -gt 0 ]]; then
 		svntags \
 		svntrunk \
 		webrelease \
+		mailvia \
+		announce_mailto \
 		webuser \
 		webpath; do
 
@@ -146,15 +149,14 @@ if [[ ${webrelease} -gt 0 ]]; then
 4.	Upload the release shortlog to ${webpath}
 5.	Upload the broken-out patches and tarballs 
 	to ${webpath}/{broken-out,releases}
+6.	Send an announcement email to ${announce_mailto}
+
+To continue, Hit enter."
 EOF
 fi
-
-[[ -x /bin/mail ]] && echo "And then finally, send an email to ${announce_mailto}"
-
-echo "To continue, Hit enter."
 read
 
-echo "ACTION: Tagging release in svn"
+echo "ACTION: Tagging release in svn..."
 svn cp \
 	${svntrunk}/${target} \
 	${svntags}/${target_release} \
@@ -163,14 +165,18 @@ svn cp \
 echo "ACTION: Comitting release..."
 svn ci ${svntags}/${target_release} -m "Releasing ${target_release}"
 
-echo "ACTION: Uploading tarballs to distfiles"
+echo "ACTION: Uploading tarballs to distfiles..."
 scp ${tarball_prefix}* \
 	${webuser}@dev.gentoo.org:/space/distfiles-local \
 	>/dev/null
 
 if [[ ${webrelease} -gt 0 ]]; then
-	echo "ACTION: Creating Shortlog..."
+	tmpfile=$(mktemp /tmp/myemail-XXXXXXX)
+	tmpath=${webpath%*\/}
+	tmppath=${tmppath/*\/}
 	shortlog=$(mktemp /tmp/myshortlog-XXXXXXX)
+
+	echo "ACTION: Creating Shortlog..."
 	if [[ ${target_release//*-} == 1 ]]; then
 		echo "Initial Import" > ${shortlog}
 	else
@@ -191,7 +197,7 @@ if [[ ${webrelease} -gt 0 ]]; then
 		${webpath}/logs/ \
 		>/dev/null
 	
-	echo "ACTION: Uploading Shortlog"
+	echo "ACTION: Uploading Shortlog..."
 	scp ${shortlog} \
 		${webuser}@dev.gentoo.org:${webpath}/logs/shortlog-${target_release} \
 		>/dev/null
@@ -200,41 +206,41 @@ if [[ ${webrelease} -gt 0 ]]; then
 		>/dev/null
 
 	#upload broken patches
-	echo "ACTION: Uploading broken-out patches"
+	echo "ACTION: Uploading broken-out patches..."
 	scp -r ${svntags}/${target_release} \
 		${webuser}@dev.gentoo.org:${webpath}/broken-out/ \
 		>/dev/null
 
 	#upload release tarballs
-	echo "ACTION: Uploading release tarballs"
+	echo "ACTION: Uploading release tarballs..."
 	scp ${tarball_prefix}* \
 		${webuser}@dev.gentoo.org:${webpath}/releases/ \
 		>/dev/null
-fi
 
-if [[ -x /bin/mail ]]; then
-	tmpfile=$(mktemp /tmp/myemail-XXXXXXX)
-	cat << EOF > ${tmpfile}
+	# Email section
+	cat << EOF >> ${tmpfile}
 This is an automated email to say that ${branch_prefix}-${target_release}
 has just been released.
 
-EOF
-
-	if [[ ${webrelease} -gt 0 ]]; then
-		tmpath=${webpath%*\/}
-		tmppath=${tmppath/*\/}
-		cat << EOF >> ${tmpfile}
 You can find a shortlog, broken out patches and release tarballs at:
 http://dev.gentoo.org/~${webuser}/${tmppath}
 
+Changes since ${target}-${lasttag} are as follows:"
 EOF
-	fi
 
-	echo "Changes since ${target}-${lasttag} are as follows:" >> ${tmpfile}
 	cat < ${shortlog} >> ${tmpfile}
-	cat ${tmpfile} | mail \
-		-s "[gentoo-kernel] [ANNOUNCE] ${branch_prefix}-${target_release} Release" \
-		${announce_mailto}
+
+	# Send the email
+	case ${mailvia} in
+		ssh)	scp ${tmpfile} ${webuser}@dev.gentoo.org:tmpannounce;
+				ssh ${webuser}@dev.gentoo.org "cat tmpannounce | mailx -s \
+					\"[ANNOUNCE] ${branch_prefix}-${target_release} Released\" \
+					${announce_mailto}";
+				ssh ${webuser}@dev.gentoo.org rm tmpannounce;;
+		mailx)	cat ${tmpfile} | mail \
+				-s "[gentoo-kernel] [ANNOUNCE] ${branch_prefix}-${target_release} Release" \
+				${announce_mailto};;
+	esac
 	rm ${tmpfile}
+	rm ${shortlog}
 fi
-rm ${shortlog}
