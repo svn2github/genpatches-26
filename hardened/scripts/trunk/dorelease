@@ -57,7 +57,7 @@ svn up ${svntags}/../ >/dev/null
 # Compute targets
 echo "ACTION: Tracing Previous Releases..."
 # Sorry for all the pipes, its just easier to read :)
-release_history="$(svn ls ${svntags} | sort -n | sed -e 's:/::g')"
+release_history="$(svn ls ${svntags} | sed -e 's:/::g' | sort -n)"
 
 # Find target
 if [[ -z ${target} ]]; then
@@ -68,10 +68,14 @@ if [[ -z ${target} ]]; then
 fi
 
 # Set target release
+hightarget=0
 for i in ${release_history}; do
 	if [[ -z ${i/*${target}*} ]]; then
 		lasttag=${i//*-}
-		target_release=${target}-$((${lasttag} + 1));
+		if [[ ${lasttag} -ge ${hightarget} ]]; then
+			hightarget=$((${lasttag} + 1))
+			target_release=${target}-${hightarget}
+		fi
 	fi
 done
 [[ -z "${target_release}" ]] && target_release=${target}-1
