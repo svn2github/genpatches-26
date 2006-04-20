@@ -1,0 +1,37 @@
+From: Kaj-Michael Lang <milang@tal.org>
+Date: Fri, 24 Feb 2006 21:04:15 +0000 (-0800)
+Subject: [PATCH] gbefb: IP32 gbefb depth change fix
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=c48cc3694e1ad82407c2aa041743f2e8fb0adcde
+
+[PATCH] gbefb: IP32 gbefb depth change fix
+
+The gbefb driver does not update the framebuffer layers visual setting when
+depth is changed with fbset, resulting in strange colors (very dark blue in
+16-bit, almost black in 24-bit).
+
+Signed-off-by: Kaj-Michael Lang <milang@tal.org>
+Signed-off-by: Martin Michlmayr <tbm@cyrius.com>
+Signed-off-by: Antonino Daplas <adaplas@pol.net>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/drivers/video/gbefb.c
++++ b/drivers/video/gbefb.c
+@@ -656,12 +656,15 @@ static int gbefb_set_par(struct fb_info 
+ 	switch (bytesPerPixel) {
+ 	case 1:
+ 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_I8);
++		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
+ 		break;
+ 	case 2:
+ 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_ARGB5);
++		info->fix.visual = FB_VISUAL_TRUECOLOR;
+ 		break;
+ 	case 4:
+ 		SET_GBE_FIELD(WID, TYP, val, GBE_CMODE_RGB8);
++		info->fix.visual = FB_VISUAL_TRUECOLOR;
+ 		break;
+ 	}
+ 	SET_GBE_FIELD(WID, BUF, val, GBE_BMODE_BOTH);

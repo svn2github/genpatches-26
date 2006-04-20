@@ -1,0 +1,33 @@
+From: Thomas Renninger <trenn@suse.de>
+Date: Thu, 26 Jan 2006 17:46:33 +0000 (+0100)
+Subject: [CPUFREQ] _PPC frequency change issues
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=0961dd0d217d072df736d964f47c2b6600931e19
+
+[CPUFREQ] _PPC frequency change issues
+
+BIOS might change frequency behind our back when BIOS changes allowed
+frequencies via _PPC.  In this case cpufreq core got out of sync.
+Ask driver for current freq and notify governors about a change
+
+Signed-off-by: Thomas Renninger <trenn@suse.de>
+Signed-off-by: Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
+Signed-off-by: Dave Jones <davej@redhat.com>
+---
+
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -1429,6 +1429,14 @@ int cpufreq_update_policy(unsigned int c
+ 	policy.policy = data->user_policy.policy;
+ 	policy.governor = data->user_policy.governor;
+ 
++	/* BIOS might change freq behind our back
++	  -> ask driver for current freq and notify governors about a change */
++	if (cpufreq_driver->get) {
++		policy.cur = cpufreq_driver->get(cpu);
++		if (data->cur != policy.cur)
++			cpufreq_out_of_sync(cpu, data->cur, policy.cur);
++	}
++
+ 	ret = __cpufreq_set_policy(data, &policy);
+ 
+ 	mutex_unlock(&data->lock);

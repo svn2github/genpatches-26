@@ -1,0 +1,31 @@
+From: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Date: Fri, 24 Feb 2006 21:04:24 +0000 (-0800)
+Subject: [PATCH] dm: missing bdput/thaw_bdev at removal
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=2687a132e9d6e5e9249fc2b961ab37cf185dd3c8
+
+[PATCH] dm: missing bdput/thaw_bdev at removal
+
+Need to unfreeze and release bdev otherwise the bdev inode with
+inconsistent state is reused later and cause problem.
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Acked-by: Alasdair G Kergon <agk@redhat.com>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+[chrisw: backport to 2.6.15]
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -812,6 +812,10 @@ static struct mapped_device *alloc_dev(u
+ 
+ static void free_dev(struct mapped_device *md)
+ {
++	if (md->frozen_bdev) {
++		thaw_bdev(md->frozen_bdev, NULL);
++		bdput(md->frozen_bdev);
++	}
+ 	free_minor(md->disk->first_minor);
+ 	mempool_destroy(md->tio_pool);
+ 	mempool_destroy(md->io_pool);
