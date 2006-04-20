@@ -1,0 +1,98 @@
+From: Olof Johansson <olof@lixom.net>
+Date: Mon, 14 Nov 2005 00:06:48 +0000 (-0800)
+Subject:     [PATCH] ppc: add support for new powerbooks
+X-Git-Tag: v2.6.15-rc2
+X-Git-Url: http://www.kernel.org/git/gitweb.cgi?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=7fce260a6bf75080ef61408504add5618f90e41b
+
+  [PATCH] ppc: add support for new powerbooks
+  
+  Enablement patch for the new PowerBooks (late 2005 edition).
+  
+  This enables the ATA controller, Gigabit ethernet and basic AGP setup.
+  Bluetooth works out-of-the box after running hid2hci.
+  
+  Still remaining is to get the touchpad to work, the simple change of just
+  adding the new USB ids isn't enough.
+  
+  Signed-off-by: Olof Johansson <olof@lixom.net>
+  Acked-by: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+  Signed-off-by: Andrew Morton <akpm@osdl.org>
+  Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/arch/ppc/platforms/pmac_feature.c
++++ b/arch/ppc/platforms/pmac_feature.c
+@@ -2317,6 +2317,14 @@ static struct pmac_mb_def pmac_mb_defs[]
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+ 		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
+ 	},
++	{	"PowerBook5,8",			"PowerBook G4 15\"",
++		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
++		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
++	},
++	{	"PowerBook5,9",			"PowerBook G4 17\"",
++		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
++		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
++	},
+ 	{	"PowerBook6,1",			"PowerBook G4 12\"",
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+ 		PMAC_MB_MAY_SLEEP | PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
+--- a/drivers/char/agp/uninorth-agp.c
++++ b/drivers/char/agp/uninorth-agp.c
+@@ -557,6 +557,10 @@ static struct agp_device_ids uninorth_ag
+ 		.device_id	= PCI_DEVICE_ID_APPLE_U3H_AGP,
+ 		.chipset_name	= "U3H",
+ 	},
++	{
++		.device_id	= PCI_DEVICE_ID_APPLE_IPID2_AGP,
++		.chipset_name	= "UniNorth/Intrepid2",
++	},
+ };
+ 
+ static int __devinit agp_uninorth_probe(struct pci_dev *pdev,
+--- a/drivers/ide/ppc/pmac.c
++++ b/drivers/ide/ppc/pmac.c
+@@ -1667,11 +1667,16 @@ static struct macio_driver pmac_ide_maci
+ };
+ 
+ static struct pci_device_id pmac_ide_pci_match[] = {
+-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_ATA, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID_ATA100, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_K2_ATA100, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_ATA,
++	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID_ATA100,
++	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_K2_ATA100,
++	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+ 	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_SH_ATA,
+ 	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
++	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID2_ATA,
++	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+ };
+ 
+ static struct pci_driver pmac_ide_pci_driver = {
+--- a/drivers/net/sungem.c
++++ b/drivers/net/sungem.c
+@@ -128,6 +128,8 @@ static struct pci_device_id gem_pci_tbl[
+ 	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
+ 	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_SH_SUNGEM,
+ 	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
++	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID2_GMAC,
++	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
+ 	{0, }
+ };
+ 
+--- a/include/linux/pci_ids.h
++++ b/include/linux/pci_ids.h
+@@ -805,6 +805,10 @@
+ #define PCI_DEVICE_ID_APPLE_SH_SUNGEM   0x0051
+ #define PCI_DEVICE_ID_APPLE_U3L_AGP	0x0058
+ #define PCI_DEVICE_ID_APPLE_U3H_AGP	0x0059
++#define PCI_DEVICE_ID_APPLE_IPID2_AGP	0x0066
++#define PCI_DEVICE_ID_APPLE_IPID2_ATA	0x0069
++#define PCI_DEVICE_ID_APPLE_IPID2_FW	0x006a
++#define PCI_DEVICE_ID_APPLE_IPID2_GMAC	0x006b
+ #define PCI_DEVICE_ID_APPLE_TIGON3	0x1645
+ 
+ #define PCI_VENDOR_ID_YAMAHA		0x1073

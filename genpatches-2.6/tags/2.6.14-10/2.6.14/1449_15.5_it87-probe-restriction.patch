@@ -1,0 +1,46 @@
+Re-diffed for 2.6.14.7 by Kerin Millar <kerframil@gmail.com>:
+
+From: Jean Delvare <khali@linux-fr.org>
+Date: Sun, 19 Feb 2006 14:34:03 +0000 (+0100)
+Subject: [PATCH] hwmon it87: Probe i2c 0x2d only
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=fd01ab8d4018937a01cbc221e7a006bcde24c87f
+
+[PATCH] hwmon it87: Probe i2c 0x2d only
+
+Only scan I2C address 0x2d. This is the default address and no IT87xxF
+chip was ever seen on I2C at a different address. These chips are
+better accessed through their ISA interface anyway.
+
+This fixes bug #5889, although it doesn't address the whole class
+of problems. We'd need the ability to blacklist arbitrary I2C addresses
+on systems known to contain I2C devices which behave badly when probed.
+
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- linux-2.6.14.7.orig/Documentation/hwmon/it87	2005-10-27 19:02:08.000000000 -0500
++++ linux-2.6.14.7/Documentation/hwmon/it87	2006-03-07 05:34:33.000000000 -0500
+@@ -9,7 +9,7 @@
+                http://www.ite.com.tw/
+   * IT8712F
+     Prefix: 'it8712'
+-    Addresses scanned: I2C 0x28 - 0x2f
++    Addresses scanned: I2C 0x2d
+                        from Super I/O config space, or default ISA 0x290 (8 I/O ports)
+     Datasheet: Publicly available at the ITE website
+                http://www.ite.com.tw/
+--- linux-2.6.14.7.orig/drivers/hwmon/it87.c	2006-03-07 04:54:09.000000000 -0500
++++ linux-2.6.14.7/drivers/hwmon/it87.c	2006-03-07 05:34:05.000000000 -0500
+@@ -45,8 +45,7 @@
+ 
+ 
+ /* Addresses to scan */
+-static unsigned short normal_i2c[] = { 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
+-					0x2e, 0x2f, I2C_CLIENT_END };
++static unsigned short normal_i2c[] = { 0x2d, I2C_CLIENT_END };
+ static unsigned short isa_address = 0x290;
+ 
+ /* Insmod parameters */
