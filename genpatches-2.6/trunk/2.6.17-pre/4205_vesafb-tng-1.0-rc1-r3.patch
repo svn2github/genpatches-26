@@ -2902,7 +2902,7 @@ Index: linux-git/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -384,6 +385,40 @@ void mmput(struct mm_struct *mm)
+@@ -385,6 +386,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
