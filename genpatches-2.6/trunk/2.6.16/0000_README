@@ -82,6 +82,10 @@ Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
 
+Patch:	2900_tipar-boot-oops.patch
+From:	http://bugs.gentoo.org/128852
+Desc:	Fix boot crash when tipar is compiled-in
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
