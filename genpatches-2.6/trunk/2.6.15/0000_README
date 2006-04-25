@@ -280,6 +280,10 @@ Patch:	1399_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	2100_nfsacl-export.patch
+From:	http://bugs.gentoo.org/128332
+Desc:	Fix export of NFS ACL's
+
 Patch:	2300_ata-piix-suspend.patch
 From:	http://bugs.gentoo.org/118284
 Desc:	Fix crash-on-resume with ata_piix driver by implementing suspend support
