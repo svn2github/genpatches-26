@@ -1,0 +1,45 @@
+From: Andreas Happe <andreashappe@snikt.net>
+Date: Thu, 5 Jan 2006 18:40:07 +0000 (+0100)
+Subject: [PATCH] ipw2200: add monitor and qos entries to Kconfig
+X-Git-Tag: v2.6.16-rc4
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=2c0f63166a5998102ddc7697706af83cbff49317
+
+[PATCH] ipw2200: add monitor and qos entries to Kconfig
+
+I have made a stupid copy&paste error: QoS option is named IPW_QOS not
+IPW2200_MONITOR. Spotted by Daniel Paschka, thanks.
+
+Add the following config entries for the ipw2200 driver to
+drivers/net/wireless/Kconfig
+ * IPW2200_MONITOR
+   enables Monitor mode
+ * IPW_QOS
+   enables QoS feature - this is under development right now, so it depends
+upon EXPERIMENTAL
+
+Signed-off-by: Andreas Happe <andreashappe@snikt.net>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+---
+
+--- a/drivers/net/wireless/Kconfig
++++ b/drivers/net/wireless/Kconfig
+@@ -216,6 +216,19 @@ config IPW2200
+           say M here and read <file:Documentation/modules.txt>.  The module
+           will be called ipw2200.ko.
+ 
++config IPW2200_MONITOR
++        bool "Enable promiscuous mode"
++        depends on IPW2200
++        ---help---
++	  Enables promiscuous/monitor mode support for the ipw2200 driver.
++	  With this feature compiled into the driver, you can switch to 
++	  promiscuous mode via the Wireless Tool's Monitor mode.  While in this
++	  mode, no packets can be sent.
++
++config IPW_QOS
++        bool "Enable QoS support"
++        depends on IPW2200 && EXPERIMENTAL
++
+ config IPW2200_DEBUG
+ 	bool "Enable full debugging output in IPW2200 module."
+ 	depends on IPW2200
