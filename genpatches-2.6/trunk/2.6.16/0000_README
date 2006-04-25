@@ -106,6 +106,10 @@ Patch:	2405_skge-1.5.patch
 From:	Stephen Hemminger
 Desc:	skge update, hopefully solves performance issues
 
+Patch:	2410_ipw2200-monitor-mode.patch
+From:	http://bugs.gentoo.org/131017
+Desc:	Add missing IPW2200 config option
+
 Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
