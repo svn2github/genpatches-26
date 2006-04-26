@@ -114,6 +114,14 @@ Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
 
+Patch:	2700_alsa-hda-ad1986a.patch
+From:	http://bugs.gentoo.org/131226
+Desc:	Fix sound on laptops with AD1986A codec
+
+Patch:	2705_alsa-hda-auto-configuration.patch
+From:	http://bugs.gentoo.org/131226
+Desc:	Fix silence on some hda-based sound chips
+
 Patch:	2900_tipar-boot-oops.patch
 From:	http://bugs.gentoo.org/128852
 Desc:	Fix boot crash when tipar is compiled-in
