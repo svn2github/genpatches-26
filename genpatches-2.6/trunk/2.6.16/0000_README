@@ -98,7 +98,7 @@ Patch:	1715_ppc32-crosscc-ssp.patch
 From:	http://dev.gentoo.org/~johnm/files/ppc32-2.6.16-sspcc.patch
 Desc:	Disable ssp when building ppc32 boot utils with CROSS32CC
 
-Patch:	2400_sky2-1.1.patch
+Patch:	2400_sky2-1.2.patch
 From:	Stephen Hemminger
 Desc:	sky2 update, hopefully solves stability issues
 
