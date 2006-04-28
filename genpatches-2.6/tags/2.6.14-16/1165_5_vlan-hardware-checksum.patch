@@ -1,0 +1,29 @@
+From: Stephen Hemminger <shemminger@osdl.org>
+Date: Thu, 15 Dec 2005 00:29:02 +0000 (-0800)
+Subject: [PATCH] Fix hardware rx csum errors
+X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/gregkh/linux-2.6.14.y.git;a=commitdiff;h=ed67d6e838c2203a64d815596e400822d5283875
+
+[PATCH] Fix hardware rx csum errors
+
+Receiving VLAN packets over a device (without VLAN assist) that is
+doing hardware checksumming (CHECKSUM_HW), causes errors because the
+VLAN code forgets to adjust the hardware checksum.
+
+Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Chris Wright <chrisw@redhat.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/net/8021q/vlan_dev.c
++++ b/net/8021q/vlan_dev.c
+@@ -165,6 +165,9 @@ int vlan_skb_recv(struct sk_buff *skb, s
+ 
+ 	skb_pull(skb, VLAN_HLEN); /* take off the VLAN header (4 bytes currently) */
+ 
++	/* Need to correct hardware checksum */
++	skb_postpull_rcsum(skb, vhdr, VLAN_HLEN);
++
+ 	/* Ok, lets check to make sure the device (dev) we
+ 	 * came in on is what this VLAN is attached to.
+ 	 */

@@ -1,0 +1,39 @@
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Date: Sun, 26 Feb 2006 23:52:53 +0000 (+0100)
+Subject: [PATCH] sbp2: fix another deadlock after disconnection
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=6cbb463db05210e83ddc18cbd92e295f1fefa111
+
+[PATCH] sbp2: fix another deadlock after disconnection
+
+sbp2: fix another deadlock after disconnection
+
+If there were commands enqueued but not completed before an SBP-2 unit
+was unplugged (or an attempt to reconnect failed), knodemgrd or any
+process which tried to remove the device would sleep uninterruptibly
+in blk_execute_rq().  Therefore make sure that all commands are
+completed when sbp2 retreats.
+
+Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/drivers/ieee1394/sbp2.c
++++ b/drivers/ieee1394/sbp2.c
+@@ -650,9 +650,15 @@ static int sbp2_remove(struct device *de
+ 	if (!scsi_id)
+ 		return 0;
+ 
+-	/* Trigger shutdown functions in scsi's highlevel. */
+-	if (scsi_id->scsi_host)
++	if (scsi_id->scsi_host) {
++		/* Get rid of enqueued commands if there is no chance to
++		 * send them. */
++		if (!sbp2util_node_is_available(scsi_id))
++			sbp2scsi_complete_all_commands(scsi_id, DID_NO_CONNECT);
++		/* scsi_remove_device() will trigger shutdown functions of SCSI
++		 * highlevel drivers which would deadlock if blocked. */
+ 		scsi_unblock_requests(scsi_id->scsi_host);
++	}
+ 	sdev = scsi_id->sdev;
+ 	if (sdev) {
+ 		scsi_id->sdev = NULL;

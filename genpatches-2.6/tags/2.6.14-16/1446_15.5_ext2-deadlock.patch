@@ -1,0 +1,51 @@
+From: Peter Staubach <staubach@redhat.com>
+Date: Fri, 17 Feb 2006 21:52:36 +0000 (-0800)
+Subject: [PATCH] fix deadlock in ext2
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=8fef8ea2a1f28a7611ad0b8ff7b48ceb38db9535
+
+[PATCH] fix deadlock in ext2
+
+Fix a deadlock possible in the ext2 file system implementation.  This
+deadlock occurs when a file is removed from an ext2 file system which was
+mounted with the "sync" mount option.
+
+The problem is that ext2_xattr_delete_inode() was invoking the routine,
+sync_dirty_buffer(), using a buffer head which was previously locked via
+lock_buffer().  The first thing that sync_dirty_buffer() does is to lock
+the buffer head that it was passed.  It does this via lock_buffer().  Oops.
+
+The solution is to unlock the buffer head in ext2_xattr_delete_inode()
+before invoking sync_dirty_buffer().  This makes the code in
+ext2_xattr_delete_inode() obey the same locking rules as all other callers
+of sync_dirty_buffer() in the ext2 file system implementation.
+
+Signed-off-by: Peter Staubach <staubach@redhat.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/fs/ext2/xattr.c
++++ b/fs/ext2/xattr.c
+@@ -796,18 +796,20 @@ ext2_xattr_delete_inode(struct inode *in
+ 		ext2_free_blocks(inode, EXT2_I(inode)->i_file_acl, 1);
+ 		get_bh(bh);
+ 		bforget(bh);
++		unlock_buffer(bh);
+ 	} else {
+ 		HDR(bh)->h_refcount = cpu_to_le32(
+ 			le32_to_cpu(HDR(bh)->h_refcount) - 1);
+ 		if (ce)
+ 			mb_cache_entry_release(ce);
++		ea_bdebug(bh, "refcount now=%d",
++			le32_to_cpu(HDR(bh)->h_refcount));
++		unlock_buffer(bh);
+ 		mark_buffer_dirty(bh);
+ 		if (IS_SYNC(inode))
+ 			sync_dirty_buffer(bh);
+ 		DQUOT_FREE_BLOCK(inode, 1);
+ 	}
+-	ea_bdebug(bh, "refcount now=%d", le32_to_cpu(HDR(bh)->h_refcount) - 1);
+-	unlock_buffer(bh);
+ 	EXT2_I(inode)->i_file_acl = 0;
+ 
+ cleanup:
