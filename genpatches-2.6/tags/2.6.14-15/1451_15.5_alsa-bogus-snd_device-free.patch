@@ -1,0 +1,28 @@
+From: Takashi Iwai <tiwai@suse.de>
+Date: Fri, 24 Feb 2006 21:03:52 +0000 (-0800)
+Subject: [PATCH] alsa: fix bogus snd_device_free() in opl3-oss.c
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/chrisw/linux-2.6.15.y.git;a=commitdiff;h=b68e8ec13bcb0bb66173a5803a98602575e6b8d0
+
+[PATCH] alsa: fix bogus snd_device_free() in opl3-oss.c
+
+Remove snd_device_free() for an opl3-oss instance which should have been
+released.
+
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Cc: Jaroslav Kysela <perex@suse.cz>
+Cc: <stable@kernel.org>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Chris Wright <chrisw@sous-sol.org>
+---
+
+--- a/sound/drivers/opl3/opl3_oss.c
++++ b/sound/drivers/opl3/opl3_oss.c
+@@ -146,7 +146,7 @@ void snd_opl3_init_seq_oss(opl3_t *opl3,
+ void snd_opl3_free_seq_oss(opl3_t *opl3)
+ {
+ 	if (opl3->oss_seq_dev) {
+-		snd_device_free(opl3->card, opl3->oss_seq_dev);
++		/* The instance should have been released in prior */
+ 		opl3->oss_seq_dev = NULL;
+ 	}
+ }

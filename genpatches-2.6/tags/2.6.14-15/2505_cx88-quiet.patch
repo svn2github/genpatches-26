@@ -1,0 +1,15 @@
+--- linux-2.6.14-gentoo-r3/drivers/media/video/cx88/cx88-video.c.orig	2005-11-25 01:24:52.000000000 +0000
++++ linux-2.6.14-gentoo-r3/drivers/media/video/cx88/cx88-video.c	2005-11-25 01:25:26.000000000 +0000
+@@ -1256,11 +1256,9 @@ int cx88_do_ioctl(struct inode *inode, s
+ {
+ 	int err;
+ 
++	dprintk( 1, "CORE IOCTL: 0x%x\n", cmd );
+ 	if (video_debug > 1)
+ 		cx88_print_ioctl(core->name,cmd);
+-	printk( KERN_INFO "CORE IOCTL: 0x%x\n", cmd );
+-	cx88_print_ioctl(core->name,cmd);
+-	dprintk( 1, "CORE IOCTL: 0x%x\n", cmd );
+ 
+ 	switch (cmd) {
+ 	/* ---------- tv norms ---------- */
