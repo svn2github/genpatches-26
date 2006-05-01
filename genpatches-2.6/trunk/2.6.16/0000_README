@@ -82,6 +82,10 @@ Patch:	1010_linux-2.6.16.11.patch
 From:	www.kernel.org
 Desc:	CIFS filename handling security fix
 
+Patch:	1011_linux-2.6.16.12.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -129,10 +133,6 @@ Desc:	Fix sound on laptops with AD1986A codec
 Patch:	2705_alsa-hda-auto-configuration.patch
 From:	http://bugs.gentoo.org/131226
 Desc:	Fix silence on some hda-based sound chips
-
-Patch:	2900_tipar-boot-oops.patch
-From:	http://bugs.gentoo.org/128852
-Desc:	Fix boot crash when tipar is compiled-in
 
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
