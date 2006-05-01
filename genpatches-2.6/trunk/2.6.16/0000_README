@@ -114,6 +114,10 @@ Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
 
+Patch:	2605_psmouse-detection.patch
+From:	http://bugs.gentoo.org/130846
+Desc:	Fix mouse buttons after replug
+
 Patch:	2700_alsa-hda-ad1986a.patch
 From:	http://bugs.gentoo.org/131226
 Desc:	Fix sound on laptops with AD1986A codec
