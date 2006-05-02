@@ -1,0 +1,4 @@
+webrelease=1
+webpath="~johnm/public_html/genpatches/"
+announce_mailto=gentoo-kernel@gentoo.org
+branch_prefix=genpatches
