@@ -1,0 +1,24 @@
+From: Dmitry Torokhov <dtor_core@ameritech.net>
+Date: Sat, 29 Apr 2006 05:12:44 +0000 (-0400)
+Subject: Input: psmouse - fix new device detection logic
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=89c9b4805a525bdd4c6e7529d06292f60ac837fc
+
+Input: psmouse - fix new device detection logic
+
+Signed-off-by: Dmitry Torokhov <dtor@mail.ru>
+---
+
+--- a/drivers/input/mouse/psmouse-base.c
++++ b/drivers/input/mouse/psmouse-base.c
+@@ -302,8 +302,10 @@ static irqreturn_t psmouse_interrupt(str
+  * Check if this is a new device announcement (0xAA 0x00)
+  */
+ 	if (unlikely(psmouse->packet[0] == PSMOUSE_RET_BAT && psmouse->pktcnt <= 2)) {
+-		if (psmouse->pktcnt == 1)
++		if (psmouse->pktcnt == 1) {
++			psmouse->last = jiffies;
+ 			goto out;
++		}
+ 
+ 		if (psmouse->packet[1] == PSMOUSE_RET_ID) {
+ 			__psmouse_set_state(psmouse, PSMOUSE_IGNORE);
