@@ -1,0 +1,353 @@
+diff -Nura linux-2.6.16-rc6-git4/arch/sparc64/Kconfig linux-2.6.16-rc6-git4-sparse/arch/sparc64/Kconfig
+--- linux-2.6.16-rc6-git4/arch/sparc64/Kconfig	2006-03-11 16:12:55.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/arch/sparc64/Kconfig	2006-03-15 07:13:12.000000000 -0600
+@@ -186,6 +186,12 @@
+ 
+ endmenu
+ 
++config ARCH_SPARSEMEM_ENABLE
++	def_bool y
++
++config ARCH_SPARSEMEM_DEFAULT
++	def_bool y
++
+ source "mm/Kconfig"
+ 
+ config GENERIC_ISA_DMA
+diff -Nura linux-2.6.16-rc6-git4/arch/sparc64/kernel/sparc64_ksyms.c linux-2.6.16-rc6-git4-sparse/arch/sparc64/kernel/sparc64_ksyms.c
+--- linux-2.6.16-rc6-git4/arch/sparc64/kernel/sparc64_ksyms.c	2006-03-11 16:12:55.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/arch/sparc64/kernel/sparc64_ksyms.c	2006-03-15 07:13:12.000000000 -0600
+@@ -95,9 +95,6 @@
+ 
+ extern int dump_fpu (struct pt_regs * regs, elf_fpregset_t * fpregs);
+ 
+-extern unsigned long phys_base;
+-extern unsigned long pfn_base;
+-
+ extern unsigned int sys_call_table[];
+ 
+ extern void xor_vis_2(unsigned long, unsigned long *, unsigned long *);
+@@ -342,11 +339,7 @@
+ EXPORT_SYMBOL(__bzero_noasi);
+ 
+ /* Various address conversion macros use this. */
+-EXPORT_SYMBOL(phys_base);
+-EXPORT_SYMBOL(pfn_base);
+ EXPORT_SYMBOL(sparc64_valid_addr_bitmap);
+-EXPORT_SYMBOL(page_to_pfn);
+-EXPORT_SYMBOL(pfn_to_page);
+ 
+ /* No version information on this, heavily used in inline asm,
+  * and will always be 'void __ret_efault(void)'.
+diff -Nura linux-2.6.16-rc6-git4/arch/sparc64/mm/init.c linux-2.6.16-rc6-git4-sparse/arch/sparc64/mm/init.c
+--- linux-2.6.16-rc6-git4/arch/sparc64/mm/init.c	2006-03-11 16:12:55.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/arch/sparc64/mm/init.c	2006-03-15 07:13:27.000000000 -0600
+@@ -111,11 +111,9 @@
+ 
+ unsigned long *sparc64_valid_addr_bitmap __read_mostly;
+ 
+-/* Ugly, but necessary... -DaveM */
+-unsigned long phys_base __read_mostly;
++/* Kernel physical address base and size in bytes.  */
+ unsigned long kern_base __read_mostly;
+ unsigned long kern_size __read_mostly;
+-unsigned long pfn_base __read_mostly;
+ 
+ /* get_new_mmu_context() uses "cache + 1".  */
+ DEFINE_SPINLOCK(ctx_alloc_lock);
+@@ -186,8 +184,8 @@
+ }
+ 
+ #define PG_dcache_dirty		PG_arch_1
+-#define PG_dcache_cpu_shift	24
+-#define PG_dcache_cpu_mask	(256 - 1)
++#define PG_dcache_cpu_shift	24UL
++#define PG_dcache_cpu_mask	(256UL - 1UL)
+ 
+ #if NR_CPUS > 256
+ #error D-cache dirty tracking and thread_info->cpu need fixing for > 256 cpus
+@@ -320,16 +318,6 @@
+ 	}
+ }
+ 
+-unsigned long page_to_pfn(struct page *page)
+-{
+-	return (unsigned long) ((page - mem_map) + pfn_base);
+-}
+-
+-struct page *pfn_to_page(unsigned long pfn)
+-{
+-	return (mem_map + (pfn - pfn_base));
+-}
+-
+ void show_mem(void)
+ {
+ 	printk("Mem-info:\n");
+@@ -1196,9 +1184,78 @@
+ 
+ extern unsigned long cmdline_memory_size;
+ 
+-unsigned long __init bootmem_init(unsigned long *pages_avail)
++/* Find a free area for the bootmem map, avoiding the kernel image
++ * and the initial ramdisk.
++ */
++static unsigned long __init choose_bootmap_pfn(unsigned long start_pfn,
++					       unsigned long end_pfn)
+ {
+-	unsigned long bootmap_size, start_pfn, end_pfn;
++	unsigned long avoid_start, avoid_end, bootmap_size;
++	int i;
++
++	bootmap_size = ((end_pfn - start_pfn) + 7) / 8;
++	bootmap_size = ALIGN(bootmap_size, sizeof(long));
++
++	avoid_start = avoid_end = 0;
++#ifdef CONFIG_BLK_DEV_INITRD
++	avoid_start = initrd_start;
++	avoid_end = PAGE_ALIGN(initrd_end);
++#endif
++
++#ifdef CONFIG_DEBUG_BOOTMEM
++	prom_printf("choose_bootmap_pfn: kern[%lx:%lx] avoid[%lx:%lx]\n",
++		    kern_base, PAGE_ALIGN(kern_base + kern_size),
++		    avoid_start, avoid_end);
++#endif
++	for (i = 0; i < pavail_ents; i++) {
++		unsigned long start, end;
++
++		start = pavail[i].phys_addr;
++		end = start + pavail[i].reg_size;
++
++		while (start < end) {
++			if (start >= kern_base &&
++			    start < PAGE_ALIGN(kern_base + kern_size)) {
++				start = PAGE_ALIGN(kern_base + kern_size);
++				continue;
++			}
++			if (start >= avoid_start && start < avoid_end) {
++				start = avoid_end;
++				continue;
++			}
++
++			if ((end - start) < bootmap_size)
++				break;
++
++			if (start < kern_base &&
++			    (start + bootmap_size) > kern_base) {
++				start = PAGE_ALIGN(kern_base + kern_size);
++				continue;
++			}
++
++			if (start < avoid_start &&
++			    (start + bootmap_size) > avoid_start) {
++				start = avoid_end;
++				continue;
++			}
++
++			/* OK, it doesn't overlap anything, use it.  */
++#ifdef CONFIG_DEBUG_BOOTMEM
++			prom_printf("choose_bootmap_pfn: Using %lx [%lx]\n",
++				    start >> PAGE_SHIFT, start);
++#endif
++			return start >> PAGE_SHIFT;
++		}
++	}
++
++	prom_printf("Cannot find free area for bootmap, aborting.\n");
++	prom_halt();
++}
++
++static unsigned long __init bootmem_init(unsigned long *pages_avail,
++					 unsigned long phys_base)
++{
++	unsigned long bootmap_size, end_pfn;
+ 	unsigned long end_of_phys_memory = 0UL;
+ 	unsigned long bootmap_pfn, bytes_avail, size;
+ 	int i;
+@@ -1236,14 +1293,6 @@
+ 
+ 	*pages_avail = bytes_avail >> PAGE_SHIFT;
+ 
+-	/* Start with page aligned address of last symbol in kernel
+-	 * image.  The kernel is hard mapped below PAGE_OFFSET in a
+-	 * 4MB locked TLB translation.
+-	 */
+-	start_pfn = PAGE_ALIGN(kern_base + kern_size) >> PAGE_SHIFT;
+-
+-	bootmap_pfn = start_pfn;
+-
+ 	end_pfn = end_of_phys_memory >> PAGE_SHIFT;
+ 
+ #ifdef CONFIG_BLK_DEV_INITRD
+@@ -1260,23 +1309,22 @@
+ 		                 	 "(0x%016lx > 0x%016lx)\ndisabling initrd\n",
+ 			       initrd_end, end_of_phys_memory);
+ 			initrd_start = 0;
+-		}
+-		if (initrd_start) {
+-			if (initrd_start >= (start_pfn << PAGE_SHIFT) &&
+-			    initrd_start < (start_pfn << PAGE_SHIFT) + 2 * PAGE_SIZE)
+-				bootmap_pfn = PAGE_ALIGN (initrd_end) >> PAGE_SHIFT;
++			initrd_end = 0;
+ 		}
+ 	}
+ #endif	
+ 	/* Initialize the boot-time allocator. */
+ 	max_pfn = max_low_pfn = end_pfn;
+-	min_low_pfn = pfn_base;
++	min_low_pfn = (phys_base >> PAGE_SHIFT);
++
++	bootmap_pfn = choose_bootmap_pfn(min_low_pfn, end_pfn);
+ 
+ #ifdef CONFIG_DEBUG_BOOTMEM
+ 	prom_printf("init_bootmem(min[%lx], bootmap[%lx], max[%lx])\n",
+ 		    min_low_pfn, bootmap_pfn, max_low_pfn);
+ #endif
+-	bootmap_size = init_bootmem_node(NODE_DATA(0), bootmap_pfn, pfn_base, end_pfn);
++	bootmap_size = init_bootmem_node(NODE_DATA(0), bootmap_pfn,
++					 min_low_pfn, end_pfn);
+ 
+ 	/* Now register the available physical memory with the
+ 	 * allocator.
+@@ -1324,6 +1372,20 @@
+ 	reserve_bootmem((bootmap_pfn << PAGE_SHIFT), size);
+ 	*pages_avail -= PAGE_ALIGN(size) >> PAGE_SHIFT;
+ 
++	for (i = 0; i < pavail_ents; i++) {
++		unsigned long start_pfn, end_pfn;
++
++		start_pfn = pavail[i].phys_addr >> PAGE_SHIFT;
++		end_pfn = (start_pfn + (pavail[i].reg_size >> PAGE_SHIFT));
++#ifdef CONFIG_DEBUG_BOOTMEM
++		prom_printf("memory_present(0, %lx, %lx)\n",
++			    start_pfn, end_pfn);
++#endif
++		memory_present(0, start_pfn, end_pfn);
++	}
++
++	sparse_init();
++
+ 	return end_pfn;
+ }
+ 
+@@ -1448,7 +1510,7 @@
+ 
+ void __init paging_init(void)
+ {
+-	unsigned long end_pfn, pages_avail, shift;
++	unsigned long end_pfn, pages_avail, shift, phys_base;
+ 	unsigned long real_end, i;
+ 
+ 	/* Find available physical memory... */
+@@ -1458,8 +1520,6 @@
+ 	for (i = 0; i < pavail_ents; i++)
+ 		phys_base = min(phys_base, pavail[i].phys_addr);
+ 
+-	pfn_base = phys_base >> PAGE_SHIFT;
+-
+ 	kern_base = (prom_boot_mapping_phys_low >> 22UL) << 22UL;
+ 	kern_size = (unsigned long)&_end - (unsigned long)KERNBASE;
+ 
+@@ -1506,7 +1566,9 @@
+ 
+ 	/* Setup bootmem... */
+ 	pages_avail = 0;
+-	last_valid_pfn = end_pfn = bootmem_init(&pages_avail);
++	last_valid_pfn = end_pfn = bootmem_init(&pages_avail, phys_base);
++
++	max_mapnr = last_valid_pfn;
+ 
+ #ifdef CONFIG_DEBUG_PAGEALLOC
+ 	kernel_physical_mapping_init();
+@@ -1515,18 +1577,17 @@
+ 	{
+ 		unsigned long zones_size[MAX_NR_ZONES];
+ 		unsigned long zholes_size[MAX_NR_ZONES];
+-		unsigned long npages;
+ 		int znum;
+ 
+ 		for (znum = 0; znum < MAX_NR_ZONES; znum++)
+ 			zones_size[znum] = zholes_size[znum] = 0;
+ 
+-		npages = end_pfn - pfn_base;
+-		zones_size[ZONE_DMA] = npages;
+-		zholes_size[ZONE_DMA] = npages - pages_avail;
++		zones_size[ZONE_DMA] = end_pfn;
++		zholes_size[ZONE_DMA] = end_pfn - pages_avail;
+ 
+ 		free_area_init_node(0, &contig_page_data, zones_size,
+-				    phys_base >> PAGE_SHIFT, zholes_size);
++				    __pa(PAGE_OFFSET) >> PAGE_SHIFT,
++				    zholes_size);
+ 	}
+ 
+ 	device_scan();
+@@ -1596,7 +1657,6 @@
+ 
+ 	taint_real_pages();
+ 
+-	max_mapnr = last_valid_pfn - pfn_base;
+ 	high_memory = __va(last_valid_pfn << PAGE_SHIFT);
+ 
+ #ifdef CONFIG_DEBUG_BOOTMEM
+diff -Nura linux-2.6.16-rc6-git4/include/asm-sparc64/numnodes.h linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/numnodes.h
+--- linux-2.6.16-rc6-git4/include/asm-sparc64/numnodes.h	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/numnodes.h	2006-03-15 07:13:12.000000000 -0600
+@@ -0,0 +1,6 @@
++#ifndef _SPARC64_NUMNODES_H
++#define _SPARC64_NUMNODES_H
++
++#define NODES_SHIFT	0
++
++#endif /* !(_SPARC64_NUMNODES_H) */
+diff -Nura linux-2.6.16-rc6-git4/include/asm-sparc64/page.h linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/page.h
+--- linux-2.6.16-rc6-git4/include/asm-sparc64/page.h	2006-03-11 16:12:55.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/page.h	2006-03-15 07:13:12.000000000 -0600
+@@ -124,17 +124,10 @@
+ #define __pa(x)			((unsigned long)(x) - PAGE_OFFSET)
+ #define __va(x)			((void *)((unsigned long) (x) + PAGE_OFFSET))
+ 
+-/* PFNs are real physical page numbers.  However, mem_map only begins to record
+- * per-page information starting at pfn_base.  This is to handle systems where
+- * the first physical page in the machine is at some huge physical address,
+- * such as 4GB.   This is common on a partitioned E10000, for example.
+- */
+-extern struct page *pfn_to_page(unsigned long pfn);
+-extern unsigned long page_to_pfn(struct page *);
++#define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
+ 
+ #define virt_to_page(kaddr)	pfn_to_page(__pa(kaddr)>>PAGE_SHIFT)
+ 
+-#define pfn_valid(pfn)		(((pfn)-(pfn_base)) < max_mapnr)
+ #define virt_addr_valid(kaddr)	pfn_valid(__pa(kaddr) >> PAGE_SHIFT)
+ 
+ #define virt_to_phys __pa
+diff -Nura linux-2.6.16-rc6-git4/include/asm-sparc64/pgtable.h linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/pgtable.h
+--- linux-2.6.16-rc6-git4/include/asm-sparc64/pgtable.h	2006-03-11 16:12:55.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/pgtable.h	2006-03-15 07:13:12.000000000 -0600
+@@ -212,9 +212,6 @@
+ 
+ #ifndef __ASSEMBLY__
+ 
+-extern unsigned long phys_base;
+-extern unsigned long pfn_base;
+-
+ extern struct page *mem_map_zero;
+ #define ZERO_PAGE(vaddr)	(mem_map_zero)
+ 
+diff -Nura linux-2.6.16-rc6-git4/include/asm-sparc64/sparsemem.h linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/sparsemem.h
+--- linux-2.6.16-rc6-git4/include/asm-sparc64/sparsemem.h	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.16-rc6-git4-sparse/include/asm-sparc64/sparsemem.h	2006-03-15 07:13:12.000000000 -0600
+@@ -0,0 +1,12 @@
++#ifndef _SPARC64_SPARSEMEM_H
++#define _SPARC64_SPARSEMEM_H
++
++#ifdef __KERNEL__
++
++#define SECTION_SIZE_BITS       26
++#define MAX_PHYSADDR_BITS       42
++#define MAX_PHYSMEM_BITS        42
++
++#endif /* !(__KERNEL__) */
++
++#endif /* !(_SPARC64_SPARSEMEM_H) */
