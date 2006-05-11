@@ -46,10 +46,6 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	2600_input-h-bits-per-long.patch
-From:	http://bugs.gentoo.org/124301
-Desc:	input.h header fix for splashutils compile
-
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
