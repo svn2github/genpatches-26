@@ -138,6 +138,10 @@ Patch:	2410_ipw2200-monitor-mode.patch
 From:	http://bugs.gentoo.org/131017
 Desc:	Add missing IPW2200 config option
 
+Patch:	2500_sbp2-pl3507-failures.patch
+From:	http://bugs.gentoo.org/133308
+Desc:	Fix sbp2 breakage with PL-3507 based devices
+
 Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
