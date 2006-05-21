@@ -130,7 +130,7 @@ Patch:	2200_acpi-nsxfeval-flood.patch
 From:	http://bugs.gentoo.org/131534
 Desc:	Reduce ACPI verbosity on this error condition
 
-Patch:	2400_sky2-1.3.patch
+Patch:	2400_sky2-1.4.patch
 From:	Stephen Hemminger
 Desc:	sky2 update, hopefully solves stability issues
 
