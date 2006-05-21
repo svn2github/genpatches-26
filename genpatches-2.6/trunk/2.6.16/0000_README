@@ -154,6 +154,10 @@ Patch:	2605_psmouse-detection.patch
 From:	http://bugs.gentoo.org/130846
 Desc:	Fix mouse buttons after replug
 
+Patch:	2610_wacom-update.patch
+From:	http://bugs.gentoo.org/133564
+Desc:	wacom driver update, to fix mouse wheel inversion
+
 Patch:	2700_alsa-hda-ad1986a.patch
 From:	http://bugs.gentoo.org/131226
 Desc:	Fix sound on laptops with AD1986A codec
