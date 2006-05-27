@@ -252,7 +252,7 @@ Index: linux-git/drivers/video/Kconfig
 ===================================================================
 --- linux-git.orig/drivers/video/Kconfig
 +++ linux-git/drivers/video/Kconfig
-@@ -770,7 +770,6 @@ config FB_MATROX
+@@ -772,7 +772,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
@@ -260,7 +260,7 @@ Index: linux-git/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1471,5 +1470,15 @@ if FB && SYSFS
+@@ -1473,5 +1472,15 @@ if FB && SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  

@@ -1698,7 +1698,7 @@ Index: linux-git/MAINTAINERS
 ===================================================================
 --- linux-git.orig/MAINTAINERS
 +++ linux-git/MAINTAINERS
-@@ -2563,6 +2563,13 @@ M:	wli@holomorphy.com
+@@ -2618,6 +2618,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1716,7 +1716,7 @@ Index: linux-git/arch/arm/Kconfig
 ===================================================================
 --- linux-git.orig/arch/arm/Kconfig
 +++ linux-git/arch/arm/Kconfig
-@@ -858,6 +858,7 @@ source "drivers/leds/Kconfig"
+@@ -856,6 +856,7 @@ source "drivers/leds/Kconfig"
  source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
@@ -1751,6 +1751,15 @@ Index: linux-git/drivers/Makefile
  obj-y				+= base/ block/ misc/ mfd/ net/ media/
  obj-$(CONFIG_NUBUS)		+= nubus/
  obj-$(CONFIG_ATM)		+= atm/
+@@ -50,8 +53,6 @@ obj-$(CONFIG_USB)		+= usb/
+ obj-$(CONFIG_PCI)		+= usb/
+ obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
+ obj-$(CONFIG_SERIO)		+= input/serio/
+-obj-$(CONFIG_GAMEPORT)		+= input/gameport/
+-obj-$(CONFIG_INPUT)		+= input/
+ obj-$(CONFIG_I2O)		+= message/
+ obj-$(CONFIG_RTC_LIB)		+= rtc/
+ obj-$(CONFIG_I2C)		+= i2c/
 Index: linux-git/drivers/char/Makefile
 ===================================================================
 --- linux-git.orig/drivers/char/Makefile
@@ -1810,7 +1819,7 @@ Index: linux-git/drivers/char/keyboard.c
  
  #define FN_HANDLERS\
  	fn_null,	fn_enter,	fn_show_ptregs,	fn_show_mem,\
-@@ -100,7 +111,7 @@ static fn_handler_fn *fn_handler[] = { F
+@@ -100,15 +111,18 @@ static fn_handler_fn *fn_handler[] = { F
  const int max_vals[] = {
  	255, ARRAY_SIZE(func_table) - 1, ARRAY_SIZE(fn_handler) - 1, NR_PAD - 1,
  	NR_DEAD - 1, 255, 3, NR_SHIFT - 1, 255, NR_ASCII - 1, NR_LOCK - 1,
@@ -1819,8 +1828,10 @@ Index: linux-git/drivers/char/keyboard.c
  };
  
  const int NR_TYPES = ARRAY_SIZE(max_vals);
-@@ -109,6 +120,9 @@ struct kbd_struct kbd_table[MAX_NR_CONSO
- static struct kbd_struct *kbd = kbd_table;
+ 
+ struct kbd_struct kbd_table[MAX_NR_CONSOLES];
+-static struct kbd_struct *kbd = kbd_table;
++struct kbd_struct *kbd = kbd_table;
  static struct kbd_struct kbd0;
  
 +EXPORT_SYMBOL(kbd);
@@ -1854,7 +1865,7 @@ Index: linux-git/drivers/char/keyboard.c
  		return;
  	if ((kbd->kbdmode == VC_RAW ||
  	     kbd->kbdmode == VC_MEDIUMRAW) &&
-@@ -1199,6 +1216,13 @@ static void kbd_keycode(unsigned int key
+@@ -1217,6 +1234,13 @@ static void kbd_keycode(unsigned int key
  	key_map = key_maps[shift_final];
  
  	if (!key_map) {
@@ -1868,7 +1879,7 @@ Index: linux-git/drivers/char/keyboard.c
  		compute_shiftstate();
  		kbd->slockstate = 0;
  		return;
-@@ -1221,8 +1245,15 @@ static void kbd_keycode(unsigned int key
+@@ -1239,8 +1263,15 @@ static void kbd_keycode(unsigned int key
  	}
  
  	type -= 0xf0;
@@ -1885,7 +1896,7 @@ Index: linux-git/drivers/char/keyboard.c
  		return;
  
  	if (type == KT_LETTER) {
-@@ -1233,13 +1264,29 @@ static void kbd_keycode(unsigned int key
+@@ -1251,13 +1282,29 @@ static void kbd_keycode(unsigned int key
  				keysym = key_map[keycode];
  		}
  	}
@@ -1916,7 +1927,7 @@ Index: linux-git/drivers/char/keyboard.c
  static void kbd_event(struct input_handle *handle, unsigned int event_type,
  		      unsigned int event_code, int value)
  {
-@@ -1277,6 +1324,7 @@ static struct input_handle *kbd_connect(
+@@ -1295,6 +1342,7 @@ static struct input_handle *kbd_connect(
  	memset(handle, 0, sizeof(struct input_handle));
  
  	handle->dev = dev;
@@ -11379,7 +11390,7 @@ Index: linux-git/include/linux/keyboard.h
  #define KT_LOCK		10
  #define KT_SLOCK	12
  #define KT_BRL		14
-+#define KT_SPKUP	15
++#define KT_SPKUP	16
  
  #define K(t,v)		(((t)<<8)|(v))
  #define KTYP(x)		((x) >> 8)

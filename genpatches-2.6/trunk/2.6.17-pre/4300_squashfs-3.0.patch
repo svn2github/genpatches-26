@@ -78,7 +78,7 @@ Index: linux-git/fs/Makefile
 ===================================================================
 --- linux-git.orig/fs/Makefile
 +++ linux-git/fs/Makefile
-@@ -55,6 +55,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
+@@ -56,6 +56,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
  obj-$(CONFIG_JBD)		+= jbd/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/

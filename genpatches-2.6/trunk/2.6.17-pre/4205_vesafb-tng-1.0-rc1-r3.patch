@@ -415,7 +415,7 @@ Index: linux-git/drivers/video/Kconfig
 ===================================================================
 --- linux-git.orig/drivers/video/Kconfig
 +++ linux-git/drivers/video/Kconfig
-@@ -470,8 +470,8 @@ config FB_TGA
+@@ -472,8 +472,8 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -426,7 +426,7 @@ Index: linux-git/drivers/video/Kconfig
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -481,6 +481,48 @@ config FB_VESA
+@@ -483,6 +483,48 @@ config FB_VESA
  	  You will get a boot time penguin logo at no additional cost. Please
  	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
  
@@ -2902,7 +2902,7 @@ Index: linux-git/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -385,6 +386,40 @@ void mmput(struct mm_struct *mm)
+@@ -383,6 +384,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
