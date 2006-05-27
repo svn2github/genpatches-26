@@ -1,0 +1,51 @@
+From: Stephen Hemminger <shemminger@osdl.org>
+Date: Mon, 22 May 2006 19:03:42 +0000 (-0700)
+Subject: [PATCH] sky2: fix jumbo packet support
+X-Git-Tag: v2.6.17-rc5
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=a1433ac4ab46fb23ae77804c207a1f710a7b12f1
+
+[PATCH] sky2: fix jumbo packet support
+
+The truncate threshold calculation to prevent receiver from getting stuck
+was incorrect, and it didn't take into account the upper limit on bits
+in the register so the jumbo packet support was broken.
+
+Signed-off-by: Stephen Hemminger <shemminger@osdl.org>
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+--- a/drivers/net/sky2.c
++++ b/drivers/net/sky2.c
+@@ -979,6 +979,7 @@ static int sky2_rx_start(struct sky2_por
+ 	struct sky2_hw *hw = sky2->hw;
+ 	unsigned rxq = rxqaddr[sky2->port];
+ 	int i;
++	unsigned thresh;
+ 
+ 	sky2->rx_put = sky2->rx_next = 0;
+ 	sky2_qset(hw, rxq);
+@@ -1003,9 +1004,21 @@ static int sky2_rx_start(struct sky2_por
+ 		sky2_rx_add(sky2, re->mapaddr);
+ 	}
+ 
+- 	/* Truncate oversize frames */
+- 	sky2_write16(hw, SK_REG(sky2->port, RX_GMF_TR_THR), sky2->rx_bufsize - 8);
+- 	sky2_write32(hw, SK_REG(sky2->port, RX_GMF_CTRL_T), RX_TRUNC_ON);
++
++	/*
++	 * The receiver hangs if it receives frames larger than the
++	 * packet buffer. As a workaround, truncate oversize frames, but
++	 * the register is limited to 9 bits, so if you do frames > 2052
++	 * you better get the MTU right!
++	 */
++	thresh = (sky2->rx_bufsize - 8) / sizeof(u32);
++	if (thresh > 0x1ff)
++		sky2_write32(hw, SK_REG(sky2->port, RX_GMF_CTRL_T), RX_TRUNC_OFF);
++	else {
++		sky2_write16(hw, SK_REG(sky2->port, RX_GMF_TR_THR), thresh);
++		sky2_write32(hw, SK_REG(sky2->port, RX_GMF_CTRL_T), RX_TRUNC_ON);
++	}
++
+ 
+ 	/* Tell chip about available buffers */
+ 	sky2_write16(hw, Y2_QADDR(rxq, PREF_UNIT_PUT_IDX), sky2->rx_put);
