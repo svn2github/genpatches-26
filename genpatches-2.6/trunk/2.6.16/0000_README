@@ -130,6 +130,10 @@ Patch:	1720_sparc-bbc-i2c.patch
 From:	http://bugs.gentoo.org/133342
 Desc:	Fix bbc fan control on some sparc systems
 
+Patch:	1900_nfs-utimes.patch
+From:	http://bugs.gentoo.org/132673
+Desc:	Fix utimes() behaviour on NFS
+
 Patch:	2200_acpi-nsxfeval-flood.patch
 From:	http://bugs.gentoo.org/131534
 Desc:	Reduce ACPI verbosity on this error condition
