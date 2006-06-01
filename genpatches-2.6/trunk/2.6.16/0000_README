@@ -182,6 +182,14 @@ Patch:	2705_alsa-hda-auto-configuration.patch
 From:	http://bugs.gentoo.org/131226
 Desc:	Fix silence on some hda-based sound chips
 
+Patch:	2710_dvb-i2c-depends.patch
+From:	http://bugs.gentoo.org/133249
+Desc:	Fix dependencies of some DVB drivers
+
+Patch:	2711_dvb-i2c-depends-fix.patch
+From:	http://bugs.gentoo.org/133249
+Desc:	Fix dependencies of some DVB drivers
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge

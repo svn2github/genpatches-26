@@ -1,0 +1,37 @@
+From: Jean Delvare <khali@linux-fr.org>
+Date: Wed, 24 May 2006 13:35:18 +0000 (-0300)
+Subject: V4L/DVB (4045): Fixes recursive dependency for I2C
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/mchehab/v4l-dvb.git;a=commitdiff;h=d1a2c08662e975492ee19d9eb15c15f623391903
+
+V4L/DVB (4045): Fixes recursive dependency for I2C
+
+Mixing "depends on I2C" and "select I2C" within the media subsystem
+leads to the following problem:
+Warning! Found recursive dependency: I2C DVB_BUDGET DVB_BUDGET_PATCH
+DVB_AV7110 VIDEO_SAA7146_VV VIDEO_SAA7146 I2C
+
+Signed-off-by: Jean Delvare <khali@linux-fr.org>
+Acked-by: Manu Abraham <manu@linuxtv.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
+---
+
+--- a/drivers/media/common/Kconfig
++++ b/drivers/media/common/Kconfig
+@@ -1,6 +1,6 @@
+ config VIDEO_SAA7146
+ 	tristate
+-	select I2C
++	depends on I2C
+ 
+ config VIDEO_SAA7146_VV
+ 	tristate
+--- a/drivers/media/dvb/pluto2/Kconfig
++++ b/drivers/media/dvb/pluto2/Kconfig
+@@ -1,7 +1,6 @@
+ config DVB_PLUTO2
+ 	tristate "Pluto2 cards"
+ 	depends on DVB_CORE && PCI && I2C
+-	select I2C
+ 	select I2C_ALGOBIT
+ 	select DVB_TDA1004X
+ 	help

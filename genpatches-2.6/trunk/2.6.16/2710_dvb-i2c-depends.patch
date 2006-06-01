@@ -1,0 +1,142 @@
+From: Manu Abraham <abraham.manu@gmail.com>
+Date: Sat, 20 May 2006 16:17:00 +0000 (-0300)
+Subject: V4L/DVB (4037): Make the bridge devices that depend on I2C dependant on I2C
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/mchehab/v4l-dvb.git;a=commitdiff;h=3c2c54910f277f3abd3763dbc64b9dbf8b4479e9
+
+V4L/DVB (4037): Make the bridge devices that depend on I2C dependant on I2C
+
+Ref: Bugzilla 6179, 6589
+
+Signed-off-by: Manu Abraham <manu@linuxtv.org>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
+---
+
+--- a/drivers/media/dvb/Kconfig
++++ b/drivers/media/dvb/Kconfig
+@@ -22,26 +22,26 @@ config DVB
+ source "drivers/media/dvb/dvb-core/Kconfig"
+ 
+ comment "Supported SAA7146 based PCI Adapters"
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
+ source "drivers/media/dvb/ttpci/Kconfig"
+ 
+ comment "Supported USB Adapters"
+-	depends on DVB_CORE && USB
++	depends on DVB_CORE && USB && I2C
+ source "drivers/media/dvb/dvb-usb/Kconfig"
+ source "drivers/media/dvb/ttusb-budget/Kconfig"
+ source "drivers/media/dvb/ttusb-dec/Kconfig"
+ source "drivers/media/dvb/cinergyT2/Kconfig"
+ 
+ comment "Supported FlexCopII (B2C2) Adapters"
+-	depends on DVB_CORE && (PCI || USB)
++	depends on DVB_CORE && (PCI || USB) && I2C
+ source "drivers/media/dvb/b2c2/Kconfig"
+ 
+ comment "Supported BT878 Adapters"
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
+ source "drivers/media/dvb/bt8xx/Kconfig"
+ 
+ comment "Supported Pluto2 Adapters"
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
+ source "drivers/media/dvb/pluto2/Kconfig"
+ 
+ comment "Supported DVB Frontends"
+--- a/drivers/media/dvb/b2c2/Kconfig
++++ b/drivers/media/dvb/b2c2/Kconfig
+@@ -1,6 +1,6 @@
+ config DVB_B2C2_FLEXCOP
+ 	tristate "Technisat/B2C2 FlexCopII(b) and FlexCopIII adapters"
+-	depends on DVB_CORE
++	depends on DVB_CORE && I2C
+ 	select DVB_STV0299
+ 	select DVB_MT352
+ 	select DVB_MT312
+@@ -16,7 +16,7 @@ config DVB_B2C2_FLEXCOP
+ 
+ config DVB_B2C2_FLEXCOP_PCI
+ 	tristate "Technisat/B2C2 Air/Sky/Cable2PC PCI"
+-	depends on DVB_B2C2_FLEXCOP && PCI
++	depends on DVB_B2C2_FLEXCOP && PCI && I2C
+ 	help
+ 	  Support for the Air/Sky/CableStar2 PCI card (DVB/ATSC) by Technisat/B2C2.
+ 
+@@ -24,7 +24,7 @@ config DVB_B2C2_FLEXCOP_PCI
+ 
+ config DVB_B2C2_FLEXCOP_USB
+ 	tristate "Technisat/B2C2 Air/Sky/Cable2PC USB"
+-	depends on DVB_B2C2_FLEXCOP && USB
++	depends on DVB_B2C2_FLEXCOP && USB && I2C
+ 	help
+ 	  Support for the Air/Sky/Cable2PC USB1.1 box (DVB/ATSC) by Technisat/B2C2,
+ 
+--- a/drivers/media/dvb/bt8xx/Kconfig
++++ b/drivers/media/dvb/bt8xx/Kconfig
+@@ -1,6 +1,6 @@
+ config DVB_BT8XX
+ 	tristate "BT8xx based PCI cards"
+-	depends on DVB_CORE && PCI && VIDEO_BT848
++	depends on DVB_CORE && PCI && I2C && VIDEO_BT848
+ 	select DVB_MT352
+ 	select DVB_SP887X
+ 	select DVB_NXT6000
+--- a/drivers/media/dvb/dvb-usb/Kconfig
++++ b/drivers/media/dvb/dvb-usb/Kconfig
+@@ -1,6 +1,6 @@
+ config DVB_USB
+ 	tristate "Support for various USB DVB devices"
+-	depends on DVB_CORE && USB
++	depends on DVB_CORE && USB && I2C
+ 	select FW_LOADER
+ 	help
+ 	  By enabling this you will be able to choose the various supported
+--- a/drivers/media/dvb/pluto2/Kconfig
++++ b/drivers/media/dvb/pluto2/Kconfig
+@@ -1,6 +1,6 @@
+ config DVB_PLUTO2
+ 	tristate "Pluto2 cards"
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
+ 	select I2C
+ 	select I2C_ALGOBIT
+ 	select DVB_TDA1004X
+--- a/drivers/media/dvb/ttpci/Kconfig
++++ b/drivers/media/dvb/ttpci/Kconfig
+@@ -1,6 +1,6 @@
+ config DVB_AV7110
+ 	tristate "AV7110 cards"
+-	depends on DVB_CORE && PCI && VIDEO_V4L1
++	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+ 	select FW_LOADER
+ 	select VIDEO_SAA7146_VV
+ 	select DVB_VES1820
+@@ -58,7 +58,7 @@ config DVB_AV7110_OSD
+ 
+ config DVB_BUDGET
+ 	tristate "Budget cards"
+-	depends on DVB_CORE && PCI && VIDEO_V4L1
++	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+ 	select VIDEO_SAA7146
+ 	select DVB_STV0299
+ 	select DVB_VES1X93
+@@ -79,7 +79,7 @@ config DVB_BUDGET
+ 
+ config DVB_BUDGET_CI
+ 	tristate "Budget cards with onboard CI connector"
+-	depends on DVB_CORE && PCI && VIDEO_V4L1
++	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+ 	select VIDEO_SAA7146
+ 	select DVB_STV0297
+ 	select DVB_STV0299
+@@ -99,7 +99,7 @@ config DVB_BUDGET_CI
+ 
+ config DVB_BUDGET_AV
+ 	tristate "Budget cards with analog video inputs"
+-	depends on DVB_CORE && PCI && VIDEO_V4L1
++	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+ 	select VIDEO_SAA7146_VV
+ 	select DVB_STV0299
+ 	select DVB_TDA1004X
