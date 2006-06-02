@@ -1,0 +1,235 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_linux-2.6.16.1.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1001_linux-2.6.16.2.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1002_linux-2.6.16.3.patch
+From:	www.kernel.org
+Desc:	Fix a keyctl-related security problem
+
+Patch:	1003_linux-2.6.16.4.patch
+From:	www.kernel.org
+Desc:	Fix an RCU-related security problem
+
+Patch:	1004_linux-2.6.16.5.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1005_linux-2.6.16.6.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1006_linux-2.6.16.7.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1007_linux-2.6.16.8.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1008_linux-2.6.16.9.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1009_linux-2.6.16.10.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1010_linux-2.6.16.11.patch
+From:	www.kernel.org
+Desc:	CIFS filename handling security fix
+
+Patch:	1011_linux-2.6.16.12.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1012_linux-2.6.16.13.patch
+From:	www.kernel.org
+Desc:	netfilter/SCTP security fix
+
+Patch:	1013_linux-2.6.16.14.patch
+From:	www.kernel.org
+Desc:	smbfs chroot security fix
+
+Patch:	1014_linux-2.6.16.15.patch
+From:	www.kernel.org
+Desc:	SCTP security fixes
+
+Patch:	1015_linux-2.6.16.16.patch
+From:	www.kernel.org
+Desc:	FS locking security fix
+
+Patch:	1016_linux-2.6.16.17.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1017_linux-2.6.16.18.patch
+From:	www.kernel.org
+Desc:	SNMP NAT security fix
+
+Patch:	1018_linux-2.6.16.19.patch
+From:	www.kernel.org
+Desc:	netfilter conntrack security fix
+
+Patch:	1700_sparc-obp64-naming.patch
+From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
+Desc:	Fix OBP naming on some sparc systems
+
+Patch:	1705_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	1710_sparc-sparsemem.patch
+From:	http://bugs.gentoo.org/127095
+Desc:	Use sparsemem for ultrasparc machines
+
+Patch:	1715_ppc32-crosscc-ssp.patch
+From:	http://dev.gentoo.org/~johnm/files/ppc32-2.6.16-sspcc.patch
+Desc:	Disable ssp when building ppc32 boot utils with CROSS32CC
+
+Patch:	1720_sparc-bbc-i2c.patch
+From:	http://bugs.gentoo.org/133342
+Desc:	Fix bbc fan control on some sparc systems
+
+Patch:	1900_nfs-utimes.patch
+From:	http://bugs.gentoo.org/132673
+Desc:	Fix utimes() behaviour on NFS
+
+Patch:	2200_acpi-nsxfeval-flood.patch
+From:	http://bugs.gentoo.org/131534
+Desc:	Reduce ACPI verbosity on this error condition
+
+Patch:	2300_usb-insufficient-power.patch
+From:	http://bugs.gentoo.org/
+Desc:	Print a message when a device is rejected due to insufficient power
+
+Patch:	2400_sky2-1.4.patch
+From:	Stephen Hemminger
+Desc:	sky2 update, hopefully solves stability issues
+
+Patch:	2401_sky2-jumbo-packets.patch
+From:	Stephen Hemminger
+Desc:	sky2 jumbo packet bugfix
+
+Patch:	2405_skge-1.5.patch
+From:	Stephen Hemminger
+Desc:	skge update, hopefully solves performance issues
+
+Patch:	2410_ipw2200-monitor-mode.patch
+From:	http://bugs.gentoo.org/131017
+Desc:	Add missing IPW2200 config option
+
+Patch:	2500_sbp2-pl3507-failures.patch
+From:	http://bugs.gentoo.org/133308
+Desc:	Fix sbp2 breakage with PL-3507 based devices
+
+Patch:	2600_input-mod-devicetable.patch
+From:	http://bugs.gentoo.org/124301
+Desc:	input.h header fix for splashutils compile
+
+Patch:	2605_psmouse-detection.patch
+From:	http://bugs.gentoo.org/130846
+Desc:	Fix mouse buttons after replug
+
+Patch:	2610_wacom-update.patch
+From:	http://bugs.gentoo.org/133564
+Desc:	wacom driver update, to fix mouse wheel inversion
+
+Patch:	2700_alsa-hda-ad1986a.patch
+From:	http://bugs.gentoo.org/131226
+Desc:	Fix sound on laptops with AD1986A codec
+
+Patch:	2705_alsa-hda-auto-configuration.patch
+From:	http://bugs.gentoo.org/131226
+Desc:	Fix silence on some hda-based sound chips
+
+Patch:	2710_dvb-i2c-depends.patch
+From:	http://bugs.gentoo.org/133249
+Desc:	Fix dependencies of some DVB drivers
+
+Patch:	2711_dvb-i2c-depends-fix.patch
+From:	http://bugs.gentoo.org/133249
+Desc:	Fix dependencies of some DVB drivers
+
+Patch:	4000_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4100_libata-enable-atapi.patch
+From:	dsd@gentoo.org acked by Jeff Garzik
+Desc:	Enable libata ATAPI (i.e. SATA CDROM) support by default
+
+Patch:	4105_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4110_promise-pdc2037x.patch
+From:	Jeff Garzik's libata-dev-2.6 tree
+Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
+
+Patch:	4200_fbsplash-0.9.2-r5.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4205_vesafb-tng-1.0-rc1-r3.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4300_squashfs-3.0.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4400_speakup-20060103.patch
+From:	dsd@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4401_speakup-highlight-tracking-amd64.patch
+From:	dsd@gentoo.org
+Desc:	Experimental fix for speakup highlight tracking on amd64
+
+Patch:	4405_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
