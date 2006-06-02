@@ -1,16 +1,3 @@
-diff --git a/Makefile b/Makefile
-index 2567664..bf2e152 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 16
--EXTRAVERSION = .18
-+EXTRAVERSION = .19
- NAME=Sliding Snow Leopard
- 
- # *DOCUMENTATION*
 diff --git a/net/ipv4/netfilter/ip_conntrack_core.c b/net/ipv4/netfilter/ip_conntrack_core.c
 index 84c66db..43f6b45 100644
 --- a/net/ipv4/netfilter/ip_conntrack_core.c

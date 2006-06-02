@@ -11,8 +11,10 @@ Signed-off-by: Manu Abraham <manu@linuxtv.org>
 Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
 ---
 
---- a/drivers/media/dvb/Kconfig
-+++ b/drivers/media/dvb/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/Kconfig
 @@ -22,26 +22,26 @@ config DVB
  source "drivers/media/dvb/dvb-core/Kconfig"
  
@@ -45,8 +47,10 @@ Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
  source "drivers/media/dvb/pluto2/Kconfig"
  
  comment "Supported DVB Frontends"
---- a/drivers/media/dvb/b2c2/Kconfig
-+++ b/drivers/media/dvb/b2c2/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/b2c2/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/b2c2/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/b2c2/Kconfig
 @@ -1,6 +1,6 @@
  config DVB_B2C2_FLEXCOP
  	tristate "Technisat/B2C2 FlexCopII(b) and FlexCopIII adapters"
@@ -73,8 +77,10 @@ Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
  	help
  	  Support for the Air/Sky/Cable2PC USB1.1 box (DVB/ATSC) by Technisat/B2C2,
  
---- a/drivers/media/dvb/bt8xx/Kconfig
-+++ b/drivers/media/dvb/bt8xx/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/bt8xx/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/bt8xx/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/bt8xx/Kconfig
 @@ -1,6 +1,6 @@
  config DVB_BT8XX
  	tristate "BT8xx based PCI cards"
@@ -83,8 +89,10 @@ Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
  	select DVB_MT352
  	select DVB_SP887X
  	select DVB_NXT6000
---- a/drivers/media/dvb/dvb-usb/Kconfig
-+++ b/drivers/media/dvb/dvb-usb/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/dvb-usb/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/dvb-usb/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/dvb-usb/Kconfig
 @@ -1,6 +1,6 @@
  config DVB_USB
  	tristate "Support for various USB DVB devices"
@@ -93,8 +101,10 @@ Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
  	select FW_LOADER
  	help
  	  By enabling this you will be able to choose the various supported
---- a/drivers/media/dvb/pluto2/Kconfig
-+++ b/drivers/media/dvb/pluto2/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/pluto2/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/pluto2/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/pluto2/Kconfig
 @@ -1,6 +1,6 @@
  config DVB_PLUTO2
  	tristate "Pluto2 cards"
@@ -103,40 +113,42 @@ Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
  	select I2C
  	select I2C_ALGOBIT
  	select DVB_TDA1004X
---- a/drivers/media/dvb/ttpci/Kconfig
-+++ b/drivers/media/dvb/ttpci/Kconfig
+Index: linux-2.6.16-gentoo-r9/drivers/media/dvb/ttpci/Kconfig
+===================================================================
+--- linux-2.6.16-gentoo-r9.orig/drivers/media/dvb/ttpci/Kconfig
++++ linux-2.6.16-gentoo-r9/drivers/media/dvb/ttpci/Kconfig
 @@ -1,6 +1,6 @@
  config DVB_AV7110
  	tristate "AV7110 cards"
--	depends on DVB_CORE && PCI && VIDEO_V4L1
-+	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
  	select FW_LOADER
+ 	select VIDEO_DEV
  	select VIDEO_SAA7146_VV
- 	select DVB_VES1820
-@@ -58,7 +58,7 @@ config DVB_AV7110_OSD
+@@ -59,7 +59,7 @@ config DVB_AV7110_OSD
  
  config DVB_BUDGET
  	tristate "Budget cards"
--	depends on DVB_CORE && PCI && VIDEO_V4L1
-+	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
  	select VIDEO_SAA7146
  	select DVB_STV0299
  	select DVB_VES1X93
-@@ -79,7 +79,7 @@ config DVB_BUDGET
+@@ -80,7 +80,7 @@ config DVB_BUDGET
  
  config DVB_BUDGET_CI
  	tristate "Budget cards with onboard CI connector"
--	depends on DVB_CORE && PCI && VIDEO_V4L1
-+	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
  	select VIDEO_SAA7146
  	select DVB_STV0297
  	select DVB_STV0299
-@@ -99,7 +99,7 @@ config DVB_BUDGET_CI
+@@ -100,7 +100,7 @@ config DVB_BUDGET_CI
  
  config DVB_BUDGET_AV
  	tristate "Budget cards with analog video inputs"
--	depends on DVB_CORE && PCI && VIDEO_V4L1
-+	depends on DVB_CORE && PCI && I2C && VIDEO_V4L1
+-	depends on DVB_CORE && PCI
++	depends on DVB_CORE && PCI && I2C
+ 	select VIDEO_DEV
  	select VIDEO_SAA7146_VV
  	select DVB_STV0299
- 	select DVB_TDA1004X
