@@ -138,6 +138,10 @@ Patch:	1900_nfs-utimes.patch
 From:	http://bugs.gentoo.org/132673
 Desc:	Fix utimes() behaviour on NFS
 
+Patch:	2100_i2o-bugfixes.patch
+From:	http://bugs.gentoo.org/136088
+Desc:	Fix various i2o problems/regressions
+
 Patch:	2200_acpi-nsxfeval-flood.patch
 From:	http://bugs.gentoo.org/131534
 Desc:	Reduce ACPI verbosity on this error condition
