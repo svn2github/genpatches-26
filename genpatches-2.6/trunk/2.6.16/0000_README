@@ -114,6 +114,10 @@ Patch:	1018_linux-2.6.16.19.patch
 From:	www.kernel.org
 Desc:	netfilter conntrack security fix
 
+Patch:	1019_linux-2.6.16.20.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -170,17 +174,9 @@ Patch:	2410_ipw2200-monitor-mode.patch
 From:	http://bugs.gentoo.org/131017
 Desc:	Add missing IPW2200 config option
 
-Patch:	2500_sbp2-pl3507-failures.patch
-From:	http://bugs.gentoo.org/133308
-Desc:	Fix sbp2 breakage with PL-3507 based devices
-
 Patch:	2600_input-mod-devicetable.patch
 From:	http://bugs.gentoo.org/124301
 Desc:	input.h header fix for splashutils compile
-
-Patch:	2605_psmouse-detection.patch
-From:	http://bugs.gentoo.org/130846
-Desc:	Fix mouse buttons after replug
 
 Patch:	2610_wacom-update.patch
 From:	http://bugs.gentoo.org/133564
