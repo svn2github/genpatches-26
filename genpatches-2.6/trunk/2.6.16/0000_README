@@ -202,6 +202,10 @@ Patch:	2711_dvb-i2c-depends-fix.patch
 From:	http://bugs.gentoo.org/133249
 Desc:	Fix dependencies of some DVB drivers
 
+Patch:	2900_n-tty-throttling.patch
+From:	http://bugs.gentoo.org/130555
+Desc:	Fix PPP/PPTP connection dropping regression
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
