@@ -1,2 +1,2 @@
 Does genpatches include patches from the 2.6.x.y releases (linux-stable)?
-Yes, and we frequently contribute patches to that tree. Note that genpatches does not modify the version string to take account of this, so it might not be obvious. Also, we split out the -stable releases into their individual patches, and give them filenames like 10??_X_description.patch where X refers to the fourth version component.
+Yes, and we frequently contribute patches to that tree. Note that genpatches does not modify the version string to take account of this, so it might not be obvious.
