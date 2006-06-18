@@ -50,6 +50,10 @@ Patch:	2200_acpi-nsxfeval-flood.patch
 From:	http://bugs.gentoo.org/131534
 Desc:	Reduce ACPI verbosity on this error condition
 
+Patch:	2300_usb-insufficient-power.patch
+From:	http://bugs.gentoo.org/
+Desc:	Print a message when a device is rejected due to insufficient power
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
