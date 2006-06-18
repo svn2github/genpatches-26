@@ -1,7 +1,17 @@
-Index: linux-git/Documentation/speakup/DefaultKeyAssignments
-===================================================================
---- /dev/null
-+++ linux-git/Documentation/speakup/DefaultKeyAssignments
+diff -urNpX dontdiff linux-2.6.17-orig/arch/arm/Kconfig linux-2.6.17/arch/arm/Kconfig
+--- linux-2.6.17-orig/arch/arm/Kconfig	2006-06-18 16:32:13.000000000 +0100
++++ linux-2.6.17/arch/arm/Kconfig	2006-06-18 16:46:06.000000000 +0100
+@@ -856,6 +856,7 @@ source "drivers/leds/Kconfig"
+ source "drivers/media/Kconfig"
+ 
+ source "drivers/video/Kconfig"
++source "drivers/char/speakup/Kconfig"
+ 
+ source "sound/Kconfig"
+ 
+diff -urNpX dontdiff linux-2.6.17-orig/Documentation/speakup/DefaultKeyAssignments linux-2.6.17/Documentation/speakup/DefaultKeyAssignments
+--- linux-2.6.17-orig/Documentation/speakup/DefaultKeyAssignments	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/Documentation/speakup/DefaultKeyAssignments	2006-06-18 16:46:06.000000000 +0100
 @@ -0,0 +1,46 @@
 +This file is intended to give you an overview of the default keys used
 +by speakup for it's review functions.  You may change them to be
@@ -49,10 +59,9 @@ Index: linux-git/Documentation/speakup/DefaultKeyAssignments
 +synth until it has caught up with what is being printed on the
 +console.
 +
-Index: linux-git/Documentation/speakup/INSTALLATION
-===================================================================
---- /dev/null
-+++ linux-git/Documentation/speakup/INSTALLATION
+diff -urNpX dontdiff linux-2.6.17-orig/Documentation/speakup/INSTALLATION linux-2.6.17/Documentation/speakup/INSTALLATION
+--- linux-2.6.17-orig/Documentation/speakup/INSTALLATION	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/Documentation/speakup/INSTALLATION	2006-06-18 16:46:06.000000000 +0100
 @@ -0,0 +1,108 @@
 +This document assumes you have had some experience with kernel
 +compilation and installation.  If you have not, I recommend you get
@@ -162,10 +171,153 @@ Index: linux-git/Documentation/speakup/INSTALLATION
 +email: kirk@braille.uwo.ca
 +phone: (519) 679-6845 (home)
 +
-Index: linux-git/Documentation/speakup/README
-===================================================================
---- /dev/null
-+++ linux-git/Documentation/speakup/README
+diff -urNpX dontdiff linux-2.6.17-orig/Documentation/speakup/keymap-tutorial linux-2.6.17/Documentation/speakup/keymap-tutorial
+--- linux-2.6.17-orig/Documentation/speakup/keymap-tutorial	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/Documentation/speakup/keymap-tutorial	2006-06-18 16:46:06.000000000 +0100
+@@ -0,0 +1,140 @@
++		       Speakup Keymap Tutorial
++
++This is meant to be a basic tutorial on how to change the Linux keymap
++file to assign speakup review functions to desired keys.  It is not
++intended to be a replacement for the loadkeys(8) or keymap(5) man
++pages.
++
++The basic lay-out of the keymap file is a series of lines with the
++following fields.  The keyword keycode indicates this is the start of
++a new key assignment.  It is then followed by a number which
++represents the actual key on the keyboard.  That number is followed by
++the equals '=' operator and finally a list of keywords representing
++key names such as keypad5.  Each line can have quite a few key
++functions on it.  They are interpreted by loadkeys in order and
++assigned to key shift states depending on the order they are
++encountered.  So for example, the first value after the equals is the
++keys unshifted state, while the second is the keys shifted state.  If
++you wish to learn the order they are interpreted in read the
++loadkeys(8) and keymap(5) man pages.
++
++You can have subsequent lines which are indented and start with
++another keyword for the various shifted states.  This way you can
++assign some of the states without having to specify them all in order
++up until you get to the one you want to assign.
++
++In speakup, we have assigned the insert key on the number pad to the
++altgr keyword.  This is not required; you could choose any other
++shifted state keyword.  We used altgr because it typically represents
++the right hand alt key.  In Linux each shift key is separate and
++independent, so the left shift and the right shift keys are not
++necessarily the same.  The altgr key is not really used for anything
++important, so we steel it.
++
++Here are the default key assignments for the number eight on the
++keypad:
++
++keycode  72 = KP_8            
++	alt     keycode  72 = Ascii_8         
++
++As you can see, the first line starts with keycode followed by 72
++which is the actual number assigned to the key when the keyboard port
++is read.  The KP_8 after the equal sign, is the symbolic representation
++of the function called when that key is hit.
++
++The second line is the same format except it starts with the keyword
++alt which is indented.  That means that the function at the end of
++that line Ascii_8 is applied to the alt-shifted eight key.
++
++Now here are the speakup assignments for that key:
++
++keycode  72 = 0x0d0a
++	altgr keycode 72 = 0x0d20
++#keycode  72 = KP_8            
++	alt     keycode  72 = Ascii_8         
++
++Notice that the only thing which has changed on the first line is the
++function called when the key is struck.  It is a hexadecimal number
++identifying the function called in a look up table.  It is not a
++symbolic representation yet because that means we need to change the
++loadkeys program to understand our symbolic names.  We will do this in
++the future but for now it is more expedient to just use the table
++indices.  You will find a table at the bottom of this document
++listing the review functions and their corresponding hex lookups.
++
++The 0x0d0a in the first line above is speakup's say line function.
++The second line ends with 0x0d20 which is speakup's read from top of
++screen to reading cursor line.
++
++The third line is the original key assignment commented out with a
++number-sign '#' at the beginning.  I do that so I can easily find the
++keys I want to affect by symbolic name.  Otherwise I would need to
++keep a look up table for all the keycodes.  I recommend you do this as
++well or you'll be very sorry at some point in the future.
++
++The forth line is just the standard key assignment for the left hand
++alt key.
++
++Now let's say we want to design a different keyboard layout.  I'll use
++an example for the JAWS style keypad because I've specifically been
++asked to help with that.  JAWS uses the eight on the keypad to move up
++a line or the speakup function to read previous line.  JAWS also uses
++the keypad_8 key in a shifted mode to read the current line.  I
++apologize if these are not quite right.  It has been a long time since
++I used JAWS.  So we would have the following two lines:
++
++keycode  72 = 0x0d0b
++	altgr keycode 72 = 0x0d0a
++
++The hex value 0x0d0b in the first line is speakup's SAY_PREVIOUS_LINE
++function.  The 0x0d0a in the second line is the same say_line function
++as we had earlier.  So when the number eight is hit on the keypad
++speakup will read the previous line and when the number eight is
++shifted with the insert key on the keypad it will read the current
++line.
++
++As you can tell, it is not really very difficult to reassign the keys
++to different review functions.
++
++Once you have carefully edited the keymap file, called default.map in
++the speakup distribution, you copy it into the /etc/kbd directory.
++Make sure you back up the original default.map from that directory
++first, if there is one.  Then you run loadkeys to load the new map
++into the kernel:
++
++loadkeys /etc/kbd/default.map
++
++If you wish to build your new keyboard lay-out into the kernel, after
++testing it, copy the default.map file into the drivers/char directory,
++with the name defkeymap.map, of your Linux source tree.  Then rm the
++defkeymap.c file and recompile the kernel.  Because there is no
++defkeymap.c `make' will rebuild it on the next compile.
++
++Here is a list of the available speakup review functions at this point
++in time.
++
++SAY_CHAR 0x0d04 /* say this character */
++SAY_PREV_CHAR 0x0d05 /* say character left of this char */
++SAY_NEXT_CHAR 0x0d06 /* say char right of this char */
++SAY_WORD 0x0d07 /* say this word under reading cursor */
++SAY_PREV_WORD 0x0d08
++SAY_NEXT_WORD 0x0d09
++SAY_LINE 0x0d0a /* say this line */
++SAY_PREV_LINE 0x0d0b /* say line above this line */
++SAY_NEXT_LINE 0x0d0c
++TOP_EDGE 0x0d0d /* move to top edge of screen */
++BOTTOM_EDGE 0x0d0e
++LEFT_EDGE 0x0d0f
++RIGHT_EDGE 0x0d10
++SAY_PHONETIC_CHAR 0x0d11 /* say this character phonetically */
++SPELL_WORD 0x0d12 /* spell this word letter by letter */
++SAY_SCREEN 0x0d14
++SAY_POSITION 0x0d1b
++SPEECH_OFF 0x0d1c
++SAY_ATTRIBUTES 0x0d1d
++SPEAKUP_PARKED 0x0d1e
++SAY_FROM_TOP 0x0d20
++SAY_TO_BOTTOM 0x0d21
++SAY_FROM_LEFT 0x0d22
++SAY_TO_RIGHT 0x0d23
++
+diff -urNpX dontdiff linux-2.6.17-orig/Documentation/speakup/README linux-2.6.17/Documentation/speakup/README
+--- linux-2.6.17-orig/Documentation/speakup/README	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/Documentation/speakup/README	2006-06-18 16:46:06.000000000 +0100
 @@ -0,0 +1,98 @@
 +Welcome to the speakup project for the Speakup speech package for Linux.
 +
@@ -265,155 +417,9 @@ Index: linux-git/Documentation/speakup/README
 +
 +  Kirk
 +
-Index: linux-git/Documentation/speakup/keymap-tutorial
-===================================================================
---- /dev/null
-+++ linux-git/Documentation/speakup/keymap-tutorial
-@@ -0,0 +1,140 @@
-+		       Speakup Keymap Tutorial
-+
-+This is meant to be a basic tutorial on how to change the Linux keymap
-+file to assign speakup review functions to desired keys.  It is not
-+intended to be a replacement for the loadkeys(8) or keymap(5) man
-+pages.
-+
-+The basic lay-out of the keymap file is a series of lines with the
-+following fields.  The keyword keycode indicates this is the start of
-+a new key assignment.  It is then followed by a number which
-+represents the actual key on the keyboard.  That number is followed by
-+the equals '=' operator and finally a list of keywords representing
-+key names such as keypad5.  Each line can have quite a few key
-+functions on it.  They are interpreted by loadkeys in order and
-+assigned to key shift states depending on the order they are
-+encountered.  So for example, the first value after the equals is the
-+keys unshifted state, while the second is the keys shifted state.  If
-+you wish to learn the order they are interpreted in read the
-+loadkeys(8) and keymap(5) man pages.
-+
-+You can have subsequent lines which are indented and start with
-+another keyword for the various shifted states.  This way you can
-+assign some of the states without having to specify them all in order
-+up until you get to the one you want to assign.
-+
-+In speakup, we have assigned the insert key on the number pad to the
-+altgr keyword.  This is not required; you could choose any other
-+shifted state keyword.  We used altgr because it typically represents
-+the right hand alt key.  In Linux each shift key is separate and
-+independent, so the left shift and the right shift keys are not
-+necessarily the same.  The altgr key is not really used for anything
-+important, so we steel it.
-+
-+Here are the default key assignments for the number eight on the
-+keypad:
-+
-+keycode  72 = KP_8
-+	alt     keycode  72 = Ascii_8
-+
-+As you can see, the first line starts with keycode followed by 72
-+which is the actual number assigned to the key when the keyboard port
-+is read.  The KP_8 after the equal sign, is the symbolic representation
-+of the function called when that key is hit.
-+
-+The second line is the same format except it starts with the keyword
-+alt which is indented.  That means that the function at the end of
-+that line Ascii_8 is applied to the alt-shifted eight key.
-+
-+Now here are the speakup assignments for that key:
-+
-+keycode  72 = 0x0d0a
-+	altgr keycode 72 = 0x0d20
-+#keycode  72 = KP_8
-+	alt     keycode  72 = Ascii_8
-+
-+Notice that the only thing which has changed on the first line is the
-+function called when the key is struck.  It is a hexadecimal number
-+identifying the function called in a look up table.  It is not a
-+symbolic representation yet because that means we need to change the
-+loadkeys program to understand our symbolic names.  We will do this in
-+the future but for now it is more expedient to just use the table
-+indices.  You will find a table at the bottom of this document
-+listing the review functions and their corresponding hex lookups.
-+
-+The 0x0d0a in the first line above is speakup's say line function.
-+The second line ends with 0x0d20 which is speakup's read from top of
-+screen to reading cursor line.
-+
-+The third line is the original key assignment commented out with a
-+number-sign '#' at the beginning.  I do that so I can easily find the
-+keys I want to affect by symbolic name.  Otherwise I would need to
-+keep a look up table for all the keycodes.  I recommend you do this as
-+well or you'll be very sorry at some point in the future.
-+
-+The forth line is just the standard key assignment for the left hand
-+alt key.
-+
-+Now let's say we want to design a different keyboard layout.  I'll use
-+an example for the JAWS style keypad because I've specifically been
-+asked to help with that.  JAWS uses the eight on the keypad to move up
-+a line or the speakup function to read previous line.  JAWS also uses
-+the keypad_8 key in a shifted mode to read the current line.  I
-+apologize if these are not quite right.  It has been a long time since
-+I used JAWS.  So we would have the following two lines:
-+
-+keycode  72 = 0x0d0b
-+	altgr keycode 72 = 0x0d0a
-+
-+The hex value 0x0d0b in the first line is speakup's SAY_PREVIOUS_LINE
-+function.  The 0x0d0a in the second line is the same say_line function
-+as we had earlier.  So when the number eight is hit on the keypad
-+speakup will read the previous line and when the number eight is
-+shifted with the insert key on the keypad it will read the current
-+line.
-+
-+As you can tell, it is not really very difficult to reassign the keys
-+to different review functions.
-+
-+Once you have carefully edited the keymap file, called default.map in
-+the speakup distribution, you copy it into the /etc/kbd directory.
-+Make sure you back up the original default.map from that directory
-+first, if there is one.  Then you run loadkeys to load the new map
-+into the kernel:
-+
-+loadkeys /etc/kbd/default.map
-+
-+If you wish to build your new keyboard lay-out into the kernel, after
-+testing it, copy the default.map file into the drivers/char directory,
-+with the name defkeymap.map, of your Linux source tree.  Then rm the
-+defkeymap.c file and recompile the kernel.  Because there is no
-+defkeymap.c `make' will rebuild it on the next compile.
-+
-+Here is a list of the available speakup review functions at this point
-+in time.
-+
-+SAY_CHAR 0x0d04 /* say this character */
-+SAY_PREV_CHAR 0x0d05 /* say character left of this char */
-+SAY_NEXT_CHAR 0x0d06 /* say char right of this char */
-+SAY_WORD 0x0d07 /* say this word under reading cursor */
-+SAY_PREV_WORD 0x0d08
-+SAY_NEXT_WORD 0x0d09
-+SAY_LINE 0x0d0a /* say this line */
-+SAY_PREV_LINE 0x0d0b /* say line above this line */
-+SAY_NEXT_LINE 0x0d0c
-+TOP_EDGE 0x0d0d /* move to top edge of screen */
-+BOTTOM_EDGE 0x0d0e
-+LEFT_EDGE 0x0d0f
-+RIGHT_EDGE 0x0d10
-+SAY_PHONETIC_CHAR 0x0d11 /* say this character phonetically */
-+SPELL_WORD 0x0d12 /* spell this word letter by letter */
-+SAY_SCREEN 0x0d14
-+SAY_POSITION 0x0d1b
-+SPEECH_OFF 0x0d1c
-+SAY_ATTRIBUTES 0x0d1d
-+SPEAKUP_PARKED 0x0d1e
-+SAY_FROM_TOP 0x0d20
-+SAY_TO_BOTTOM 0x0d21
-+SAY_FROM_LEFT 0x0d22
-+SAY_TO_RIGHT 0x0d23
-+
-Index: linux-git/Documentation/speakup/spkguide.txt
-===================================================================
---- /dev/null
-+++ linux-git/Documentation/speakup/spkguide.txt
+diff -urNpX dontdiff linux-2.6.17-orig/Documentation/speakup/spkguide.txt linux-2.6.17/Documentation/speakup/spkguide.txt
+--- linux-2.6.17-orig/Documentation/speakup/spkguide.txt	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/Documentation/speakup/spkguide.txt	2006-06-18 16:46:06.000000000 +0100
 @@ -0,0 +1,1279 @@
 +
 +The Speakup User's Guide
@@ -501,7 +507,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +Speakup does support two other synthesizers, but because they work in
 +conjunction with other software, they must be loaded as modules after
-+their related software is loaded, and so are not available at boot up.
++their related software is loaded, and so are not available at boot up. 
 +These are as follows:
 +
 +decpc -- DecTalk PC (not available at boot up)
@@ -519,7 +525,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +Once you have booted the system, and if necessary, have supplied the
 +proper bootup parameter for your synthesizer, Speakup will begin
-+talking as soon as the kernel is loaded.  In fact, it will talk a lot!
++talking as soon as the kernel is loaded.  In fact, it will talk a lot! 
 +It will speak all the boot up messages that the kernel prints on the
 +screen during the boot process.  This is because Speakup is not a
 +separate screen reader, but is actually built into the operating
@@ -528,7 +534,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +kernel, they are automatically handled properly by Speakup.  There are a
 +few exceptions, but we'll come to those later.
 +
-+Note:  In this guide I will refer to the numeric keypad as the keypad.
++Note:  In this guide I will refer to the numeric keypad as the keypad. 
 +This is done because the speakupmap.map file referred to later in this
 +manual uses the term keypad instead of numeric keypad.  Also I'm lazy
 +and would rather only type one word.  So keypad it is.  Got it?  Good.
@@ -556,7 +562,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +You can check to see if the boot process has completed by pressing the 8
 +key on the keypad, which reads the current line.  This also has the
 +effect of starting Speakup talking again, so you can press keypad enter
-+to silence it again if the boot process has not completed.
++to silence it again if the boot process has not completed.  
 +
 +When the boot process is complete, you will arrive at a "login" prompt.
 +At this point, you'll need to type in your user id and password, as
@@ -572,7 +578,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +When you are running a program or command, Speakup will automatically
 +speak new text as it arrives on the screen.  You can at any time silence
-+the speech with keypad enter, or use any of the Speakup review keys.
++the speech with keypad enter, or use any of the Speakup review keys. 
 +
 +Here are some basic Speakup review keys, and a short description of what
 +they do.
@@ -637,12 +643,12 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +"Keypad 8 is line, say current."
 +
-+You'll notice that some commands do not have keys assigned to them.
++You'll notice that some commands do not have keys assigned to them. 
 +This is because they are very infrequently used commands, and are also
 +accessible through the proc system.  We'll discuss the proc system later
 +in this manual.
 +
-+You'll also notice that some commands have two keys assigned to them.
++You'll also notice that some commands have two keys assigned to them. 
 +This is because Speakup has a built in set of alternative key bindings
 +for laptop users.  The alternate speakup key is the caps lock key.  You
 +can press and hold the caps lock key, while pressing an alternate
@@ -714,12 +720,12 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +spk key_kp6 = say_to_right
 + key_kpplus = say_screen
 +spk key_kpplus = say_win
-+ key_kp1 = say_prev_char
++ key_kp1 = say_prev_char 
 +spk key_kp1 = right_edge
 + key_kp2 = say_char
 +spk key_kp2 = say_to_bottom
 +double key_kp2 = say_phonetic_char
-+ key_kp3 = say_next_char
++ key_kp3 = say_next_char  
 +spk  key_kp3 = bottom_edge
 + key_kp0 = spk_key
 + key_kpdot = say_position
@@ -889,7 +895,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +this:
 +
 +cat /proc/speakup/version
-+Speakup v-2.00 CVS: Thu Oct 21 10:38:21 EDT 2004
++Speakup v-2.00 CVS: Thu Oct 21 10:38:21 EDT 2004 
 +synth dtlk version 1.1
 +
 +The display shows the Speakup version number, along with the version
@@ -908,7 +914,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +All the entries in the Speakup proc system are readable, some are
 +writable by root only, and some are writable by everyone.  Unless you
 +know what you are doing, you should probably leave the ones that are
-+writable by root only alone.  Most of the names are self explanatory.
++writable by root only alone.  Most of the names are self explanatory. 
 +Vol for controlling volume, pitch for pitch, rate for controlling speaking
 +rate, etc.  If you find one you aren't sure about, you can post a query
 +on the Speakup list.
@@ -918,7 +924,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +It is possible to change to a different synthesizer while speakup is
 +running.  In other words, it is not necessary to reboot the system
 +in order to use a different synthesizer.  You can simply echo the
-+synthesizer keyword to the /proc/speakup/synth_name proc entry.
++synthesizer keyword to the /proc/speakup/synth_name proc entry. 
 +Depending on your situation, you may wish to echo none to the synth_name
 +proc entry, to disable speech while one synthesizer is disconnected and
 +a second one is connected in its place.  Then echo the keyword for the
@@ -1001,7 +1007,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +Once you've installed, configured, and tested Speech Dispatcher with your
 +chosen software synthesizer, you still need one more piece of software
-+in order to make things work.  You need a package called speechd-up.
++in order to make things work.  You need a package called speechd-up. 
 +You get it from the free(b)soft web site mentioned above.  After you've
 +compiled and installed speechd-up, you are almost ready to begin using
 +your software synthesizer.
@@ -1111,7 +1117,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +position the reading cursor on the rightmost character of the above
 +url. Press the keypad slash key once again to actually cut the text
 +from the screen.  Speakup will say, "cut".  Although we call this
-+cutting, Speakup does not actually delete the cut text from the screen.
++cutting, Speakup does not actually delete the cut text from the screen. 
 +It makes a copy of the text in a special buffer for later pasting.
 +
 +Now that you have the url cut from the screen, you can paste it into
@@ -1258,7 +1264,7 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +
 +One final warning.  If you try to load a partial map, you will quickly
 +find that all the mappings you didn't include in your file got deleted
-+from the working map.  Be extremely careful, and always make a backup!
++from the working map.  Be extremely careful, and always make a backup! 
 +You have been warned!
 +
 +14.  Using Speakup's Windowing Capability
@@ -1694,108 +1700,28 @@ Index: linux-git/Documentation/speakup/spkguide.txt
 +to permit their use in free software.
 +
 +The End.
-Index: linux-git/MAINTAINERS
-===================================================================
---- linux-git.orig/MAINTAINERS
-+++ linux-git/MAINTAINERS
-@@ -2618,6 +2618,13 @@ M:	wli@holomorphy.com
- L:	sparclinux@vger.kernel.org
- S:	Maintained
- 
-+SPEAKUP Console speech output
-+P: Kirk Reiser
-+M: kirk@braille.uwo.ca
-+L: speakup@braille.uwo.ca
-+W: http://www.linux-speakup.org
-+S: Maintained
-+
- SPECIALIX IO8+ MULTIPORT SERIAL CARD DRIVER
- P:	Roger Wolff
- M:	R.E.Wolff@BitWizard.nl
-Index: linux-git/arch/arm/Kconfig
-===================================================================
---- linux-git.orig/arch/arm/Kconfig
-+++ linux-git/arch/arm/Kconfig
-@@ -856,6 +856,7 @@ source "drivers/leds/Kconfig"
- source "drivers/media/Kconfig"
- 
- source "drivers/video/Kconfig"
-+source "drivers/char/speakup/Kconfig"
- 
- source "sound/Kconfig"
- 
-Index: linux-git/drivers/Kconfig
-===================================================================
---- linux-git.orig/drivers/Kconfig
-+++ linux-git/drivers/Kconfig
-@@ -58,6 +58,8 @@ source "drivers/media/Kconfig"
- 
- source "drivers/video/Kconfig"
- 
-+source "drivers/char/speakup/Kconfig"
-+
- source "sound/Kconfig"
- 
- source "drivers/usb/Kconfig"
-Index: linux-git/drivers/Makefile
-===================================================================
---- linux-git.orig/drivers/Makefile
-+++ linux-git/drivers/Makefile
-@@ -26,6 +26,9 @@ obj-$(CONFIG_FB_INTEL)          += video
- 
- obj-y				+= serial/
- obj-$(CONFIG_PARPORT)		+= parport/
-+obj-$(CONFIG_GAMEPORT)		+= input/gameport/
-+# load keyboard early so speakup can be quieted
-+obj-$(CONFIG_INPUT)		+= input/
- obj-y				+= base/ block/ misc/ mfd/ net/ media/
- obj-$(CONFIG_NUBUS)		+= nubus/
- obj-$(CONFIG_ATM)		+= atm/
-@@ -50,8 +53,6 @@ obj-$(CONFIG_USB)		+= usb/
- obj-$(CONFIG_PCI)		+= usb/
- obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
- obj-$(CONFIG_SERIO)		+= input/serio/
--obj-$(CONFIG_GAMEPORT)		+= input/gameport/
--obj-$(CONFIG_INPUT)		+= input/
- obj-$(CONFIG_I2O)		+= message/
- obj-$(CONFIG_RTC_LIB)		+= rtc/
- obj-$(CONFIG_I2C)		+= i2c/
-Index: linux-git/drivers/char/Makefile
-===================================================================
---- linux-git.orig/drivers/char/Makefile
-+++ linux-git/drivers/char/Makefile
-@@ -87,6 +87,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
- obj-$(CONFIG_TANBAC_TB0219)	+= tb0219.o
- obj-$(CONFIG_TELCLOCK)		+= tlclk.o
- 
-+obj-$(CONFIG_SPEAKUP)		+= speakup/
- obj-$(CONFIG_WATCHDOG)		+= watchdog/
- obj-$(CONFIG_MWAVE)		+= mwave/
- obj-$(CONFIG_AGP)		+= agp/
-Index: linux-git/drivers/char/consolemap.c
-===================================================================
---- linux-git.orig/drivers/char/consolemap.c
-+++ linux-git/drivers/char/consolemap.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/consolemap.c linux-2.6.17/drivers/char/consolemap.c
+--- linux-2.6.17-orig/drivers/char/consolemap.c	2006-06-18 16:32:28.000000000 +0100
++++ linux-2.6.17/drivers/char/consolemap.c	2006-06-18 16:46:06.000000000 +0100
 @@ -668,3 +668,4 @@ console_map_init(void)
  }
  
  EXPORT_SYMBOL(con_copy_unimap);
 +EXPORT_SYMBOL(inverse_translate);
-Index: linux-git/drivers/char/keyboard.c
-===================================================================
---- linux-git.orig/drivers/char/keyboard.c
-+++ linux-git/drivers/char/keyboard.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/keyboard.c linux-2.6.17/drivers/char/keyboard.c
+--- linux-2.6.17-orig/drivers/char/keyboard.c	2006-06-18 16:32:29.000000000 +0100
++++ linux-2.6.17/drivers/char/keyboard.c	2006-06-18 16:46:06.000000000 +0100
 @@ -40,6 +40,13 @@
  #include <linux/sysrq.h>
  #include <linux/input.h>
  
 +
 +#include <linux/speakup.h>
-+
++        
 +#ifdef CONFIG_SPEAKUP_MODULE
 +spk_key_func addr_spk_key = NULL;
 +#endif
-+
++ 
  static void kbd_disconnect(struct input_handle *handle);
  extern void ctrl_alt_del(void);
  
@@ -1879,23 +1805,26 @@ Index: linux-git/drivers/char/keyboard.c
  		compute_shiftstate();
  		kbd->slockstate = 0;
  		return;
-@@ -1239,8 +1263,15 @@ static void kbd_keycode(unsigned int key
+@@ -1239,10 +1263,17 @@ static void kbd_keycode(unsigned int key
  	}
  
  	type -= 0xf0;
+-
+-	if (raw_mode && type != KT_SPEC && type != KT_SHIFT)
 +#ifdef CONFIG_SPEAKUP
 +	if (speakup_key(vc, shift_final, keycode, keysym, !down, regs ))
-+		return;
+ 		return;
 +#elif defined(CONFIG_SPEAKUP_MODULE)
 +	if ( addr_spk_key && (*addr_spk_key)(vc, shift_final,
 +		keycode, keysym, !down, regs) ) return;
 +#endif
  
--	if (raw_mode && type != KT_SPEC && type != KT_SHIFT)
 +	if (raw_mode && type != KT_SPEC && type != KT_SHIFT )
- 		return;
- 
++		return;
++ 
  	if (type == KT_LETTER) {
+ 		type = KT_LATIN;
+ 		if (vc_kbd_led(kbd, VC_CAPSLOCK)) {
 @@ -1251,13 +1282,29 @@ static void kbd_keycode(unsigned int key
  				keysym = key_map[keycode];
  		}
@@ -1935,10 +1864,20 @@ Index: linux-git/drivers/char/keyboard.c
  	handle->handler = handler;
  	handle->name = "kbd";
  
-Index: linux-git/drivers/char/speakup/Config.in
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/Config.in
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/Makefile linux-2.6.17/drivers/char/Makefile
+--- linux-2.6.17-orig/drivers/char/Makefile	2006-06-18 16:32:28.000000000 +0100
++++ linux-2.6.17/drivers/char/Makefile	2006-06-18 16:46:06.000000000 +0100
+@@ -87,6 +87,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
+ obj-$(CONFIG_TANBAC_TB0219)	+= tb0219.o
+ obj-$(CONFIG_TELCLOCK)		+= tlclk.o
+ 
++obj-$(CONFIG_SPEAKUP)		+= speakup/
+ obj-$(CONFIG_WATCHDOG)		+= watchdog/
+ obj-$(CONFIG_MWAVE)		+= mwave/
+ obj-$(CONFIG_AGP)		+= agp/
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/Config.in linux-2.6.17/drivers/char/speakup/Config.in
+--- linux-2.6.17-orig/drivers/char/speakup/Config.in	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/Config.in	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,26 @@
 +tristate 'Speakup console speech' CONFIG_SPEAKUP
 +if [ "$CONFIG_SPEAKUP" != "n" ]; then
@@ -1966,297 +1905,14 @@ Index: linux-git/drivers/char/speakup/Config.in
 +	comment 'Enter the three to six character synth string from above or none.'
 +	string "Default synthesizer for Speakup" CONFIG_SPEAKUP_DEFAULT "none"
 +fi
-Index: linux-git/drivers/char/speakup/Kconfig
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/Kconfig
-@@ -0,0 +1,210 @@
-+menu "Speakup console speech"
-+config SPEAKUP
-+	tristate "Build speakup console speech"
-+	---help---
-+
-+		This is the Speakup screen reader.  Think of it as a
-+		video console for blind people.  If built in to the
-+		kernel, it can speak evrything on the text console from
-+		boot up to shutdown.  For more information on Speakup,
-+		point your browser at http://www.linux-speakup.org/.
-+		There is also a mailing list at the above url that you
-+		can subscribe to.
-+
-+		Supported synthesizers are accent sa, accent pc, appollo
-+		II., Auddapter, Braille 'n Speak, Dectalk external
-+		(old), Dectalk PC (full length isa board), Dectalk
-+		express, Doubletalk, Doubletalk LT or Litetalk,
-+		Keynote
-+		Gold internal PC, software synthesizers, Speakout, and transport.
-+
-+		Speakup can either be built in or compiled as a module
-+		by answering y or m.  If you answer y here, then you
-+		must answer either y or m to at least one of the
-+		synthesizer drivers below.  If you answer m here, then
-+		the synthesizer drivers below can only be built as
-+		modules.
-+
-+		These drivers are not standalone drivers, but must be
-+		used in conjunction with Speakup.  Think of them as
-+		video cards for blind people.
-+
-+
-+		The Dectalk pc driver can only be built as a module, and
-+		requires software to be pre-loaded on to the card before
-+		the module can be loaded.  See the decpc choice below
-+		for more details.
-+
-+		If you are not a blind person, or don't have access to
-+		one of the listed synthesizers, you should say n.
-+
-+config SPEAKUP_ACNTSA
-+	depends on SPEAKUP
-+	tristate "Accent SA, acntsa"
-+	---help---
-+
-+		This is the Speakup driver for the accent sa
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+config SPEAKUP_ACNTPC
-+	depends on SPEAKUP
-+	tristate "Accent PC, acntpc"
-+	---help---
-+
-+		This is the Speakup driver for the accent pc
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+config SPEAKUP_APOLLO
-+	depends on SPEAKUP
-+	tristate "Apollo, apollo"
-+	---help---
-+
-+		This is the Speakup driver for the Apollo II
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+config SPEAKUP_AUDPTR
-+	depends on SPEAKUP
-+	tristate "Audapter, audptr"
-+	---help---
-+
-+		This is the Speakup driver for the Audapter synthesizer.
-+		 You can say y to build it into the kernel, or m to
-+		build it as a module.  See the configuration help on the
-+		Speakup choice above for more info.
-+
-+config SPEAKUP_BNS
-+	depends on SPEAKUP
-+	tristate "Braille 'n' Speak, bns"
-+	---help---
-+
-+		This is the Speakup driver for the Braille 'n' Speak
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+config SPEAKUP_DECTLK
-+	depends on SPEAKUP
-+	tristate "DECtalk Express, dectlk"
-+	---help---
-+
-+		This is the Speakup driver for the DecTalk Express
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+config SPEAKUP_DECEXT
-+	depends on SPEAKUP
-+	tristate "DECtalk External (old), decext"
-+	---help---
-+
-+		This is the Speakup driver for the DecTalk External
-+		(old) synthesizer.  You can say y to build it into the
-+		kernel, or m to build it as a module.  See the
-+		configuration help on the Speakup choice above for more
-+		info.
-+
-+config SPEAKUP_DECPC
-+	depends on SPEAKUP
-+	tristate "DECtalk PC (big ISA card), decpc"
-+	---help---
-+
-+		This is the Speakup driver for the DecTalk PC (full
-+		length ISA) synthesizer.  You can say  m to build it as
-+		a module.  See the configuration help on the Speakup
-+		choice above for more info.
-+
-+		In order to use the DecTalk PC driver, you must download
-+		the dec_pc.tgz file from linux-speakup.org.  It is in
-+		the pub/linux/goodies directory.  The dec_pc.tgz file
-+		contains the software which must be pre-loaded on to the
-+		DecTalk PC board in order to use it with this driver.
-+		This driver must be built as a module, and can not be
-+		loaded until the file system is mounted and the DecTalk
-+		PC software has been pre-loaded on to the board.
-+
-+		See the README file in the dec_pc.tgz file for more
-+		details.
-+
-+config SPEAKUP_DTLK
-+	depends on SPEAKUP
-+	tristate "DoubleTalk PC, dtlk"
-+	---help---
-+
-+		This is the Speakup driver for the internal DoubleTalk
-+		PC synthesizer.  You can say y to build it into the
-+		kernel, or m to build it as a module.  See the
-+		configuration help on the Speakup choice above for more
-+		info.
-+
-+config SPEAKUP_KEYPC
-+	depends on SPEAKUP
-+	tristate "Keynote Gold PC, keypc"
-+	---help---
-+
-+		This is the Speakup driver for the Keynote Gold
-+		PC synthesizer.  You can say y to build it into the
-+		kernel, or m to build it as a module.  See the
-+		configuration help on the Speakup choice above for more
-+		info.
-+
-+config SPEAKUP_LTLK
-+	depends on SPEAKUP
-+	tristate "DoubleTalk LT or LiteTalk, ltlk"
-+---help---
-+
-+		This is the Speakup driver for the LiteTalk/DoubleTalk
-+		LT synthesizer.  You can say y to build it into the
-+		kernel, or m to build it as a module.  See the
-+		configuration help on the Speakup choice above for more
-+		info.
-+
-+config SPEAKUP_SFTSYN
-+	depends on SPEAKUP
-+	tristate "Software synthesizers, sftsyn"
-+---help---
-+
-+		This is the software synthesizer device node.  It will
-+		register a device /dev/sftsyn which midware programs
-+		and speech
-+		daemons may open and read to provide kernel output to
-+		software synths
-+		such as festival, flite, tuxtalk and so forth.  You
-+		can select 'y' or
-+		'm' to have it built-in to the kernel or loaded as a module.
-+
-+config SPEAKUP_SPKOUT
-+	depends on SPEAKUP
-+	tristate "Speak Out, spkout"
-+	---help---
-+
-+		This is the Speakup driver for the Speakout synthesizer.
-+		 You can say y to build it into the kernel, or m to
-+		build it as a module.  See the configuration help on the
-+		Speakup choice above for more info.
-+
-+config SPEAKUP_TXPRT
-+	depends on SPEAKUP
-+	tristate "Transport, txprt"
-+	---help---
-+
-+		This is the Speakup driver for the Transport
-+		synthesizer.  You can say y to build it into the kernel,
-+		or m to build it as a module.  See the configuration
-+		help on the Speakup choice above for more info.
-+
-+if SPEAKUP != n
-+	comment 'Enter the 3 to 6 character keyword from the list above, or none for no default synthesizer on boot up.'
-+	depends on SPEAKUP
-+endif
-+
-+config SPEAKUP_DEFAULT
-+	string "Choose Default synthesizer for Speakup"
-+	default "none"
-+
-+endmenu
-Index: linux-git/drivers/char/speakup/Makefile
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/Makefile
-@@ -0,0 +1,61 @@
-+#
-+# Makefile for the speakup speech output system.
-+#
-+
-+V := $(shell awk '/UTS_RELEASE/ {print substr($$3,2,3)}' $(TOPDIR)/include/linux/version.h)
-+ifeq ($V,2.4)
-+# Note! Dependencies are done automagically by 'make dep', which also
-+# removes any old dependencies. DON'T put your own dependencies here
-+# unless it's something special (ie not a .c file).
-+#
-+# Note 2! The CFLAGS definitions are now inherited from the
-+# parent makes..
-+#
-+O_TARGET       := spk.o
-+export-objs    := speakup_drvcommon.o speakup.o
-+endif
-+obj-m = speakup_keyhelp.o
-+speakupmain-objs := speakup.o speakup_drvcommon.o
-+obj-$(CONFIG_SPEAKUP)	+= speakupmain.o
-+obj-$(CONFIG_SPEAKUP_ACNTPC)	+= speakup_acntpc.o
-+obj-$(CONFIG_SPEAKUP_ACNTSA)	+= speakup_acntsa.o
-+obj-$(CONFIG_SPEAKUP_APOLLO)	+= speakup_apollo.o
-+obj-$(CONFIG_SPEAKUP_AUDPTR)	+= speakup_audptr.o
-+obj-$(CONFIG_SPEAKUP_BNS)	+= speakup_bns.o
-+obj-$(CONFIG_SPEAKUP_DECEXT)	+= speakup_decext.o
-+obj-$(CONFIG_SPEAKUP_DECPC)	+= speakup_decpc.o
-+obj-$(CONFIG_SPEAKUP_DECTLK)	+= speakup_dectlk.o
-+obj-$(CONFIG_SPEAKUP_DTLK)	+= speakup_dtlk.o
-+obj-$(CONFIG_SPEAKUP_KEYPC)	+= speakup_keypc.o
-+obj-$(CONFIG_SPEAKUP_LTLK)	+= speakup_ltlk.o
-+obj-$(CONFIG_SPEAKUP_SFTSYN)	+= speakup_sftsyn.o
-+obj-$(CONFIG_SPEAKUP_SPKOUT)	+= speakup_spkout.o
-+obj-$(CONFIG_SPEAKUP_TXPRT)	+= speakup_txprt.o
-+
-+ifeq ($V,2.4)
-+	include $(TOPDIR)/Rules.make
-+
-+speakupmap.h: speakupmap.map genmap
-+	./genmap speakupmap.map >$@
-+
-+genmap: genmap.c mapdata.h
-+	cc -o genmap genmap.c
-+
-+mapdata.h: makemapdata.c keyinfo.h
-+	cc -o makemapdata makemapdata.c
-+	./makemapdata >mapdata.h
-+
-+endif
-+speakupmain.o:speakup.o speakup_drvcommon.o
-+	ld -r -o speakupmain.o speakup.o speakup_drvcommon.o
-+
-+$(obj)/speakupmap.h: $(src)/speakupmap.map $(src)/genmap
-+	$(src)/genmap $(src)/speakupmap.map >$@
-+
-+$(obj)/mapdata.h: $(src)/keyinfo.h $(src)/makemapdata
-+	$(src)/makemapdata >$@
-+
-+$(obj)/genmap: $(obj)/mapdata.h
-+
-+HOSTCFLAGS := -Iinclude -I/usr/include
-+hostprogs-y := makemapdata genmap
-Index: linux-git/drivers/char/speakup/cvsversion.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/cvsversion.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/cvsversion.h linux-2.6.17/drivers/char/speakup/cvsversion.h
+--- linux-2.6.17-orig/drivers/char/speakup/cvsversion.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/cvsversion.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1 @@
-+#define CVSVERSION " CVS: Wed Dec 21 14:36:03 EST 2005 "
-Index: linux-git/drivers/char/speakup/dtload.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/dtload.c
++#define CVSVERSION " CVS: Mon May 1 09:46:33 EDT 2006 "
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/dtload.c linux-2.6.17/drivers/char/speakup/dtload.c
+--- linux-2.6.17-orig/drivers/char/speakup/dtload.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/dtload.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,554 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -2461,7 +2117,7 @@ Index: linux-git/drivers/char/speakup/dtload.c
 +    dma_state ^= STAT_dma_state;
 +    if( ! dt_wait_dma( ) ) return -3;
 +    addr += l;
-+    while( l-- ){
++    while( l-- ){ 
 +      c = *src++;
 +      outb_p( c, iobase+4 );
 +    }
@@ -2812,10 +2468,9 @@ Index: linux-git/drivers/char/speakup/dtload.c
 +  if ( intest ) do_test( );
 +  exit( 0 );
 +}
-Index: linux-git/drivers/char/speakup/dtload.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/dtload.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/dtload.h linux-2.6.17/drivers/char/speakup/dtload.h
+--- linux-2.6.17-orig/drivers/char/speakup/dtload.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/dtload.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,57 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -2874,10 +2529,9 @@ Index: linux-git/drivers/char/speakup/dtload.h
 +struct dos_reloc {
 +	short int offset, segment;
 +};
-Index: linux-git/drivers/char/speakup/dtpc_reg.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/dtpc_reg.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/dtpc_reg.h linux-2.6.17/drivers/char/speakup/dtpc_reg.h
+--- linux-2.6.17-orig/drivers/char/speakup/dtpc_reg.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/dtpc_reg.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,132 @@
 +/*
 + * This is the DECtalk PC register constants (from DEC's DOS driver)
@@ -2916,7 +2570,7 @@ Index: linux-git/drivers/char/speakup/dtpc_reg.h
 + *  port interface defs ... used by dtpc.c
 + */
 +
-+#define	MODULE_init		0x0dec		/* module in boot code */
++#define	MODULE_init		0x0dec		/* module in boot code */			
 +#define	MODULE_self_test	0x8800		/* module in self-test */
 +#define	MODULE_reset		0xffff		/* reinit the whole module */
 +
@@ -2937,8 +2591,8 @@ Index: linux-git/drivers/char/speakup/dtpc_reg.h
 +#define	STAT_flushing	0x0400		/* flush in progress */
 +#define	STAT_self_test	0x0800		/* module in self test */
 +#define	MODE_ready		0xc000		/* module ready for next phase */
-+#define	READY_boot		0x0000
-+#define	READY_kernel	0x0001
++#define	READY_boot		0x0000				
++#define	READY_kernel	0x0001		
 +#define	MODE_error		0xf000
 +
 +#define	CMD_mask			0xf000		/* mask for command nibble */
@@ -3011,10 +2665,9 @@ Index: linux-git/drivers/char/speakup/dtpc_reg.h
 +#define	DT_DIGITAL_IN		0x08
 +#define	DMA_sync		0x06
 +#define	DMA_sync_char		0x07
-Index: linux-git/drivers/char/speakup/genmap.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/genmap.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/genmap.c linux-2.6.17/drivers/char/speakup/genmap.c
+--- linux-2.6.17-orig/drivers/char/speakup/genmap.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/genmap.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,204 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -3134,7 +2787,7 @@ Index: linux-git/drivers/char/speakup/genmap.c
 +	return i;
 +}
 +
-+int
++int		
 +main( int argc, char *argv[] )
 +{
 +	int value, shift_state, i, spk_val = 0, lock_val = 0;
@@ -3220,10 +2873,223 @@ Index: linux-git/drivers/char/speakup/genmap.c
 +	printf( "\n\t0, %d\n", map_ver );
 +	exit( 0 );
 +}
-Index: linux-git/drivers/char/speakup/keyinfo.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/keyinfo.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/Kconfig linux-2.6.17/drivers/char/speakup/Kconfig
+--- linux-2.6.17-orig/drivers/char/speakup/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/Kconfig	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,210 @@
++menu "Speakup console speech" 
++config SPEAKUP
++	tristate "Build speakup console speech"
++	---help---
++		
++		This is the Speakup screen reader.  Think of it as a
++		video console for blind people.  If built in to the
++		kernel, it can speak evrything on the text console from
++		boot up to shutdown.  For more information on Speakup,
++		point your browser at http://www.linux-speakup.org/. 
++		There is also a mailing list at the above url that you
++		can subscribe to.
++		
++		Supported synthesizers are accent sa, accent pc, appollo
++		II., Auddapter, Braille 'n Speak, Dectalk external
++		(old), Dectalk PC (full length isa board), Dectalk
++		express, Doubletalk, Doubletalk LT or Litetalk,
++		Keynote
++		Gold internal PC, software synthesizers, Speakout, and transport.
++		
++		Speakup can either be built in or compiled as a module
++		by answering y or m.  If you answer y here, then you
++		must answer either y or m to at least one of the
++		synthesizer drivers below.  If you answer m here, then
++		the synthesizer drivers below can only be built as
++		modules.
++		
++		These drivers are not standalone drivers, but must be
++		used in conjunction with Speakup.  Think of them as
++		video cards for blind people.
++		
++		
++		The Dectalk pc driver can only be built as a module, and
++		requires software to be pre-loaded on to the card before
++		the module can be loaded.  See the decpc choice below
++		for more details.
++		
++		If you are not a blind person, or don't have access to
++		one of the listed synthesizers, you should say n.
++
++config SPEAKUP_ACNTSA
++	depends on SPEAKUP
++	tristate "Accent SA, acntsa"
++	---help---
++		
++		This is the Speakup driver for the accent sa
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++
++config SPEAKUP_ACNTPC
++	depends on SPEAKUP
++	tristate "Accent PC, acntpc"
++	---help---
++		
++		This is the Speakup driver for the accent pc
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++
++config SPEAKUP_APOLLO
++	depends on SPEAKUP
++	tristate "Apollo, apollo"
++	---help---
++		
++		This is the Speakup driver for the Apollo II
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++	
++config SPEAKUP_AUDPTR
++	depends on SPEAKUP
++	tristate "Audapter, audptr"
++	---help---
++		
++		This is the Speakup driver for the Audapter synthesizer.
++		 You can say y to build it into the kernel, or m to
++		build it as a module.  See the configuration help on the
++		Speakup choice above for more info.
++
++config SPEAKUP_BNS
++	depends on SPEAKUP
++	tristate "Braille 'n' Speak, bns"
++	---help---
++		
++		This is the Speakup driver for the Braille 'n' Speak
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++	 
++config SPEAKUP_DECTLK
++	depends on SPEAKUP
++	tristate "DECtalk Express, dectlk"
++	---help---
++		
++		This is the Speakup driver for the DecTalk Express
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++
++config SPEAKUP_DECEXT
++	depends on SPEAKUP
++	tristate "DECtalk External (old), decext"
++	---help---
++		
++		This is the Speakup driver for the DecTalk External
++		(old) synthesizer.  You can say y to build it into the
++		kernel, or m to build it as a module.  See the
++		configuration help on the Speakup choice above for more
++		info.
++
++config SPEAKUP_DECPC
++	depends on SPEAKUP
++	tristate "DECtalk PC (big ISA card), decpc"
++	---help---
++		
++		This is the Speakup driver for the DecTalk PC (full
++		length ISA) synthesizer.  You can say  m to build it as
++		a module.  See the configuration help on the Speakup
++		choice above for more info.
++		
++		In order to use the DecTalk PC driver, you must download
++		the dec_pc.tgz file from linux-speakup.org.  It is in
++		the pub/linux/goodies directory.  The dec_pc.tgz file
++		contains the software which must be pre-loaded on to the
++		DecTalk PC board in order to use it with this driver. 
++		This driver must be built as a module, and can not be
++		loaded until the file system is mounted and the DecTalk
++		PC software has been pre-loaded on to the board.
++		
++		See the README file in the dec_pc.tgz file for more
++		details.
++
++config SPEAKUP_DTLK
++	depends on SPEAKUP
++	tristate "DoubleTalk PC, dtlk"
++	---help---
++		
++		This is the Speakup driver for the internal DoubleTalk
++		PC synthesizer.  You can say y to build it into the
++		kernel, or m to build it as a module.  See the
++		configuration help on the Speakup choice above for more
++		info.
++
++config SPEAKUP_KEYPC
++	depends on SPEAKUP
++	tristate "Keynote Gold PC, keypc"
++	---help---
++		
++		This is the Speakup driver for the Keynote Gold
++		PC synthesizer.  You can say y to build it into the
++		kernel, or m to build it as a module.  See the
++		configuration help on the Speakup choice above for more
++		info.
++
++config SPEAKUP_LTLK
++	depends on SPEAKUP
++	tristate "DoubleTalk LT or LiteTalk, ltlk"
++---help---
++
++		This is the Speakup driver for the LiteTalk/DoubleTalk
++		LT synthesizer.  You can say y to build it into the
++		kernel, or m to build it as a module.  See the
++		configuration help on the Speakup choice above for more
++		info.
++
++config SPEAKUP_SFTSYN
++	depends on SPEAKUP
++	tristate "Software synthesizers, sftsyn"
++---help---
++
++		This is the software synthesizer device node.  It will
++		register a device /dev/sftsyn which midware programs
++		and speech
++		daemons may open and read to provide kernel output to
++		software synths
++		such as festival, flite, tuxtalk and so forth.  You
++		can select 'y' or
++		'm' to have it built-in to the kernel or loaded as a module.
++
++config SPEAKUP_SPKOUT
++	depends on SPEAKUP
++	tristate "Speak Out, spkout"
++	---help---
++		
++		This is the Speakup driver for the Speakout synthesizer.
++		 You can say y to build it into the kernel, or m to
++		build it as a module.  See the configuration help on the
++		Speakup choice above for more info.
++
++config SPEAKUP_TXPRT
++	depends on SPEAKUP
++	tristate "Transport, txprt"
++	---help---
++		
++		This is the Speakup driver for the Transport
++		synthesizer.  You can say y to build it into the kernel,
++		or m to build it as a module.  See the configuration
++		help on the Speakup choice above for more info.
++
++if SPEAKUP != n
++	comment 'Enter the 3 to 6 character keyword from the list above, or none for no default synthesizer on boot up.'
++	depends on SPEAKUP
++endif
++
++config SPEAKUP_DEFAULT
++	string "Choose Default synthesizer for Speakup"
++	default "none"
++
++endmenu
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/keyinfo.h linux-2.6.17/drivers/char/speakup/keyinfo.h
+--- linux-2.6.17-orig/drivers/char/speakup/keyinfo.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/keyinfo.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,120 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
@@ -3260,7 +3126,7 @@ Index: linux-git/drivers/char/speakup/keyinfo.h
 +	SPELL_DELAY, PUNC_LEVEL, READING_PUNC,
 +	ATTRIB_BLEEP, BLEEPS,
 + RATE, PITCH, VOL, TONE, PUNCT, VOICE, FREQ, LANG,
-+	CAPS_START, CAPS_STOP,
++	CAPS_START, CAPS_STOP, CHARTAB,
 +	MAXVARS
 +};
 +
@@ -3345,10 +3211,74 @@ Index: linux-git/drivers/char/speakup/keyinfo.h
 +#define PUNCT_INC PUNCT_DEC+1
 +#define VOICE_DEC PUNCT_DEC+2
 +#define VOICE_INC VOICE_DEC+1
-Index: linux-git/drivers/char/speakup/makemapdata.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/makemapdata.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/Makefile linux-2.6.17/drivers/char/speakup/Makefile
+--- linux-2.6.17-orig/drivers/char/speakup/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/Makefile	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,61 @@
++#
++# Makefile for the speakup speech output system.
++#
++
++V := $(shell awk '/UTS_RELEASE/ {print substr($$3,2,3)}' $(TOPDIR)/include/linux/version.h)
++ifeq ($V,2.4)
++# Note! Dependencies are done automagically by 'make dep', which also
++# removes any old dependencies. DON'T put your own dependencies here
++# unless it's something special (ie not a .c file).
++#
++# Note 2! The CFLAGS definitions are now inherited from the
++# parent makes..
++#
++O_TARGET       := spk.o
++export-objs    := speakup_drvcommon.o speakup.o
++endif
++obj-m = speakup_keyhelp.o
++speakupmain-objs := speakup.o speakup_drvcommon.o
++obj-$(CONFIG_SPEAKUP)	+= speakupmain.o
++obj-$(CONFIG_SPEAKUP_ACNTPC)	+= speakup_acntpc.o
++obj-$(CONFIG_SPEAKUP_ACNTSA)	+= speakup_acntsa.o
++obj-$(CONFIG_SPEAKUP_APOLLO)	+= speakup_apollo.o
++obj-$(CONFIG_SPEAKUP_AUDPTR)	+= speakup_audptr.o
++obj-$(CONFIG_SPEAKUP_BNS)	+= speakup_bns.o
++obj-$(CONFIG_SPEAKUP_DECEXT)	+= speakup_decext.o
++obj-$(CONFIG_SPEAKUP_DECPC)	+= speakup_decpc.o
++obj-$(CONFIG_SPEAKUP_DECTLK)	+= speakup_dectlk.o
++obj-$(CONFIG_SPEAKUP_DTLK)	+= speakup_dtlk.o
++obj-$(CONFIG_SPEAKUP_KEYPC)	+= speakup_keypc.o
++obj-$(CONFIG_SPEAKUP_LTLK)	+= speakup_ltlk.o
++obj-$(CONFIG_SPEAKUP_SFTSYN)	+= speakup_sftsyn.o
++obj-$(CONFIG_SPEAKUP_SPKOUT)	+= speakup_spkout.o
++obj-$(CONFIG_SPEAKUP_TXPRT)	+= speakup_txprt.o
++
++ifeq ($V,2.4)
++	include $(TOPDIR)/Rules.make
++
++speakupmap.h: speakupmap.map genmap
++	./genmap speakupmap.map >$@
++
++genmap: genmap.c mapdata.h
++	cc -o genmap genmap.c
++
++mapdata.h: makemapdata.c keyinfo.h
++	cc -o makemapdata makemapdata.c
++	./makemapdata >mapdata.h
++
++endif	
++speakupmain.o:speakup.o speakup_drvcommon.o
++	ld -r -o speakupmain.o speakup.o speakup_drvcommon.o
++
++$(obj)/speakupmap.h: $(src)/speakupmap.map $(src)/genmap
++	$(src)/genmap $(src)/speakupmap.map >$@
++
++$(obj)/mapdata.h: $(src)/keyinfo.h $(src)/makemapdata
++	$(src)/makemapdata >$@
++
++$(obj)/genmap: $(obj)/mapdata.h
++
++HOSTCFLAGS := -Iinclude -I/usr/include
++hostprogs-y := makemapdata genmap
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/makemapdata.c linux-2.6.17/drivers/char/speakup/makemapdata.c
+--- linux-2.6.17-orig/drivers/char/speakup/makemapdata.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/makemapdata.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,156 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -3458,7 +3388,7 @@ Index: linux-git/drivers/char/speakup/makemapdata.c
 +	return this;
 +}
 +
-+int
++int		
 +main( int argc, char *argv[] )
 +{
 +	int value, i;
@@ -3487,7 +3417,7 @@ Index: linux-git/drivers/char/speakup/makemapdata.c
 +			this = find_key( def_val );
 +			if ( !this || *cp < '0' || *cp > '9' ) continue;
 +			value = this->value+atoi( cp );
-+		} else if ( !strncmp( def_val, "0x", 2 ) )
++		} else if ( !strncmp( def_val, "0x", 2 ) ) 
 +			sscanf( def_val+2, "%x", &value );
 +		else if ( *def_val >= '0' && *def_val <= '9' )
 +			value = atoi( def_val );
@@ -3506,16 +3436,15 @@ Index: linux-git/drivers/char/speakup/makemapdata.c
 +	printf( "\t\".\", 0, 0\n};\n" );
 +	exit( 0 );
 +}
-Index: linux-git/drivers/char/speakup/mod_code.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/mod_code.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/mod_code.c linux-2.6.17/drivers/char/speakup/mod_code.c
+--- linux-2.6.17-orig/drivers/char/speakup/mod_code.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/mod_code.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,22 @@
 +/* this code is to modularize a synth specific file, included at the end */
 +
 +static void __exit mod_synth_exit( void )
 +{
-+        if ( synth == &MY_SYNTH )
++        if ( synth == &MY_SYNTH ) 
 +	  synth_release( );
 +	synth_remove( &MY_SYNTH );
 +}
@@ -3533,15 +3462,14 @@ Index: linux-git/drivers/char/speakup/mod_code.c
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Synthesizer driver module for speakup for the  synth->long_name");
 +MODULE_LICENSE( "GPL" );
-Index: linux-git/drivers/char/speakup/serialio.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/serialio.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/serialio.h linux-2.6.17/drivers/char/speakup/serialio.h
+--- linux-2.6.17-orig/drivers/char/speakup/serialio.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/serialio.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,18 @@
 +#ifndef SSPK_SERIAL
 +#define SSPK_SERIAL
 +
-+#include <linux/serial.h>	/* for rs_table, serial constants &
++#include <linux/serial.h>	/* for rs_table, serial constants & 
 +				   serial_uart_config */
 +#include <linux/serial_reg.h>	/* for more serial constants */
 +#include <linux/serialP.h>	/* for struct serial_state */
@@ -3556,11 +3484,969 @@ Index: linux-git/drivers/char/speakup/serialio.h
 +#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
 +
 +#endif
-Index: linux-git/drivers/char/speakup/speakup.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup.c
-@@ -0,0 +1,2721 @@
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_acnt.h linux-2.6.17/drivers/char/speakup/speakup_acnt.h
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_acnt.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_acnt.h	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,16 @@
++/* speakup_acntpc.h - header file for speakups Accent-PC driver. */
++
++#define SYNTH_IO_EXTENT	0x02
++
++#define SYNTH_CLEAR 0x18		/* stops speech */
++
++	/* Port Status Flags */
++#define SYNTH_READABLE     0x01	/* mask for bit which is nonzero if a
++				   byte can be read from the data port */
++#define SYNTH_WRITABLE     0x02	/* mask for RDY bit, which when set to
++             			   1, indicates the data port is ready
++             			   to accept a byte of data. */
++#define SYNTH_QUIET      'S' /* synth is not speaking */
++#define SYNTH_FULL  'F' /* synth is full. */
++#define SYNTH_ALMOST_EMPTY 'M' /* synth has les than 2 seconds of text left */
++#define SYNTH_SPEAKING 's' /* synth is speaking and has a fare way to go */
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_acntpc.c linux-2.6.17/drivers/char/speakup/speakup_acntpc.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_acntpc.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_acntpc.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,161 @@
++/*
++ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
++* this version considerably modified by David Borowski, david575@rogers.com
++
++		Copyright (C) 1998-99  Kirk Reiser.
++		Copyright (C) 2003 David Borowski.
++
++		This program is free software; you can redistribute it and/or modify
++		it under the terms of the GNU General Public License as published by
++		the Free Software Foundation; either version 2 of the License, or
++		(at your option) any later version.
++
++		This program is distributed in the hope that it will be useful,
++		but WITHOUT ANY WARRANTY; without even the implied warranty of
++		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++		GNU General Public License for more details.
++
++		You should have received a copy of the GNU General Public License
++		along with this program; if not, write to the Free Software
++		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++ * this code is specificly written as a driver for the speakup screenreview
++ * package and is not a general device driver.
++		*/
++#include "spk_priv.h"
++#include "speakup_acnt.h" /* local header file for Accent values */
++
++#define MY_SYNTH synth_acntpc
++#define synth_readable( ) ( inb_p( synth_port_control ) & SYNTH_READABLE ) 
++#define synth_writable( ) ( inb_p( synth_port_control ) & SYNTH_WRITABLE ) 
++#define synth_full( ) ( inb_p( synth_port_tts ) == 'F' ) 
++#define PROCSPEECH '\r'
++
++
++static int synth_port_control;
++static unsigned int synth_portlist[] =
++    { 0x2a8, 0 };
++
++static const char *synth_immediate ( const char *buf )
++{
++	u_char ch;
++	while (  (  ch = *buf ) ) {
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++		if ( synth_full( ) )
++			return buf;
++		while ( synth_writable( ) ); 
++		outb_p( ch, synth_port_tts );
++	buf++;
++	}
++	return 0;
++}
++
++static void do_catch_up( unsigned long data )
++{
++	unsigned long jiff_max = jiffies+synth_jiffy_delta;
++	u_char ch;
++	synth_stop_timer( );
++	while (  synth_buff_out < synth_buff_in ) {
++		if ( synth_full( ) ) {
++			synth_delay( synth_full_time );
++			return;
++		}
++		while ( synth_writable( ) ); 
++		ch = *synth_buff_out++;
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++		outb_p( ch, synth_port_tts );
++		if ( jiffies >= jiff_max && ch == SPACE ) {
++			while ( synth_writable( ) );
++			outb_p( PROCSPEECH, synth_port_tts );
++			synth_delay( synth_delay_time ); 
++			return; 
++		}
++	}
++	while ( synth_writable( ) );
++	outb_p( PROCSPEECH, synth_port_tts );
++	synth_done(  );
++}
++
++static void synth_flush( void )
++{
++	outb_p( SYNTH_CLEAR, synth_port_tts );
++}
++
++static int synth_probe( void )
++{
++	unsigned int port_val = 0;
++	int i = 0;
++	pr_info( "Probing for %s.\n", synth->long_name );
++	if ( synth_port_forced ) {
++		synth_port_tts = synth_port_forced;
++		pr_info( "probe forced to %x by kernel command line\n", synth_port_tts );
++		if ( synth_request_region( synth_port_tts-1, SYNTH_IO_EXTENT ) ) {
++			pr_warn( "sorry, port already reserved\n" );
++			return -EBUSY;
++		}
++		port_val = inw( synth_port_tts-1 );
++		synth_port_control = synth_port_tts-1;
++	} else {
++		for( i=0; synth_portlist[i]; i++ ) {
++			if ( synth_request_region( synth_portlist[i], SYNTH_IO_EXTENT ) ) {
++				pr_warn( "request_region:  failed with 0x%x, %d\n",
++					synth_portlist[i], SYNTH_IO_EXTENT );
++				continue;
++			}
++			port_val = inw( synth_portlist[i] );
++			if ( ( port_val &= 0xfffc ) == 0x53fc ) { /* 'S' and out&input bits */
++				synth_port_control = synth_portlist[i];
++				synth_port_tts = synth_port_control+1;
++				break;
++			}
++		}
++	}
++	if ( ( port_val &= 0xfffc ) != 0x53fc ) { /* 'S' and out&input bits */
++		pr_info( "%s:  not found\n", synth->long_name );
++		synth_release_region( synth_portlist[i], SYNTH_IO_EXTENT );
++		synth_port_control = 0;
++		return -ENODEV;
++	}
++	pr_info( "%s:  %03x-%03x, driver version %s,\n", synth->long_name,
++		synth_port_control,	synth_port_control+SYNTH_IO_EXTENT-1, 
++		synth->version );
++	return 0;
++}
++
++static void accent_release(  void )
++{
++	if (  synth_port_tts )
++		synth_release_region( synth_port_tts-1, SYNTH_IO_EXTENT );
++	synth_port_tts = 0;
++}
++
++static int synth_is_alive( void )
++{
++	synth_alive = 1;
++	return 1;
++}
++
++static const char init_string[] = "\033=X \033Oi\033T2\033=M\033N1\n";
++
++static string_var stringvars[] = {
++	{ CAPS_START, "\033P8" },
++	{ CAPS_STOP, "\033P5" },
++	V_LAST_STRING
++};
++static num_var numvars[] = {
++	{ RATE, "\033R%c", 9, 0, 17, 0, 0, "0123456789abcdefgh" },
++	{ PITCH, "\033P%d", 5, 0, 9, 0, 0, 0 },
++	{ VOL, "\033A%d", 5, 0, 9, 0, 0, 0 },
++	{ TONE, "\033V%d", 5, 0, 9, 0, 0, 0 },
++	V_LAST_NUM
++};
++
++struct spk_synth synth_acntpc = {"acntpc", "1.1", "Accent PC",
++	 init_string, 500, 50, 50, 1000, 0, 0, SYNTH_CHECK,
++	stringvars, numvars, synth_probe, accent_release, synth_immediate,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
++	{NULL,0,0,0} };
++
++#ifdef MODULE
++#include "mod_code.c"
++#endif
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_acntsa.c linux-2.6.17/drivers/char/speakup/speakup_acntsa.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_acntsa.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_acntsa.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,185 @@
++/*
++ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
++* this version considerably modified by David Borowski, david575@rogers.com
++
++		Copyright (C) 1998-99  Kirk Reiser.
++		Copyright (C) 2003 David Borowski.
++
++		This program is free software; you can redistribute it and/or modify
++		it under the terms of the GNU General Public License as published by
++		the Free Software Foundation; either version 2 of the License, or
++		(at your option) any later version.
++
++		This program is distributed in the hope that it will be useful,
++		but WITHOUT ANY WARRANTY; without even the implied warranty of
++		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++		GNU General Public License for more details.
++
++		You should have received a copy of the GNU General Public License
++		along with this program; if not, write to the Free Software
++		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++ * this code is specificly written as a driver for the speakup screenreview
++ * package and is not a general device driver.
++		*/
++#include "spk_priv.h"
++#include "serialio.h"
++#include "speakup_acnt.h"	/* local header file for Accent values */
++
++#define MY_SYNTH synth_acntsa
++#define synth_full( ) ( inb_p( synth_port_tts ) == 'F' )
++#define PROCSPEECH '\r'
++
++static int timeouts = 0;	/* sequential number of timeouts */
++
++static int
++wait_for_xmitr ( void )
++{
++	int check, tmout = SPK_XMITR_TIMEOUT;
++	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
++		synth_alive = 0;
++		return 0;
++	}
++	do { /* holding register empty? */
++		check = inb_p ( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) {
++			pr_warn ( "%s:  timed out\n", synth->long_name );
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
++	tmout = SPK_XMITR_TIMEOUT;
++	do { /* CTS */
++		check = inb_p ( synth_port_tts + UART_MSR );
++		if ( --tmout == 0 ) {
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
++	timeouts = 0;
++	return 1;
++}
++
++static inline int
++spk_serial_out ( const char ch )
++{
++	if ( synth_alive && wait_for_xmitr ( ) ) {
++		outb_p ( ch, synth_port_tts );
++		return 1;
++	}
++	return 0;
++}
++
++static void
++do_catch_up ( unsigned long data )
++{
++	unsigned long jiff_max = jiffies+synth_jiffy_delta;
++	u_char ch;
++	synth_stop_timer ( );
++	while ( synth_buff_out < synth_buff_in ) {
++		ch = *synth_buff_out;
++	if ( ch == 0x0a ) ch = 0x0D;
++		if ( !spk_serial_out ( ch ) ) {
++			synth_delay ( synth_full_time );
++			return;
++		}
++		synth_buff_out++;
++		if ( jiffies >= jiff_max && ch == ' ' ) {
++			spk_serial_out ( PROCSPEECH );
++			synth_delay ( synth_delay_time );
++			return;
++		}
++	}
++	spk_serial_out ( PROCSPEECH );
++	synth_done( );
++}
++
++static const char *synth_immediate ( const char *buff )
++{
++	u_char ch;
++	while ( ( ch = *buff ) ) {
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++        if ( wait_for_xmitr( ) )
++          outb( ch, synth_port_tts );
++        else return buff;
++	buff++;
++	}
++	return 0;
++}
++
++static void synth_flush ( void )
++{
++	spk_serial_out ( SYNTH_CLEAR );
++}
++
++static int serprobe ( int index )
++{
++	struct serial_state *ser = spk_serial_init( index );
++	if ( ser == NULL ) return -1;
++	outb ( 0x0d, ser->port );
++	//	mdelay ( 1 );
++	/* ignore any error results, if port was forced */
++	if ( synth_port_forced ) return 0;
++	/* check for accent s.a now... */
++	if ( !synth_immediate( "\x18" ) )
++		return 0;
++	spk_serial_release( );
++	timeouts = synth_alive = 0;	/* not ignoring */
++	return -1;
++}
++
++static int synth_probe ( void )
++{
++	int i = 0, failed=0;
++	pr_info ( "Probing for %s.\n", synth->long_name );
++	for ( i = SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
++	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
++        }
++        if ( failed ) {
++		pr_info ( "%s:  not found\n", synth->long_name );
++		return -ENODEV;
++	}
++	pr_info ( "%s: %03x-%03x, Driver Version %s,\n", synth->long_name,
++		synth_port_tts, synth_port_tts + 7, synth->version );
++	synth_immediate( "\033=R\r" );
++	mdelay( 100 );
++	return 0;
++}
++
++static int
++synth_is_alive ( void )
++{
++	if ( synth_alive ) return 1;
++	if ( !synth_alive && wait_for_xmitr ( ) > 0 ) {	/* restart */
++		synth_alive = 1;
++		synth_write_string ( synth->init );
++		return 2;
++	}
++	pr_warn ( "%s: can't restart synth\n", synth->long_name );
++	return 0;
++}
++
++static const char init_string[] = "\033T2\033=M\033Oi\033N1\n";
++
++static string_var stringvars[] = {
++	{ CAPS_START, "\033P8" },
++	{ CAPS_STOP, "\033P5" },
++	V_LAST_STRING
++};
++static num_var numvars[] = {
++	{ RATE, "\033R%c", 9, 0, 17, 0, 0, "0123456789abcdefgh" },
++	{ PITCH, "\033P%d", 5, 0, 9, 0, 0, 0 },
++	{ VOL, "\033A%d", 9, 0, 9, 0, 0, 0 },
++	{ TONE, "\033V%d", 5, 0, 9, 0, 0, 0 },
++	V_LAST_NUM
++};
++   
++struct spk_synth synth_acntsa = { "acntsa", "1.1", "Accent-SA",
++	init_string, 400, 5, 30, 1000, 0, 0, SYNTH_CHECK,
++	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
++	{NULL,0,0,0} };
++
++#ifdef MODULE
++#include "mod_code.c"
++#endif
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_apollo.c linux-2.6.17/drivers/char/speakup/speakup_apollo.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_apollo.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_apollo.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,196 @@
++/*
++ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
++* this version considerably modified by David Borowski, david575@rogers.com
++
++		Copyright (C) 1998-99  Kirk Reiser.
++		Copyright (C) 2003 David Borowski.
++
++		This program is free software; you can redistribute it and/or modify
++		it under the terms of the GNU General Public License as published by
++		the Free Software Foundation; either version 2 of the License, or
++		(at your option) any later version.
++
++		This program is distributed in the hope that it will be useful,
++		but WITHOUT ANY WARRANTY; without even the implied warranty of
++		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++		GNU General Public License for more details.
++
++		You should have received a copy of the GNU General Public License
++		along with this program; if not, write to the Free Software
++		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++ * this code is specificly written as a driver for the speakup screenreview
++ * package and is not a general device driver.
++		*/
++#include "spk_priv.h"
++#include "serialio.h"
++
++#define MY_SYNTH synth_apollo
++#define SYNTH_CLEAR 0x18
++#define PROCSPEECH '\r'
++
++static int timeouts = 0;	/* sequential number of timeouts */
++
++static int wait_for_xmitr( void )
++{
++	int check, tmout = SPK_XMITR_TIMEOUT;
++	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
++		synth_alive = 0; 
++		timeouts = 0;
++		return 0; 
++	}
++	do {
++		check = inb( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) {
++			pr_warn( "APOLLO:  timed out\n" );
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
++	tmout = SPK_XMITR_TIMEOUT;
++	do {
++		check = inb( synth_port_tts + UART_MSR );
++				if ( --tmout == 0 ) {
++					timeouts++;
++					return 0;
++				}
++	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
++	timeouts = 0;
++	return 1;
++}
++
++static inline int spk_serial_out( const char ch )
++{
++ // int timer = 9000000; 
++	if ( synth_alive && wait_for_xmitr( ) ) {
++		outb( ch, synth_port_tts );
++		/*while ( inb( synth_port_tts+UART_MSR ) & UART_MSR_CTS ) if ( --timer == 0 ) break;*/
++		/*    outb( UART_MCR_DTR, synth_port_tts + UART_MCR );*/
++		return 1;
++	}
++	return 0;
++}
++
++/*
++static unsigned char spk_serial_in( void ) 
++{
++	int c, lsr, tmout = SPK_SERIAL_TIMEOUT;
++	do {
++		lsr = inb( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) return 0xff;
++	} while ( !( lsr & UART_LSR_DR ) );
++	c = inb( synth_port_tts + UART_RX );
++	return ( unsigned char ) c;
++}
++*/
++
++static void do_catch_up( unsigned long data )
++{
++	unsigned long jiff_max = jiffies+synth_jiffy_delta;
++	u_char ch;
++synth_stop_timer( );
++	while ( synth_buff_out < synth_buff_in ) {
++		ch = *synth_buff_out;
++		if ( !spk_serial_out( ch ) ) {
++			outb( UART_MCR_DTR, synth_port_tts + UART_MCR );
++			outb( UART_MCR_DTR | UART_MCR_RTS, synth_port_tts + UART_MCR );
++			synth_delay( synth_full_time );
++			return;
++		}
++		synth_buff_out++;
++		if ( jiffies >= jiff_max && synth_buff_out-synth_buffer > 10 ) {
++		spk_serial_out( PROCSPEECH );
++		synth_delay( synth_delay_time ); 
++		return; 
++		}
++	}
++	spk_serial_out( PROCSPEECH );
++	synth_done( );
++}
++
++static const char *synth_immediate ( const char *buf )
++{
++	u_char ch;
++	while ( ( ch = *buf ) ) {
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++        if ( wait_for_xmitr( ) )
++	  outb( ch, synth_port_tts );
++	else return buf;
++	buf++;
++	}
++	return 0;
++}
++
++static void synth_flush ( void )
++{
++	spk_serial_out ( SYNTH_CLEAR );
++}
++
++static int serprobe( int index )
++{
++	struct serial_state *ser = spk_serial_init( index );
++	if ( ser == NULL ) return -1;
++	outb( 0x0d, ser->port ); /* wake it up if older BIOS */
++	mdelay( 1 );
++	synth_port_tts = ser->port;
++	if ( synth_port_forced ) return 0;
++	/* check for apollo now... */
++	if ( !synth_immediate( "\x18" ) ) return 0;
++	pr_warn( "port %x failed\n", synth_port_tts );
++	spk_serial_release( );
++	timeouts = synth_alive = synth_port_tts = 0;
++	return -1;
++}
++
++static int synth_probe( void )
++{
++int i, failed=0;
++	pr_info( "Probing for %s.\n", synth->long_name );
++	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
++	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
++	}
++	if ( failed ) {
++		pr_info( "%s:  not found\n", synth->long_name );
++		return -ENODEV;
++	}
++	pr_info( "%s:  %03x-%03x, Driver version %s,\n", synth->long_name,
++	 synth_port_tts, synth_port_tts + 7, synth->version );
++	return 0;
++}
++
++static int synth_is_alive( void )
++{
++	if ( synth_alive ) return 1;
++	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
++		synth_alive = 1;
++		synth_write_string( synth->init );
++		return 2;  /* reenabled */
++	} else pr_warn( "%s: can't restart synth\n", synth->long_name );
++	return 0;
++}
++
++static const char init_string[] = "@R3@D0@K1\r";
++
++static string_var stringvars[] = {
++	{ CAPS_START, "cap, " },
++	{ CAPS_STOP, "" },
++	V_LAST_STRING
++};
++static num_var numvars[] = {
++	{ RATE, "@W%d", 6, 1, 9, 0, 0, 0 },
++	{ PITCH, "@F%x", 10, 0, 15, 0, 0, 0 },
++	{ VOL, "@A%x", 10, 0, 15, 0, 0, 0 },
++	{ VOICE, "@V%d", 1, 1, 6, 0, 0, 0 },
++	{ LANG, "@=%d,", 1, 1, 4, 0, 0, 0 },
++	V_LAST_NUM
++};
++	 
++struct spk_synth synth_apollo = {"apollo", "1.2", "Apollo",
++	init_string, 500, 50, 50, 5000, 0, 0, SYNTH_CHECK,
++	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
++	{NULL,0,0,0} };
++
++#ifdef MODULE
++#include "mod_code.c"
++#endif
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_audptr.c linux-2.6.17/drivers/char/speakup/speakup_audptr.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_audptr.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_audptr.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,202 @@
++/*
++ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
++* this version considerably modified by David Borowski, david575@rogers.com
++
++		Copyright (C) 1998-99  Kirk Reiser.
++		Copyright (C) 2003 David Borowski.
++
++		This program is free software; you can redistribute it and/or modify
++		it under the terms of the GNU General Public License as published by
++		the Free Software Foundation; either version 2 of the License, or
++		(at your option) any later version.
++
++		This program is distributed in the hope that it will be useful,
++		but WITHOUT ANY WARRANTY; without even the implied warranty of
++		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++		GNU General Public License for more details.
++
++		You should have received a copy of the GNU General Public License
++		along with this program; if not, write to the Free Software
++		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++ * this code is specificly written as a driver for the speakup screenreview
++ * package and is not a general device driver.
++		*/
++#include "spk_priv.h"
++#include "serialio.h"
++
++#define MY_SYNTH synth_audptr
++#define SYNTH_CLEAR 0x18 /* flush synth buffer */
++#define PROCSPEECH '\r' /* start synth processing speech char */
++
++static int timeouts = 0;	/* sequential number of timeouts */
++
++static int wait_for_xmitr( void )
++{
++	int check, tmout = SPK_XMITR_TIMEOUT;
++	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
++		synth_alive = 0; 
++		timeouts = 0;
++		return 0; 
++	}
++	do { /* holding register empty? */
++		check = inb( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) {
++			pr_warn( "%s:  timed out\n", synth->long_name );
++		  timeouts++;
++		  return 0;
++		}
++	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
++	tmout = SPK_XMITR_TIMEOUT;
++	do { /* CTS */
++		check = inb( synth_port_tts + UART_MSR );
++		if ( --tmout == 0 ) {
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
++	timeouts = 0;
++	return 1;
++}
++
++static inline int spk_serial_out( const char ch )
++{
++	if ( synth_alive && wait_for_xmitr( ) ) {
++		outb( ch, synth_port_tts );
++		return 1;
++	}
++	return 0;
++}
++
++static unsigned char spk_serial_in( void )
++{
++	int c, lsr, tmout = SPK_SERIAL_TIMEOUT;
++	do {
++		lsr = inb( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) return 0xff;
++	} while ( !( lsr & UART_LSR_DR ) );
++	c = inb( synth_port_tts + UART_RX );
++	return ( unsigned char ) c;
++}
++
++static void do_catch_up( unsigned long data )
++{
++	unsigned long jiff_max = jiffies+synth_jiffy_delta;
++	u_char ch;
++synth_stop_timer( );
++	while ( synth_buff_out < synth_buff_in ) {
++		ch = *synth_buff_out;
++		if ( ch == 0x0a ) ch = PROCSPEECH;
++		if ( !spk_serial_out( ch ) ) {
++		  	synth_delay( synth_full_time );
++		  	return;
++		}
++		synth_buff_out++;
++		if ( jiffies >= jiff_max && ch == SPACE ) {
++		  	spk_serial_out( PROCSPEECH );
++			synth_delay( synth_delay_time ); 
++			return; 
++		}
++	}
++	spk_serial_out( PROCSPEECH );
++	synth_done( );
++}
++
++static const char *synth_immediate ( const char *buf )
++{
++	u_char ch;
++	while ( ( ch = *buf ) ) {
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++        if ( wait_for_xmitr( ) )
++          outb( ch, synth_port_tts );
++        else return buf;
++	buf++;
++	}
++	return 0;
++}
++
++static void synth_flush( void )
++{
++	while ( ( inb( synth_port_tts + UART_LSR ) & BOTH_EMPTY ) != BOTH_EMPTY );
++	outb( SYNTH_CLEAR, synth_port_tts );
++		  spk_serial_out( PROCSPEECH );
++		}
++
++static char synth_id[40] = "";
++
++static int serprobe( int index )
++{
++	u_char test = 0;
++	struct serial_state *ser = spk_serial_init( index );
++	if ( ser == NULL ) return -1;
++	/* ignore any error results, if port was forced */
++	if ( synth_port_forced )
++		return 0;
++	synth_immediate( "\x05[Q]" );
++	if ( ( synth_id[test] = spk_serial_in( ) ) == 'A' ) {
++		do { /* read version string from synth */
++		  synth_id[++test] = spk_serial_in( );
++		} while ( synth_id[test] != '\n' && test < 32 );
++		synth_id[++test] = 0x00;
++		if ( test != 32 ) 
++		  return 0;
++	}
++	spk_serial_release( );
++		    timeouts = synth_alive = 0; /* not ignoring */
++		    return -1;
++}
++
++static int synth_probe( void )
++{
++int i=0, failed=0;
++	pr_info( "Probing for %s.\n", synth->long_name );
++	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
++	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
++	}
++	if ( failed ) {
++		pr_info( "%s:  not found\n", synth->long_name );
++		return -ENODEV;
++	}
++	pr_info( "%s:  %03x-%03x, Driver %s,\n", synth->long_name,
++	 synth_port_tts, synth_port_tts + 7, synth->version );
++	if ( synth_id[0] == 'A' )
++	  pr_info( "%s version: %s", synth->long_name, synth_id );
++		return 0;
++}
++
++static int synth_is_alive( void )
++{
++	if ( synth_alive ) return 1;
++	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
++		synth_alive = 1;
++		synth_write_string( synth->init );
++		return 2;
++	}
++	return 0;
++}
++
++static const char init_string[] = "\x05[D1]\x05[Ol]";
++
++static string_var stringvars[] = {
++	{ CAPS_START, "\x05[f99]" },
++	{ CAPS_STOP, "\x05[f80]" },
++	V_LAST_STRING
++};
++static num_var numvars[] = {
++	{ RATE, "\x05[r%d]", 10, 0, 20, -100, 10, 0 },
++	{ PITCH, "\x05[f%d]", 80, 39, 4500, 0, 0, 0 },
++	{ VOL, "\x05[g%d]", 21, 0, 40, 0, 0, 0 },
++	{ TONE, "\x05[s%d]", 9, 0,63, 0, 0, 0 },
++	{ PUNCT, "\x05[A%c]", 0, 0, 3, 0, 0, "nmsa" },
++	V_LAST_NUM
++};
++	 
++struct spk_synth synth_audptr = {"audptr", "1.1", "Audapter",
++	 init_string, 400, 5, 30, 5000, 0, 0, SYNTH_CHECK,
++	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
++	{NULL,0,0,0} };
++
++#ifdef MODULE
++#include "mod_code.c"
++#endif
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_bns.c linux-2.6.17/drivers/char/speakup/speakup_bns.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_bns.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_bns.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,175 @@
++/*
++ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
++* this version considerably modified by David Borowski, david575@rogers.com
++
++		Copyright (C) 1998-99  Kirk Reiser.
++		Copyright (C) 2003 David Borowski.
++
++		This program is free software; you can redistribute it and/or modify
++		it under the terms of the GNU General Public License as published by
++		the Free Software Foundation; either version 2 of the License, or
++		(at your option) any later version.
++
++		This program is distributed in the hope that it will be useful,
++		but WITHOUT ANY WARRANTY; without even the implied warranty of
++		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++		GNU General Public License for more details.
++
++		You should have received a copy of the GNU General Public License
++		along with this program; if not, write to the Free Software
++		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++
++ * this code is specificly written as a driver for the speakup screenreview
++ * package and is not a general device driver.
++		*/
++#include "spk_priv.h"
++#include "serialio.h"
++
++#define MY_SYNTH synth_bns
++#define SYNTH_CLEAR 0x18
++#define PROCSPEECH '\r'
++
++static int wait_for_xmitr( void )
++{
++	static int timeouts = 0;	/* sequential number of timeouts */
++	int check, tmout = SPK_XMITR_TIMEOUT;
++	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
++		synth_alive = 0; 
++		timeouts = 0;
++		return 0; 
++	}
++	do {
++		check = inb( synth_port_tts + UART_LSR );
++		if ( --tmout == 0 ) {
++		 	pr_warn( "BNS:  timed out\n" );
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
++	tmout = SPK_XMITR_TIMEOUT;
++	do {
++		check = inb( synth_port_tts + UART_MSR );
++		if ( --tmout == 0 ) {
++			timeouts++;
++			return 0;
++		}
++	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
++	timeouts = 0;
++	return 1;
++}
++
++static inline int spk_serial_out( const char ch )
++{
++	if ( synth_alive && wait_for_xmitr( ) ) {
++		outb( ch, synth_port_tts );
++		return 1;
++	}
++	return 0;
++}
++
++static void do_catch_up( unsigned long data )
++{
++	unsigned long jiff_max = jiffies+synth_jiffy_delta;
++	u_char ch;
++	synth_stop_timer( );
++	while ( synth_buff_out < synth_buff_in ) {
++		ch = *synth_buff_out;
++		if ( ch == '\n' ) ch = PROCSPEECH;
++		if ( !spk_serial_out( ch ) ) {
++			synth_delay( synth_full_time );
++			return;
++		}
++		synth_buff_out++;
++		if ( jiffies >= jiff_max && ch == ' ' ) { 
++			spk_serial_out( PROCSPEECH );
++			synth_delay( synth_delay_time ); 
++			return; 
++		}
++	}
++	spk_serial_out( PROCSPEECH );
++	synth_done( );
++}
++
++static const char *synth_immediate ( const char *buf )
++{
++	u_char ch;
++	while ( ( ch = *buf ) ) {
++	if ( ch == 0x0a ) ch = PROCSPEECH;
++        if ( wait_for_xmitr( ) )
++          outb( ch, synth_port_tts );
++        else return buf;
++	buf++;
++	}
++	return 0;
++}
++
++static void synth_flush ( void )
++{
++	spk_serial_out ( SYNTH_CLEAR );
++}
++
++static int serprobe( int index )
++{
++	struct serial_state *ser = spk_serial_init( index );
++	if ( ser == NULL ) return -1;
++	outb( '\r', ser->port );
++	if ( synth_port_forced ) return 0;
++	/* check for bns now... */
++	if ( !synth_immediate( "\x18" ) ) return 0;
++	spk_serial_release( );
++	synth_alive = 0;
++				return -1;
++}
++
++static int synth_probe( void )
++{
++int i=0, failed=0;
++	pr_info( "Probing for %s.\n", synth->long_name );
++	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
++	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
++        }
++        if ( failed ) {
++		pr_info( "%s:  not found\n", synth->long_name );
++		return -ENODEV;
++	}
++	pr_info( "%s:  %03x-%03x, Driver version %s,\n", synth->long_name,
++		synth_port_tts, synth_port_tts + 7, synth->version );
++	return 0;
++}
++
++static int synth_is_alive( void )
++{
++	if ( synth_alive ) return 1;
++	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
++		synth_alive = 1;
++		synth_write_string( synth->init );
++		return 2;
++	}
++	pr_warn( "%s: can't restart synth\n", synth->long_name );
++	return 0;
++}
++
++static const char init_string[] = "\x05Z\x05\x43";
++
++static string_var stringvars[] = {
++	{ CAPS_START, "\x05\x31\x32P" },
++	{ CAPS_STOP, "\x05\x38P" },
++	V_LAST_STRING
++};
++static num_var numvars[] = {
++	{ RATE, "\x05%dE", 8, 1, 16, 0, 0, 0 },
++	{ PITCH, "\x05%dP", 8, 0, 16, 0, 0, 0 },
++	{ VOL, "\x05%dV", 8, 0, 16, 0, 0, 0 },
++	{ TONE, "\x05%dT", 8, 0, 16, 0, 0, 0 },
++	V_LAST_NUM
++};
++
++struct spk_synth synth_bns = {"bns", "1.1", "Braille 'N Speak",
++	init_string, 500, 50, 50, 5000, 0, 0, SYNTH_CHECK,
++	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
++	{NULL,0,0,0} };
++
++#ifdef MODULE
++#include "mod_code.c"
++#endif
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup.c linux-2.6.17/drivers/char/speakup/speakup.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,2905 @@
 +/* speakup.c
 +   review functions for the speakup screen review package.
 +   originally written by: Kirk Reiser and Andy Berdan.
@@ -3663,10 +4549,10 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +};
 +
 +// Speakup Cursor Track Variables
-+#define MAXCURSORTRACK 2
-+static int cursor_track = 1;
-+static int prev_cursor_track=1;
-+static int read_all_mode=MAXCURSORTRACK+1;
++static int cursor_track = 1, prev_cursor_track=1;
++/* cursor track modes, must be ordered same as cursor_msgs */
++enum { CT_Off = 0, CT_On, CT_Highlight, CT_Window, CT_Max };
++#define read_all_mode CT_Max
 +
 +struct tty_struct *tty;
 +#define key_handler k_handler
@@ -3699,7 +4585,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	"x ray", "yankee", "zooloo"
 +};
 +
-+// array of 256 char pointers (one for each ASCII character description )
++// array of 256 char pointers (one for each character description )
 +// initialized to default_chars and user selectable via /proc/speakup/characters
 +char *characters[256];
 +
@@ -3766,7 +4652,11 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	"power", "squared", "black square", "white space" /* 252 */
 +};
 +
-+u_short spk_chartab[256] = {
++// array of 256 u_short (one for each character)
++// initialized to default_chartab and user selectable via /proc/speakup/chartab
++u_short spk_chartab[256];
++
++u_short default_chartab[256] = {
 + B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, /* 0-7 */
 + B_CTL, B_CTL, A_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, /* 8-15 */
 + B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, B_CTL, /*16-23 */
@@ -3835,9 +4725,16 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	return 1;
 +}
 +
++int spk_quiet_setup (char *str )
++{
++	if (strchr( "1yt", *str) != NULL) quiet_boot = 1;
++	return 1;
++}
++
 +__setup ("speakup_port=", spk_setup );
 +__setup ("speakup_ser=", spk_ser_setup );
 +__setup ("speakup_synth=", spk_synth_setup );
++__setup ("speakup_quiet=", spk_quiet_setup );
 +
 +char *
 +strlwr (char *s )
@@ -3928,6 +4825,28 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +sel_pos(int n)
 +{
 +	return inverse_translate(spk_sel_cons, screen_glyph(spk_sel_cons, n));
++}
++
++static inline unsigned char
++get_char(struct vc_data *vc, u16 *pos)
++{
++  unsigned char ch = ' ';
++  if (vc && pos) {
++    u16 w = scr_readw (pos );
++    u16 c = w & 0xff;
++  
++    if (w & vc->vc_hi_font_mask)
++      c |= 0x100;
++
++    ch = inverse_translate (vc, c );
++  }
++  return ch;
++}
++
++static inline unsigned char
++get_attributes(u16 *pos)
++{
++  return (u_char ) (scr_readw (pos ) >> 8 );
 +}
 +
 +static void
@@ -4069,7 +4988,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	ye = (u_short )spk_y;
 +	mark_cut_flag = 0;
 +	synth_write_msg ("cut" );
-+
++	
 +	speakup_clear_selection( );
 +	ret = speakup_set_selection ( tty );
 +
@@ -4134,6 +5053,10 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +speak_char( u_char ch )
 +{
 +	char *cp = characters[ ch];
++	if (cp == NULL) {
++		pr_info ("speak_char: cp==NULL!\n");
++		return;
++	}
 +	synth_buffer_add( SPACE );
 +	if (IS_CHAR(ch, B_CAP ) ) {
 +		pitch_shift++;
@@ -4155,7 +5078,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +{
 +	u_short ch;
 +	spk_old_attr = spk_attr;
-+	ch = scr_readw ((u_short * ) spk_pos );
++	ch = get_char (vc, (u_short * ) spk_pos );
 +	spk_attr = ((ch & 0xff00 ) >> 8 );
 +	if (spk_attr != spk_old_attr ) {
 +		if (  attrib_bleep&1 ) bleep (spk_y );
@@ -4169,7 +5092,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +{
 +	u_short ch;
 +	spk_old_attr = spk_attr;
-+	ch = scr_readw ((u_short * ) spk_pos );
++	ch = get_char (vc, (u_short * ) spk_pos );
 +	spk_attr = ((ch & 0xff00 ) >> 8 );
 +		if ( IS_CHAR(ch, B_ALPHA ) ) {
 +		ch &= 0x1f;
@@ -4222,7 +5145,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	char ch;
 +	u_short attr_ch;
 +	spk_old_attr = spk_attr;
-+	ch = (char ) scr_readw ((u_short * ) tmp_pos );
++	ch = (char ) get_char (vc, (u_short * ) tmp_pos );
 +
 +/* decided to take out the sayword if on a space (mis-information */
 +	if ( say_word_ctl && ch == SPACE ) {
@@ -4231,25 +5154,25 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		return 0;
 +	} else if ((tmpx < vc->vc_cols-2 )
 +		   && (ch == SPACE || IS_WDLM(ch ))
-+		   && ((char) scr_readw ((u_short * ) tmp_pos+1 ) > SPACE)) {
++		   && ((char) get_char (vc, (u_short * ) tmp_pos+1 ) > SPACE)) {
 +	  tmp_pos += 2;
 +	  tmpx++;
 +	} else
 +	while (tmpx > 0 ) {
-+	  if (((ch = (char ) scr_readw ((u_short * ) tmp_pos-1 )) == SPACE
++	  if (((ch = (char ) get_char (vc, (u_short * ) tmp_pos-1 )) == SPACE
 +	       || IS_WDLM(ch ))
-+	      && ((char) scr_readw ((u_short * ) tmp_pos ) > SPACE))
++	      && ((char) get_char (vc, (u_short * ) tmp_pos ) > SPACE))
 +	    break;
 +	  tmp_pos -= 2;
 +	  tmpx--;
 +	}
-+	attr_ch = scr_readw ((u_short * ) tmp_pos );
++	attr_ch = get_char (vc, (u_short * ) tmp_pos );
 +	spk_attr = attr_ch >> 8;
 +	buf[cnt++] = attr_ch&0xff;
 +	while (tmpx < vc->vc_cols-1 ) {
 +	  tmp_pos += 2;
 +	  tmpx++;
-+	  ch = (char ) scr_readw ((u_short * ) tmp_pos );
++	  ch = (char ) get_char (vc, (u_short * ) tmp_pos );
 +	  if ((ch == SPACE )
 +	      || (IS_WDLM(buf[cnt-1] ) && ( ch > SPACE )))
 +	    break;
@@ -4298,7 +5221,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +			spk_x = vc->vc_cols-1;
 +		} else spk_x--;
 +			spk_pos -= 2;
-+		ch = (char ) scr_readw ((u_short * ) spk_pos );
++		ch = (char ) get_char (vc, (u_short * ) spk_pos );
 +		if ( ch == SPACE ) state = 0;
 +		else if (IS_WDLM(ch ) ) state = 1;
 +		else state = 2;
@@ -4327,7 +5250,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		return;
 +	}
 +	while ( 1 ) {
-+		ch = (char ) scr_readw ((u_short * ) spk_pos );
++		ch = (char ) get_char (vc, (u_short * ) spk_pos );
 +		if ( ch == SPACE ) state = 0;
 +		else if (IS_WDLM(ch ) ) state = 1;
 +		else state = 2;
@@ -4393,9 +5316,9 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	u_long tmp = spk_pos - (spk_x * 2 );
 +	int i = 0;
 +	spk_old_attr = spk_attr;
-+	spk_attr = (u_char ) (scr_readw ((u_short * ) spk_pos ) >> 8 );
++	spk_attr = get_attributes ((u_short * ) spk_pos );
 +	for (i = 0; i < vc->vc_cols; i++ ) {
-+		buf[i] = (u_char ) scr_readw ((u_short * ) tmp );
++		buf[i] = (u_char ) get_char (vc, (u_short * ) tmp );
 +		tmp += 2;
 +	}
 +	for (--i; i >= 0; i-- )
@@ -4457,9 +5380,9 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	int i = 0;
 +	u_short saved_punc_mask = punc_mask;
 +	spk_old_attr = spk_attr;
-+	spk_attr = (u_char ) (scr_readw ((u_short * ) from ) >> 8 );
++	spk_attr = get_attributes ((u_short * ) from );
 +	while (from < to ) {
-+		buf[i++] = (char ) scr_readw ((u_short * ) from );
++		buf[i++] = (char ) get_char (vc, (u_short * ) from );
 +		from += 2;
 +		if ( i >= vc->vc_size_row ) break;
 +	}
@@ -4502,17 +5425,13 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +{
 +	bn=currbuf;
 +	currsentence=num+1;
-+	if (prev)
-+	{
-+		bn--;
-+		if (bn == -1)
-+			bn=1;
++	if (prev) {
++		if (--bn == -1) bn=1;
 +	}
 +
 +	if (num>numsentences[bn])
 +		return 0;
 +	spkup_write (sentmarks[bn][num], sentbufend[bn]-sentmarks[bn][num]);
-+
 +	return 1;
 +}
 +
@@ -4532,10 +5451,10 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	sentmarks[bn][0]=&sentbuf[bn][0];
 +	i = 0;
 +	spk_old_attr = spk_attr;
-+	spk_attr = (u_char ) (scr_readw ((u_short * ) start ) >> 8 );
++	spk_attr = get_attributes ((u_short * ) start );
 +
 +	while (start < end ) {
-+		sentbuf[bn][i] = (char ) scr_readw ((u_short * ) start );
++		sentbuf[bn][i] = (char ) get_char (vc, (u_short * ) start );
 +		if (i>0)
 +		{
 +			if ((sentbuf[bn][i]==SPACE)&&(sentbuf[bn][i-1]=='.')&&(numsentences[bn]<9))
@@ -4689,7 +5608,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +static void
 +say_char_num (struct vc_data *vc )
 +{
-+	u_short ch = scr_readw ((u_short * ) spk_pos );
++	u_short ch = get_char(vc, (u_short * ) spk_pos);
 +	ch &= 0x0ff;
 +	sprintf (buf, "hex %02x, decimal %d", ch, ch );
 +	synth_write_msg (buf );
@@ -4734,15 +5653,11 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	char rpt_buf[32];
 +	spk_keydown = 0;
 +	while ( count-- ) {
-+		if ( cursor_track == read_all_mode )
-+		{
++		if ( cursor_track == read_all_mode ) {
 +			// Insert Sentence Index
 +			if (( in_buf == sentmarks[bn][currsentence] ) &&
 +			   ( currsentence <= numsentences[bn] ))
-+			{
-+				synth_insert_next_index(currsentence);
-+				currsentence++;
-+			}
++				synth_insert_next_index(currsentence++);
 +		}
 +		ch = (u_char )*in_buf++;
 +		char_type = spk_chartab[ch];
@@ -4817,10 +5732,8 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +{
 +	(*do_shift)( KBD_ARGS );
 +	if ( synth == NULL || up_flag || spk_killed ) return;
-+	if (cursor_track==read_all_mode)
-+	{
-+		switch (value)
-+		{
++	if (cursor_track==read_all_mode) {
++		switch (value) {
 +			case KVAL(K_SHIFT):
 +				cursor_stop_timer( );
 +				spk_shut_up &= 0xfe;
@@ -4840,7 +5753,6 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		spk_shut_up &= 0xfe;
 +		do_flush();
 +	}
-+	//synth_write_immediate("\x19");
 +	if ( say_ctrl && value < NUM_CTL_LABELS )
 +		synth_write_string ( ctl_key_ids[value] );
 +}
@@ -4901,7 +5813,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	{ SPELL_DELAY, 0, 0, 0, 5, 0, 0, 0 },
 +	{ ATTRIB_BLEEP, 0, 1, 0, 3, 0, 0, 0 },
 +	{ BLEEPS, 0, 3, 0, 3, 0, 0, 0 },
-+	{ BLEEP_TIME, 0, 4, 1, 20, 0, 0, 0 },
++	{ BLEEP_TIME, 0, 30, 1, 200, 0, 0, 0 },
 +	{ PUNC_LEVEL, 0, 1, 0, 4, 0, 0, 0 },
 +	{ READING_PUNC, 0, 1, 0, 4, 0, 0, 0 },
 +	{ CURSOR_TIME, 0, 120, 50, 600, 0, 0, 0 },
@@ -4913,18 +5825,15 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +};
 +
 +static char *cursor_msgs[] = { "cursoring off", "cursoring on",
-+	"highlight tracking", "read all" };
-+//#define MAXCURSORTRACK 2 static int cursor_track = 1;static int prev_cursor_track=cursor_track;static int read_all_mode=MAXCURSORTRACK+1;
-+/* increase when we add more cursor modes */
-+/* attribute cursor code coming soon */
++	"highlight tracking", "read windo",
++"read all" };
 +
 +static void
 +toggle_cursoring( struct vc_data *vc )
 +{
 +	if (cursor_track==read_all_mode)
 +		cursor_track=prev_cursor_track;
-+        cursor_track++;
-+	if ( cursor_track > MAXCURSORTRACK )
++	if (++ cursor_track >= CT_Max )
 +		cursor_track = 0;
 +	synth_write_msg (cursor_msgs[cursor_track] );
 +}
@@ -4942,7 +5851,13 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +				kfree (characters[i] );
 +		}
 +	}
-+		memcpy( characters, default_chars, sizeof( default_chars ) );
++	memcpy( characters, default_chars, sizeof( default_chars ) );
++}
++
++static void
++reset_default_chartab (void )
++{
++	memcpy( spk_chartab, default_chartab, sizeof( default_chartab ) );
 +}
 +
 +static void
@@ -4960,6 +5875,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	num_var *n_var;
 +
 +	reset_default_chars();
++	reset_default_chartab();
 +	memset( speakup_console, 0, sizeof(speakup_console));
 +	if ( first_console == NULL ) return;
 +	memset( first_console, 0, spk_size);
@@ -4985,6 +5901,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	do_shift = key_handler[KT_SHIFT];
 +	key_handler[KT_SHIFT] = handle_shift;
 +	set_key_info(key_defaults, key_buf);
++	if (quiet_boot) spk_shut_up |= 0x01;
 +}
 +
 +#ifdef CONFIG_PROC_FS
@@ -5005,6 +5922,18 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +echo 119 w > /proc/speakup/characters
 +echo defaults > /proc/speakup/characters
 +echo reset > /proc/speakup/characters
++
++
++cat /proc/speakup/chartab > foo
++less /proc/speakup/chartab
++vi /proc/speakup/chartab
++
++cat foo > /proc/speakup/chartab
++cat > /proc/speakup/chartab
++echo 233 ALPHA > /proc/speakup/chartab
++echo 46 A_PUNC > /proc/speakup/chartab
++echo defaults > /proc/speakup/chartab
++echo reset > /proc/speakup/chartab
 +*/
 +
 +// keymap handlers
@@ -5168,6 +6097,76 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	printk( buf );
 +}
 +
++// this is the read handler for /proc/speakup/chartab
++static int
++chartab_read_proc (PROC_READ_PROTOTYPE )
++{
++	int i, len = 0;
++	off_t begin = 0;
++	char *cp;
++	for (i = 0; i < 256; i++ ) {	  
++		cp = "0";
++		if (IS_TYPE( i, B_CTL ))
++			cp = "B_CTL";
++		else if (IS_TYPE( i, WDLM ))
++			cp = "WDLM";
++		else if (IS_TYPE( i, A_PUNC ))
++			cp = "A_PUNC";
++		else if (IS_TYPE( i, PUNC ))
++			cp = "PUNC";
++		else if (IS_TYPE( i, NUM ))
++			cp = "NUM";
++		else if (IS_TYPE( i, A_CAP ))
++			cp = "A_CAP";
++		else if (IS_TYPE( i, ALPHA ))
++			cp = "ALPHA";
++		else if (IS_TYPE( i, B_CAPSYM ))
++			cp = "B_CAPSYM";
++		else if (IS_TYPE( i, B_SYM ))
++			cp = "B_SYM";
++
++		len += sprintf (page + len, "%d\t%s\n", i, cp );
++		if (len + begin > off + count )
++			break;
++		if (len + begin < off ) {
++			begin += len;
++			len = 0;
++		}
++	}
++	if (i >= 256 )
++		*eof = 1;
++	if (off >= len + begin )
++		return 0;
++	*start = page + (off - begin );
++	return ((count < begin + len - off ) ? count : begin + len - off );
++}
++
++static int
++chartab_get_value (char* keyword)
++{
++	int value = 0;
++	
++	if (!strcmp(keyword,"ALPHA"))
++		value = ALPHA;
++	else if (!strcmp(keyword,"B_CTL"))
++		value = B_CTL;
++	else if (!strcmp(keyword,"WDLM"))
++		value = WDLM;
++	else if (!strcmp(keyword,"A_PUNC"))
++		value = A_PUNC;
++	else if (!strcmp(keyword,"PUNC"))
++		value = PUNC;
++	else if (!strcmp(keyword,"NUM"))
++		value = NUM;
++	else if (!strcmp(keyword,"A_CAP"))
++		value = A_CAP;
++	else if (!strcmp(keyword,"B_CAPSYM"))
++		value = B_CAPSYM;
++	else if (!strcmp(keyword,"B_SYM"))
++		value = B_SYM;
++	return value;
++}
++
 +/* this is the write handler for /proc/speakup/silent */
 +static int
 +silent_write_proc (PROC_WRITE_PROTOTYPE )
@@ -5222,7 +6221,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	}
 +	if (state < 2 ) return count;
 +	cp = desc;
-+	while ( *cp && *cp <= SPACE ) cp++;
++	while ( *cp && (unsigned char)(*cp) <= SPACE ) cp++;
 +	if ((!cnt ) || strchr ("dDrR", *cp ) ) {
 +		reset_default_chars ( );
 +		pr_info( "character descriptions reset to defaults\n" );
@@ -5233,7 +6232,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	if (*cp == '#' ) goto get_more;
 +	num = -1;
 +	cp = speakup_s2i(cp, &num );
-+	while ( *cp && *cp <= SPACE ) cp++;
++	while ( *cp && (unsigned char)(*cp) <= SPACE ) cp++;
 +	if (num < 0 || num > 255 ) {	// not in range
 +		rejects++;
 +		strings++;
@@ -5257,6 +6256,79 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	if (!p_new ) return -ENOMEM;
 +	strcpy ( p_new, cp );
 +	characters[num] = p_new;
++	updates++;
++	strings++;
++	if (i < count ) goto get_more;
++	chars_stop_timer ( );
++	init_timer (&chars_timer );
++	chars_timer.function = show_char_results;
++	chars_timer.expires = jiffies + 5;
++		start_timer (chars_timer );
++	chars_timer_active++;
++	return count;
++}
++
++// this is the write handler for /proc/speakup/chartab
++static int
++chartab_write_proc (PROC_WRITE_PROTOTYPE )
++{
++#define max_desc_len 72
++	static int cnt = 0, state = 0;
++	static char desc[max_desc_len + 1];
++	static u_long jiff_last = 0;
++	short i = 0, num;
++	char ch, *cp;
++	int value=0;
++	// reset certain vars if enough time has elapsed since last called
++	if (jiffies - jiff_last > 10 ) {
++		cnt = state = strings = rejects = updates = 0;
++	}
++	jiff_last = jiffies;
++get_more:
++	desc[cnt] = '\0';
++	state = 0;
++	for (; i < count && state < 2; i++ ) {
++		get_user (ch, buffer + i );
++		if ( ch == '\n' ) {
++			desc[cnt] = '\0';
++			state = 2;
++		} else if (cnt < max_desc_len )
++			desc[cnt++] = ch;
++	}
++	if (state < 2 ) return count;
++	cp = desc;
++	while ( *cp && (unsigned char)(*cp) <= SPACE ) cp++;
++	if ((!cnt ) || strchr ("dDrR", *cp ) ) {
++		reset_default_chartab ( );
++		pr_info( "character descriptions reset to defaults\n" );
++		cnt = 0;
++		return count;
++	}
++	cnt = 0;
++	if (*cp == '#' ) goto get_more;
++	num = -1;
++	cp = speakup_s2i(cp, &num );
++	while ( *cp && (unsigned char)(*cp) <= SPACE ) cp++;
++	if (num < 0 || num > 255 ) {	// not in range
++		rejects++;
++		strings++;
++		goto get_more;
++	}
++	/*	if (num >= 27 && num <= 31 ) goto get_more; */
++
++	value = chartab_get_value (cp);
++	if (!value) {	// not in range
++		rejects++;
++		strings++;
++		goto get_more;
++	}
++
++	if (value==spk_chartab[num]) {
++		strings++;
++		goto get_more;
++	}
++
++	spk_chartab[num] = value;
 +	updates++;
 +	strings++;
 +	if (i < count ) goto get_more;
@@ -5413,6 +6485,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	 { DELIM, bits_read_proc, bits_write_proc, 4 },
 +	 { REPEATS, bits_read_proc, bits_write_proc, 5 },
 +	 { EXNUMBER, bits_read_proc, bits_write_proc, 6 },
++	 { CHARTAB, chartab_read_proc, chartab_write_proc, 0 },
 +	{ -1, 0, 0, 0 }
 +};
 +
@@ -5452,7 +6525,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	spk_y = spk_cy = vc->vc_y;
 +	spk_pos = spk_cp = vc->vc_pos;
 +	spk_old_attr = spk_attr;
-+	spk_attr = ((scr_readw ((u_short * ) spk_pos ) & 0xff00 ) >> 8 );
++	spk_attr = get_attributes((u_short * ) spk_pos );
 +}
 +
 +static u_char is_cursor = 0;
@@ -5494,20 +6567,17 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +static void
 +read_all_doc( struct vc_data *vc)
 +{
-+	if (!synth_supports_indexing())
-+		return;
 +	if ( synth == NULL || spk_shut_up || (vc->vc_num != fg_console ) )
++		return;
++	if (!synth_supports_indexing())
 +		return;
 +	if (cursor_track!=read_all_mode)
 +		prev_cursor_track=cursor_track;
 +	cursor_track=read_all_mode;
 +	reset_index_count(0);
 +	if (get_sentence_buf(vc,0)==-1)
-+	{
 +		kbd_fakekey2(vc,0,RA_DOWN_ARROW);
-+	}
-+	else
-+	{
++	else {
 +		say_sentence_num(0,0);
 +		synth_insert_next_index(0);
 +		start_read_all_timer(vc,RA_TIMER);
@@ -5636,13 +6706,12 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		cursor_stop_timer();
 +		spk_shut_up &= 0xfe;
 +		do_flush();
-+
 +		start_read_all_timer(vc,value+1);
 +		return;
 +	}
 +	(*do_cursor)( KBD_ARGS );
 +	spk_parked &= 0xfe;
-+	if ( synth == NULL || up_flag || spk_shut_up || cursor_track == 0 )
++	if ( synth == NULL || up_flag || spk_shut_up || cursor_track == CT_Off )
 +	  return;
 +	spk_shut_up &= 0xfe;
 +	if ( no_intr ) do_flush( );
@@ -5656,7 +6725,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	cursor_con = vc->vc_num;
 +	cursor_stop_timer( );
 +	cursor_timer.expires = jiffies + cursor_timeout;
-+	if ( cursor_track == 2)
++	if ( cursor_track == CT_Highlight)
 +		reset_highlight_buffers( vc );
 +	read_all_key=value+1;
 +	start_timer (cursor_timer );
@@ -5668,10 +6737,10 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +{
 +	int i,bi,hi;
 +	int vc_num=vc->vc_num;
-+
++	
 +	bi = ( (vc->vc_attr & 0x70) >> 4 ) ;
 +	hi=speakup_console[vc_num]->ht.highsize[bi];
-+
++	
 +	i=0;
 +	if (speakup_console[vc_num]->ht.highsize[bi]==0)
 +	{
@@ -5711,20 +6780,21 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +static int
 +count_highlight_color(struct vc_data *vc)
 +{
-+	int i,j,bg,ch;
++	int i,bg;
 +	int cc;
 +	int vc_num=vc->vc_num;
-+	unsigned int start,end;
++	u16 ch;
++	u16 *start = (u16 *) vc->vc_origin;
 +
 +	for ( i=0 ; i<8 ; i++ )
-+		speakup_console[vc_num]->ht.bgcount[i]=0;
++		speakup_console[vc_num]->ht.bgcount[i]=0;		
 +
-+	start=vc->vc_origin;
 +	for ( i=0 ; i<vc->vc_rows; i++ ){
-+		end = start + vc->vc_cols*2;
-+		for ( j=start ; j<end ; j+=2){
-+			ch = scr_readw( (ushort *) j );
-+			bg = ( ch & 0x7000 ) >> 12;
++		u16 *end = start + vc->vc_cols*2;
++		u16 *ptr;
++		for ( ptr=start ; ptr<end ; ptr++){
++			ch = get_attributes( ptr );
++			bg = ( ch & 0x70 ) >> 4;
 +			speakup_console[vc_num]->ht.bgcount[bg]++;
 +		}
 +		start += vc->vc_size_row;
@@ -5733,7 +6803,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +	cc=0;
 +	for ( i=0 ; i<8 ; i++ )
 +		if (speakup_console[vc_num]->ht.bgcount[i]>0)
-+			cc++;
++			cc++;		
 +	return cc;
 +}
 +
@@ -5783,9 +6853,9 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		spk_parked |= 0x01;
 +		do_flush();
 +		spkup_write (speakup_console[vc_num]->ht.highbuf[hc] , speakup_console[vc_num]->ht.highsize[hc] );
-+		spk_pos=spk_cp=speakup_console[vc_num]->ht.rpos[hc];
-+		spk_x=spk_cx=speakup_console[vc_num]->ht.rx[hc];
-+		spk_y=spk_cy=speakup_console[vc_num]->ht.ry[hc];
++		spk_pos=spk_cp=speakup_console[vc_num]->ht.rpos[hc];		
++		spk_x=spk_cx=speakup_console[vc_num]->ht.rx[hc];		
++		spk_y=spk_cy=speakup_console[vc_num]->ht.ry[hc];		
 +		return 1;
 +	}
 +	return 0;
@@ -5808,19 +6878,19 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +			return;
 +		}
 +	}
-+	if ( cursor_track == 2){
++	if ( cursor_track == read_all_mode ) {
++		handle_cursor_read_all(vc,read_all_key);
++		return;
++	}
++	if ( cursor_track == CT_Highlight){
 +		if ( speak_highlight( vc )) {
 +			spk_keydown = is_cursor = 0;
 +			return;
 +		}
 +	}
-+	else if ( cursor_track == read_all_mode )
-+	{
-+		handle_cursor_read_all(vc,read_all_key);
-+		return;
-+	}
-+
-+        if ( is_cursor == 1 || is_cursor == 4 )
++	if ( cursor_track == CT_Window){
++		speakup_win_say (vc);
++	} else if ( is_cursor == 1 || is_cursor == 4 )
 +		say_line_from_to (vc, 0, vc->vc_cols, 0 );
 +	else
 +		say_char ( vc );
@@ -5850,7 +6920,7 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +		bleep(3 );
 +	if (synth == NULL) return;
 +	if ((is_cursor)||(cursor_track == read_all_mode )){
-+		if (cursor_track == 2 )
++		if (cursor_track == CT_Highlight )
 +			update_color_buffer( vc, str, len);
 +		return;
 +	}
@@ -6282,975 +7352,64 @@ Index: linux-git/drivers/char/speakup/speakup.c
 +module_exit( mod_speakup_exit );
 +
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_acnt.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_acnt.h
-@@ -0,0 +1,16 @@
-+/* speakup_acntpc.h - header file for speakups Accent-PC driver. */
-+
-+#define SYNTH_IO_EXTENT	0x02
-+
-+#define SYNTH_CLEAR 0x18		/* stops speech */
-+
-+	/* Port Status Flags */
-+#define SYNTH_READABLE     0x01	/* mask for bit which is nonzero if a
-+				   byte can be read from the data port */
-+#define SYNTH_WRITABLE     0x02	/* mask for RDY bit, which when set to
-+             			   1, indicates the data port is ready
-+             			   to accept a byte of data. */
-+#define SYNTH_QUIET      'S' /* synth is not speaking */
-+#define SYNTH_FULL  'F' /* synth is full. */
-+#define SYNTH_ALMOST_EMPTY 'M' /* synth has les than 2 seconds of text left */
-+#define SYNTH_SPEAKING 's' /* synth is speaking and has a fare way to go */
-Index: linux-git/drivers/char/speakup/speakup_acntpc.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_acntpc.c
-@@ -0,0 +1,161 @@
-+/*
-+ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
-+* this version considerably modified by David Borowski, david575@rogers.com
-+
-+		Copyright (C) 1998-99  Kirk Reiser.
-+		Copyright (C) 2003 David Borowski.
-+
-+		This program is free software; you can redistribute it and/or modify
-+		it under the terms of the GNU General Public License as published by
-+		the Free Software Foundation; either version 2 of the License, or
-+		(at your option) any later version.
-+
-+		This program is distributed in the hope that it will be useful,
-+		but WITHOUT ANY WARRANTY; without even the implied warranty of
-+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+		GNU General Public License for more details.
-+
-+		You should have received a copy of the GNU General Public License
-+		along with this program; if not, write to the Free Software
-+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+
-+ * this code is specificly written as a driver for the speakup screenreview
-+ * package and is not a general device driver.
-+		*/
-+#include "spk_priv.h"
-+#include "speakup_acnt.h" /* local header file for Accent values */
-+
-+#define MY_SYNTH synth_acntpc
-+#define synth_readable( ) ( inb_p( synth_port_control ) & SYNTH_READABLE )
-+#define synth_writable( ) ( inb_p( synth_port_control ) & SYNTH_WRITABLE )
-+#define synth_full( ) ( inb_p( synth_port_tts ) == 'F' )
-+#define PROCSPEECH '\r'
-+
-+
-+static int synth_port_control;
-+static unsigned int synth_portlist[] =
-+    { 0x2a8, 0 };
-+
-+static const char *synth_immediate ( const char *buf )
-+{
-+	u_char ch;
-+	while (  (  ch = *buf ) ) {
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+		if ( synth_full( ) )
-+			return buf;
-+		while ( synth_writable( ) );
-+		outb_p( ch, synth_port_tts );
-+	buf++;
-+	}
-+	return 0;
-+}
-+
-+static void do_catch_up( unsigned long data )
-+{
-+	unsigned long jiff_max = jiffies+synth_jiffy_delta;
-+	u_char ch;
-+	synth_stop_timer( );
-+	while (  synth_buff_out < synth_buff_in ) {
-+		if ( synth_full( ) ) {
-+			synth_delay( synth_full_time );
-+			return;
-+		}
-+		while ( synth_writable( ) );
-+		ch = *synth_buff_out++;
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+		outb_p( ch, synth_port_tts );
-+		if ( jiffies >= jiff_max && ch == SPACE ) {
-+			while ( synth_writable( ) );
-+			outb_p( PROCSPEECH, synth_port_tts );
-+			synth_delay( synth_delay_time );
-+			return;
-+		}
-+	}
-+	while ( synth_writable( ) );
-+	outb_p( PROCSPEECH, synth_port_tts );
-+	synth_done(  );
-+}
-+
-+static void synth_flush( void )
-+{
-+	outb_p( SYNTH_CLEAR, synth_port_tts );
-+}
-+
-+static int synth_probe( void )
-+{
-+	unsigned int port_val = 0;
-+	int i = 0;
-+	pr_info( "Probing for %s.\n", synth->long_name );
-+	if ( synth_port_forced ) {
-+		synth_port_tts = synth_port_forced;
-+		pr_info( "probe forced to %x by kernel command line\n", synth_port_tts );
-+		if ( synth_request_region( synth_port_tts-1, SYNTH_IO_EXTENT ) ) {
-+			pr_warn( "sorry, port already reserved\n" );
-+			return -EBUSY;
-+		}
-+		port_val = inw( synth_port_tts-1 );
-+		synth_port_control = synth_port_tts-1;
-+	} else {
-+		for( i=0; synth_portlist[i]; i++ ) {
-+			if ( synth_request_region( synth_portlist[i], SYNTH_IO_EXTENT ) ) {
-+				pr_warn( "request_region:  failed with 0x%x, %d\n",
-+					synth_portlist[i], SYNTH_IO_EXTENT );
-+				continue;
-+			}
-+			port_val = inw( synth_portlist[i] );
-+			if ( ( port_val &= 0xfffc ) == 0x53fc ) { /* 'S' and out&input bits */
-+				synth_port_control = synth_portlist[i];
-+				synth_port_tts = synth_port_control+1;
-+				break;
-+			}
-+		}
-+	}
-+	if ( ( port_val &= 0xfffc ) != 0x53fc ) { /* 'S' and out&input bits */
-+		pr_info( "%s:  not found\n", synth->long_name );
-+		synth_release_region( synth_portlist[i], SYNTH_IO_EXTENT );
-+		synth_port_control = 0;
-+		return -ENODEV;
-+	}
-+	pr_info( "%s:  %03x-%03x, driver version %s,\n", synth->long_name,
-+		synth_port_control,	synth_port_control+SYNTH_IO_EXTENT-1,
-+		synth->version );
-+	return 0;
-+}
-+
-+static void accent_release(  void )
-+{
-+	if (  synth_port_tts )
-+		synth_release_region( synth_port_tts-1, SYNTH_IO_EXTENT );
-+	synth_port_tts = 0;
-+}
-+
-+static int synth_is_alive( void )
-+{
-+	synth_alive = 1;
-+	return 1;
-+}
-+
-+static const char init_string[] = "\033=X \033Oi\033T2\033=M\033N1\n";
-+
-+static string_var stringvars[] = {
-+	{ CAPS_START, "\033P8" },
-+	{ CAPS_STOP, "\033P5" },
-+	V_LAST_STRING
-+};
-+static num_var numvars[] = {
-+	{ RATE, "\033R%c", 9, 0, 17, 0, 0, "0123456789abcdefgh" },
-+	{ PITCH, "\033P%d", 5, 0, 9, 0, 0, 0 },
-+	{ VOL, "\033A%d", 5, 0, 9, 0, 0, 0 },
-+	{ TONE, "\033V%d", 5, 0, 9, 0, 0, 0 },
-+	V_LAST_NUM
-+};
-+
-+struct spk_synth synth_acntpc = {"acntpc", "1.1", "Accent PC",
-+	 init_string, 500, 50, 50, 1000, 0, 0, SYNTH_CHECK,
-+	stringvars, numvars, synth_probe, accent_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
-+	{NULL,0,0,0} };
-+
-+#ifdef MODULE
-+#include "mod_code.c"
-+#endif
-Index: linux-git/drivers/char/speakup/speakup_acntsa.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_acntsa.c
-@@ -0,0 +1,185 @@
-+/*
-+ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
-+* this version considerably modified by David Borowski, david575@rogers.com
-+
-+		Copyright (C) 1998-99  Kirk Reiser.
-+		Copyright (C) 2003 David Borowski.
-+
-+		This program is free software; you can redistribute it and/or modify
-+		it under the terms of the GNU General Public License as published by
-+		the Free Software Foundation; either version 2 of the License, or
-+		(at your option) any later version.
-+
-+		This program is distributed in the hope that it will be useful,
-+		but WITHOUT ANY WARRANTY; without even the implied warranty of
-+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+		GNU General Public License for more details.
-+
-+		You should have received a copy of the GNU General Public License
-+		along with this program; if not, write to the Free Software
-+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+
-+ * this code is specificly written as a driver for the speakup screenreview
-+ * package and is not a general device driver.
-+		*/
-+#include "spk_priv.h"
-+#include "serialio.h"
-+#include "speakup_acnt.h"	/* local header file for Accent values */
-+
-+#define MY_SYNTH synth_acntsa
-+#define synth_full( ) ( inb_p( synth_port_tts ) == 'F' )
-+#define PROCSPEECH '\r'
-+
-+static int timeouts = 0;	/* sequential number of timeouts */
-+
-+static int
-+wait_for_xmitr ( void )
-+{
-+	int check, tmout = SPK_XMITR_TIMEOUT;
-+	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
-+		return 0;
-+	}
-+	do { /* holding register empty? */
-+		check = inb_p ( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) {
-+			pr_warn ( "%s:  timed out\n", synth->long_name );
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
-+	tmout = SPK_XMITR_TIMEOUT;
-+	do { /* CTS */
-+		check = inb_p ( synth_port_tts + UART_MSR );
-+		if ( --tmout == 0 ) {
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
-+	timeouts = 0;
-+	return 1;
-+}
-+
-+static inline int
-+spk_serial_out ( const char ch )
-+{
-+	if ( synth_alive && wait_for_xmitr ( ) ) {
-+		outb_p ( ch, synth_port_tts );
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+static void
-+do_catch_up ( unsigned long data )
-+{
-+	unsigned long jiff_max = jiffies+synth_jiffy_delta;
-+	u_char ch;
-+	synth_stop_timer ( );
-+	while ( synth_buff_out < synth_buff_in ) {
-+		ch = *synth_buff_out;
-+	if ( ch == 0x0a ) ch = 0x0D;
-+		if ( !spk_serial_out ( ch ) ) {
-+			synth_delay ( synth_full_time );
-+			return;
-+		}
-+		synth_buff_out++;
-+		if ( jiffies >= jiff_max && ch == ' ' ) {
-+			spk_serial_out ( PROCSPEECH );
-+			synth_delay ( synth_delay_time );
-+			return;
-+		}
-+	}
-+	spk_serial_out ( PROCSPEECH );
-+	synth_done( );
-+}
-+
-+static const char *synth_immediate ( const char *buff )
-+{
-+	u_char ch;
-+	while ( ( ch = *buff ) ) {
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+        if ( wait_for_xmitr( ) )
-+          outb( ch, synth_port_tts );
-+        else return buff;
-+	buff++;
-+	}
-+	return 0;
-+}
-+
-+static void synth_flush ( void )
-+{
-+	spk_serial_out ( SYNTH_CLEAR );
-+}
-+
-+static int serprobe ( int index )
-+{
-+	struct serial_state *ser = spk_serial_init( index );
-+	if ( ser == NULL ) return -1;
-+	outb ( 0x0d, ser->port );
-+	//	mdelay ( 1 );
-+	/* ignore any error results, if port was forced */
-+	if ( synth_port_forced ) return 0;
-+	/* check for accent s.a now... */
-+	if ( !synth_immediate( "\x18" ) )
-+		return 0;
-+	spk_serial_release( );
-+	timeouts = synth_alive = 0;	/* not ignoring */
-+	return -1;
-+}
-+
-+static int synth_probe ( void )
-+{
-+	int i = 0, failed=0;
-+	pr_info ( "Probing for %s.\n", synth->long_name );
-+	for ( i = SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
-+	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
-+        }
-+        if ( failed ) {
-+		pr_info ( "%s:  not found\n", synth->long_name );
-+		return -ENODEV;
-+	}
-+	pr_info ( "%s: %03x-%03x, Driver Version %s,\n", synth->long_name,
-+		synth_port_tts, synth_port_tts + 7, synth->version );
-+	synth_immediate( "\033=R\r" );
-+	mdelay( 100 );
-+	return 0;
-+}
-+
-+static int
-+synth_is_alive ( void )
-+{
-+	if ( synth_alive ) return 1;
-+	if ( !synth_alive && wait_for_xmitr ( ) > 0 ) {	/* restart */
-+		synth_alive = 1;
-+		synth_write_string ( synth->init );
-+		return 2;
-+	}
-+	pr_warn ( "%s: can't restart synth\n", synth->long_name );
-+	return 0;
-+}
-+
-+static const char init_string[] = "\033T2\033=M\033Oi\033N1\n";
-+
-+static string_var stringvars[] = {
-+	{ CAPS_START, "\033P8" },
-+	{ CAPS_STOP, "\033P5" },
-+	V_LAST_STRING
-+};
-+static num_var numvars[] = {
-+	{ RATE, "\033R%c", 9, 0, 17, 0, 0, "0123456789abcdefgh" },
-+	{ PITCH, "\033P%d", 5, 0, 9, 0, 0, 0 },
-+	{ VOL, "\033A%d", 9, 0, 9, 0, 0, 0 },
-+	{ TONE, "\033V%d", 5, 0, 9, 0, 0, 0 },
-+	V_LAST_NUM
-+};
-+
-+struct spk_synth synth_acntsa = { "acntsa", "1.1", "Accent-SA",
-+	init_string, 400, 5, 30, 1000, 0, 0, SYNTH_CHECK,
-+	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
-+	{NULL,0,0,0} };
-+
-+#ifdef MODULE
-+#include "mod_code.c"
-+#endif
-Index: linux-git/drivers/char/speakup/speakup_apollo.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_apollo.c
-@@ -0,0 +1,196 @@
-+/*
-+ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
-+* this version considerably modified by David Borowski, david575@rogers.com
-+
-+		Copyright (C) 1998-99  Kirk Reiser.
-+		Copyright (C) 2003 David Borowski.
-+
-+		This program is free software; you can redistribute it and/or modify
-+		it under the terms of the GNU General Public License as published by
-+		the Free Software Foundation; either version 2 of the License, or
-+		(at your option) any later version.
-+
-+		This program is distributed in the hope that it will be useful,
-+		but WITHOUT ANY WARRANTY; without even the implied warranty of
-+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+		GNU General Public License for more details.
-+
-+		You should have received a copy of the GNU General Public License
-+		along with this program; if not, write to the Free Software
-+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+
-+ * this code is specificly written as a driver for the speakup screenreview
-+ * package and is not a general device driver.
-+		*/
-+#include "spk_priv.h"
-+#include "serialio.h"
-+
-+#define MY_SYNTH synth_apollo
-+#define SYNTH_CLEAR 0x18
-+#define PROCSPEECH '\r'
-+
-+static int timeouts = 0;	/* sequential number of timeouts */
-+
-+static int wait_for_xmitr( void )
-+{
-+	int check, tmout = SPK_XMITR_TIMEOUT;
-+	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
-+		timeouts = 0;
-+		return 0;
-+	}
-+	do {
-+		check = inb( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) {
-+			pr_warn( "APOLLO:  timed out\n" );
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
-+	tmout = SPK_XMITR_TIMEOUT;
-+	do {
-+		check = inb( synth_port_tts + UART_MSR );
-+				if ( --tmout == 0 ) {
-+					timeouts++;
-+					return 0;
-+				}
-+	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
-+	timeouts = 0;
-+	return 1;
-+}
-+
-+static inline int spk_serial_out( const char ch )
-+{
-+ // int timer = 9000000;
-+	if ( synth_alive && wait_for_xmitr( ) ) {
-+		outb( ch, synth_port_tts );
-+		/*while ( inb( synth_port_tts+UART_MSR ) & UART_MSR_CTS ) if ( --timer == 0 ) break;*/
-+		/*    outb( UART_MCR_DTR, synth_port_tts + UART_MCR );*/
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+/*
-+static unsigned char spk_serial_in( void )
-+{
-+	int c, lsr, tmout = SPK_SERIAL_TIMEOUT;
-+	do {
-+		lsr = inb( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) return 0xff;
-+	} while ( !( lsr & UART_LSR_DR ) );
-+	c = inb( synth_port_tts + UART_RX );
-+	return ( unsigned char ) c;
-+}
-+*/
-+
-+static void do_catch_up( unsigned long data )
-+{
-+	unsigned long jiff_max = jiffies+synth_jiffy_delta;
-+	u_char ch;
-+synth_stop_timer( );
-+	while ( synth_buff_out < synth_buff_in ) {
-+		ch = *synth_buff_out;
-+		if ( !spk_serial_out( ch ) ) {
-+			outb( UART_MCR_DTR, synth_port_tts + UART_MCR );
-+			outb( UART_MCR_DTR | UART_MCR_RTS, synth_port_tts + UART_MCR );
-+			synth_delay( synth_full_time );
-+			return;
-+		}
-+		synth_buff_out++;
-+		if ( jiffies >= jiff_max && synth_buff_out-synth_buffer > 10 ) {
-+		spk_serial_out( PROCSPEECH );
-+		synth_delay( synth_delay_time );
-+		return;
-+		}
-+	}
-+	spk_serial_out( PROCSPEECH );
-+	synth_done( );
-+}
-+
-+static const char *synth_immediate ( const char *buf )
-+{
-+	u_char ch;
-+	while ( ( ch = *buf ) ) {
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+        if ( wait_for_xmitr( ) )
-+	  outb( ch, synth_port_tts );
-+	else return buf;
-+	buf++;
-+	}
-+	return 0;
-+}
-+
-+static void synth_flush ( void )
-+{
-+	spk_serial_out ( SYNTH_CLEAR );
-+}
-+
-+static int serprobe( int index )
-+{
-+	struct serial_state *ser = spk_serial_init( index );
-+	if ( ser == NULL ) return -1;
-+	outb( 0x0d, ser->port ); /* wake it up if older BIOS */
-+	mdelay( 1 );
-+	synth_port_tts = ser->port;
-+	if ( synth_port_forced ) return 0;
-+	/* check for apollo now... */
-+	if ( !synth_immediate( "\x18" ) ) return 0;
-+	pr_warn( "port %x failed\n", synth_port_tts );
-+	spk_serial_release( );
-+	timeouts = synth_alive = synth_port_tts = 0;
-+	return -1;
-+}
-+
-+static int synth_probe( void )
-+{
-+int i, failed=0;
-+	pr_info( "Probing for %s.\n", synth->long_name );
-+	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
-+	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
-+	}
-+	if ( failed ) {
-+		pr_info( "%s:  not found\n", synth->long_name );
-+		return -ENODEV;
-+	}
-+	pr_info( "%s:  %03x-%03x, Driver version %s,\n", synth->long_name,
-+	 synth_port_tts, synth_port_tts + 7, synth->version );
-+	return 0;
-+}
-+
-+static int synth_is_alive( void )
-+{
-+	if ( synth_alive ) return 1;
-+	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
-+		synth_alive = 1;
-+		synth_write_string( synth->init );
-+		return 2;  /* reenabled */
-+	} else pr_warn( "%s: can't restart synth\n", synth->long_name );
-+	return 0;
-+}
-+
-+static const char init_string[] = "@R3@D0@K1\r";
-+
-+static string_var stringvars[] = {
-+	{ CAPS_START, "cap, " },
-+	{ CAPS_STOP, "" },
-+	V_LAST_STRING
-+};
-+static num_var numvars[] = {
-+	{ RATE, "@W%d", 6, 1, 9, 0, 0, 0 },
-+	{ PITCH, "@F%x", 10, 0, 15, 0, 0, 0 },
-+	{ VOL, "@A%x", 10, 0, 15, 0, 0, 0 },
-+	{ VOICE, "@V%d", 1, 1, 6, 0, 0, 0 },
-+	{ LANG, "@=%d,", 1, 1, 4, 0, 0, 0 },
-+	V_LAST_NUM
-+};
-+
-+struct spk_synth synth_apollo = {"apollo", "1.2", "Apollo",
-+	init_string, 500, 50, 50, 5000, 0, 0, SYNTH_CHECK,
-+	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
-+	{NULL,0,0,0} };
-+
-+#ifdef MODULE
-+#include "mod_code.c"
-+#endif
-Index: linux-git/drivers/char/speakup/speakup_audptr.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_audptr.c
-@@ -0,0 +1,202 @@
-+/*
-+ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
-+* this version considerably modified by David Borowski, david575@rogers.com
-+
-+		Copyright (C) 1998-99  Kirk Reiser.
-+		Copyright (C) 2003 David Borowski.
-+
-+		This program is free software; you can redistribute it and/or modify
-+		it under the terms of the GNU General Public License as published by
-+		the Free Software Foundation; either version 2 of the License, or
-+		(at your option) any later version.
-+
-+		This program is distributed in the hope that it will be useful,
-+		but WITHOUT ANY WARRANTY; without even the implied warranty of
-+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+		GNU General Public License for more details.
-+
-+		You should have received a copy of the GNU General Public License
-+		along with this program; if not, write to the Free Software
-+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+
-+ * this code is specificly written as a driver for the speakup screenreview
-+ * package and is not a general device driver.
-+		*/
-+#include "spk_priv.h"
-+#include "serialio.h"
-+
-+#define MY_SYNTH synth_audptr
-+#define SYNTH_CLEAR 0x18 /* flush synth buffer */
-+#define PROCSPEECH '\r' /* start synth processing speech char */
-+
-+static int timeouts = 0;	/* sequential number of timeouts */
-+
-+static int wait_for_xmitr( void )
-+{
-+	int check, tmout = SPK_XMITR_TIMEOUT;
-+	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
-+		timeouts = 0;
-+		return 0;
-+	}
-+	do { /* holding register empty? */
-+		check = inb( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) {
-+			pr_warn( "%s:  timed out\n", synth->long_name );
-+		  timeouts++;
-+		  return 0;
-+		}
-+	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
-+	tmout = SPK_XMITR_TIMEOUT;
-+	do { /* CTS */
-+		check = inb( synth_port_tts + UART_MSR );
-+		if ( --tmout == 0 ) {
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
-+	timeouts = 0;
-+	return 1;
-+}
-+
-+static inline int spk_serial_out( const char ch )
-+{
-+	if ( synth_alive && wait_for_xmitr( ) ) {
-+		outb( ch, synth_port_tts );
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+static unsigned char spk_serial_in( void )
-+{
-+	int c, lsr, tmout = SPK_SERIAL_TIMEOUT;
-+	do {
-+		lsr = inb( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) return 0xff;
-+	} while ( !( lsr & UART_LSR_DR ) );
-+	c = inb( synth_port_tts + UART_RX );
-+	return ( unsigned char ) c;
-+}
-+
-+static void do_catch_up( unsigned long data )
-+{
-+	unsigned long jiff_max = jiffies+synth_jiffy_delta;
-+	u_char ch;
-+synth_stop_timer( );
-+	while ( synth_buff_out < synth_buff_in ) {
-+		ch = *synth_buff_out;
-+		if ( ch == 0x0a ) ch = PROCSPEECH;
-+		if ( !spk_serial_out( ch ) ) {
-+		  	synth_delay( synth_full_time );
-+		  	return;
-+		}
-+		synth_buff_out++;
-+		if ( jiffies >= jiff_max && ch == SPACE ) {
-+		  	spk_serial_out( PROCSPEECH );
-+			synth_delay( synth_delay_time );
-+			return;
-+		}
-+	}
-+	spk_serial_out( PROCSPEECH );
-+	synth_done( );
-+}
-+
-+static const char *synth_immediate ( const char *buf )
-+{
-+	u_char ch;
-+	while ( ( ch = *buf ) ) {
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+        if ( wait_for_xmitr( ) )
-+          outb( ch, synth_port_tts );
-+        else return buf;
-+	buf++;
-+	}
-+	return 0;
-+}
-+
-+static void synth_flush( void )
-+{
-+	while ( ( inb( synth_port_tts + UART_LSR ) & BOTH_EMPTY ) != BOTH_EMPTY );
-+	outb( SYNTH_CLEAR, synth_port_tts );
-+		  spk_serial_out( PROCSPEECH );
-+		}
-+
-+static char synth_id[40] = "";
-+
-+static int serprobe( int index )
-+{
-+	u_char test = 0;
-+	struct serial_state *ser = spk_serial_init( index );
-+	if ( ser == NULL ) return -1;
-+	/* ignore any error results, if port was forced */
-+	if ( synth_port_forced )
-+		return 0;
-+	synth_immediate( "\x05[Q]" );
-+	if ( ( synth_id[test] = spk_serial_in( ) ) == 'A' ) {
-+		do { /* read version string from synth */
-+		  synth_id[++test] = spk_serial_in( );
-+		} while ( synth_id[test] != '\n' && test < 32 );
-+		synth_id[++test] = 0x00;
-+		if ( test != 32 )
-+		  return 0;
-+	}
-+	spk_serial_release( );
-+		    timeouts = synth_alive = 0; /* not ignoring */
-+		    return -1;
-+}
-+
-+static int synth_probe( void )
-+{
-+int i=0, failed=0;
-+	pr_info( "Probing for %s.\n", synth->long_name );
-+	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
-+	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
-+	}
-+	if ( failed ) {
-+		pr_info( "%s:  not found\n", synth->long_name );
-+		return -ENODEV;
-+	}
-+	pr_info( "%s:  %03x-%03x, Driver %s,\n", synth->long_name,
-+	 synth_port_tts, synth_port_tts + 7, synth->version );
-+	if ( synth_id[0] == 'A' )
-+	  pr_info( "%s version: %s", synth->long_name, synth_id );
-+		return 0;
-+}
-+
-+static int synth_is_alive( void )
-+{
-+	if ( synth_alive ) return 1;
-+	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
-+		synth_alive = 1;
-+		synth_write_string( synth->init );
-+		return 2;
-+	}
-+	return 0;
-+}
-+
-+static const char init_string[] = "\x05[D1]\x05[Ol]";
-+
-+static string_var stringvars[] = {
-+	{ CAPS_START, "\x05[f99]" },
-+	{ CAPS_STOP, "\x05[f80]" },
-+	V_LAST_STRING
-+};
-+static num_var numvars[] = {
-+	{ RATE, "\x05[r%d]", 10, 0, 20, -100, 10, 0 },
-+	{ PITCH, "\x05[f%d]", 80, 39, 4500, 0, 0, 0 },
-+	{ VOL, "\x05[g%d]", 21, 0, 40, 0, 0, 0 },
-+	{ TONE, "\x05[s%d]", 9, 0,63, 0, 0, 0 },
-+	{ PUNCT, "\x05[A%c]", 0, 0, 3, 0, 0, "nmsa" },
-+	V_LAST_NUM
-+};
-+
-+struct spk_synth synth_audptr = {"audptr", "1.1", "Audapter",
-+	 init_string, 400, 5, 30, 5000, 0, 0, SYNTH_CHECK,
-+	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
-+	{NULL,0,0,0} };
-+
-+#ifdef MODULE
-+#include "mod_code.c"
-+#endif
-Index: linux-git/drivers/char/speakup/speakup_bns.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_bns.c
-@@ -0,0 +1,175 @@
-+/*
-+ * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
-+* this version considerably modified by David Borowski, david575@rogers.com
-+
-+		Copyright (C) 1998-99  Kirk Reiser.
-+		Copyright (C) 2003 David Borowski.
-+
-+		This program is free software; you can redistribute it and/or modify
-+		it under the terms of the GNU General Public License as published by
-+		the Free Software Foundation; either version 2 of the License, or
-+		(at your option) any later version.
-+
-+		This program is distributed in the hope that it will be useful,
-+		but WITHOUT ANY WARRANTY; without even the implied warranty of
-+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+		GNU General Public License for more details.
-+
-+		You should have received a copy of the GNU General Public License
-+		along with this program; if not, write to the Free Software
-+		Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+
-+ * this code is specificly written as a driver for the speakup screenreview
-+ * package and is not a general device driver.
-+		*/
-+#include "spk_priv.h"
-+#include "serialio.h"
-+
-+#define MY_SYNTH synth_bns
-+#define SYNTH_CLEAR 0x18
-+#define PROCSPEECH '\r'
-+
-+static int wait_for_xmitr( void )
-+{
-+	static int timeouts = 0;	/* sequential number of timeouts */
-+	int check, tmout = SPK_XMITR_TIMEOUT;
-+	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
-+		timeouts = 0;
-+		return 0;
-+	}
-+	do {
-+		check = inb( synth_port_tts + UART_LSR );
-+		if ( --tmout == 0 ) {
-+		 	pr_warn( "BNS:  timed out\n" );
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & BOTH_EMPTY ) != BOTH_EMPTY );
-+	tmout = SPK_XMITR_TIMEOUT;
-+	do {
-+		check = inb( synth_port_tts + UART_MSR );
-+		if ( --tmout == 0 ) {
-+			timeouts++;
-+			return 0;
-+		}
-+	} while ( ( check & UART_MSR_CTS ) != UART_MSR_CTS );
-+	timeouts = 0;
-+	return 1;
-+}
-+
-+static inline int spk_serial_out( const char ch )
-+{
-+	if ( synth_alive && wait_for_xmitr( ) ) {
-+		outb( ch, synth_port_tts );
-+		return 1;
-+	}
-+	return 0;
-+}
-+
-+static void do_catch_up( unsigned long data )
-+{
-+	unsigned long jiff_max = jiffies+synth_jiffy_delta;
-+	u_char ch;
-+	synth_stop_timer( );
-+	while ( synth_buff_out < synth_buff_in ) {
-+		ch = *synth_buff_out;
-+		if ( ch == '\n' ) ch = PROCSPEECH;
-+		if ( !spk_serial_out( ch ) ) {
-+			synth_delay( synth_full_time );
-+			return;
-+		}
-+		synth_buff_out++;
-+		if ( jiffies >= jiff_max && ch == ' ' ) {
-+			spk_serial_out( PROCSPEECH );
-+			synth_delay( synth_delay_time );
-+			return;
-+		}
-+	}
-+	spk_serial_out( PROCSPEECH );
-+	synth_done( );
-+}
-+
-+static const char *synth_immediate ( const char *buf )
-+{
-+	u_char ch;
-+	while ( ( ch = *buf ) ) {
-+	if ( ch == 0x0a ) ch = PROCSPEECH;
-+        if ( wait_for_xmitr( ) )
-+          outb( ch, synth_port_tts );
-+        else return buf;
-+	buf++;
-+	}
-+	return 0;
-+}
-+
-+static void synth_flush ( void )
-+{
-+	spk_serial_out ( SYNTH_CLEAR );
-+}
-+
-+static int serprobe( int index )
-+{
-+	struct serial_state *ser = spk_serial_init( index );
-+	if ( ser == NULL ) return -1;
-+	outb( '\r', ser->port );
-+	if ( synth_port_forced ) return 0;
-+	/* check for bns now... */
-+	if ( !synth_immediate( "\x18" ) ) return 0;
-+	spk_serial_release( );
-+	synth_alive = 0;
-+				return -1;
-+}
-+
-+static int synth_probe( void )
-+{
-+int i=0, failed=0;
-+	pr_info( "Probing for %s.\n", synth->long_name );
-+	for ( i=SPK_LO_TTY; i <= SPK_HI_TTY; i++ ) {
-+	  if (( failed = serprobe( i )) == 0 ) break; /* found it */
-+        }
-+        if ( failed ) {
-+		pr_info( "%s:  not found\n", synth->long_name );
-+		return -ENODEV;
-+	}
-+	pr_info( "%s:  %03x-%03x, Driver version %s,\n", synth->long_name,
-+		synth_port_tts, synth_port_tts + 7, synth->version );
-+	return 0;
-+}
-+
-+static int synth_is_alive( void )
-+{
-+	if ( synth_alive ) return 1;
-+	if ( !synth_alive && wait_for_xmitr( ) > 0 ) { /* restart */
-+		synth_alive = 1;
-+		synth_write_string( synth->init );
-+		return 2;
-+	}
-+	pr_warn( "%s: can't restart synth\n", synth->long_name );
-+	return 0;
-+}
-+
-+static const char init_string[] = "\x05Z\x05\x43";
-+
-+static string_var stringvars[] = {
-+	{ CAPS_START, "\x05\x31\x32P" },
-+	{ CAPS_STOP, "\x05\x38P" },
-+	V_LAST_STRING
-+};
-+static num_var numvars[] = {
-+	{ RATE, "\x05%dE", 8, 1, 16, 0, 0, 0 },
-+	{ PITCH, "\x05%dP", 8, 0, 16, 0, 0, 0 },
-+	{ VOL, "\x05%dV", 8, 0, 16, 0, 0, 0 },
-+	{ TONE, "\x05%dT", 8, 0, 16, 0, 0, 0 },
-+	V_LAST_NUM
-+};
-+
-+struct spk_synth synth_bns = {"bns", "1.1", "Braille 'N Speak",
-+	init_string, 500, 50, 50, 5000, 0, 0, SYNTH_CHECK,
-+	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, NULL,
-+	{NULL,0,0,0} };
-+
-+#ifdef MODULE
-+#include "mod_code.c"
-+#endif
-Index: linux-git/drivers/char/speakup/speakup_decext.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_decext.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakupconf linux-2.6.17/drivers/char/speakup/speakupconf
+--- linux-2.6.17-orig/drivers/char/speakup/speakupconf	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakupconf	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,51 @@
++#!/bin/sh
++# script to load/save all the vars in speakup
++# speakupconf save or speakupconf load
++# if root saves in /etc/speakup/<synth_name> else in $HOME/.speakup/<synth_name>
++if [ $UID -eq "0" ]; then
++  SAVEDIR="/etc/speakup"
++else
++  SAVEDIR="$HOME/.speakup"
++fi
++if [ ! -d /proc/speakup ]; then
++  echo "no directory /proc/speakup"
++  exit 0
++fi
++SYNTH=`cat /proc/speakup/synth_name`
++case "$1" in
++*save)
++  if [ ! -d $SAVEDIR ] ; then
++    echo creating $SAVEDIR
++    mkdir $SAVEDIR
++  fi
++  if [ ! -d $SAVEDIR/$SYNTH ] ; then
++    echo creating $SAVEDIR/$SYNTH
++    mkdir $SAVEDIR/$SYNTH
++  fi
++  cd /proc/speakup
++  SAVELIST=`    find . -perm -6 |sed 's/..//' |fgrep -v synth`
++  for f in $SAVELIST; do
++    cp $f $SAVEDIR/$SYNTH/$f
++  done
++;;
++*load)
++  if [ ! -d $SAVEDIR ] ; then
++    echo no directory $SAVEDIR
++    exit 1
++  fi
++  if [ ! -d $SAVEDIR/$SYNTH ] ; then
++    echo no directory $SAVEDIR/$SYNTH
++    exit 1
++  fi
++  cd $SAVEDIR/$SYNTH
++  for f in *; do
++    if [ -w /proc/speakup/$f ]; then
++      cat $f >/proc/speakup/$f
++    fi
++  done
++;;
++*)
++  echo "usage: speakupconf load/save"
++  exit 1
++;;
++esac
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_decext.c linux-2.6.17/drivers/char/speakup/speakup_decext.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_decext.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_decext.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,206 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7356,11 +7515,11 @@ Index: linux-git/drivers/char/speakup/speakup_decext.c
 +		else if ( ch <= SPACE ) {
 +			if ( !in_escape && strchr( ",.!?;:", last ) )
 +				spk_serial_out( PROCSPEECH );
-+			if ( jiffies >= jiff_max ) {
++			if ( jiffies >= jiff_max ) { 
 +				if ( !in_escape )
 +					spk_serial_out( PROCSPEECH );
-+				synth_delay( synth_delay_time );
-+				return;
++				synth_delay( synth_delay_time ); 
++				return; 
 +			}
 +		}
 +		last = ch;
@@ -7394,11 +7553,11 @@ Index: linux-git/drivers/char/speakup/speakup_decext.c
 +		struct serial_state *ser = spk_serial_init( index );
 +		if ( ser == NULL ) return -1;
 +		/* ignore any error results, if port was forced */
-+	if ( synth_port_forced )
++	if ( synth_port_forced ) 
 +				return 0;
 +	synth_immediate( "\033[;5n\033\\" );
 +	if ( ( test = spk_serial_in( ) ) == '\033' )
-+		return 0;
++		return 0;  
 +	spk_serial_release( );
 +	timeouts = synth_alive = synth_port_tts = 0; /* not ignoring */
 +	return -1;
@@ -7458,10 +7617,9 @@ Index: linux-git/drivers/char/speakup/speakup_decext.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_decpc.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_decpc.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_decpc.c linux-2.6.17/drivers/char/speakup/speakup_decpc.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_decpc.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_decpc.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,243 @@
 +/*
 +* written by David Borowski, david575@golden.net
@@ -7621,11 +7779,11 @@ Index: linux-git/drivers/char/speakup/speakup_decpc.c
 +		else if ( ch <= SPACE ) {
 +			if ( !in_escape && strchr( ",.!?;:", last ) )
 +				dt_sendchar( PROCSPEECH );
-+			if ( jiffies >= jiff_max ) {
++			if ( jiffies >= jiff_max ) { 
 +				if ( !in_escape )
 +					dt_sendchar( PROCSPEECH );
-+				synth_delay( synth_delay_time );
-+				return;
++				synth_delay( synth_delay_time ); 
++				return; 
 +			}
 +		}
 +		last = ch;
@@ -7696,7 +7854,7 @@ Index: linux-git/drivers/char/speakup/speakup_decpc.c
 +	{ VOICE, "[:n%c]", 0, 0, 9, 0, 0, "phfdburwkv" },
 +	V_LAST_NUM
 +};
-+
++   
 +struct spk_synth synth_dec_pc = { "decpc", "1.1", "Dectalk PC",
 +	init_string, 500, 50, 50, 1000, 0, SF_DEC, SYNTH_CHECK,
 +	stringvars, numvars, synth_probe, dtpc_release, synth_immediate,
@@ -7706,10 +7864,9 @@ Index: linux-git/drivers/char/speakup/speakup_decpc.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_dectlk.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_dectlk.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_dectlk.c linux-2.6.17/drivers/char/speakup/speakup_dectlk.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_dectlk.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_dectlk.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,285 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7874,11 +8031,11 @@ Index: linux-git/drivers/char/speakup/speakup_dectlk.c
 +		else if ( ch <= SPACE ) {
 +			if ( !in_escape && strchr( ",.!?;:", last ) )
 +				spk_serial_out( PROCSPEECH );
-+			if ( jiffies >= jiff_max ) {
++			if ( jiffies >= jiff_max ) { 
 +				if ( !in_escape )
 +					spk_serial_out( PROCSPEECH );
-+				synth_delay( synth_delay_time );
-+				return;
++				synth_delay( synth_delay_time ); 
++				return; 
 +			}
 +		}
 +		last = ch;
@@ -7929,12 +8086,12 @@ Index: linux-git/drivers/char/speakup/speakup_dectlk.c
 +			test = spk_serial_in ( );
 +			if ( test == 0x01 ) return 0;
 +		} while ( --timeout > 0 );*/
-+
++	
 +		do {
 +			if ( atomic_read(&dectest)==0) return 0;
 +			outb('a',0x80);  // Sleep about a microsecond
 +		} while ( --timeout > 0);
-+
++		
 +	}
 +	spk_serial_release( );
 +	timeouts = synth_alive = synth_port_tts = 0;	/* not ignoring */
@@ -7986,7 +8143,7 @@ Index: linux-git/drivers/char/speakup/speakup_dectlk.c
 +	{ VOICE, "[:n%c]", 0, 0, 9, 0, 0, "phfdburwkv" },
 +	V_LAST_NUM
 +};
-+
++   
 +struct spk_synth synth_dectlk = { "dectlk", "1.3", "Dectalk Express",
 +	init_string, 500, 50, 50, 1000, 0, SF_DEC, SYNTH_CHECK,
 +	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
@@ -7996,11 +8153,10 @@ Index: linux-git/drivers/char/speakup/speakup_dectlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_drvcommon.c
-@@ -0,0 +1,1007 @@
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_drvcommon.c linux-2.6.17/drivers/char/speakup/speakup_drvcommon.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_drvcommon.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_drvcommon.c	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,1012 @@
 +#define KERNEL
 +#include <linux/config.h>
 +#include <linux/version.h>
@@ -8044,7 +8200,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +declare_timer( synth_timer );
 +short synth_delay_time = 500, synth_trigger_time = 50;
 +short synth_jiffy_delta = 50, synth_full_time = 1000;
-+int synth_alive = 0;
++int synth_alive = 0, quiet_boot = 0;
 +u_char synth_buffer[synthBufferSize];	/* guess what this is for! */
 +u_char *buffer_highwater = synth_buffer+synthBufferSize-100;
 +u_char *buffer_end = synth_buffer+synthBufferSize-1;
@@ -8058,7 +8214,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +	unsigned int cval = 0;
 +	int     i, cflag = CREAD | HUPCL | CLOCAL | B9600 | CS8;
 +	struct serial_state *ser = NULL;
-+
++ 
 +	if ( synth_port_forced ) {
 +		if ( index > 0 ) return NULL;
 +		pr_info ( "probe forced to 0x%x by kernel command line\n",
@@ -8120,7 +8276,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +	if (synth->read_buff_add == NULL)
 +		return;
 +
-+	rv = request_irq(irq, synth_readbuf_handler, SA_SHIRQ,
++	rv = request_irq(irq, synth_readbuf_handler, SA_SHIRQ, 
 +			 "serial", (void *) synth_readbuf_handler);
 +
 +	if (rv)
@@ -8140,6 +8296,8 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +
 +void stop_serial_interrupt()
 +{
++	if ( synth_port_tts == 0 ) return;
++
 +	// Turn off interrupts
 +	outb(0,synth_port_tts+UART_IER);
 +	// Free IRQ
@@ -8436,8 +8594,10 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +		speakup_register_var((num_var *) s_var);
 +	for(n_var = synth->num_vars; n_var->var_id >= 0; n_var++)
 +		speakup_register_var(n_var);
-+	synth_write_string(synth->long_name);
-+	synth_write_msg(" found");
++	if (!quiet_boot) {
++		synth_write_string(synth->long_name);
++		synth_write_msg(" found");
++	}
 +#ifdef CONFIG_PROC_FS
 +	speakup_register_var((num_var *) &synth_direct);
 +#endif
@@ -8445,7 +8605,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +	return 0;
 +}
 +
-+void
++void 
 +synth_release ( void )
 +{
 +	num_var *n_var;
@@ -8512,7 +8672,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +  { "spell_delay", SPELL_DELAY, VAR_NUM, USER_RW, 0, &spell_delay, 0 },
 +  { "bleeps", BLEEPS, VAR_NUM, USER_RW, 0, &bleeps, 0 },
 +  { "attrib_bleep", ATTRIB_BLEEP, VAR_NUM, USER_RW, 0, &attrib_bleep, 0 },
-+  { "bleep_time", BLEEP_TIME, VAR_NUM, USER_RW, 0, &bleep_time, 0 },
++  { "bleep_time", BLEEP_TIME, VAR_TIME, USER_RW, 0, &bleep_time, 0 },
 +  { "cursor_time", CURSOR_TIME, VAR_TIME, USER_RW, 0, &cursor_timeout, 0 },
 +  { "punc_level", PUNC_LEVEL, VAR_NUM, USER_RW, 0, &punc_level, 0 },
 +  { "reading_punc", READING_PUNC, VAR_NUM, USER_RW, 0, &reading_punc, 0 },
@@ -8528,7 +8688,8 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +  { "punct", PUNCT, VAR_NUM, USER_RW, 0, 0, 0 },
 +  { "voice", VOICE, VAR_NUM, USER_RW, 0, 0, 0 },
 +  { "freq", FREQ, VAR_NUM, USER_RW, 0, 0, 0 },
-+  { "lang", LANG, VAR_NUM, USER_RW, 0, 0, 0 }
++  { "lang", LANG, VAR_NUM, USER_RW, 0, 0, 0 },
++  { "chartab", CHARTAB, VAR_PROC, USER_RW, 0, 0, 0 },
 +};
 +
 +var_header *var_ptrs[MAXVARS] = { 0, 0, 0 };
@@ -8804,7 +8965,7 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +
 +extern char synth_name[];
 +
-+// called by
++// called by 
 +int speakup_dev_init(void)
 +{
 +	int i;
@@ -9008,10 +9169,9 @@ Index: linux-git/drivers/char/speakup/speakup_drvcommon.c
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Speakup module required by all synthesizer specific modules");
 +MODULE_LICENSE("GPL");
-Index: linux-git/drivers/char/speakup/speakup_dtlk.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_dtlk.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_dtlk.c linux-2.6.17/drivers/char/speakup/speakup_dtlk.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_dtlk.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_dtlk.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,233 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9043,8 +9203,8 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.c
 +
 +#define MY_SYNTH synth_dtlk
 +#define PROCSPEECH 0x00
-+#define synth_readable() ((synth_status = inb_p(synth_port_tts)) & TTS_READABLE)
-+#define synth_full() ((synth_status = inb_p(synth_port_tts)) & TTS_ALMOST_FULL)
++#define synth_readable() ((synth_status = inb_p(synth_port_tts)) & TTS_READABLE) 
++#define synth_full() ((synth_status = inb_p(synth_port_tts)) & TTS_ALMOST_FULL) 
 +
 +static int synth_lpc;
 +static unsigned int synth_portlist[] =
@@ -9054,7 +9214,7 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.c
 +static inline void spk_out(const char ch)
 +{
 +	int tmout = 100000;
-+	while (((synth_status = inb_p(synth_port_tts)) & TTS_WRITABLE) == 0);
++	while (((synth_status = inb_p(synth_port_tts)) & TTS_WRITABLE) == 0); 
 +	outb_p(ch, synth_port_tts);
 +	while ((((synth_status = inb_p(synth_port_tts)) & TTS_WRITABLE) != 0)
 +		&& (--tmout != 0) );
@@ -9074,10 +9234,10 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.c
 +		ch = *synth_buff_out++;
 +		if (ch == 0x0a) ch = PROCSPEECH;
 +		spk_out( ch );
-+		if (jiffies >= jiff_max && ch == SPACE) {
++		if (jiffies >= jiff_max && ch == SPACE) { 
 +			spk_out(PROCSPEECH);
-+			synth_delay(synth_delay_time);
-+			return;
++			synth_delay(synth_delay_time); 
++			return; 
 +		}
 +	}
 +	spk_out(PROCSPEECH);
@@ -9236,7 +9396,7 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.c
 +	{ FREQ, "\x01%df", 5, 0, 9, 0, 0, 0 },
 +	V_LAST_NUM
 +};
-+
++	 
 +struct spk_synth synth_dtlk = {"dtlk", "1.1", "DoubleTalk PC",
 +			   init_string, 500, 30, 50, 1000, 0, 0, SYNTH_CHECK,
 +	stringvars, numvars, synth_probe, dtlk_release, synth_immediate,
@@ -9246,10 +9406,9 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_dtlk.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_dtlk.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_dtlk.h linux-2.6.17/drivers/char/speakup/speakup_dtlk.h
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_dtlk.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_dtlk.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,54 @@
 +/* speakup_dtlk.h - header file for speakups DoubleTalk driver. */
 +
@@ -9305,10 +9464,9 @@ Index: linux-git/drivers/char/speakup/speakup_dtlk.h
 +	                                 parameter block */
 +	u_char has_indexing;	/* nonzero if indexing is implemented */
 +};
-Index: linux-git/drivers/char/speakup/speakup_keyhelp.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_keyhelp.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_keyhelp.c linux-2.6.17/drivers/char/speakup/speakup_keyhelp.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_keyhelp.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_keyhelp.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,288 @@
 +/* speakup_keyhelp.c
 +   help module for speakup
@@ -9598,10 +9756,9 @@ Index: linux-git/drivers/char/speakup/speakup_keyhelp.c
 +MODULE_AUTHOR("David Borowski");
 +MODULE_DESCRIPTION("Speakup keyboard help MODULE");
 +MODULE_LICENSE("GPL");
-Index: linux-git/drivers/char/speakup/speakup_keypc.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_keypc.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_keypc.c linux-2.6.17/drivers/char/speakup/speakup_keypc.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_keypc.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_keypc.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,190 @@
 +/*
 +* written by David Borowski
@@ -9640,8 +9797,8 @@ Index: linux-git/drivers/char/speakup/speakup_keypc.c
 +static unsigned int synth_portlist[] =
 +    { 0x2a8, 0 };
 +
-+static int
-+oops( void )
++static int 
++oops( void ) 
 +{
 +	int s1, s2, s3, s4;
 +	s1 = inb_p( synth_port );
@@ -9701,8 +9858,8 @@ Index: linux-git/drivers/char/speakup/speakup_keypc.c
 +			break;
 +			}
 +			outb_p( PROCSPEECH, synth_port );
-+			synth_delay( synth_delay_time );
-+			return;
++			synth_delay( synth_delay_time ); 
++			return; 
 +		}
 +	}
 +	timeout = 1000;
@@ -9753,7 +9910,7 @@ Index: linux-git/drivers/char/speakup/speakup_keypc.c
 +		return -ENODEV;
 +	}
 +	pr_info( "%s:  %03x-%03x, driver version %s,\n", synth->long_name,
-+		synth_port,	synth_port+SYNTH_IO_EXTENT-1,
++		synth_port,	synth_port+SYNTH_IO_EXTENT-1, 
 +		synth->version );
 +	return 0;
 +}
@@ -9793,10 +9950,9 @@ Index: linux-git/drivers/char/speakup/speakup_keypc.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_ltlk.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_ltlk.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_ltlk.c linux-2.6.17/drivers/char/speakup/speakup_ltlk.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_ltlk.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_ltlk.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,229 @@
 +/*
 + * originally written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9836,9 +9992,9 @@ Index: linux-git/drivers/char/speakup/speakup_ltlk.c
 +	static int timeouts = 0;	/* sequential number of timeouts */
 +	int check, tmout = SPK_XMITR_TIMEOUT;
 +	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
++		synth_alive = 0; 
 +		timeouts = 0;
-+		return 0;
++		return 0; 
 +	}
 +	do { /* holding register empty? */
 +		check = inb( synth_port_tts + UART_LSR );
@@ -9876,7 +10032,7 @@ Index: linux-git/drivers/char/speakup/speakup_ltlk.c
 +		lsr = inb( synth_port_tts + UART_LSR );
 +		if ( --tmout == 0 ) {
 +			pr_warn( "time out while waiting for input.\n" );
-+			return 0xff;
++			return 0xff; 
 +		}
 +	} while ( ( lsr & UART_LSR_DR ) != UART_LSR_DR );
 +	c = inb( synth_port_tts + UART_RX );
@@ -9898,8 +10054,8 @@ Index: linux-git/drivers/char/speakup/speakup_ltlk.c
 +		synth_buff_out++;
 +		if ( jiffies >= jiff_max && ch == SPACE ) {
 +			spk_serial_out( PROCSPEECH );
-+			synth_delay( synth_delay_time );
-+			return;
++			synth_delay( synth_delay_time ); 
++			return; 
 +		}
 +	}
 +	spk_serial_out( PROCSPEECH );
@@ -9965,7 +10121,7 @@ Index: linux-git/drivers/char/speakup/speakup_ltlk.c
 +	/* ignore any error results, if port was forced */
 +	if ( synth_port_forced ) return 0;
 +	/* check for device... */
-+	if ( !synth_immediate( "\x18" ) ) return 0;
++	if ( !synth_immediate( "\x18" ) ) return 0;	
 +	spk_serial_release( );
 +	synth_alive = 0; /* try next port */
 +	return -1;
@@ -10027,10 +10183,174 @@ Index: linux-git/drivers/char/speakup/speakup_ltlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_sftsyn.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakupmap.h linux-2.6.17/drivers/char/speakup/speakupmap.h
+--- linux-2.6.17-orig/drivers/char/speakup/speakupmap.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakupmap.h	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,65 @@
++	119, 62, 6,
++	0, 16, 17, 32, 20, 48, 0,
++	2, 0, 78, 0, 0, 0, 0,
++	3, 0, 79, 0, 0, 0, 0,
++	4, 0, 76, 0, 0, 0, 0,
++	5, 0, 77, 0, 0, 0, 0,
++	6, 0, 74, 0, 0, 0, 0,
++	7, 0, 75, 0, 0, 0, 0,
++	9, 0, 5, 0, 0, 0, 0,
++	10, 0, 4, 0, 0, 0, 0,
++	11, 0, 0, 0, 0, 1, 0,
++	12, 0, 27, 33, 0, 0, 0,
++	19, 0, 47, 0, 0, 0, 0,
++	21, 0, 29, 0, 0, 17, 0,
++	22, 0, 15, 0, 0, 0, 0,
++	23, 0, 14, 0, 0, 0, 28,
++	24, 0, 16, 0, 0, 0, 0,
++	25, 0, 30, 0, 0, 18, 0,
++	28, 0, 3, 0, 0, 26, 0,
++	35, 0, 31, 0, 0, 0, 0,
++	36, 0, 12, 0, 0, 0, 0,
++	37, 0, 11, 0, 0, 0, 22,
++	38, 0, 13, 0, 0, 0, 0,
++	39, 0, 32, 0, 0, 7, 0,
++	40, 0, 23, 0, 0, 0, 0,
++	44, 0, 44, 0, 0, 0, 0,
++	49, 0, 24, 0, 0, 0, 0,
++	50, 0, 9, 6, 0, 19, 0,
++	51, 0, 8, 0, 0, 0, 36,
++	52, 0, 10, 0, 0, 20, 0,
++	53, 0, 25, 0, 0, 0, 0,
++	55, 46, 1, 0, 0, 0, 0,
++	58, 128, 128, 0, 0, 0, 0,
++	59, 0, 45, 0, 0, 0, 0,
++	60, 0, 40, 0, 0, 0, 0,
++	61, 0, 41, 0, 0, 0, 0,
++	62, 0, 42, 0, 0, 0, 0,
++	63, 0, 34, 0, 0, 0, 0,
++	64, 0, 35, 0, 0, 0, 0,
++	65, 0, 37, 0, 0, 0, 0,
++	66, 0, 38, 0, 0, 0, 0,
++	67, 0, 66, 39, 0, 0, 0,
++	68, 0, 67, 0, 0, 0, 0,
++	71, 15, 19, 0, 0, 0, 0,
++	72, 14, 29, 0, 28, 0, 0,
++	73, 16, 17, 0, 0, 0, 0,
++	74, 27, 33, 0, 0, 0, 0,
++	75, 12, 31, 0, 0, 0, 0,
++	76, 11, 21, 0, 22, 0, 0,
++	77, 13, 32, 0, 0, 0, 0,
++	78, 23, 43, 0, 0, 0, 0,
++	79, 9, 20, 0, 0, 0, 0,
++	80, 8, 30, 0, 36, 0, 0,
++	81, 10, 18, 0, 0, 0, 0,
++	82, 128, 128, 0, 0, 0, 0,
++	83, 24, 25, 0, 0, 0, 0,
++	87, 0, 68, 0, 0, 0, 0,
++	88, 0, 69, 0, 0, 0, 0,
++	96, 3, 26, 0, 0, 0, 0,
++	98, 4, 5, 0, 0, 0, 0,
++	99, 2, 0, 0, 0, 0, 0,
++	104, 0, 6, 0, 0, 0, 0,
++	109, 0, 7, 0, 0, 0, 0,
++	125, 128, 128, 0, 0, 0, 0,
++	0, 119
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakupmap.map linux-2.6.17/drivers/char/speakup/speakupmap.map
+--- linux-2.6.17-orig/drivers/char/speakup/speakupmap.map	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakupmap.map	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,92 @@
++spk key_f9 = punc_level_dec
++spk key_f10 = punc_level_inc
++spk key_f11 = reading_punc_dec
++spk key_f12 = reading_punc_inc
++spk key_1 = vol_dec
++spk key_2 =  vol_inc
++spk key_3 = pitch_dec
++spk key_4 = pitch_inc
++spk key_5 = rate_dec
++spk key_6 = rate_inc
++key_kpasterisk = toggle_cursoring
++spk key_kpasterisk = speakup_goto
++spk key_f1 = speakup_help
++spk key_f2 = set_win
++spk key_f3 = clear_win
++spk key_f4 = enable_win
++spk key_f5 = edit_some
++spk key_f6 = edit_most
++spk key_f7 = edit_delim
++spk key_f8 = edit_repeat
++shift spk key_f9 = edit_exnum
++ key_kp7 = say_prev_line
++spk key_kp7 = left_edge
++ key_kp8 = say_line
++double  key_kp8 = say_line_indent
++spk key_kp8 = say_from_top
++ key_kp9 = say_next_line
++spk  key_kp9 = top_edge
++ key_kpminus = speakup_parked
++spk key_kpminus = say_char_num
++ key_kp4 = say_prev_word
++spk key_kp4 = say_from_left
++ key_kp5 = say_word
++double key_kp5 = spell_word
++spk key_kp5 = spell_phonetic
++ key_kp6 = say_next_word
++spk key_kp6 = say_to_right
++ key_kpplus = say_screen
++spk key_kpplus = say_win
++ key_kp1 = say_prev_char 
++spk key_kp1 = right_edge
++ key_kp2 = say_char
++spk key_kp2 = say_to_bottom
++double key_kp2 = say_phonetic_char
++ key_kp3 = say_next_char  
++spk  key_kp3 = bottom_edge
++ key_kp0 = spk_key
++ key_kpdot = say_position
++spk key_kpdot = say_attributes
++key_kpenter = speakup_quiet
++spk key_kpenter = speakup_off
++key_sysrq = speech_kill
++ key_kpslash = speakup_cut
++spk key_kpslash = speakup_paste
++spk key_pageup = say_first_char
++spk key_pagedown = say_last_char
++key_capslock = spk_key
++ spk key_z = spk_lock
++key_leftmeta = spk_key
++ctrl spk key_0 = speakup_goto
++spk key_u = say_prev_line
++spk key_i = say_line
++double spk key_i = say_line_indent
++spk key_o = say_next_line
++spk key_minus = speakup_parked
++shift spk key_minus = say_char_num
++spk key_j = say_prev_word
++spk key_k = say_word
++double spk key_k = spell_word
++spk key_l = say_next_word
++spk key_m = say_prev_char
++spk key_comma = say_char
++double spk key_comma = say_phonetic_char
++spk key_dot = say_next_char
++spk key_n = say_position
++ ctrl spk key_m = left_edge
++ ctrl spk key_y = top_edge
++ ctrl spk key_dot = right_edge
++ctrl spk key_p = bottom_edge
++spk key_apostrophe = say_screen
++spk key_h = say_from_left
++spk key_y = say_from_top
++spk key_semicolon = say_to_right
++spk key_p = say_to_bottom
++spk key_slash = say_attributes
++ spk key_enter = speakup_quiet
++ ctrl  spk key_enter = speakup_off
++ spk key_9 = speakup_cut
++spk key_8 = speakup_paste
++shift spk key_m = say_first_char
++ ctrl spk key_semicolon = say_last_char
++spk key_r = read_all_doc
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_sftsyn.c linux-2.6.17/drivers/char/speakup/speakup_sftsyn.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_sftsyn.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_sftsyn.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,207 @@
 +/* speakup_sftsynth.c - speakup driver to register and make available
 + * a user space device for software synthesizers.  written by: Kirk
@@ -10103,7 +10423,7 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +	  if (down_interruptible( &sem )) return -ERESTARTSYS;
 +	}
 +
-+	chars_sent = (count > synth_buff_in-synth_buff_out)
++	chars_sent = (count > synth_buff_in-synth_buff_out) 
 +	  ? synth_buff_in-synth_buff_out : count;
 +	if (copy_to_user(buf, (char *) synth_buff_out, chars_sent)) {
 +	  up ( &sem);
@@ -10149,7 +10469,7 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +	return 0;
 +}
 +
-+static void
++static void 
 +softsynth_flush( void )
 +{
 +	synth_write( "\x18", 1 );
@@ -10170,9 +10490,9 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +        open:softsynth_open,
 +        release:softsynth_close,
 +};
++ 
 +
-+
-+static int
++static int 
 +softsynth_probe( void )
 +{
 +
@@ -10191,7 +10511,7 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +	return 0;
 +}
 +
-+static void
++static void 
 +softsynth_release(void)
 +{
 +        misc_deregister( &synth_device );
@@ -10199,13 +10519,13 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +	pr_info("unregistered /dev/softsynth\n");
 +}
 +
-+static void
++static void 
 +softsynth_start ( void )
 +{
 +        wake_up_interruptible ( &wait_on_output );
 +}
 +
-+static int
++static int 
 +softsynth_is_alive( void )
 +{
 +	if ( synth_alive ) return 1;
@@ -10239,10 +10559,9 @@ Index: linux-git/drivers/char/speakup/speakup_sftsyn.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_spkout.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_spkout.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_spkout.c linux-2.6.17/drivers/char/speakup/speakup_spkout.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_spkout.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_spkout.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,201 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10280,9 +10599,9 @@ Index: linux-git/drivers/char/speakup/speakup_spkout.c
 +	static int timeouts = 0;	/* sequential number of timeouts */
 +	int check, tmout = SPK_XMITR_TIMEOUT;
 +	if ((synth_alive) && (timeouts >= NUM_DISABLE_TIMEOUTS)) {
-+		synth_alive = 0;
++		synth_alive = 0; 
 +		timeouts = 0;
-+		return 0;
++		return 0; 
 +	}
 +	do {
 +		check = inb(synth_port_tts + UART_LSR);
@@ -10339,8 +10658,8 @@ Index: linux-git/drivers/char/speakup/speakup_spkout.c
 +		synth_buff_out++;
 +		if (jiffies >= jiff_max && ch == SPACE ) {
 +			spk_serial_out(PROCSPEECH);
-+			synth_delay(synth_delay_time);
-+			return;
++			synth_delay(synth_delay_time); 
++			return; 
 +		}
 +	}
 +spk_serial_out(PROCSPEECH);
@@ -10435,20 +10754,19 @@ Index: linux-git/drivers/char/speakup/speakup_spkout.c
 +	{ PUNCT, "\x05M%c", 0, 0, 3, 0, 0, "nsma" },
 +	V_LAST_NUM
 +};
-+
++	 
 +struct spk_synth synth_spkout = {"spkout", "1.1", "Speakout",
 +	 init_string, 500, 50, 50, 5000, 0, 0, SYNTH_CHECK,
 +	stringvars, numvars, synth_probe, spk_serial_release, synth_immediate,
-+	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL,
++	do_catch_up, NULL, synth_flush, synth_is_alive, NULL, NULL, 
 +	get_index, {"\x05[%c",1,5,1} };
 +
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakup_txprt.c
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakup_txprt.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/speakup_txprt.c linux-2.6.17/drivers/char/speakup/speakup_txprt.c
+--- linux-2.6.17-orig/drivers/char/speakup/speakup_txprt.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/speakup_txprt.c	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,196 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10488,9 +10806,9 @@ Index: linux-git/drivers/char/speakup/speakup_txprt.c
 +{
 +	int check, tmout = SPK_XMITR_TIMEOUT;
 +	if ( ( synth_alive ) && ( timeouts >= NUM_DISABLE_TIMEOUTS ) ) {
-+		synth_alive = 0;
++		synth_alive = 0; 
 +		timeouts = 0;
-+		return 0;
++		return 0; 
 +	}
 +	do {
 +		check = inb( synth_port_tts + UART_LSR );
@@ -10536,7 +10854,7 @@ Index: linux-git/drivers/char/speakup/speakup_txprt.c
 +{
 +	unsigned long jiff_max = jiffies+synth_jiffy_delta;
 +	u_char ch;
-+
++	
 +	synth_stop_timer( );
 +	while ( synth_buff_out < synth_buff_in ) {
 +		ch = *synth_buff_out;
@@ -10546,10 +10864,10 @@ Index: linux-git/drivers/char/speakup/speakup_txprt.c
 +			return;
 +		}
 +		synth_buff_out++;
-+		if ( jiffies >= jiff_max && ch == ' ' ) {
++		if ( jiffies >= jiff_max && ch == ' ' ) { 
 +			spk_serial_out( PROCSPEECH );
 +			synth_delay( synth_delay_time );
-+			return;
++			return; 
 +		}
 +	}
 +	spk_serial_out( PROCSPEECH );
@@ -10646,233 +10964,9 @@ Index: linux-git/drivers/char/speakup/speakup_txprt.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-git/drivers/char/speakup/speakupconf
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakupconf
-@@ -0,0 +1,51 @@
-+#!/bin/sh
-+# script to load/save all the vars in speakup
-+# speakupconf save or speakupconf load
-+# if root saves in /etc/speakup/<synth_name> else in $HOME/.speakup/<synth_name>
-+if [ $UID -eq "0" ]; then
-+  SAVEDIR="/etc/speakup"
-+else
-+  SAVEDIR="$HOME/.speakup"
-+fi
-+if [ ! -d /proc/speakup ]; then
-+  echo "no directory /proc/speakup"
-+  exit 0
-+fi
-+SYNTH=`cat /proc/speakup/synth_name`
-+case "$1" in
-+*save)
-+  if [ ! -d $SAVEDIR ] ; then
-+    echo creating $SAVEDIR
-+    mkdir $SAVEDIR
-+  fi
-+  if [ ! -d $SAVEDIR/$SYNTH ] ; then
-+    echo creating $SAVEDIR/$SYNTH
-+    mkdir $SAVEDIR/$SYNTH
-+  fi
-+  cd /proc/speakup
-+  SAVELIST=`    find . -perm -6 |sed 's/..//' |fgrep -v synth`
-+  for f in $SAVELIST; do
-+    cp $f $SAVEDIR/$SYNTH/$f
-+  done
-+;;
-+*load)
-+  if [ ! -d $SAVEDIR ] ; then
-+    echo no directory $SAVEDIR
-+    exit 1
-+  fi
-+  if [ ! -d $SAVEDIR/$SYNTH ] ; then
-+    echo no directory $SAVEDIR/$SYNTH
-+    exit 1
-+  fi
-+  cd $SAVEDIR/$SYNTH
-+  for f in *; do
-+    if [ -w /proc/speakup/$f ]; then
-+      cat $f >/proc/speakup/$f
-+    fi
-+  done
-+;;
-+*)
-+  echo "usage: speakupconf load/save"
-+  exit 1
-+;;
-+esac
-Index: linux-git/drivers/char/speakup/speakupmap.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakupmap.h
-@@ -0,0 +1,65 @@
-+	119, 62, 6,
-+	0, 16, 17, 32, 20, 48, 0,
-+	2, 0, 78, 0, 0, 0, 0,
-+	3, 0, 79, 0, 0, 0, 0,
-+	4, 0, 76, 0, 0, 0, 0,
-+	5, 0, 77, 0, 0, 0, 0,
-+	6, 0, 74, 0, 0, 0, 0,
-+	7, 0, 75, 0, 0, 0, 0,
-+	9, 0, 5, 0, 0, 0, 0,
-+	10, 0, 4, 0, 0, 0, 0,
-+	11, 0, 0, 0, 0, 1, 0,
-+	12, 0, 27, 33, 0, 0, 0,
-+	19, 0, 47, 0, 0, 0, 0,
-+	21, 0, 29, 0, 0, 17, 0,
-+	22, 0, 15, 0, 0, 0, 0,
-+	23, 0, 14, 0, 0, 0, 28,
-+	24, 0, 16, 0, 0, 0, 0,
-+	25, 0, 30, 0, 0, 18, 0,
-+	28, 0, 3, 0, 0, 26, 0,
-+	35, 0, 31, 0, 0, 0, 0,
-+	36, 0, 12, 0, 0, 0, 0,
-+	37, 0, 11, 0, 0, 0, 22,
-+	38, 0, 13, 0, 0, 0, 0,
-+	39, 0, 32, 0, 0, 7, 0,
-+	40, 0, 23, 0, 0, 0, 0,
-+	44, 0, 44, 0, 0, 0, 0,
-+	49, 0, 24, 0, 0, 0, 0,
-+	50, 0, 9, 6, 0, 19, 0,
-+	51, 0, 8, 0, 0, 0, 36,
-+	52, 0, 10, 0, 0, 20, 0,
-+	53, 0, 25, 0, 0, 0, 0,
-+	55, 46, 1, 0, 0, 0, 0,
-+	58, 128, 128, 0, 0, 0, 0,
-+	59, 0, 45, 0, 0, 0, 0,
-+	60, 0, 40, 0, 0, 0, 0,
-+	61, 0, 41, 0, 0, 0, 0,
-+	62, 0, 42, 0, 0, 0, 0,
-+	63, 0, 34, 0, 0, 0, 0,
-+	64, 0, 35, 0, 0, 0, 0,
-+	65, 0, 37, 0, 0, 0, 0,
-+	66, 0, 38, 0, 0, 0, 0,
-+	67, 0, 66, 39, 0, 0, 0,
-+	68, 0, 67, 0, 0, 0, 0,
-+	71, 15, 19, 0, 0, 0, 0,
-+	72, 14, 29, 0, 28, 0, 0,
-+	73, 16, 17, 0, 0, 0, 0,
-+	74, 27, 33, 0, 0, 0, 0,
-+	75, 12, 31, 0, 0, 0, 0,
-+	76, 11, 21, 0, 22, 0, 0,
-+	77, 13, 32, 0, 0, 0, 0,
-+	78, 23, 43, 0, 0, 0, 0,
-+	79, 9, 20, 0, 0, 0, 0,
-+	80, 8, 30, 0, 36, 0, 0,
-+	81, 10, 18, 0, 0, 0, 0,
-+	82, 128, 128, 0, 0, 0, 0,
-+	83, 24, 25, 0, 0, 0, 0,
-+	87, 0, 68, 0, 0, 0, 0,
-+	88, 0, 69, 0, 0, 0, 0,
-+	96, 3, 26, 0, 0, 0, 0,
-+	98, 4, 5, 0, 0, 0, 0,
-+	99, 2, 0, 0, 0, 0, 0,
-+	104, 0, 6, 0, 0, 0, 0,
-+	109, 0, 7, 0, 0, 0, 0,
-+	125, 128, 128, 0, 0, 0, 0,
-+	0, 119
-Index: linux-git/drivers/char/speakup/speakupmap.map
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/speakupmap.map
-@@ -0,0 +1,92 @@
-+spk key_f9 = punc_level_dec
-+spk key_f10 = punc_level_inc
-+spk key_f11 = reading_punc_dec
-+spk key_f12 = reading_punc_inc
-+spk key_1 = vol_dec
-+spk key_2 =  vol_inc
-+spk key_3 = pitch_dec
-+spk key_4 = pitch_inc
-+spk key_5 = rate_dec
-+spk key_6 = rate_inc
-+key_kpasterisk = toggle_cursoring
-+spk key_kpasterisk = speakup_goto
-+spk key_f1 = speakup_help
-+spk key_f2 = set_win
-+spk key_f3 = clear_win
-+spk key_f4 = enable_win
-+spk key_f5 = edit_some
-+spk key_f6 = edit_most
-+spk key_f7 = edit_delim
-+spk key_f8 = edit_repeat
-+shift spk key_f9 = edit_exnum
-+ key_kp7 = say_prev_line
-+spk key_kp7 = left_edge
-+ key_kp8 = say_line
-+double  key_kp8 = say_line_indent
-+spk key_kp8 = say_from_top
-+ key_kp9 = say_next_line
-+spk  key_kp9 = top_edge
-+ key_kpminus = speakup_parked
-+spk key_kpminus = say_char_num
-+ key_kp4 = say_prev_word
-+spk key_kp4 = say_from_left
-+ key_kp5 = say_word
-+double key_kp5 = spell_word
-+spk key_kp5 = spell_phonetic
-+ key_kp6 = say_next_word
-+spk key_kp6 = say_to_right
-+ key_kpplus = say_screen
-+spk key_kpplus = say_win
-+ key_kp1 = say_prev_char
-+spk key_kp1 = right_edge
-+ key_kp2 = say_char
-+spk key_kp2 = say_to_bottom
-+double key_kp2 = say_phonetic_char
-+ key_kp3 = say_next_char
-+spk  key_kp3 = bottom_edge
-+ key_kp0 = spk_key
-+ key_kpdot = say_position
-+spk key_kpdot = say_attributes
-+key_kpenter = speakup_quiet
-+spk key_kpenter = speakup_off
-+key_sysrq = speech_kill
-+ key_kpslash = speakup_cut
-+spk key_kpslash = speakup_paste
-+spk key_pageup = say_first_char
-+spk key_pagedown = say_last_char
-+key_capslock = spk_key
-+ spk key_z = spk_lock
-+key_leftmeta = spk_key
-+ctrl spk key_0 = speakup_goto
-+spk key_u = say_prev_line
-+spk key_i = say_line
-+double spk key_i = say_line_indent
-+spk key_o = say_next_line
-+spk key_minus = speakup_parked
-+shift spk key_minus = say_char_num
-+spk key_j = say_prev_word
-+spk key_k = say_word
-+double spk key_k = spell_word
-+spk key_l = say_next_word
-+spk key_m = say_prev_char
-+spk key_comma = say_char
-+double spk key_comma = say_phonetic_char
-+spk key_dot = say_next_char
-+spk key_n = say_position
-+ ctrl spk key_m = left_edge
-+ ctrl spk key_y = top_edge
-+ ctrl spk key_dot = right_edge
-+ctrl spk key_p = bottom_edge
-+spk key_apostrophe = say_screen
-+spk key_h = say_from_left
-+spk key_y = say_from_top
-+spk key_semicolon = say_to_right
-+spk key_p = say_to_bottom
-+spk key_slash = say_attributes
-+ spk key_enter = speakup_quiet
-+ ctrl  spk key_enter = speakup_off
-+ spk key_9 = speakup_cut
-+spk key_8 = speakup_paste
-+shift spk key_m = say_first_char
-+ ctrl spk key_semicolon = say_last_char
-+spk key_r = read_all_doc
-Index: linux-git/drivers/char/speakup/spk_con_module.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/spk_con_module.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/spk_con_module.h linux-2.6.17/drivers/char/speakup/spk_con_module.h
+--- linux-2.6.17-orig/drivers/char/speakup/spk_con_module.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/spk_con_module.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,43 @@
 +/* written bby David Borowski.
 +    Copyright (C ) 2003  David Borowski.
@@ -10917,11 +11011,10 @@ Index: linux-git/drivers/char/speakup/spk_con_module.h
 +}
 +
 +EXPORT_SYMBOL(speakup_set_addresses);
-Index: linux-git/drivers/char/speakup/spk_priv.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/spk_priv.h
-@@ -0,0 +1,288 @@
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/spk_priv.h linux-2.6.17/drivers/char/speakup/spk_priv.h
+--- linux-2.6.17-orig/drivers/char/speakup/spk_priv.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/spk_priv.h	2006-06-18 16:45:59.000000000 +0100
+@@ -0,0 +1,289 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
 +   originally written by: Kirk Reiser and Andy Berdan.
@@ -10998,11 +11091,12 @@ Index: linux-git/drivers/char/speakup/spk_priv.h
 +#define B_EXNUM 0x0100
 +#define CH_RPT 0x0200
 +#define B_CTL 0x0400
-+#define A_CTL B_CTL+SYNTH_OK
++#define A_CTL ( B_CTL+SYNTH_OK )
 +#define B_SYM 0x0800
-+#define B_CAPSYM B_CAP|B_SYM
++#define B_CAPSYM ( B_CAP|B_SYM )
 +#define IS_WDLM( x ) ( spk_chartab[( ( u_char )x )]&B_WDLM )
 +#define IS_CHAR( x, type ) ( spk_chartab[( ( u_char )x )]&type )
++#define IS_TYPE( x, type ) ( (spk_chartab[( ( u_char )x )]&type) == type )
 +#define SET_DEFAULT -4
 +#define E_RANGE -3
 +#define E_TOOLONG -2
@@ -11178,7 +11272,7 @@ Index: linux-git/drivers/char/speakup/spk_priv.h
 +extern short synth_jiffy_delta, synth_delay_time;
 +extern short synth_trigger_time, synth_full_time;
 +extern short cursor_timeout, pitch_shift, synth_flags;
-+extern int synth_alive;
++extern int synth_alive, quiet_boot;
 +extern u_char synth_buffer[];  /* guess what this is for! */
 +extern u_char *buffer_highwater;
 +extern volatile u_char *synth_buff_in, *synth_buff_out;
@@ -11210,10 +11304,9 @@ Index: linux-git/drivers/char/speakup/spk_priv.h
 +#endif
 +
 +#endif
-Index: linux-git/drivers/char/speakup/synthlist.h
-===================================================================
---- /dev/null
-+++ linux-git/drivers/char/speakup/synthlist.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/speakup/synthlist.h linux-2.6.17/drivers/char/speakup/synthlist.h
+--- linux-2.6.17-orig/drivers/char/speakup/synthlist.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/drivers/char/speakup/synthlist.h	2006-06-18 16:45:59.000000000 +0100
 @@ -0,0 +1,51 @@
 +/* this is included two times */
 +#if defined(PASS2)
@@ -11266,10 +11359,9 @@ Index: linux-git/drivers/char/speakup/synthlist.h
 +#endif
 +
 +#undef SYNTH_DECL
-Index: linux-git/drivers/char/vt.c
-===================================================================
---- linux-git.orig/drivers/char/vt.c
-+++ linux-git/drivers/char/vt.c
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/char/vt.c linux-2.6.17/drivers/char/vt.c
+--- linux-2.6.17-orig/drivers/char/vt.c	2006-06-18 16:32:29.000000000 +0100
++++ linux-2.6.17/drivers/char/vt.c	2006-06-18 16:46:06.000000000 +0100
 @@ -98,6 +98,10 @@
  #include <asm/system.h>
  #include <asm/uaccess.h>
@@ -11293,7 +11385,7 @@ Index: linux-git/drivers/char/vt.c
  		vc->vc_pos += vc->vc_size_row;
  	}
  	vc->vc_need_wrap = 0;
-+	speakup_con_write(vc, "\n",1);
++	speakup_con_write(vc, "\n",1);	
  }
  
  static void ri(struct vc_data *vc)
@@ -11317,7 +11409,7 @@ Index: linux-git/drivers/char/vt.c
  			}
  			if (vc->vc_decim)
  				insert_char(vc, 1);
-+			speakup_con_write(vc, (char *) &tc, 1);
++			speakup_con_write(vc, (char *) &c, 1);
  			scr_writew(himask ?
  				     ((vc->vc_attr << 8) & ~himask) + ((tc & 0x100) ? himask : 0) + (tc & 0xff) :
  				     (vc->vc_attr << 8) + tc,
@@ -11337,14 +11429,16 @@ Index: linux-git/drivers/char/vt.c
  		}
  		want_console = -1;
  	}
-@@ -2141,6 +2152,7 @@ static void console_callback(void *ignor
+@@ -2141,7 +2152,8 @@ static void console_callback(void *ignor
  		do_blank_screen(0);
  		blank_timer_expired = 0;
  	}
+-
 +	speakup_con_update(vc_cons[fg_console].d);
- 
++	
  	release_console_sem();
  }
+ 
 @@ -2186,6 +2198,7 @@ static void vt_console_print(struct cons
  		/* printk("vt_console_print: tty %d not allocated ??\n", currcons+1); */
  		goto quit;
@@ -11377,20 +11471,53 @@ Index: linux-git/drivers/char/vt.c
  	gotoxy(vc, vc->vc_x, vc->vc_y);
  	csi_J(vc, 0);
  	update_screen(vc);
-@@ -3265,3 +3281,4 @@ EXPORT_SYMBOL(vc_cons);
+@@ -3257,3 +3273,4 @@ EXPORT_SYMBOL(vc_cons);
  EXPORT_SYMBOL(take_over_console);
  EXPORT_SYMBOL(give_up_console);
  #endif
 +EXPORT_SYMBOL(screen_glyph);
-Index: linux-git/include/linux/keyboard.h
-===================================================================
---- linux-git.orig/include/linux/keyboard.h
-+++ linux-git/include/linux/keyboard.h
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/Kconfig linux-2.6.17/drivers/Kconfig
+--- linux-2.6.17-orig/drivers/Kconfig	2006-06-18 16:32:26.000000000 +0100
++++ linux-2.6.17/drivers/Kconfig	2006-06-18 16:46:06.000000000 +0100
+@@ -58,6 +58,8 @@ source "drivers/media/Kconfig"
+ 
+ source "drivers/video/Kconfig"
+ 
++source "drivers/char/speakup/Kconfig"
++
+ source "sound/Kconfig"
+ 
+ source "drivers/usb/Kconfig"
+diff -urNpX dontdiff linux-2.6.17-orig/drivers/Makefile linux-2.6.17/drivers/Makefile
+--- linux-2.6.17-orig/drivers/Makefile	2006-06-18 16:32:35.000000000 +0100
++++ linux-2.6.17/drivers/Makefile	2006-06-18 16:46:06.000000000 +0100
+@@ -27,6 +27,9 @@ obj-$(CONFIG_FB_INTEL)          += video
+ 
+ obj-y				+= serial/
+ obj-$(CONFIG_PARPORT)		+= parport/
++obj-$(CONFIG_GAMEPORT)		+= input/gameport/
++# load keyboard early so speakup can be quieted
++obj-$(CONFIG_INPUT)		+= input/
+ obj-y				+= base/ block/ misc/ mfd/ net/ media/
+ obj-$(CONFIG_NUBUS)		+= nubus/
+ obj-$(CONFIG_ATM)		+= atm/
+@@ -51,8 +54,6 @@ obj-$(CONFIG_USB)		+= usb/
+ obj-$(CONFIG_PCI)		+= usb/
+ obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
+ obj-$(CONFIG_SERIO)		+= input/serio/
+-obj-$(CONFIG_GAMEPORT)		+= input/gameport/
+-obj-$(CONFIG_INPUT)		+= input/
+ obj-$(CONFIG_I2O)		+= message/
+ obj-$(CONFIG_RTC_LIB)		+= rtc/
+ obj-$(CONFIG_I2C)		+= i2c/
+diff -urNpX dontdiff linux-2.6.17-orig/include/linux/keyboard.h linux-2.6.17/include/linux/keyboard.h
+--- linux-2.6.17-orig/include/linux/keyboard.h	2006-06-18 16:32:48.000000000 +0100
++++ linux-2.6.17/include/linux/keyboard.h	2006-06-18 16:46:06.000000000 +0100
 @@ -45,6 +45,7 @@ extern unsigned short plain_map[NR_KEYS]
  #define KT_LOCK		10
  #define KT_SLOCK	12
  #define KT_BRL		14
-+#define KT_SPKUP	16
++#define KT_SPKUP       	15
  
  #define K(t,v)		(((t)<<8)|(v))
  #define KTYP(x)		((x) >> 8)
@@ -11402,10 +11529,9 @@ Index: linux-git/include/linux/keyboard.h
  
  #define K_BRL_BLANK     K(KT_BRL, 0)
  #define K_BRL_DOT1      K(KT_BRL, 1)
-Index: linux-git/include/linux/miscdevice.h
-===================================================================
---- linux-git.orig/include/linux/miscdevice.h
-+++ linux-git/include/linux/miscdevice.h
+diff -urNpX dontdiff linux-2.6.17-orig/include/linux/miscdevice.h linux-2.6.17/include/linux/miscdevice.h
+--- linux-2.6.17-orig/include/linux/miscdevice.h	2006-06-18 16:32:51.000000000 +0100
++++ linux-2.6.17/include/linux/miscdevice.h	2006-06-18 16:46:06.000000000 +0100
 @@ -12,6 +12,7 @@
  #define APOLLO_MOUSE_MINOR 7
  #define PC110PAD_MINOR 9
@@ -11414,10 +11540,9 @@ Index: linux-git/include/linux/miscdevice.h
  #define WATCHDOG_MINOR		130	/* Watchdog timer     */
  #define TEMP_MINOR		131	/* Temperature Sensor */
  #define RTC_MINOR 135
-Index: linux-git/include/linux/speakup.h
-===================================================================
---- /dev/null
-+++ linux-git/include/linux/speakup.h
+diff -urNpX dontdiff linux-2.6.17-orig/include/linux/speakup.h linux-2.6.17/include/linux/speakup.h
+--- linux-2.6.17-orig/include/linux/speakup.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.17/include/linux/speakup.h	2006-06-18 16:46:06.000000000 +0100
 @@ -0,0 +1,35 @@
 +#ifndef __SPEAKUP_H
 +#define __SPEAKUP_H
@@ -11454,3 +11579,20 @@ Index: linux-git/include/linux/speakup.h
 +#define speakup_dev_init()
 +#endif
 +#endif
+diff -urNpX dontdiff linux-2.6.17-orig/MAINTAINERS linux-2.6.17/MAINTAINERS
+--- linux-2.6.17-orig/MAINTAINERS	2006-06-18 16:32:13.000000000 +0100
++++ linux-2.6.17/MAINTAINERS	2006-06-18 16:46:06.000000000 +0100
+@@ -2635,6 +2635,13 @@ M:	wli@holomorphy.com
+ L:	sparclinux@vger.kernel.org
+ S:	Maintained
+ 
++SPEAKUP Console speech output
++P: Kirk Reiser
++M: kirk@braille.uwo.ca
++L: speakup@braille.uwo.ca
++W: http://www.linux-speakup.org
++S: Maintained
++
+ SPECIALIX IO8+ MULTIPORT SERIAL CARD DRIVER
+ P:	Roger Wolff
+ M:	R.E.Wolff@BitWizard.nl
