@@ -66,6 +66,10 @@ Patch:	4010_pcnet-cs-te-cf100.patch
 From:	2.6.18 tree
 Desc:	Add PCMCIA ID for trendnet TE-CF100 ethernet adapter
 
+Patch:	4015_forcedeth-new-ids.patch
+From:	2.6.18 tree
+Desc:	Support various new nvidia ethernet adapters
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
