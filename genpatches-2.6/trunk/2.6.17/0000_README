@@ -62,6 +62,10 @@ Patch:	4005_bcm4319.patch
 From:	2.6.18 tree
 Desc:	Add PCI ID for bcm4319 wifi card
 
+Patch:	4010_pcnet-cs-te-cf100.patch
+From:	2.6.18 tree
+Desc:	Add PCMCIA ID for trendnet TE-CF100 ethernet adapter
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
