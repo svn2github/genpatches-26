@@ -102,6 +102,10 @@ Patch:	4110_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
+Patch:	4115_nvidia-sata-new.patch
+From:	2.6.18 tree
+Desc:	Support even more new nvidia SATA hardware
+
 Patch:	4200_fbsplash-0.9.2-r5.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
