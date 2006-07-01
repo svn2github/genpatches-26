@@ -8,7 +8,7 @@ Index: linux-git/drivers/net/sunhme.c
 ===================================================================
 --- linux-git.orig/drivers/net/sunhme.c
 +++ linux-git/drivers/net/sunhme.c
-@@ -1996,6 +1996,7 @@ static void happy_meal_tx(struct happy_m
+@@ -1971,6 +1971,7 @@ static void happy_meal_tx(struct happy_m
  	}
  	hp->tx_old = elem;
  	TXD((">"));
