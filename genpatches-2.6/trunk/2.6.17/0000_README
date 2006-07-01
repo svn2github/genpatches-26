@@ -94,9 +94,9 @@ Patch:	4020_asix-88178.patch
 From:	2.6.18 tree
 Desc:	Support USB ASIX 88178 ethernet
 
-Patch:	4100_ahci-nvidia-mcp65.patch
-From:	2.6.18 tree
-Desc:	Support new nvidia MCP65 SATA controllers
+Patch:	4100_vt8251-sata.patch
+From:	2.6.18 tree (backport by dsd@gentoo.org)
+Desc:	Support VT8251 SATA controllers
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
@@ -110,9 +110,9 @@ Patch:	4115_nvidia-sata-new.patch
 From:	2.6.18 tree
 Desc:	Support even more new nvidia SATA hardware
 
-Patch:	4120_vt8251-sata.patch
-From:	2.6.18 tree (backport by dsd@gentoo.org)
-Desc:	Support VT8251 SATA controllers
+Patch:	4120_ahci-nvidia-mcp65.patch
+From:	2.6.18 tree
+Desc:	Support new nvidia MCP65 SATA controllers
 
 Patch:	4125_nvidia-ide-new.patch
 From:	2.6.18 tree
