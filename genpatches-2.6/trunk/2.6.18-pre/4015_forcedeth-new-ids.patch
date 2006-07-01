@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<!-- git web interface v267, (C) 2005-2006, Kay Sievers <kay.sievers@vrfy.org>, Christian Gierke -->
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<meta name="robots" content="index, nofollow"/>
+<title>git - linux/kernel/git/torvalds/linux-2.6.git/commitdiff</title>
+<link rel="alternate" title="linux/kernel/git/torvalds/linux-2.6.git log" href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=rss" type="application/rss+xml"/>
+<style type="text/css">
+body {
+	font-family: sans-serif; font-size: 12px; border:solid #d9d8d1; border-width:1px;
+	margin:10px; background-color:#ffffff; color:#000000;
+}
+a { color:#0000cc; }
+a:hover, a:visited, a:active { color:#880000; }
+div.page_header { height:25px; padding:8px; font-size:18px; font-weight:bold; background-color:#d9d8d1; }
+div.page_header a:visited, a.header { color:#0000cc; }
+div.page_header a:hover { color:#880000; }
+div.page_nav { padding:8px; }
+div.page_nav a:visited { color:#0000cc; }
+div.page_path { padding:8px; border:solid #d9d8d1; border-width:0px 0px 1px}
+div.page_footer { height:17px; padding:4px 8px; background-color: #d9d8d1; }
+div.page_footer_text { float:left; color:#555555; font-style:italic; }
+div.page_body { padding:8px; }
+div.title, a.title {
+	display:block; padding:6px 8px;
+	font-weight:bold; background-color:#edece6; text-decoration:none; color:#000000;
+}
+a.title:hover { background-color: #d9d8d1; }
+div.title_text { padding:6px 0px; border: solid #d9d8d1; border-width:0px 0px 1px; }
+div.log_body { padding:8px 8px 8px 150px; }
+span.age { position:relative; float:left; width:142px; font-style:italic; }
+div.log_link {
+	padding:0px 8px;
+	font-size:10px; font-family:sans-serif; font-style:normal;
+	position:relative; float:left; width:136px;
+}
+div.list_head { padding:6px 8px 4px; border:solid #d9d8d1; border-width:1px 0px 0px; font-style:italic; }
+a.list { text-decoration:none; color:#000000; }
+a.list:hover { text-decoration:underline; color:#880000; }
+a.text { text-decoration:none; color:#0000cc; }
+a.text:visited { text-decoration:none; color:#880000; }
+a.text:hover { text-decoration:underline; color:#880000; }
+table { padding:8px 4px; }
+th { padding:2px 5px; font-size:12px; text-align:left; }
+tr.light:hover { background-color:#edece6; }
+tr.dark { background-color:#f6f6f0; }
+tr.dark:hover { background-color:#edece6; }
+td { padding:2px 5px; font-size:12px; vertical-align:top; }
+td.link { padding:2px 5px; font-family:sans-serif; font-size:10px; }
+div.pre { font-family:monospace; font-size:12px; white-space:pre; }
+div.diff_info { font-family:monospace; color:#000099; background-color:#edece6; font-style:italic; }
+div.index_include { border:solid #d9d8d1; border-width:0px 0px 1px; padding:12px 8px; }
+div.search { margin:4px 8px; position:absolute; top:56px; right:12px }
+a.linenr { color:#999999; text-decoration:none }
+a.rss_logo {
+	float:right; padding:3px 0px; width:35px; line-height:10px;
+	border:1px solid; border-color:#fcc7a5 #7d3302 #3e1a01 #ff954e;
+	color:#ffffff; background-color:#ff6600;
+	font-weight:bold; font-family:sans-serif; font-size:10px;
+	text-align:center; text-decoration:none;
+}
+a.rss_logo:hover { background-color:#ee5500; }
+span.tag {
+	padding:0px 4px; font-size:10px; font-weight:normal;
+	background-color:#ffffaa; border:1px solid; border-color:#ffffcc #ffee00 #ffee00 #ffffcc;
+}
+</style>
+</head>
+<body>
+<div class="page_header">
+<a href="http://www.kernel.org/pub/software/scm/git/docs/" title="git documentation"><img src="/git/?a=git-logo.png" width="72" height="27" alt="git" style="float:right; border-width:0px;"/></a>
+<a href="/git/">projects</a> / <a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=summary">linux/kernel/git/torvalds/linux-2.6.git</a> / commitdiff
+<form method="get" action="/git/" enctype="application/x-www-form-urlencoded">
+<div class="search">
+<input type="hidden" name="p" value="linux/kernel/git/torvalds/linux-2.6.git"  />
+<input type="hidden" name="a" value="search"  />
+<input type="hidden" name="h" value="c99ce7ee75db7836e2faba932affd2aadd1e942f"  />
+<input type="text" name="s"  />
+</div>
+</form>
+</div>
+<div class="page_nav">
+<a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=summary">summary</a> | <a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=shortlog;h=c99ce7ee75db7836e2faba932affd2aadd1e942f">shortlog</a> | <a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=log;h=c99ce7ee75db7836e2faba932affd2aadd1e942f">log</a> | <a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=c99ce7ee75db7836e2faba932affd2aadd1e942f">commit</a> | commitdiff | <a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=tree;h=f390bcb4658ba6149d72773f3963ee5599554968;hb=c99ce7ee75db7836e2faba932affd2aadd1e942f">tree</a><br/>
+<a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=c99ce7ee75db7836e2faba932affd2aadd1e942f;hp=ebe611a48378f8f5c347d86dc403a2d56c320f1c">plain</a>
+</div>
+<div>
+<a class="title" href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=c99ce7ee75db7836e2faba932affd2aadd1e942f">[PATCH] forcedeth: new device ids</a>
+</div>
+<div class="page_body">
+This&nbsp;patch&nbsp;contains&nbsp;new&nbsp;device&nbsp;ids&nbsp;for&nbsp;forcedeth&nbsp;ethernet.<br/>
+<br/>
+<br/>
+<div class="diff_info">file:<a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob;h=0e7131028b9f20930220eefc16b660248bf88377;hb=c99ce7ee75db7836e2faba932affd2aadd1e942f;f=drivers/net/forcedeth.c">0e7131028b9f20930220eefc16b660248bf88377</a> -> file:<a href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=blob;h=4ab39c554d0d995c684434a6b78758b498a30091;hb=c99ce7ee75db7836e2faba932affd2aadd1e942f;f=drivers/net/forcedeth.c">4ab39c554d0d995c684434a6b78758b498a30091</a></div>
+<div class="pre" style="color:#cc0000;">--- a/drivers/net/forcedeth.c</div>
+<div class="pre" style="color:#008800;">+++ b/drivers/net/forcedeth.c</div>
+<div class="pre" style="color:#990099;">@@ -4467,6 +4467,38 @@ static struct pci_device_id pci_tbl[] = </div>
+<div class="pre">                 PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_15),</div>
+<div class="pre">                 .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_LARGEDESC|DEV_HAS_CHECKSUM|DEV_HAS_HIGH_DMA|DEV_HAS_VLAN|DEV_HAS_MSI|DEV_HAS_MSI_X|DEV_HAS_POWER_CNTRL|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre">         },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP61 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_16),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP61 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_17),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP61 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_18),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP61 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_19),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP65 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_20),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_LARGEDESC|DEV_HAS_CHECKSUM|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP65 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_21),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_LARGEDESC|DEV_HAS_CHECKSUM|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP65 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_22),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_LARGEDESC|DEV_HAS_CHECKSUM|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre" style="color:#008800;">+        {       /* MCP65 Ethernet Controller */</div>
+<div class="pre" style="color:#008800;">+                PCI_DEVICE(PCI_VENDOR_ID_NVIDIA, PCI_DEVICE_ID_NVIDIA_NVENET_23),</div>
+<div class="pre" style="color:#008800;">+                .driver_data = DEV_NEED_TIMERIRQ|DEV_NEED_LINKTIMER|DEV_HAS_LARGEDESC|DEV_HAS_CHECKSUM|DEV_HAS_HIGH_DMA|DEV_HAS_POWER_CNTRL|DEV_HAS_MSI|DEV_HAS_PAUSEFRAME_TX|DEV_HAS_STATISTICS|DEV_HAS_TEST_EXTENDED,</div>
+<div class="pre" style="color:#008800;">+        },</div>
+<div class="pre">         {0,},</div>
+<div class="pre"> };</div>
+<div class="pre"> </div>
+<br/>
+</div><div class="page_footer">
+<div class="page_footer_text">Linus&#39; kernel tree</div>
+<a class="rss_logo" href="/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=rss">RSS</a>
+</div>
+</body>
+</html>
