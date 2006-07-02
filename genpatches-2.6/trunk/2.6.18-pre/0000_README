@@ -55,7 +55,7 @@ From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
 
 Patch:	4110_promise-pdc2037x.patch
-From:	Jeff Garzik's libata-dev-2.6 tree
+From:	Jeff Garzik's libata-dev tree (http://www.kernel.org/git/?p=linux/kernel/git/jgarzik/libata-dev.git;a=shortlog)
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
 Patch:	4200_fbsplash-0.9.2-r5.patch
