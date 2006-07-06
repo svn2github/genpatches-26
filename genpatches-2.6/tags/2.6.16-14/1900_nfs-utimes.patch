@@ -1,0 +1,31 @@
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Mon, 20 Mar 2006 18:44:06 +0000 (-0500)
+Subject: NFS: writes should not clobber utimes() calls
+X-Git-Tag: v2.6.17-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=755c1e20cd2ad56e5c567fa05769eb98a3eef72b
+
+NFS: writes should not clobber utimes() calls
+
+Ensure that we flush out writes in the case when someone calls utimes() in
+order to set the file times.
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+---
+
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -859,11 +859,9 @@ nfs_setattr(struct dentry *dentry, struc
+ 
+ 	lock_kernel();
+ 	nfs_begin_data_update(inode);
+-	/* Write all dirty data if we're changing file permissions or size */
+-	if ((attr->ia_valid & (ATTR_MODE|ATTR_UID|ATTR_GID|ATTR_SIZE)) != 0) {
+-		filemap_write_and_wait(inode->i_mapping);
+-		nfs_wb_all(inode);
+-	}
++	/* Write all dirty data */
++	filemap_write_and_wait(inode->i_mapping);
++	nfs_wb_all(inode);
+ 	/*
+ 	 * Return any delegations if we're going to change ACLs
+ 	 */
