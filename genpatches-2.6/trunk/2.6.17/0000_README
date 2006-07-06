@@ -78,6 +78,10 @@ Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
 
+Patch:	2705_alsa-pcspkr-module.patch
+From:	http://bugs.gentoo.org/138870
+Desc:	Fix pcspkr when built as a module
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge

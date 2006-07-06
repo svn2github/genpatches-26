@@ -1,0 +1,26 @@
+From: Piotr Kaczuba <pepe@attika.ath.cx>
+Date: Mon, 26 Jun 2006 11:59:38 +0000 (+0200)
+Subject: [PATCH] x86_64: Fix modular pc speaker
+X-Git-Tag: v2.6.18-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=9c63f8738734eb7e6d3f76ca03186f16ef88edf5
+
+[PATCH] x86_64: Fix modular pc speaker
+
+It turned out that the following change is needed when the speaker is
+compiled as a module.
+
+Signed-off-by: Andi Kleen <ak@suse.de>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+--- a/arch/x86_64/kernel/setup.c
++++ b/arch/x86_64/kernel/setup.c
+@@ -1361,7 +1361,7 @@ struct seq_operations cpuinfo_op = {
+ 	.show =	show_cpuinfo,
+ };
+ 
+-#ifdef CONFIG_INPUT_PCSPKR
++#if defined(CONFIG_INPUT_PCSPKR) || defined(CONFIG_INPUT_PCSPKR_MODULE)
+ #include <linux/platform_device.h>
+ static __init int add_pcspkr(void)
+ {
