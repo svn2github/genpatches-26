@@ -2,7 +2,7 @@ Index: linux-git/fs/Kconfig
 ===================================================================
 --- linux-git.orig/fs/Kconfig
 +++ linux-git/fs/Kconfig
-@@ -1188,6 +1188,71 @@ config CRAMFS
+@@ -1249,6 +1249,71 @@ config CRAMFS
  
  	  If unsure, say N.
  
@@ -78,7 +78,7 @@ Index: linux-git/fs/Makefile
 ===================================================================
 --- linux-git.orig/fs/Makefile
 +++ linux-git/fs/Makefile
-@@ -56,6 +56,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
+@@ -57,6 +57,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
  obj-$(CONFIG_JBD)		+= jbd/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/

@@ -2,19 +2,19 @@ Index: linux-git/drivers/scsi/libata-core.c
 ===================================================================
 --- linux-git.orig/drivers/scsi/libata-core.c
 +++ linux-git/drivers/scsi/libata-core.c
-@@ -4453,6 +4453,7 @@ static void ata_host_init(struct ata_por
+@@ -5279,6 +5279,7 @@ static void ata_host_init(struct ata_por
  	ap->mwdma_mask = ent->mwdma_mask;
  	ap->udma_mask = ent->udma_mask;
  	ap->flags |= ent->host_flags;
 +	ap->flags |= ent->port_flags[port_no];
  	ap->ops = ent->port_ops;
- 	ap->cbl = ATA_CBL_NONE;
+ 	ap->hw_sata_spd_limit = UINT_MAX;
  	ap->active_tag = ATA_TAG_POISON;
 Index: linux-git/drivers/scsi/sata_promise.c
 ===================================================================
 --- linux-git.orig/drivers/scsi/sata_promise.c
 +++ linux-git/drivers/scsi/sata_promise.c
-@@ -96,6 +96,7 @@ static irqreturn_t pdc_interrupt (int ir
+@@ -97,6 +97,7 @@ static irqreturn_t pdc_interrupt (int ir
  static void pdc_eng_timeout(struct ata_port *ap);
  static int pdc_port_start(struct ata_port *ap);
  static void pdc_port_stop(struct ata_port *ap);
@@ -22,7 +22,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  static void pdc_pata_phy_reset(struct ata_port *ap);
  static void pdc_sata_phy_reset(struct ata_port *ap);
  static void pdc_qc_prep(struct ata_queued_cmd *qc);
-@@ -171,7 +172,7 @@ static const struct ata_port_info pdc_po
+@@ -175,7 +176,7 @@ static const struct ata_port_info pdc_po
  	/* board_2037x */
  	{
  		.sht		= &pdc_ata_sht,
@@ -31,7 +31,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
-@@ -360,17 +361,34 @@ static void pdc_reset_port(struct ata_po
+@@ -364,7 +365,10 @@ static void pdc_reset_port(struct ata_po
  static void pdc_sata_phy_reset(struct ata_port *ap)
  {
  	pdc_reset_port(ap);
@@ -40,38 +40,10 @@ Index: linux-git/drivers/scsi/sata_promise.c
 +		sata_phy_reset(ap);
 +	else
 +		pdc_pata_phy_reset(ap);
-+}
-+
-+static void pdc_pata_cbl_detect(struct ata_port *ap)
-+{
-+	u8 tmp;
-+	void *mmio = (void *) ap->ioaddr.cmd_addr + PDC_CTLSTAT + 0x03;
-+
-+	tmp = readb(mmio);
-+
-+	if (tmp & 0x01)
-+	{
-+		ap->cbl = ATA_CBL_PATA40;
-+		ap->udma_mask &= ATA_UDMA_MASK_40C;
-+	}
-+	else
-+		ap->cbl = ATA_CBL_PATA80;
  }
  
- static void pdc_pata_phy_reset(struct ata_port *ap)
- {
--	/* FIXME: add cable detect.  Don't assume 40-pin cable */
--	ap->cbl = ATA_CBL_PATA40;
--	ap->udma_mask &= ATA_UDMA_MASK_40C;
-+	pdc_pata_cbl_detect(ap);
- 
--	pdc_reset_port(ap);
- 	ata_port_probe(ap);
-+
- 	ata_bus_reset(ap);
- }
- 
-@@ -672,6 +690,7 @@ static int pdc_ata_init_one (struct pci_
+ static void pdc_pata_cbl_detect(struct ata_port *ap)
+@@ -688,6 +692,7 @@ static int pdc_ata_init_one (struct pci_
  	unsigned int board_idx = (unsigned int) ent->driver_data;
  	int pci_dev_busy = 0;
  	int rc;
@@ -79,7 +51,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  
  	if (!printed_version++)
  		dev_printk(KERN_DEBUG, &pdev->dev, "version " DRV_VERSION "\n");
-@@ -740,6 +759,9 @@ static int pdc_ata_init_one (struct pci_
+@@ -752,6 +757,9 @@ static int pdc_ata_init_one (struct pci_
  	probe_ent->port[0].scr_addr = base + 0x400;
  	probe_ent->port[1].scr_addr = base + 0x500;
  
@@ -89,7 +61,7 @@ Index: linux-git/drivers/scsi/sata_promise.c
  	/* notice 4-port boards */
  	switch (board_idx) {
  	case board_40518:
-@@ -754,13 +776,29 @@ static int pdc_ata_init_one (struct pci_
+@@ -766,13 +774,29 @@ static int pdc_ata_init_one (struct pci_
  
  		probe_ent->port[2].scr_addr = base + 0x600;
  		probe_ent->port[3].scr_addr = base + 0x700;
@@ -124,7 +96,7 @@ Index: linux-git/include/linux/libata.h
 ===================================================================
 --- linux-git.orig/include/linux/libata.h
 +++ linux-git/include/linux/libata.h
-@@ -282,6 +282,7 @@ struct ata_probe_ent {
+@@ -357,6 +357,7 @@ struct ata_probe_ent {
  	unsigned int		irq_flags;
  	unsigned long		host_flags;
  	unsigned long		host_set_flags;

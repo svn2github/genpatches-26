@@ -1,8 +1,8 @@
 # Patch generated against a6047eef1c465c38aacfbdab193161b3f0cd144
-diff --git a/Documentation/fb/vesafb.txt b/Documentation/fb/vesafb.txt
-index ee277dd..93d6e6e 100644
---- a/Documentation/fb/vesafb.txt
-+++ b/Documentation/fb/vesafb.txt
+Index: linux-git/Documentation/fb/vesafb.txt
+===================================================================
+--- linux-git.orig/Documentation/fb/vesafb.txt
++++ linux-git/Documentation/fb/vesafb.txt
 @@ -2,16 +2,18 @@
  What is vesafb?
  ===============
@@ -13,14 +13,15 @@ index ee277dd..93d6e6e 100644
 -The idea is simple:  Turn on graphics mode at boot time with the help
 -of the BIOS, and use this as framebuffer device /dev/fb0, like the m68k
 -(and other) ports do.
-+VESA BIOS Extensions Version 2.0 are required, because we need access to
-+a linear frame buffer. VBE 3.0 is required if you want to use modes with a
-+higher (than the standard 60 Hz) refresh rate.
- 
+-
 -This means we decide at boot time whenever we want to run in text or
 -graphics mode.  Switching mode later on (in protected mode) is
 -impossible; BIOS calls work in real mode only.  VESA BIOS Extensions
 -Version 2.0 are required, because we need a linear frame buffer.
++VESA BIOS Extensions Version 2.0 are required, because we need access to
++a linear frame buffer. VBE 3.0 is required if you want to use modes with a
++higher (than the standard 60 Hz) refresh rate.
++
 +The VESA framebuffer driver comes in two flavors - the standard 'vesafb'
 +and 'vesafb-tng'. Vesafb-tng is available only on 32-bit x86 due to the
 +technology it uses (vm86). Vesafb-tng has more features than vesafb
@@ -36,14 +37,19 @@ index ee277dd..93d6e6e 100644
  
 -Switching modes is done using the vga=... boot parameter.  Read
 -Documentation/svga.txt for details.
+-
+-You should compile in both vgacon (for text mode) and vesafb (for
+-graphics mode). Which of them takes over the console depends on
+-whenever the specified mode is text or graphics.
+-
+-The graphic modes are NOT in the list which you get if you boot with
+-vga=ask and hit return. The mode you wish to use is derived from the
+-VESA mode number. Here are those VESA mode numbers:
 +If you are running a 32-bit x86 system and you decide to use vesafb-tng,
 +you can either compile the driver into the kernel or use it as a module.
 +The graphics mode you want to use is in both cases specified using the
 +standard modedb format.
- 
--You should compile in both vgacon (for text mode) and vesafb (for
--graphics mode). Which of them takes over the console depends on
--whenever the specified mode is text or graphics.
++
 +If your system doesn't support vm86 calls, things get a little more tricky.
 +Since on such systems you can't do BIOS calls from protected mode in which
 +kernel runs, you have to decide at boot time whenever you want to run in text
@@ -51,10 +57,7 @@ index ee277dd..93d6e6e 100644
 +is done using the vga=... boot parameter.  Read Documentation/svga.txt for
 +details. Below is a more detailed description of what to do on systems using
 +the standard vesafb driver.
- 
--The graphic modes are NOT in the list which you get if you boot with
--vga=ask and hit return. The mode you wish to use is derived from the
--VESA mode number. Here are those VESA mode numbers:
++
 +You should compile in both vgacon (for text mode) and vesafb (for graphics
 +mode). Which of them takes over the console depends on whenever the
 +specified mode is text or graphics.
@@ -88,15 +91,16 @@ index ee277dd..93d6e6e 100644
 -32k |  0x310    0x313    0x316    0x319   
 -64k |  0x311    0x314    0x317    0x31A   
 -16M |  0x312    0x315    0x318    0x31B   
-+256 |  0x301    0x303    0x305    0x307
-+32k |  0x310    0x313    0x316    0x319
-+64k |  0x311    0x314    0x317    0x31A
-+16M |  0x312    0x315    0x318    0x31B
- 
+-
 -To enable one of those modes you have to specify "vga=ask" in the
 -lilo.conf file and rerun LILO. Then you can type in the desired
 -mode at the "vga=ask" prompt. For example if you like to use 
 -1024x768x256 colors you have to say "305" at this prompt.
++256 |  0x301    0x303    0x305    0x307
++32k |  0x310    0x313    0x316    0x319
++64k |  0x311    0x314    0x317    0x31A
++16M |  0x312    0x315    0x318    0x31B
++
 +To enable one of those modes you have to specify "vga=ask" in the lilo.conf
 +file and rerun LILO. Then you can type in the desired mode at the "vga=ask"
 +prompt. For example if you like to use 1024x768x256 colors you have to say
@@ -135,16 +139,17 @@ index ee277dd..93d6e6e 100644
 -There is no way to change the vesafb video mode and/or timings after
 -booting linux.  If you are not happy with the 60 Hz refresh rate, you
 -have these options:
+-
+- * configure and load the DOS-Tools for your the graphics board (if
+-   available) and boot linux with loadlin.
+- * use a native driver (matroxfb/atyfb) instead if vesafb.  If none
 +With VBE 3.0 compatible BIOSes and vesafb-tng it is possible to change
 +the refresh rate either at boot time (by specifying the @<rr> part of
 +the mode name) or later, using the fbset utility.
 +
 +If you want to use the default BIOS refresh rate while switching modes
 +on a running system, set pixclock to 0.
- 
-- * configure and load the DOS-Tools for your the graphics board (if
--   available) and boot linux with loadlin.
-- * use a native driver (matroxfb/atyfb) instead if vesafb.  If none
++
 +With VBE 2.0 there is no way to change the mode timings after booting
 +Linux. If you are not happy with the 60 Hz refresh rate, you have
 +the following options:
@@ -215,9 +220,6 @@ index ee277dd..93d6e6e 100644
 -	      2 - write-back
 -	      3 - write-combining
 -	      4 - write-through
--
--	If you see the following in dmesg, choose the type that matches the
--	old one. In this example, use "mtrr:2".
 +The VESA BIOS provides protected mode interface for changing some parameters.
 +vesafb can use it for palette changes and to pan the display. It is turned
 +off by default because it seems not to work with some BIOS versions, but
@@ -262,7 +264,9 @@ index ee277dd..93d6e6e 100644
 +              2 - write-back
 +              3 - write-combining
 +              4 - write-through
-+
+ 
+-	If you see the following in dmesg, choose the type that matches the
+-	old one. In this example, use "mtrr:2".
 +        If you see the following in dmesg, choose the type that matches
 +        the old one. In this example, use "mtrr:2".
  ...
@@ -287,7 +291,8 @@ index ee277dd..93d6e6e 100644
  
 -Have fun!
 +Options accepted only by vesafb-tng:
-+
+ 
+-  Gerd
 +<mode>  The mode you want to set, in the standard modedb format. Refer to
 +        modedb.txt for a detailed description. If you specify a mode that is
 +        not supported by your board's BIOS, vesafb-tng will attempt to set a
@@ -321,7 +326,7 @@ index ee277dd..93d6e6e 100644
 +        and jump straight to the GTF part of the code (normally used only if
 +        everything else failed). This can be useful if you want to get as
 +        much as possible from your graphics board but your BIOS doesn't
-+        support modes with the refresh rates you require. Note that you may 
++        support modes with the refresh rates you require. Note that you may
 +		need to specify the maxhf, maxvf and maxclk parameters if they are not
 +        provided by the EDID block.
 +
@@ -332,8 +337,7 @@ index ee277dd..93d6e6e 100644
 +maxhf:n     Maximum horizontal frequency (in kHz).
 +maxvf:n     Maximum vertical frequency (in Hz).
 +maxclk:n    Maximum pixel clock (in MHz).
- 
--  Gerd
++
 +Have fun!
  
  --
@@ -348,11 +352,11 @@ index ee277dd..93d6e6e 100644
 +Extended documentation for vm86, VBE 3.0 and vesafb-tng by
 +Michal Januszewski <spock@gentoo.org>
 +
-diff --git a/arch/i386/boot/video.S b/arch/i386/boot/video.S
-index 8c2a6fa..3fa2069 100644
---- a/arch/i386/boot/video.S
-+++ b/arch/i386/boot/video.S
-@@ -165,10 +165,12 @@ # This is done by asking the BIOS except
+Index: linux-git/arch/i386/boot/video.S
+===================================================================
+--- linux-git.orig/arch/i386/boot/video.S
++++ linux-git/arch/i386/boot/video.S
+@@ -165,10 +165,12 @@ basret:	ret
  # parameters in the default 80x25 mode -- these are set directly,
  # because some very obscure BIOSes supply insane values.
  mode_params:
@@ -373,7 +377,7 @@ index 8c2a6fa..3fa2069 100644
  # Fetching of VESA frame buffer parameters
  mopar_gr:
  	leaw	modelist+1024, %di
-@@ -283,6 +286,7 @@ # get protected mode interface informati
+@@ -283,6 +286,7 @@ dac_done:
  	movw	%es, %fs:(PARAM_VESAPM_SEG)
  	movw	%di, %fs:(PARAM_VESAPM_OFF)
  no_pm:	ret
@@ -391,7 +395,7 @@ index 8c2a6fa..3fa2069 100644
  	cmpb	$VIDEO_FIRST_VESA>>8, %ah
  	jnc	check_vesa
 -	
-+#endif	
++#endif
 +
  	orb	%ah, %ah
  	jz	setmenu
@@ -412,10 +416,10 @@ index 8c2a6fa..3fa2069 100644
  
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
-diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
-index 17de4c8..5b704b9 100644
---- a/drivers/video/Kconfig
-+++ b/drivers/video/Kconfig
+Index: linux-git/drivers/video/Kconfig
+===================================================================
+--- linux-git.orig/drivers/video/Kconfig
++++ linux-git/drivers/video/Kconfig
 @@ -539,8 +539,22 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
@@ -430,7 +434,7 @@ index 17de4c8..5b704b9 100644
 +	  You will get a boot time penguin logo at no additional cost. Please
 +	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
 +
-+choice 
++choice
 +	prompt "VESA driver type"
 +	depends on FB_VESA
 +	default FB_VESA_STD if X86_64
@@ -459,12 +463,12 @@ index 17de4c8..5b704b9 100644
 +	select FB_CFB_COPYAREA
 +	select FB_CFB_IMAGEBLIT
 +	help
-+	  This is the frame buffer device driver for generic VESA 2.0 
-+	  compliant graphic cards. It is capable of taking advantage of 
++	  This is the frame buffer device driver for generic VESA 2.0
++	  compliant graphic cards. It is capable of taking advantage of
 +	  VBE 3.0 features. With this driver you will be able to adjust
 +	  the refresh rate (VBE 3.0 compliant boards only) and change
 +	  the graphic mode on-the-fly.
-+	  
++
 +	  You will also get a boot time penguin logo at no additional cost. Please
 +	  read <file:Documentation/fb/vesafb.txt>.
 +
@@ -474,7 +478,7 @@ index 17de4c8..5b704b9 100644
 +	string "VESA default mode"
 +	depends on FB_VESA_TNG
 +	default "640x480@60"
-+	help 
++	help
 +	  This option is used to determine the default mode vesafb is
 +	  supposed to switch to in case no mode is provided as a kernel
 +	  command line parameter.
@@ -486,12 +490,12 @@ index 17de4c8..5b704b9 100644
  
  config FB_IMAC
  	bool "Intel-based Macintosh Framebuffer Support"
-diff --git a/drivers/video/Makefile b/drivers/video/Makefile
-index c335e9b..c08f7aa 100644
---- a/drivers/video/Makefile
-+++ b/drivers/video/Makefile
-@@ -96,7 +96,11 @@ obj-$(CONFIG_FB_IMX)              += imx
- obj-$(CONFIG_FB_S3C2410)	  += s3c2410fb.o
+Index: linux-git/drivers/video/Makefile
+===================================================================
+--- linux-git.orig/drivers/video/Makefile
++++ linux-git/drivers/video/Makefile
+@@ -99,7 +99,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
+ obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx4008/
  
  # Platform or fallback drivers go here
 -obj-$(CONFIG_FB_VESA)             += vesafb.o
@@ -503,11 +507,11 @@ index c335e9b..c08f7aa 100644
  obj-$(CONFIG_FB_IMAC)             += imacfb.o
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
-diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
-index 31143af..fa5c062 100644
---- a/drivers/video/fbmem.c
-+++ b/drivers/video/fbmem.c
-@@ -1441,6 +1441,7 @@ fbmem_init(void)
+Index: linux-git/drivers/video/fbmem.c
+===================================================================
+--- linux-git.orig/drivers/video/fbmem.c
++++ linux-git/drivers/video/fbmem.c
+@@ -1435,6 +1435,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -515,10 +519,10 @@ index 31143af..fa5c062 100644
  	return 0;
  }
  
-diff --git a/drivers/video/modedb.c b/drivers/video/modedb.c
-index ff54546..3e30110 100644
---- a/drivers/video/modedb.c
-+++ b/drivers/video/modedb.c
+Index: linux-git/drivers/video/modedb.c
+===================================================================
+--- linux-git.orig/drivers/video/modedb.c
++++ linux-git/drivers/video/modedb.c
 @@ -675,6 +675,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
@@ -532,11 +536,10 @@ index ff54546..3e30110 100644
  EXPORT_SYMBOL(fb_videomode_to_modelist);
  EXPORT_SYMBOL(fb_find_mode);
 +EXPORT_SYMBOL(fb_destroy_modelist);
-diff --git a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
-new file mode 100644
-index 0000000..a2ac183
+Index: linux-git/drivers/video/vesafb-thread.c
+===================================================================
 --- /dev/null
-+++ b/drivers/video/vesafb-thread.c
++++ linux-git/drivers/video/vesafb-thread.c
 @@ -0,0 +1,727 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
@@ -1022,7 +1025,7 @@ index 0000000..a2ac183
 +				      PROT_READ | PROT_EXEC | PROT_WRITE, 0);
 +	ret += vesafb_remap_pfn_range(IVTBDA_SIZE, REAL_MEM_SIZE, 0,
 +				      PROT_READ | PROT_EXEC | PROT_WRITE, 1);
-+	ret += vesafb_remap_pfn_range(0x9f000, 0x100000, 
++	ret += vesafb_remap_pfn_range(0x9f000, 0x100000,
 +				      0x9f000 >> PAGE_SHIFT,
 +				      PROT_READ | PROT_EXEC | PROT_WRITE, 0);
 +	if (ret)
@@ -1210,7 +1213,7 @@ index 0000000..a2ac183
 +thr_end:
 +	down(&vesafb_task_list_sem);
 +	complete(&vesafb_th_completion);
-+	goto out;	
++	goto out;
 +}
 +
 +int vesafb_queue_task(struct vesafb_task *tsk)
@@ -1265,11 +1268,10 @@ index 0000000..a2ac183
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Michal Januszewski");
 +
-diff --git a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
-new file mode 100644
-index 0000000..0105a86
+Index: linux-git/drivers/video/vesafb-tng.c
+===================================================================
 --- /dev/null
-+++ b/drivers/video/vesafb-tng.c
++++ linux-git/drivers/video/vesafb-tng.c
 @@ -0,0 +1,1598 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
@@ -1856,9 +1858,9 @@ index 0000000..0105a86
 +
 +		if (vesafb_queue_task(tsk))
 +			goto out;
-+	
++
 +		vesafb_wait_for_task(tsk);
-+		
++
 +		if ((tsk->regs.eax & 0xffff) != 0x004f) {
 +			printk(KERN_WARNING "vesafb: VBE state buffer size "
 +				"cannot be determined (eax: 0x%lx)\n",
@@ -1868,7 +1870,7 @@ index 0000000..0105a86
 +
 +		par->vbe_state_size = 64 * (tsk->regs.ebx & 0xffff);
 +		par->vbe_state = kzalloc(par->vbe_state_size, GFP_KERNEL);
-+		if (!par->vbe_state) 
++		if (!par->vbe_state)
 +			goto out;
 +
 +		vesafb_reset_task(tsk);
@@ -1910,7 +1912,7 @@ index 0000000..0105a86
 +
 +	if (!cnt)
 +		return -EINVAL;
-+	
++
 +	if (cnt == 1 && par->vbe_state && par->vbe_state_size) {
 +		vesafb_create_task(tsk);
 +		if (!tsk)
@@ -1922,7 +1924,7 @@ index 0000000..0105a86
 +
 +		if (vesafb_queue_task(tsk))
 +			goto out;
-+	
++
 +		vesafb_wait_for_task(tsk);
 +
 +		vesafb_reset_task(tsk);
@@ -1935,7 +1937,7 @@ index 0000000..0105a86
 +
 +		if (vesafb_queue_task(tsk))
 +			goto out;
-+	
++
 +		vesafb_wait_for_task(tsk);
 +
 +		if ((tsk->regs.eax & 0xffff) != 0x004f)
@@ -1975,7 +1977,7 @@ index 0000000..0105a86
 +};
 +
 +static struct platform_device *vesafb_device;
-+ 
++
 +#ifndef MODULE
 +int __init vesafb_setup(char *options)
 +{
@@ -2486,16 +2488,16 @@ index 0000000..0105a86
 +		if (refresh_specified) {
 +			fb_var_to_videomode(&tmode, &info->var);
 +			tmode.refresh = refresh;
-+			fbmode = fb_find_nearest_mode(&tmode, 
++			fbmode = fb_find_nearest_mode(&tmode,
 +						      &info->modelist);
 +		} else
-+			fbmode = fb_find_best_mode(&info->var, 
++			fbmode = fb_find_best_mode(&info->var,
 +						   &info->modelist);
 +
 +		if (fbmode->xres == info->var.xres &&
 +		    fbmode->yres == info->var.yres &&
 +		    !(fbmode->vmode & (FB_VMODE_INTERLACED | FB_VMODE_DOUBLE))
-+		    && (!refresh_specified || 
++		    && (!refresh_specified ||
 +		    abs(refresh - fbmode->refresh) <= 5)) {
 +			fb_videomode_to_var(&info->var, fbmode);
 +			return modeid;
@@ -2869,11 +2871,11 @@ index 0000000..0105a86
 +MODULE_AUTHOR("Michal Januszewski");
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphics boards");
 +
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 821f048..aff4275 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1210,6 +1210,8 @@ extern void mmput(struct mm_struct *);
+Index: linux-git/include/linux/sched.h
+===================================================================
+--- linux-git.orig/include/linux/sched.h
++++ linux-git/include/linux/sched.h
+@@ -1230,6 +1230,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2882,11 +2884,10 @@ index 821f048..aff4275 100644
  
  extern int  copy_thread(int, unsigned long, unsigned long, unsigned long, struct task_struct *, struct pt_regs *);
  extern void flush_thread(void);
-diff --git a/include/video/vesa.h b/include/video/vesa.h
-new file mode 100644
-index 0000000..bb5abcf
+Index: linux-git/include/video/vesa.h
+===================================================================
 --- /dev/null
-+++ b/include/video/vesa.h
++++ linux-git/include/video/vesa.h
 @@ -0,0 +1,150 @@
 +#if 0
 +#define DPRINTK(fmt, args...)	printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , \
@@ -3032,17 +3033,17 @@ index 0000000..bb5abcf
 +	u8 *vbe_state;
 +	int vbe_state_size;
 +	atomic_t ref_count;
-+	
++
 +	u32 mem_total;
 +	int mode_idx;
 +	struct vesafb_crtc_ib crtc;
 +};
 +
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 628198a..f410752 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -97,6 +97,7 @@ kmem_cache_t *fs_cachep;
+Index: linux-git/kernel/fork.c
+===================================================================
+--- linux-git.orig/kernel/fork.c
++++ linux-git/kernel/fork.c
+@@ -96,6 +96,7 @@ kmem_cache_t *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
  kmem_cache_t *vm_area_cachep;
@@ -3050,7 +3051,7 @@ index 628198a..f410752 100644
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -386,6 +387,40 @@ void mmput(struct mm_struct *mm)
+@@ -388,6 +389,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
@@ -3069,7 +3070,7 @@ index 628198a..f410752 100644
 +		goto fail_nocontext;
 +
 +	task_lock(tsk);
-+	tsk->flags |= PF_BORROWED_MM;	
++	tsk->flags |= PF_BORROWED_MM;
 +	active_mm = tsk->active_mm;
 +	current->mm = mm;
 +	current->active_mm = mm;
@@ -3079,7 +3080,7 @@ index 628198a..f410752 100644
 +	/* Drop the previous active_mm */
 +	mmdrop(active_mm);
 +	return 0;
-+	
++
 +fail_nocontext:
 +	mmdrop(mm);
 +fail_nomem:
@@ -3091,10 +3092,10 @@ index 628198a..f410752 100644
   * get_task_mm - acquire a reference to the task's mm
   *
   * Returns %NULL if the task has no mm.  Checks PF_BORROWED_MM (meaning
-diff --git a/mm/memory.c b/mm/memory.c
-index 247b5c3..c952bc7 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
+Index: linux-git/mm/memory.c
+===================================================================
+--- linux-git.orig/mm/memory.c
++++ linux-git/mm/memory.c
 @@ -1174,6 +1174,7 @@ int zeromap_page_range(struct vm_area_st
  	} while (pgd++, addr = next, addr != end);
  	return err;
@@ -3103,10 +3104,10 @@ index 247b5c3..c952bc7 100644
  
  pte_t * fastcall get_locked_pte(struct mm_struct *mm, unsigned long addr, spinlock_t **ptl)
  {
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 6446c61..3d0c271 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
+Index: linux-git/mm/mmap.c
+===================================================================
+--- linux-git.orig/mm/mmap.c
++++ linux-git/mm/mmap.c
 @@ -2004,6 +2004,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;

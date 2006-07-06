@@ -39,7 +39,7 @@ Index: linux-git/arch/alpha/kernel/traps.c
 ===================================================================
 --- linux-git.orig/arch/alpha/kernel/traps.c
 +++ linux-git/arch/alpha/kernel/traps.c
-@@ -15,6 +15,7 @@
+@@ -14,6 +14,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
  #include <linux/module.h>
@@ -47,7 +47,7 @@ Index: linux-git/arch/alpha/kernel/traps.c
  #include <linux/init.h>
  #include <linux/kallsyms.h>
  
-@@ -103,6 +104,38 @@ static char * ireg_name[] = {"v0", "t0",
+@@ -102,6 +103,38 @@ static char * ireg_name[] = {"v0", "t0",
  			   "t10", "t11", "ra", "pv", "at", "gp", "sp", "zero"};
  #endif
  
@@ -86,7 +86,7 @@ Index: linux-git/arch/alpha/kernel/traps.c
  static void
  dik_show_code(unsigned int *pc)
  {
-@@ -780,7 +813,11 @@ do_entUnaUser(void __user * va, unsigned
+@@ -779,7 +812,11 @@ do_entUnaUser(void __user * va, unsigned
  	/* Check the UAC bits to decide what the user wants us to do
  	   with the unaliged access.  */
  
@@ -98,7 +98,7 @@ Index: linux-git/arch/alpha/kernel/traps.c
  		if (cnt >= 5 && jiffies - last_time > 5*HZ) {
  			cnt = 0;
  		}
-@@ -791,10 +828,18 @@ do_entUnaUser(void __user * va, unsigned
+@@ -790,10 +827,18 @@ do_entUnaUser(void __user * va, unsigned
  		}
  		last_time = jiffies;
  	}
@@ -117,7 +117,7 @@ Index: linux-git/arch/alpha/kernel/traps.c
  		return;
  
  	/* Don't bother reading ds in the access check since we already
-@@ -1089,3 +1134,5 @@ trap_init(void)
+@@ -1088,3 +1133,5 @@ trap_init(void)
  	wrent(entSys, 5);
  	wrent(entDbg, 6);
  }
@@ -127,17 +127,17 @@ Index: linux-git/include/linux/sysctl.h
 ===================================================================
 --- linux-git.orig/include/linux/sysctl.h
 +++ linux-git/include/linux/sysctl.h
-@@ -149,6 +149,9 @@ enum
- 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
- 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
+@@ -151,6 +151,9 @@ enum
+ 	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
+ 	KERN_MAX_LOCK_DEPTH=74,
+ 	KERN_FBSPLASH=75,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=74,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=76,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
  
-@@ -233,6 +236,17 @@ enum
+@@ -238,6 +241,17 @@ enum
  	PTY_NR=2
  };
  
@@ -159,7 +159,7 @@ Index: linux-git/kernel/sysctl.c
 ===================================================================
 --- linux-git.orig/kernel/sysctl.c
 +++ linux-git/kernel/sysctl.c
-@@ -160,6 +160,9 @@ extern ctl_table inotify_table[];
+@@ -164,6 +164,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -169,7 +169,7 @@ Index: linux-git/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -228,7 +231,14 @@ static ctl_table root_table[] = {
+@@ -226,7 +229,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
