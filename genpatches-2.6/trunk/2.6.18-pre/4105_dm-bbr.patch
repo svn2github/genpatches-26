@@ -35,7 +35,7 @@ Index: linux-git/drivers/md/dm-bbr.c
 ===================================================================
 --- /dev/null
 +++ linux-git/drivers/md/dm-bbr.c
-@@ -0,0 +1,1003 @@
+@@ -0,0 +1,1004 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
 + *
@@ -78,6 +78,7 @@ Index: linux-git/drivers/md/dm-bbr.c
 +#include "dm-bbr.h"
 +#include "dm-io.h"
 +
++#define DM_MSG_PREFIX "bbr"
 +#define SECTOR_SIZE (1 << SECTOR_SHIFT)
 +
 +static struct workqueue_struct *dm_bbr_wq = NULL;

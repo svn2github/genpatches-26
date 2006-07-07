@@ -102,7 +102,7 @@ Index: linux-git/fs/squashfs/inode.c
 ===================================================================
 --- /dev/null
 +++ linux-git/fs/squashfs/inode.c
-@@ -0,0 +1,2127 @@
+@@ -0,0 +1,2128 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -165,8 +165,9 @@ Index: linux-git/fs/squashfs/inode.c
 +static long long read_blocklist(struct inode *inode, int index,
 +				int readahead_blks, char *block_list,
 +				unsigned short **block_p, unsigned int *bsize);
-+static struct super_block *squashfs_get_sb(struct file_system_type *, int,
-+				const char *, void *);
++static int squashfs_get_sb(struct file_system_type *fs_type, int flags,
++				const char *dev_name, void *data,
++				struct vfsmount *mnt);
 +
 +
 +static z_stream stream;
@@ -2135,10 +2136,10 @@ Index: linux-git/fs/squashfs/inode.c
 +}
 +
 +
-+static struct super_block *squashfs_get_sb(struct file_system_type *fs_type,
-+				int flags, const char *dev_name, void *data)
++static int squashfs_get_sb(struct file_system_type *fs_type,
++				int flags, const char *dev_name, void *data, struct vfsmount *mnt)
 +{
-+	return get_sb_bdev(fs_type, flags, dev_name, data, squashfs_fill_super);
++	return get_sb_bdev(fs_type, flags, dev_name, data, squashfs_fill_super, mnt);
 +}
 +
 +
