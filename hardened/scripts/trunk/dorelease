@@ -158,7 +158,7 @@ if [[ ${webrelease} -gt 0 ]]; then
 	to ${webpath}/{broken-out,releases}
 6.	Send an announcement email to ${announce_mailto}
 
-To continue, Hit enter."
+To continue, Hit enter.
 EOF
 fi
 read
