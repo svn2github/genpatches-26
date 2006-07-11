@@ -1,0 +1,83 @@
+Index: linux-2.6.17/grsecurity/Kconfig
+===================================================================
+--- linux-2.6.17.orig/grsecurity/Kconfig
++++ linux-2.6.17/grsecurity/Kconfig
+@@ -575,7 +575,8 @@ config GRKERNSEC_RESLOG
+ 	  be logged with the resource name, the requested size, and the current
+ 	  limit.  It is highly recommended that you say Y here.  If the sysctl
+ 	  option is enabled, a sysctl option with name "resource_logging" is
+-	  created.  If the RBAC system is enabled, the sysctl value is ignored.
++	  created.  If the RBAC system is enabled, the sysctl value is ignored
++	  and this option is always enabled.
+ 
+ config GRKERNSEC_CHROOT_EXECLOG
+ 	bool "Log execs within chroot"
+Index: linux-2.6.17/grsecurity/gracl_res.c
+===================================================================
+--- linux-2.6.17.orig/grsecurity/gracl_res.c
++++ linux-2.6.17/grsecurity/gracl_res.c
+@@ -38,7 +38,8 @@ gr_log_resource(const struct task_struct
+ 	if (unlikely(((gt && wanted > task->signal->rlim[res].rlim_cur) ||
+ 		      (!gt && wanted >= task->signal->rlim[res].rlim_cur)) &&
+ 		     task->signal->rlim[res].rlim_cur != RLIM_INFINITY))
+-		gr_log_res_ulong2_str(GR_DONT_AUDIT, GR_RESOURCE_MSG, task, wanted, restab_log[res], task->signal->rlim[res].rlim_cur);
++		if (gr_acl_is_enabled() || grsec_resource_logging)
++			gr_log_res_ulong2_str(GR_DONT_AUDIT, GR_RESOURCE_MSG, task, wanted, restab_log[res], task->signal->rlim[res].rlim_cur);
+ 	preempt_enable_no_resched();
+ 
+ 	return;
+Index: linux-2.6.17/grsecurity/grsec_init.c
+===================================================================
+--- linux-2.6.17.orig/grsecurity/grsec_init.c
++++ linux-2.6.17/grsecurity/grsec_init.c
+@@ -48,6 +48,7 @@ int grsec_enable_socket_server;
+ int grsec_socket_server_gid;
+ int grsec_resource_logging;
+ int grsec_lock;
++int grsec_resource_logging;
+ 
+ spinlock_t grsec_alert_lock = SPIN_LOCK_UNLOCKED;
+ unsigned long grsec_alert_wtime = 0;
+@@ -166,6 +167,9 @@ grsecurity_init(void)
+ #ifdef CONFIG_GRKERNSEC_RESLOG
+ 	grsec_resource_logging = 1;
+ #endif
++#ifdef CONFIG_GRKERNSEC_RELOG
++	grsec_resource_logging = 1;
++#endif
+ #ifdef CONFIG_GRKERNSEC_CHROOT_FINDTASK
+ 	grsec_enable_chroot_findtask = 1;
+ #endif
+Index: linux-2.6.17/grsecurity/grsec_sysctl.c
+===================================================================
+--- linux-2.6.17.orig/grsecurity/grsec_sysctl.c
++++ linux-2.6.17/grsecurity/grsec_sysctl.c
+@@ -111,6 +111,16 @@ ctl_table grsecurity_table[] = {
+ 		.proc_handler	= &proc_dointvec,
+ 	},
+ #endif
++#ifdef CONFIG_GRKERNSEC_RESLOG
++	{
++		.ctl_name	= GS_RESLOG,
++		.procname	= "resource_logging",
++		.data		= &grsec_resource_logging,
++		.maxlen		= sizeof(int),
++		.mode		= 0600,
++		.proc_handler	= &proc_dointvec,
++	},
++#endif
+ #ifdef CONFIG_GRKERNSEC_CHROOT_SHMAT
+ 	{
+ 		.ctl_name	= GS_CHROOT_SHMAT,
+Index: linux-2.6.17/include/linux/grinternal.h
+===================================================================
+--- linux-2.6.17.orig/include/linux/grinternal.h
++++ linux-2.6.17/include/linux/grinternal.h
+@@ -72,6 +72,7 @@ extern int grsec_enable_mount;
+ extern int grsec_enable_chdir;
+ extern int grsec_resource_logging;
+ extern int grsec_lock;
++extern int grsec_resource_logging;
+ 
+ extern struct task_struct *child_reaper;
+ 
