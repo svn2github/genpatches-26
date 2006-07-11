@@ -1,8 +1,8 @@
-Index: linux-git/arch/alpha/Kconfig
+Index: linux-2.6.17/arch/alpha/Kconfig
 ===================================================================
---- linux-git.orig/arch/alpha/Kconfig
-+++ linux-git/arch/alpha/Kconfig
-@@ -577,6 +577,32 @@ config VERBOSE_MCHECK_ON
+--- linux-2.6.17.orig/arch/alpha/Kconfig
++++ linux-2.6.17/arch/alpha/Kconfig
+@@ -590,6 +590,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -35,10 +35,10 @@ Index: linux-git/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux-git/arch/alpha/kernel/traps.c
+Index: linux-2.6.17/arch/alpha/kernel/traps.c
 ===================================================================
---- linux-git.orig/arch/alpha/kernel/traps.c
-+++ linux-git/arch/alpha/kernel/traps.c
+--- linux-2.6.17.orig/arch/alpha/kernel/traps.c
++++ linux-2.6.17/arch/alpha/kernel/traps.c
 @@ -15,6 +15,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -123,11 +123,11 @@ Index: linux-git/arch/alpha/kernel/traps.c
  }
 +
 +__initcall(init_uac_sysctl);
-Index: linux-git/include/linux/sysctl.h
+Index: linux-2.6.17/include/linux/sysctl.h
 ===================================================================
---- linux-git.orig/include/linux/sysctl.h	2006-03-30 10:01:22.000000000 +0100
-+++ linux-git/include/linux/sysctl.h	2006-03-30 10:03:19.000000000 +0100
-@@ -148,6 +148,9 @@
+--- linux-2.6.17.orig/include/linux/sysctl.h
++++ linux-2.6.17/include/linux/sysctl.h
+@@ -148,6 +148,9 @@ enum
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
@@ -137,7 +137,7 @@ Index: linux-git/include/linux/sysctl.h
  #ifdef CONFIG_GRKERNSEC
  	KERN_GRSECURITY=98,	/* grsecurity */
  #endif
-@@ -243,6 +246,17 @@
+@@ -245,6 +248,17 @@ enum
  	PTY_NR=2
  };
  
@@ -155,21 +155,21 @@ Index: linux-git/include/linux/sysctl.h
  /* /proc/sys/bus/isa */
  enum
  {
-Index: linux-git/kernel/sysctl.c
+Index: linux-2.6.17/kernel/sysctl.c
 ===================================================================
---- linux-git.orig/kernel/sysctl.c
-+++ linux-git/kernel/sysctl.c
-@@ -160,6 +160,9 @@ extern ctl_table inotify_table[];
- #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
- int sysctl_legacy_va_layout;
+--- linux-2.6.17.orig/kernel/sysctl.c
++++ linux-2.6.17/kernel/sysctl.c
+@@ -161,6 +161,9 @@ extern ctl_table pty_table[];
+ #ifdef CONFIG_INOTIFY
+ extern ctl_table inotify_table[];
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +extern ctl_table uac_table[];
 +#endif
  
- /* /proc declarations: */
- 
-@@ -228,7 +231,14 @@ static ctl_table root_table[] = {
+ #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
+ int sysctl_legacy_va_layout;
+@@ -249,7 +252,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},

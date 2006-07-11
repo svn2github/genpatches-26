@@ -1,7 +1,40 @@
-Index: linux-git/drivers/md/dm-bbr.c
+Index: linux-2.6.17/drivers/md/Kconfig
+===================================================================
+--- linux-2.6.17.orig/drivers/md/Kconfig
++++ linux-2.6.17/drivers/md/Kconfig
+@@ -263,5 +263,16 @@ config DM_MULTIPATH_EMC
+ 	---help---
+ 	  Multipath support for EMC CX/AX series hardware.
+ 
++config BLK_DEV_DM_BBR
++	tristate "Bad Block Relocation Device Target (EXPERIMENTAL)"
++	depends on BLK_DEV_DM && EXPERIMENTAL
++	---help---
++	  Support for devices with software-based bad-block-relocation.
++
++	  To compile this as a module, choose M here: the module will be
++	  called dm-bbr.
++
++	  If unsure, say N.
++
+ endmenu
+ 
+Index: linux-2.6.17/drivers/md/Makefile
+===================================================================
+--- linux-2.6.17.orig/drivers/md/Makefile
++++ linux-2.6.17/drivers/md/Makefile
+@@ -37,6 +37,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
++obj-$(CONFIG_BLK_DEV_DM_BBR)	+= dm-bbr.o
+ 
+ quiet_cmd_unroll = UNROLL  $@
+       cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
+Index: linux-2.6.17/drivers/md/dm-bbr.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/md/dm-bbr.c
++++ linux-2.6.17/drivers/md/dm-bbr.c
 @@ -0,0 +1,1003 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1006,10 +1039,10 @@ Index: linux-git/drivers/md/dm-bbr.c
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-Index: linux-git/drivers/md/dm-bbr.h
+Index: linux-2.6.17/drivers/md/dm-bbr.h
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/md/dm-bbr.h
++++ linux-2.6.17/drivers/md/dm-bbr.h
 @@ -0,0 +1,125 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1136,36 +1169,3 @@ Index: linux-git/drivers/md/dm-bbr.h
 +	atomic_t			in_use_replacement_blks;
 +};
 +
-Index: linux-git/drivers/md/Kconfig
-===================================================================
---- linux-git.orig/drivers/md/Kconfig
-+++ linux-git/drivers/md/Kconfig
-@@ -236,5 +236,16 @@ config DM_MULTIPATH_EMC
- 	---help---
- 	  Multipath support for EMC CX/AX series hardware.
- 
-+config BLK_DEV_DM_BBR
-+	tristate "Bad Block Relocation Device Target (EXPERIMENTAL)"
-+	depends on BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	  Support for devices with software-based bad-block-relocation.
-+
-+	  To compile this as a module, choose M here: the module will be
-+	  called dm-bbr.
-+
-+	  If unsure, say N.
-+
- endmenu
- 
-Index: linux-git/drivers/md/Makefile
-===================================================================
---- linux-git.orig/drivers/md/Makefile
-+++ linux-git/drivers/md/Makefile
-@@ -37,6 +37,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
- obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
- obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
-+obj-$(CONFIG_BLK_DEV_DM_BBR)	+= dm-bbr.o
- 
- quiet_cmd_unroll = UNROLL  $@
-       cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \

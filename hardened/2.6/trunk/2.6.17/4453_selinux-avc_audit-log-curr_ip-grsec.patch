@@ -9,10 +9,11 @@ Signed-off-by: Lorenzo Hernandez Garcia-Hierro <lorenzo@gnu.org>
  linux-2.6.11-lorenzo/security/selinux/avc.c |    6 ++++++
  1 files changed, 6 insertions(+)
 
-diff -puN security/selinux/avc.c~selinux-avc_audit-log-curr_ip-grsec security/selinux/avc.c
---- linux-2.6.11/security/selinux/avc.c~selinux-avc_audit-log-curr_ip-grsec	2005-03-09 23:15:31.828358136 +0100
-+++ linux-2.6.11-lorenzo/security/selinux/avc.c	2005-03-09 23:16:28.555734264 +0100
-@@ -205,6 +205,12 @@ void avc_dump_query(struct audit_buffer 
+Index: linux-2.6.17/security/selinux/avc.c
+===================================================================
+--- linux-2.6.17.orig/security/selinux/avc.c
++++ linux-2.6.17/security/selinux/avc.c
+@@ -203,6 +203,12 @@ static void avc_dump_query(struct audit_
  	char *scontext;
  	u32 scontext_len;
  
@@ -25,4 +26,3 @@ diff -puN security/selinux/avc.c~selinux-avc_audit-log-curr_ip-grsec security/se
   	rc = security_sid_to_context(ssid, &scontext, &scontext_len);
  	if (rc)
  		audit_log_format(ab, "ssid=%d", ssid);
-_
