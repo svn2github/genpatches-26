@@ -138,7 +138,7 @@ Patch:	1500_suid-dumpable.patch
 From:	http://bugs.gentoo.org/139475
 Desc:	coredump security fix
 
-Patch:	1500_suid-dumpable.patch
+Patch:	1505_procfs-dumpable-race.patch
 From:	http://bugs.gentoo.org/140444
 Desc:	procfs security fix. Updated version of the patch in 2.6.17.5
 
