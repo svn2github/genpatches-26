@@ -130,6 +130,10 @@ Patch:	1022_linux-2.6.16.23.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1023_linux-2.6.16.25.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1500_suid-dumpable.patch
 From:	http://bugs.gentoo.org/139475
 Desc:	coredump security fix
