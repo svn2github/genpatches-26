@@ -1,0 +1,31 @@
+From: David S. Miller <davem@sunset.davemloft.net>
+Date: Fri, 17 Mar 2006 21:23:56 +0000 (-0800)
+Subject: [SPARC64] bbc_i2c: Fix cpu check and add missing module license.
+X-Git-Tag: v2.6.17-rc1
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=b5e7ae5dd034c2c0ed75c31fca04a805097817bc
+
+[SPARC64] bbc_i2c: Fix cpu check and add missing module license.
+
+Should allow cheetah_plus cpu types and don't taint
+the kernel.
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/drivers/sbus/char/bbc_i2c.c
++++ b/drivers/sbus/char/bbc_i2c.c
+@@ -440,7 +440,8 @@ static int __init bbc_i2c_init(void)
+ 	struct linux_ebus_device *edev = NULL;
+ 	int err, index = 0;
+ 
+-	if (tlb_type != cheetah || !bbc_present())
++	if ((tlb_type != cheetah && tlb_type != cheetah_plus) ||
++	    !bbc_present())
+ 		return -ENODEV;
+ 
+ 	for_each_ebus(ebus) {
+@@ -486,3 +487,4 @@ static void bbc_i2c_cleanup(void)
+ 
+ module_init(bbc_i2c_init);
+ module_exit(bbc_i2c_cleanup);
++MODULE_LICENSE("GPL");
