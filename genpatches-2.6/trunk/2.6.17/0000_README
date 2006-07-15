@@ -50,6 +50,10 @@ Patch:	1002_linux-2.6.17.3.patch
 From:	www.kernel.org
 Desc:	sctp security fix
 
+Patch:	1003_linux-2.6.17.5.patch
+From:	www.kernel.org
+Desc:	proc security fix
+
 Patch:	1500_suid-dumpable.patch
 From:	http://bugs.gentoo.org/139475
 Desc:	coredump security fix
