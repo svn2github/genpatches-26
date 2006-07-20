@@ -50,13 +50,17 @@ Patch:	1002_linux-2.6.17.3.patch
 From:	www.kernel.org
 Desc:	sctp security fix
 
-Patch:	1500_suid-dumpable.patch
-From:	http://bugs.gentoo.org/139475
+Patch:	1003_linux-2.6.17.4.patch
+From:	www.kernel.org
 Desc:	coredump security fix
 
-Patch:	1505_procfs-dumpable-race.patch
-From:	http://bugs.gentoo.org/140444
-Desc:	procfs security fix. Updated version of the patch in 2.6.17.5
+Patch:	1004_linux-2.6.17.5.patch
+From:	www.kernel.org
+Desc:	procfs race security fix
+
+Patch:	1005_linux-2.6.17.6.patch
+From:	www.kernel.org
+Desc:	improved procfs race security fix
 
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
