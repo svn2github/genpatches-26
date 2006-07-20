@@ -114,6 +114,10 @@ Patch:	4025_r8169-new-id.patch
 From:	2.6.18 tree
 Desc:	Add support for new r8169 device
 
+Patch:	4030_tg3-5787.patch
+From:	2.6.18 tree
+Desc:	Add support for Broadcom 5787 ethernet
+
 Patch:	4100_vt8251-sata.patch
 From:	2.6.18 tree (backport by dsd@gentoo.org)
 Desc:	Support VT8251 SATA controllers
