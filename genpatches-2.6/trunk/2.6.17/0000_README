@@ -110,6 +110,10 @@ Patch:	4020_asix-88178.patch
 From:	2.6.18 tree
 Desc:	Support USB ASIX 88178 ethernet
 
+Patch:	4025_r8169-new-id.patch
+From:	2.6.18 tree
+Desc:	Add support for new r8169 device
+
 Patch:	4100_vt8251-sata.patch
 From:	2.6.18 tree (backport by dsd@gentoo.org)
 Desc:	Support VT8251 SATA controllers
