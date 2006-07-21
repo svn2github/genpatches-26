@@ -1698,7 +1698,7 @@ Index: linux-git/MAINTAINERS
 ===================================================================
 --- linux-git.orig/MAINTAINERS
 +++ linux-git/MAINTAINERS
-@@ -2672,6 +2672,13 @@ M:	wli@holomorphy.com
+@@ -2696,6 +2696,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1879,26 +1879,23 @@ Index: linux-git/drivers/char/keyboard.c
  		compute_shiftstate();
  		kbd->slockstate = 0;
  		return;
-@@ -1247,10 +1271,17 @@ static void kbd_keycode(unsigned int key
+@@ -1247,8 +1271,15 @@ static void kbd_keycode(unsigned int key
  	}
  
  	type -= 0xf0;
--
--	if (raw_mode && type != KT_SPEC && type != KT_SHIFT)
 +#ifdef CONFIG_SPEAKUP
 +	if (speakup_key(vc, shift_final, keycode, keysym, !down, regs ))
- 		return;
++		return;
 +#elif defined(CONFIG_SPEAKUP_MODULE)
 +	if ( addr_spk_key && (*addr_spk_key)(vc, shift_final,
 +		keycode, keysym, !down, regs) ) return;
 +#endif
  
+-	if (raw_mode && type != KT_SPEC && type != KT_SHIFT)
 +	if (raw_mode && type != KT_SPEC && type != KT_SHIFT )
-+		return;
-+
+ 		return;
+ 
  	if (type == KT_LETTER) {
- 		type = KT_LATIN;
- 		if (vc_kbd_led(kbd, VC_CAPSLOCK)) {
 @@ -1259,13 +1290,29 @@ static void kbd_keycode(unsigned int key
  				keysym = key_map[keycode];
  		}
@@ -11530,16 +11527,14 @@ Index: linux-git/drivers/char/vt.c
  		}
  		want_console = -1;
  	}
-@@ -2155,7 +2166,8 @@ static void console_callback(void *ignor
+@@ -2155,6 +2166,7 @@ static void console_callback(void *ignor
  		do_blank_screen(0);
  		blank_timer_expired = 0;
  	}
--
 +	speakup_con_update(vc_cons[fg_console].d);
-+
+ 
  	release_console_sem();
  }
- 
 @@ -2200,6 +2212,7 @@ static void vt_console_print(struct cons
  		/* printk("vt_console_print: tty %d not allocated ??\n", currcons+1); */
  		goto quit;

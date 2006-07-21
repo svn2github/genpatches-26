@@ -494,7 +494,7 @@ Index: linux-git/drivers/video/Makefile
 ===================================================================
 --- linux-git.orig/drivers/video/Makefile
 +++ linux-git/drivers/video/Makefile
-@@ -99,7 +99,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
+@@ -100,7 +100,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
  obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx4008/
  
  # Platform or fallback drivers go here
@@ -523,7 +523,7 @@ Index: linux-git/drivers/video/modedb.c
 ===================================================================
 --- linux-git.orig/drivers/video/modedb.c
 +++ linux-git/drivers/video/modedb.c
-@@ -675,6 +675,7 @@ void fb_var_to_videomode(struct fb_video
+@@ -674,6 +674,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
  
@@ -531,7 +531,7 @@ Index: linux-git/drivers/video/modedb.c
  	mode->name = NULL;
  	mode->xres = var->xres;
  	mode->yres = var->yres;
-@@ -1026,3 +1027,4 @@ EXPORT_SYMBOL(fb_find_best_mode);
+@@ -1025,3 +1026,4 @@ EXPORT_SYMBOL(fb_find_best_mode);
  EXPORT_SYMBOL(fb_find_nearest_mode);
  EXPORT_SYMBOL(fb_videomode_to_modelist);
  EXPORT_SYMBOL(fb_find_mode);
@@ -2875,7 +2875,7 @@ Index: linux-git/include/linux/sched.h
 ===================================================================
 --- linux-git.orig/include/linux/sched.h
 +++ linux-git/include/linux/sched.h
-@@ -1230,6 +1230,8 @@ extern void mmput(struct mm_struct *);
+@@ -1282,6 +1282,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -3096,7 +3096,7 @@ Index: linux-git/mm/memory.c
 ===================================================================
 --- linux-git.orig/mm/memory.c
 +++ linux-git/mm/memory.c
-@@ -1174,6 +1174,7 @@ int zeromap_page_range(struct vm_area_st
+@@ -1175,6 +1175,7 @@ int zeromap_page_range(struct vm_area_st
  	} while (pgd++, addr = next, addr != end);
  	return err;
  }
