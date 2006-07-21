@@ -1,0 +1,18 @@
+From unknown
+
+Workaround for the Ultra1E onboard HME lockup.
+
+-------------------------------------------------------------------------------
+
+Index: linux-git/drivers/net/sunhme.c
+===================================================================
+--- linux-git.orig/drivers/net/sunhme.c
++++ linux-git/drivers/net/sunhme.c
+@@ -1996,6 +1996,7 @@ static void happy_meal_tx(struct happy_m
+ 	}
+ 	hp->tx_old = elem;
+ 	TXD((">"));
++	udelay(1);
+ 
+ 	if (netif_queue_stopped(dev) &&
+ 	    TX_BUFFS_AVAIL(hp) > (MAX_SKB_FRAGS + 1))

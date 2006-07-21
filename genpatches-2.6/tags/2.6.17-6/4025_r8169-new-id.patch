@@ -1,0 +1,31 @@
+From: Yoichi Yuasa <yoichi_yuasa@tripeaks.co.jp>
+Date: Thu, 25 May 2006 01:24:46 +0000 (+0900)
+Subject: [PATCH] r8169: add new PCI ID
+X-Git-Tag: v2.6.17-rc6
+X-Git-Url: http://kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=de1e938e54deba5b093a3074dfafd0d11afacbe1
+
+[PATCH] r8169: add new PCI ID
+
+Hi,
+
+This patch add new PCI ID for r8169 driver.
+RTL8110SBL has this PCI ID.
+
+Please aply.
+
+Yoichi
+
+Signed-off-by: Yoichi Yuasa <yoichi_yuasa@tripeaks.co.jp>
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+--- a/drivers/net/r8169.c
++++ b/drivers/net/r8169.c
+@@ -184,6 +184,7 @@ static const struct {
+ 
+ static struct pci_device_id rtl8169_pci_tbl[] = {
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8169), },
++	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8129), },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_DLINK,	0x4300), },
+ 	{ PCI_DEVICE(0x16ec,			0x0116), },
+ 	{ PCI_VENDOR_ID_LINKSYS,		0x1032, PCI_ANY_ID, 0x0024, },
