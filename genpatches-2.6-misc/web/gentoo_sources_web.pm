@@ -1,7 +1,7 @@
 # Copyright 2000-2005 Gentoo Foundation; Distributed under the GPL v2
 
 $genpatches_path = '/home/dsd/projects/gentoo/genpatches';
-$subversion_root = 'svn+ssh://dsd@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6';
+$subversion_root = 'svn+ssh://svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6';
 $webscript_path = '/home/dsd/projects/gentoo/genpatches-misc/web';
 $output_path = $webscript_path.'/output';
 
