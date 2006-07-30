@@ -62,6 +62,10 @@ Patch:	1005_linux-2.6.17.6.patch
 From:	www.kernel.org
 Desc:	improved procfs race security fix
 
+Patch:	1006_linux-2.6.17.7.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
@@ -70,69 +74,17 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1800_block-dma-oom.patch
-From:	2.6.17.7 queue
-Desc:	Fix block DMA bug which could lead to OOM condition
-
-Patch:	1900_xfs-corruption.patch
-From:	2.6.17.7 queue
-Desc:	Fix minor XFS corruption
-
-Patch:	2000_ethtool-oops.patch
-From:	2.6.17.7 queue
-Desc:	Fix an oops in ethtool
-
-Patch:	2005_netlink-sched-fix.patch
-From:	2.6.17.7 queue
-Desc:	Fix invalid dereference in netlink parsing
-
-Patch:	2200_acpi-nsxfeval-flood.patch
-From:	http://bugs.gentoo.org/131534
-Desc:	Reduce ACPI verbosity on this error condition
-
 Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
-
-Patch:	2305_usbserial-fdti-dos.patch
-From:	2.6.17.7 queue
-Desc:	Fix potential DoS in ftdi_sio driver
 
 Patch:	2400_velocity-link-detection.patch
 From:	http://bugs.gentoo.org/137702
 Desc:	Fix link detection on VIA velocity network adapters
 
-Patch:	2500_via-irq-quirk-revert.patch
-From:	http://bugs.gentoo.org/138036
-Desc:	Revert recent VIA IRQ quirk change
-
 Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
-
-Patch:	2705_alsa-pcspkr-module.patch
-From:	http://bugs.gentoo.org/138870
-Desc:	Fix pcspkr when built as a module
-
-Patch:	2710_alsa-hda-remove-race.patch
-From:	2.6.17.7 queue
-Desc:	Fix hda-intel remove race
-
-Patch:	2900_powernow-k7-smp.patch
-From:	2.6.17.7 queue
-Desc:	Fix powernow-k7 on SMP
-
-Patch:	2905_splice-tee-fixes.patch
-From:	2.6.17.7 queue
-Desc:	Various splice/tee syscall fixes
-
-Patch:	2910_file-memleak.patch
-From:	2.6.17.7 queue
-Desc:	fix file struct memory leak
-
-Patch:	2915_fdset-memleak.patch
-From:	2.6.17.7 queue
-Desc:	fix fdset memory leak
 
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
