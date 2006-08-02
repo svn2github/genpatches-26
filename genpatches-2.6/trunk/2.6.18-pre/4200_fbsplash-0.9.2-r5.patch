@@ -1,8 +1,8 @@
 # Patch generated against a6047eef1c465c38aacfbdab193161b3f0cd144
-Index: linux-git/Documentation/fb/00-INDEX
+Index: linux-2.6.18/Documentation/fb/00-INDEX
 ===================================================================
---- linux-git.orig/Documentation/fb/00-INDEX
-+++ linux-git/Documentation/fb/00-INDEX
+--- linux-2.6.18.orig/Documentation/fb/00-INDEX
++++ linux-2.6.18/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -12,10 +12,10 @@ Index: linux-git/Documentation/fb/00-INDEX
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-Index: linux-git/Documentation/fb/splash.txt
+Index: linux-2.6.18/Documentation/fb/splash.txt
 ===================================================================
 --- /dev/null
-+++ linux-git/Documentation/fb/splash.txt
++++ linux-2.6.18/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -224,10 +224,10 @@ Index: linux-git/Documentation/fb/splash.txt
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 +
-Index: linux-git/drivers/Makefile
+Index: linux-2.6.18/drivers/Makefile
 ===================================================================
---- linux-git.orig/drivers/Makefile
-+++ linux-git/drivers/Makefile
+--- linux-2.6.18.orig/drivers/Makefile
++++ linux-2.6.18/drivers/Makefile
 @@ -8,6 +8,9 @@
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
@@ -249,11 +249,11 @@ Index: linux-git/drivers/Makefile
  obj-$(CONFIG_CONNECTOR)		+= connector/
  
  # i810fb and intelfb depend on char/agp/
-Index: linux-git/drivers/video/Kconfig
+Index: linux-2.6.18/drivers/video/Kconfig
 ===================================================================
---- linux-git.orig/drivers/video/Kconfig
-+++ linux-git/drivers/video/Kconfig
-@@ -857,7 +857,6 @@ config FB_MATROX
+--- linux-2.6.18.orig/drivers/video/Kconfig
++++ linux-2.6.18/drivers/video/Kconfig
+@@ -855,7 +855,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
@@ -261,7 +261,7 @@ Index: linux-git/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1624,5 +1623,15 @@ if FB && SYSFS
+@@ -1616,5 +1615,15 @@ if SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -278,11 +278,11 @@ Index: linux-git/drivers/video/Kconfig
  
 +	  If unsure, say N.
 +endmenu
-Index: linux-git/drivers/video/Makefile
+Index: linux-2.6.18/drivers/video/Makefile
 ===================================================================
---- linux-git.orig/drivers/video/Makefile
-+++ linux-git/drivers/video/Makefile
-@@ -12,6 +12,7 @@ fb-objs                           := $(f
+--- linux-2.6.18.orig/drivers/video/Makefile
++++ linux-2.6.18/drivers/video/Makefile
+@@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
  obj-$(CONFIG_SYSFS)		  += backlight/
@@ -290,10 +290,10 @@ Index: linux-git/drivers/video/Makefile
  
  obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
  obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
-Index: linux-git/drivers/video/cfbsplash.c
+Index: linux-2.6.18/drivers/video/cfbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/cfbsplash.c
++++ linux-2.6.18/drivers/video/cfbsplash.c
 @@ -0,0 +1,472 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
@@ -767,10 +767,10 @@ Index: linux-git/drivers/video/cfbsplash.c
 +	}
 +}
 +
-Index: linux-git/drivers/video/console/bitblit.c
+Index: linux-2.6.18/drivers/video/console/bitblit.c
 ===================================================================
---- linux-git.orig/drivers/video/console/bitblit.c
-+++ linux-git/drivers/video/console/bitblit.c
+--- linux-2.6.18.orig/drivers/video/console/bitblit.c
++++ linux-2.6.18/drivers/video/console/bitblit.c
 @@ -17,6 +17,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
@@ -813,10 +813,10 @@ Index: linux-git/drivers/video/console/bitblit.c
  
  	ops->cursor_reset = 0;
  }
-Index: linux-git/drivers/video/console/fbcon.c
+Index: linux-2.6.18/drivers/video/console/fbcon.c
 ===================================================================
---- linux-git.orig/drivers/video/console/fbcon.c
-+++ linux-git/drivers/video/console/fbcon.c
+--- linux-2.6.18.orig/drivers/video/console/fbcon.c
++++ linux-2.6.18/drivers/video/console/fbcon.c
 @@ -91,6 +91,7 @@
  #endif
  
@@ -1144,10 +1144,10 @@ Index: linux-git/drivers/video/console/fbcon.c
  	fbcon_has_exited = 1;
  }
  
-Index: linux-git/drivers/video/fbcmap.c
+Index: linux-2.6.18/drivers/video/fbcmap.c
 ===================================================================
---- linux-git.orig/drivers/video/fbcmap.c
-+++ linux-git/drivers/video/fbcmap.c
+--- linux-2.6.18.orig/drivers/video/fbcmap.c
++++ linux-2.6.18/drivers/video/fbcmap.c
 @@ -15,6 +15,7 @@
  #include <linux/module.h>
  #include <linux/fb.h>
@@ -1171,10 +1171,10 @@ Index: linux-git/drivers/video/fbcmap.c
  	return rc;
  }
  
-Index: linux-git/drivers/video/fbsplash.c
+Index: linux-2.6.18/drivers/video/fbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/fbsplash.c
++++ linux-2.6.18/drivers/video/fbsplash.c
 @@ -0,0 +1,425 @@
 +/*
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
@@ -1601,10 +1601,10 @@ Index: linux-git/drivers/video/fbsplash.c
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-Index: linux-git/drivers/video/fbsplash.h
+Index: linux-2.6.18/drivers/video/fbsplash.h
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/fbsplash.h
++++ linux-2.6.18/drivers/video/fbsplash.h
 @@ -0,0 +1,78 @@
 +/*
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
@@ -1684,10 +1684,10 @@ Index: linux-git/drivers/video/fbsplash.h
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-Index: linux-git/include/linux/console_splash.h
+Index: linux-2.6.18/include/linux/console_splash.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/linux/console_splash.h
++++ linux-2.6.18/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1702,10 +1702,10 @@ Index: linux-git/include/linux/console_splash.h
 +};
 +
 +#endif
-Index: linux-git/include/linux/console_struct.h
+Index: linux-2.6.18/include/linux/console_struct.h
 ===================================================================
---- linux-git.orig/include/linux/console_struct.h
-+++ linux-git/include/linux/console_struct.h
+--- linux-2.6.18.orig/include/linux/console_struct.h
++++ linux-2.6.18/include/linux/console_struct.h
 @@ -15,6 +15,7 @@
  struct vt_struct;
  
@@ -1723,10 +1723,10 @@ Index: linux-git/include/linux/console_struct.h
  	/* additional information is in vt_kern.h */
  };
  
-Index: linux-git/include/linux/fb.h
+Index: linux-2.6.18/include/linux/fb.h
 ===================================================================
---- linux-git.orig/include/linux/fb.h
-+++ linux-git/include/linux/fb.h
+--- linux-2.6.18.orig/include/linux/fb.h
++++ linux-2.6.18/include/linux/fb.h
 @@ -9,6 +9,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
@@ -1768,10 +1768,10 @@ Index: linux-git/include/linux/fb.h
  	/* From here on everything is device dependent */
  	void *par;	
  };
-Index: linux-git/include/linux/sysctl.h
+Index: linux-2.6.18/include/linux/sysctl.h
 ===================================================================
---- linux-git.orig/include/linux/sysctl.h
-+++ linux-git/include/linux/sysctl.h
+--- linux-2.6.18.orig/include/linux/sysctl.h
++++ linux-2.6.18/include/linux/sysctl.h
 @@ -150,6 +150,7 @@ enum
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
  	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
@@ -1780,10 +1780,10 @@ Index: linux-git/include/linux/sysctl.h
  };
  
  
-Index: linux-git/kernel/sysctl.c
+Index: linux-2.6.18/kernel/sysctl.c
 ===================================================================
---- linux-git.orig/kernel/sysctl.c
-+++ linux-git/kernel/sysctl.c
+--- linux-2.6.18.orig/kernel/sysctl.c
++++ linux-2.6.18/kernel/sysctl.c
 @@ -90,6 +90,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];

@@ -1,7 +1,7 @@
-Index: linux-git/arch/alpha/Kconfig
+Index: linux-2.6.18/arch/alpha/Kconfig
 ===================================================================
---- linux-git.orig/arch/alpha/Kconfig
-+++ linux-git/arch/alpha/Kconfig
+--- linux-2.6.18.orig/arch/alpha/Kconfig
++++ linux-2.6.18/arch/alpha/Kconfig
 @@ -590,6 +590,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
@@ -35,10 +35,10 @@ Index: linux-git/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux-git/arch/alpha/kernel/traps.c
+Index: linux-2.6.18/arch/alpha/kernel/traps.c
 ===================================================================
---- linux-git.orig/arch/alpha/kernel/traps.c
-+++ linux-git/arch/alpha/kernel/traps.c
+--- linux-2.6.18.orig/arch/alpha/kernel/traps.c
++++ linux-2.6.18/arch/alpha/kernel/traps.c
 @@ -14,6 +14,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -123,10 +123,10 @@ Index: linux-git/arch/alpha/kernel/traps.c
  }
 +
 +__initcall(init_uac_sysctl);
-Index: linux-git/include/linux/sysctl.h
+Index: linux-2.6.18/include/linux/sysctl.h
 ===================================================================
---- linux-git.orig/include/linux/sysctl.h
-+++ linux-git/include/linux/sysctl.h
+--- linux-2.6.18.orig/include/linux/sysctl.h
++++ linux-2.6.18/include/linux/sysctl.h
 @@ -151,6 +151,9 @@ enum
  	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
  	KERN_MAX_LOCK_DEPTH=74,
@@ -155,10 +155,10 @@ Index: linux-git/include/linux/sysctl.h
  /* /proc/sys/bus/isa */
  enum
  {
-Index: linux-git/kernel/sysctl.c
+Index: linux-2.6.18/kernel/sysctl.c
 ===================================================================
---- linux-git.orig/kernel/sysctl.c
-+++ linux-git/kernel/sysctl.c
+--- linux-2.6.18.orig/kernel/sysctl.c
++++ linux-2.6.18/kernel/sysctl.c
 @@ -164,6 +164,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
