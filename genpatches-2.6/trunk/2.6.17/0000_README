@@ -78,10 +78,6 @@ Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
 
-Patch:	2400_velocity-link-detection.patch
-From:	http://bugs.gentoo.org/137702
-Desc:	Fix link detection on VIA velocity network adapters
-
 Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
