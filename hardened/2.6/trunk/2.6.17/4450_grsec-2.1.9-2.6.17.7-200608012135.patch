@@ -23762,12 +23762,6 @@ Index: hardened-sources-2.6.17/kernel/time.c
  	return do_sys_settimeofday(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
  }
  
-Index: hardened-sources-2.6.17/localversion-grsec
-===================================================================
---- /dev/null
-+++ hardened-sources-2.6.17/localversion-grsec
-@@ -0,0 +1 @@
-+-grsec
 Index: hardened-sources-2.6.17/mm/filemap.c
 ===================================================================
 --- hardened-sources-2.6.17.orig/mm/filemap.c
