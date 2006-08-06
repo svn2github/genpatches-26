@@ -1,7 +1,7 @@
-Index: linux-2.6.18/Documentation/speakup/DefaultKeyAssignments
+Index: linux-2.6/Documentation/speakup/DefaultKeyAssignments
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/speakup/DefaultKeyAssignments
++++ linux-2.6/Documentation/speakup/DefaultKeyAssignments
 @@ -0,0 +1,46 @@
 +This file is intended to give you an overview of the default keys used
 +by speakup for it's review functions.  You may change them to be
@@ -49,10 +49,10 @@ Index: linux-2.6.18/Documentation/speakup/DefaultKeyAssignments
 +synth until it has caught up with what is being printed on the
 +console.
 +
-Index: linux-2.6.18/Documentation/speakup/INSTALLATION
+Index: linux-2.6/Documentation/speakup/INSTALLATION
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/speakup/INSTALLATION
++++ linux-2.6/Documentation/speakup/INSTALLATION
 @@ -0,0 +1,108 @@
 +This document assumes you have had some experience with kernel
 +compilation and installation.  If you have not, I recommend you get
@@ -162,10 +162,10 @@ Index: linux-2.6.18/Documentation/speakup/INSTALLATION
 +email: kirk@braille.uwo.ca
 +phone: (519) 679-6845 (home)
 +
-Index: linux-2.6.18/Documentation/speakup/README
+Index: linux-2.6/Documentation/speakup/README
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/speakup/README
++++ linux-2.6/Documentation/speakup/README
 @@ -0,0 +1,98 @@
 +Welcome to the speakup project for the Speakup speech package for Linux.
 +
@@ -265,10 +265,10 @@ Index: linux-2.6.18/Documentation/speakup/README
 +
 +  Kirk
 +
-Index: linux-2.6.18/Documentation/speakup/keymap-tutorial
+Index: linux-2.6/Documentation/speakup/keymap-tutorial
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/speakup/keymap-tutorial
++++ linux-2.6/Documentation/speakup/keymap-tutorial
 @@ -0,0 +1,140 @@
 +		       Speakup Keymap Tutorial
 +
@@ -410,10 +410,10 @@ Index: linux-2.6.18/Documentation/speakup/keymap-tutorial
 +SAY_FROM_LEFT 0x0d22
 +SAY_TO_RIGHT 0x0d23
 +
-Index: linux-2.6.18/Documentation/speakup/spkguide.txt
+Index: linux-2.6/Documentation/speakup/spkguide.txt
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/speakup/spkguide.txt
++++ linux-2.6/Documentation/speakup/spkguide.txt
 @@ -0,0 +1,1279 @@
 +
 +The Speakup User's Guide
@@ -1694,11 +1694,11 @@ Index: linux-2.6.18/Documentation/speakup/spkguide.txt
 +to permit their use in free software.
 +
 +The End.
-Index: linux-2.6.18/MAINTAINERS
+Index: linux-2.6/MAINTAINERS
 ===================================================================
---- linux-2.6.18.orig/MAINTAINERS
-+++ linux-2.6.18/MAINTAINERS
-@@ -2709,6 +2709,13 @@ M:	wli@holomorphy.com
+--- linux-2.6.orig/MAINTAINERS
++++ linux-2.6/MAINTAINERS
+@@ -2724,6 +2724,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1712,10 +1712,10 @@ Index: linux-2.6.18/MAINTAINERS
  SPECIALIX IO8+ MULTIPORT SERIAL CARD DRIVER
  P:	Roger Wolff
  M:	R.E.Wolff@BitWizard.nl
-Index: linux-2.6.18/arch/arm/Kconfig
+Index: linux-2.6/arch/arm/Kconfig
 ===================================================================
---- linux-2.6.18.orig/arch/arm/Kconfig
-+++ linux-2.6.18/arch/arm/Kconfig
+--- linux-2.6.orig/arch/arm/Kconfig
++++ linux-2.6/arch/arm/Kconfig
 @@ -890,6 +890,7 @@ source "drivers/leds/Kconfig"
  source "drivers/media/Kconfig"
  
@@ -1724,10 +1724,10 @@ Index: linux-2.6.18/arch/arm/Kconfig
  
  source "sound/Kconfig"
  
-Index: linux-2.6.18/drivers/Kconfig
+Index: linux-2.6/drivers/Kconfig
 ===================================================================
---- linux-2.6.18.orig/drivers/Kconfig
-+++ linux-2.6.18/drivers/Kconfig
+--- linux-2.6.orig/drivers/Kconfig
++++ linux-2.6/drivers/Kconfig
 @@ -58,6 +58,8 @@ source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
@@ -1737,10 +1737,10 @@ Index: linux-2.6.18/drivers/Kconfig
  source "sound/Kconfig"
  
  source "drivers/usb/Kconfig"
-Index: linux-2.6.18/drivers/Makefile
+Index: linux-2.6/drivers/Makefile
 ===================================================================
---- linux-2.6.18.orig/drivers/Makefile
-+++ linux-2.6.18/drivers/Makefile
+--- linux-2.6.orig/drivers/Makefile
++++ linux-2.6/drivers/Makefile
 @@ -26,6 +26,9 @@ obj-$(CONFIG_FB_INTEL)          += video
  
  obj-y				+= serial/
@@ -1760,10 +1760,10 @@ Index: linux-2.6.18/drivers/Makefile
  obj-$(CONFIG_I2O)		+= message/
  obj-$(CONFIG_RTC_LIB)		+= rtc/
  obj-$(CONFIG_I2C)		+= i2c/
-Index: linux-2.6.18/drivers/char/Makefile
+Index: linux-2.6/drivers/char/Makefile
 ===================================================================
---- linux-2.6.18.orig/drivers/char/Makefile
-+++ linux-2.6.18/drivers/char/Makefile
+--- linux-2.6.orig/drivers/char/Makefile
++++ linux-2.6/drivers/char/Makefile
 @@ -89,6 +89,7 @@ obj-$(CONFIG_GPIO_VR41XX)	+= vr41xx_giu.
  obj-$(CONFIG_TANBAC_TB0219)	+= tb0219.o
  obj-$(CONFIG_TELCLOCK)		+= tlclk.o
@@ -1772,19 +1772,19 @@ Index: linux-2.6.18/drivers/char/Makefile
  obj-$(CONFIG_WATCHDOG)		+= watchdog/
  obj-$(CONFIG_MWAVE)		+= mwave/
  obj-$(CONFIG_AGP)		+= agp/
-Index: linux-2.6.18/drivers/char/consolemap.c
+Index: linux-2.6/drivers/char/consolemap.c
 ===================================================================
---- linux-2.6.18.orig/drivers/char/consolemap.c
-+++ linux-2.6.18/drivers/char/consolemap.c
+--- linux-2.6.orig/drivers/char/consolemap.c
++++ linux-2.6/drivers/char/consolemap.c
 @@ -667,3 +667,4 @@ console_map_init(void)
  }
  
  EXPORT_SYMBOL(con_copy_unimap);
 +EXPORT_SYMBOL(inverse_translate);
-Index: linux-2.6.18/drivers/char/keyboard.c
+Index: linux-2.6/drivers/char/keyboard.c
 ===================================================================
---- linux-2.6.18.orig/drivers/char/keyboard.c
-+++ linux-2.6.18/drivers/char/keyboard.c
+--- linux-2.6.orig/drivers/char/keyboard.c
++++ linux-2.6/drivers/char/keyboard.c
 @@ -40,6 +40,13 @@
  #include <linux/input.h>
  #include <linux/reboot.h>
@@ -1819,7 +1819,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  
  #define FN_HANDLERS\
  	fn_null,	fn_enter,	fn_show_ptregs,	fn_show_mem,\
-@@ -100,15 +111,18 @@ static fn_handler_fn *fn_handler[] = { F
+@@ -100,7 +111,7 @@ static fn_handler_fn *fn_handler[] = { F
  const int max_vals[] = {
  	255, ARRAY_SIZE(func_table) - 1, ARRAY_SIZE(fn_handler) - 1, NR_PAD - 1,
  	NR_DEAD - 1, 255, 3, NR_SHIFT - 1, 255, NR_ASCII - 1, NR_LOCK - 1,
@@ -1828,11 +1828,9 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  };
  
  const int NR_TYPES = ARRAY_SIZE(max_vals);
- 
+@@ -108,6 +119,9 @@ const int NR_TYPES = ARRAY_SIZE(max_vals
  struct kbd_struct kbd_table[MAX_NR_CONSOLES];
--static struct kbd_struct *kbd = kbd_table;
-+struct kbd_struct *kbd = kbd_table;
- static struct kbd_struct kbd0;
+ static struct kbd_struct *kbd = kbd_table;
  
 +EXPORT_SYMBOL(kbd);
 +EXPORT_SYMBOL(k_handler);
@@ -1840,7 +1838,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  int spawnpid, spawnsig;
  
  /*
-@@ -256,12 +270,14 @@ void kd_mksound(unsigned int hz, unsigne
+@@ -255,12 +269,14 @@ void kd_mksound(unsigned int hz, unsigne
  				}
  			}
  		}
@@ -1857,7 +1855,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  /*
   * Setting the keyboard rate.
   */
-@@ -614,6 +630,7 @@ static void k_spec(struct vc_data *vc, u
+@@ -613,6 +629,7 @@ static void k_spec(struct vc_data *vc, u
  	if (up_flag)
  		return;
  	if (value >= ARRAY_SIZE(fn_handler))
@@ -1865,7 +1863,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  		return;
  	if ((kbd->kbdmode == VC_RAW ||
  	     kbd->kbdmode == VC_MEDIUMRAW) &&
-@@ -1225,6 +1242,13 @@ static void kbd_keycode(unsigned int key
+@@ -1224,6 +1241,13 @@ static void kbd_keycode(unsigned int key
  	key_map = key_maps[shift_final];
  
  	if (!key_map) {
@@ -1879,7 +1877,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  		compute_shiftstate();
  		kbd->slockstate = 0;
  		return;
-@@ -1247,8 +1271,15 @@ static void kbd_keycode(unsigned int key
+@@ -1246,8 +1270,15 @@ static void kbd_keycode(unsigned int key
  	}
  
  	type -= 0xf0;
@@ -1896,7 +1894,7 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  		return;
  
  	if (type == KT_LETTER) {
-@@ -1259,13 +1290,29 @@ static void kbd_keycode(unsigned int key
+@@ -1258,13 +1289,29 @@ static void kbd_keycode(unsigned int key
  				keysym = key_map[keycode];
  		}
  	}
@@ -1927,18 +1925,18 @@ Index: linux-2.6.18/drivers/char/keyboard.c
  static void kbd_event(struct input_handle *handle, unsigned int event_type,
  		      unsigned int event_code, int value)
  {
-@@ -1303,6 +1350,7 @@ static struct input_handle *kbd_connect(
- 	memset(handle, 0, sizeof(struct input_handle));
+@@ -1302,6 +1349,7 @@ static struct input_handle *kbd_connect(
+ 		return NULL;
  
  	handle->dev = dev;
 +	fakekeydev=dev;
  	handle->handler = handler;
  	handle->name = "kbd";
  
-Index: linux-2.6.18/drivers/char/speakup/Config.in
+Index: linux-2.6/drivers/char/speakup/Config.in
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/Config.in
++++ linux-2.6/drivers/char/speakup/Config.in
 @@ -0,0 +1,26 @@
 +tristate 'Speakup console speech' CONFIG_SPEAKUP
 +if [ "$CONFIG_SPEAKUP" != "n" ]; then
@@ -1966,10 +1964,10 @@ Index: linux-2.6.18/drivers/char/speakup/Config.in
 +	comment 'Enter the three to six character synth string from above or none.'
 +	string "Default synthesizer for Speakup" CONFIG_SPEAKUP_DEFAULT "none"
 +fi
-Index: linux-2.6.18/drivers/char/speakup/Kconfig
+Index: linux-2.6/drivers/char/speakup/Kconfig
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/Kconfig
++++ linux-2.6/drivers/char/speakup/Kconfig
 @@ -0,0 +1,210 @@
 +menu "Speakup console speech"
 +config SPEAKUP
@@ -2181,10 +2179,10 @@ Index: linux-2.6.18/drivers/char/speakup/Kconfig
 +	default "none"
 +
 +endmenu
-Index: linux-2.6.18/drivers/char/speakup/Makefile
+Index: linux-2.6/drivers/char/speakup/Makefile
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/Makefile
++++ linux-2.6/drivers/char/speakup/Makefile
 @@ -0,0 +1,61 @@
 +#
 +# Makefile for the speakup speech output system.
@@ -2247,16 +2245,16 @@ Index: linux-2.6.18/drivers/char/speakup/Makefile
 +
 +HOSTCFLAGS := -Iinclude -I/usr/include
 +hostprogs-y := makemapdata genmap
-Index: linux-2.6.18/drivers/char/speakup/cvsversion.h
+Index: linux-2.6/drivers/char/speakup/cvsversion.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/cvsversion.h
++++ linux-2.6/drivers/char/speakup/cvsversion.h
 @@ -0,0 +1 @@
 +#define CVSVERSION " CVS: Mon May 1 09:46:33 EDT 2006 "
-Index: linux-2.6.18/drivers/char/speakup/dtload.c
+Index: linux-2.6/drivers/char/speakup/dtload.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/dtload.c
++++ linux-2.6/drivers/char/speakup/dtload.c
 @@ -0,0 +1,554 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -2812,10 +2810,10 @@ Index: linux-2.6.18/drivers/char/speakup/dtload.c
 +  if ( intest ) do_test( );
 +  exit( 0 );
 +}
-Index: linux-2.6.18/drivers/char/speakup/dtload.h
+Index: linux-2.6/drivers/char/speakup/dtload.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/dtload.h
++++ linux-2.6/drivers/char/speakup/dtload.h
 @@ -0,0 +1,57 @@
 +/*
 + * This is the DECtalk PC firmware loader for the Linux kernel, version 1.0
@@ -2874,10 +2872,10 @@ Index: linux-2.6.18/drivers/char/speakup/dtload.h
 +struct dos_reloc {
 +	short int offset, segment;
 +};
-Index: linux-2.6.18/drivers/char/speakup/dtpc_reg.h
+Index: linux-2.6/drivers/char/speakup/dtpc_reg.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/dtpc_reg.h
++++ linux-2.6/drivers/char/speakup/dtpc_reg.h
 @@ -0,0 +1,132 @@
 +/*
 + * This is the DECtalk PC register constants (from DEC's DOS driver)
@@ -3011,10 +3009,10 @@ Index: linux-2.6.18/drivers/char/speakup/dtpc_reg.h
 +#define	DT_DIGITAL_IN		0x08
 +#define	DMA_sync		0x06
 +#define	DMA_sync_char		0x07
-Index: linux-2.6.18/drivers/char/speakup/genmap.c
+Index: linux-2.6/drivers/char/speakup/genmap.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/genmap.c
++++ linux-2.6/drivers/char/speakup/genmap.c
 @@ -0,0 +1,204 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -3220,10 +3218,10 @@ Index: linux-2.6.18/drivers/char/speakup/genmap.c
 +	printf( "\n\t0, %d\n", map_ver );
 +	exit( 0 );
 +}
-Index: linux-2.6.18/drivers/char/speakup/keyinfo.h
+Index: linux-2.6/drivers/char/speakup/keyinfo.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/keyinfo.h
++++ linux-2.6/drivers/char/speakup/keyinfo.h
 @@ -0,0 +1,120 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
@@ -3345,10 +3343,10 @@ Index: linux-2.6.18/drivers/char/speakup/keyinfo.h
 +#define PUNCT_INC PUNCT_DEC+1
 +#define VOICE_DEC PUNCT_DEC+2
 +#define VOICE_INC VOICE_DEC+1
-Index: linux-2.6.18/drivers/char/speakup/makemapdata.c
+Index: linux-2.6/drivers/char/speakup/makemapdata.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/makemapdata.c
++++ linux-2.6/drivers/char/speakup/makemapdata.c
 @@ -0,0 +1,156 @@
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -3506,10 +3504,10 @@ Index: linux-2.6.18/drivers/char/speakup/makemapdata.c
 +	printf( "\t\".\", 0, 0\n};\n" );
 +	exit( 0 );
 +}
-Index: linux-2.6.18/drivers/char/speakup/mod_code.c
+Index: linux-2.6/drivers/char/speakup/mod_code.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/mod_code.c
++++ linux-2.6/drivers/char/speakup/mod_code.c
 @@ -0,0 +1,22 @@
 +/* this code is to modularize a synth specific file, included at the end */
 +
@@ -3533,10 +3531,10 @@ Index: linux-2.6.18/drivers/char/speakup/mod_code.c
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Synthesizer driver module for speakup for the  synth->long_name");
 +MODULE_LICENSE( "GPL" );
-Index: linux-2.6.18/drivers/char/speakup/serialio.h
+Index: linux-2.6/drivers/char/speakup/serialio.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/serialio.h
++++ linux-2.6/drivers/char/speakup/serialio.h
 @@ -0,0 +1,18 @@
 +#ifndef SSPK_SERIAL
 +#define SSPK_SERIAL
@@ -3556,10 +3554,10 @@ Index: linux-2.6.18/drivers/char/speakup/serialio.h
 +#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
 +
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup.c
+Index: linux-2.6/drivers/char/speakup/speakup.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup.c
++++ linux-2.6/drivers/char/speakup/speakup.c
 @@ -0,0 +1,2905 @@
 +/* speakup.c
 +   review functions for the speakup screen review package.
@@ -6466,10 +6464,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup.c
 +module_exit( mod_speakup_exit );
 +
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_acnt.h
+Index: linux-2.6/drivers/char/speakup/speakup_acnt.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_acnt.h
++++ linux-2.6/drivers/char/speakup/speakup_acnt.h
 @@ -0,0 +1,16 @@
 +/* speakup_acntpc.h - header file for speakups Accent-PC driver. */
 +
@@ -6487,10 +6485,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_acnt.h
 +#define SYNTH_FULL  'F' /* synth is full. */
 +#define SYNTH_ALMOST_EMPTY 'M' /* synth has les than 2 seconds of text left */
 +#define SYNTH_SPEAKING 's' /* synth is speaking and has a fare way to go */
-Index: linux-2.6.18/drivers/char/speakup/speakup_acntpc.c
+Index: linux-2.6/drivers/char/speakup/speakup_acntpc.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_acntpc.c
++++ linux-2.6/drivers/char/speakup/speakup_acntpc.c
 @@ -0,0 +1,161 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -6653,10 +6651,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_acntpc.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_acntsa.c
+Index: linux-2.6/drivers/char/speakup/speakup_acntsa.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_acntsa.c
++++ linux-2.6/drivers/char/speakup/speakup_acntsa.c
 @@ -0,0 +1,185 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -6843,10 +6841,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_acntsa.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_apollo.c
+Index: linux-2.6/drivers/char/speakup/speakup_apollo.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_apollo.c
++++ linux-2.6/drivers/char/speakup/speakup_apollo.c
 @@ -0,0 +1,196 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7044,10 +7042,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_apollo.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_audptr.c
+Index: linux-2.6/drivers/char/speakup/speakup_audptr.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_audptr.c
++++ linux-2.6/drivers/char/speakup/speakup_audptr.c
 @@ -0,0 +1,202 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7251,10 +7249,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_audptr.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_bns.c
+Index: linux-2.6/drivers/char/speakup/speakup_bns.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_bns.c
++++ linux-2.6/drivers/char/speakup/speakup_bns.c
 @@ -0,0 +1,175 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7431,10 +7429,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_bns.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_decext.c
+Index: linux-2.6/drivers/char/speakup/speakup_decext.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_decext.c
++++ linux-2.6/drivers/char/speakup/speakup_decext.c
 @@ -0,0 +1,206 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -7642,10 +7640,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_decext.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_decpc.c
+Index: linux-2.6/drivers/char/speakup/speakup_decpc.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_decpc.c
++++ linux-2.6/drivers/char/speakup/speakup_decpc.c
 @@ -0,0 +1,243 @@
 +/*
 +* written by David Borowski, david575@golden.net
@@ -7890,10 +7888,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_decpc.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_dectlk.c
+Index: linux-2.6/drivers/char/speakup/speakup_dectlk.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_dectlk.c
++++ linux-2.6/drivers/char/speakup/speakup_dectlk.c
 @@ -0,0 +1,285 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -8180,10 +8178,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_dectlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_drvcommon.c
+Index: linux-2.6/drivers/char/speakup/speakup_drvcommon.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_drvcommon.c
++++ linux-2.6/drivers/char/speakup/speakup_drvcommon.c
 @@ -0,0 +1,1012 @@
 +#define KERNEL
 +#include <linux/config.h>
@@ -9197,10 +9195,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_drvcommon.c
 +MODULE_AUTHOR("Kirk Reiser <kirk@braille.uwo.ca>");
 +MODULE_DESCRIPTION("Speakup module required by all synthesizer specific modules");
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.18/drivers/char/speakup/speakup_dtlk.c
+Index: linux-2.6/drivers/char/speakup/speakup_dtlk.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_dtlk.c
++++ linux-2.6/drivers/char/speakup/speakup_dtlk.c
 @@ -0,0 +1,233 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -9435,10 +9433,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_dtlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_dtlk.h
+Index: linux-2.6/drivers/char/speakup/speakup_dtlk.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_dtlk.h
++++ linux-2.6/drivers/char/speakup/speakup_dtlk.h
 @@ -0,0 +1,54 @@
 +/* speakup_dtlk.h - header file for speakups DoubleTalk driver. */
 +
@@ -9494,10 +9492,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_dtlk.h
 +	                                 parameter block */
 +	u_char has_indexing;	/* nonzero if indexing is implemented */
 +};
-Index: linux-2.6.18/drivers/char/speakup/speakup_keyhelp.c
+Index: linux-2.6/drivers/char/speakup/speakup_keyhelp.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_keyhelp.c
++++ linux-2.6/drivers/char/speakup/speakup_keyhelp.c
 @@ -0,0 +1,288 @@
 +/* speakup_keyhelp.c
 +   help module for speakup
@@ -9787,10 +9785,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_keyhelp.c
 +MODULE_AUTHOR("David Borowski");
 +MODULE_DESCRIPTION("Speakup keyboard help MODULE");
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.18/drivers/char/speakup/speakup_keypc.c
+Index: linux-2.6/drivers/char/speakup/speakup_keypc.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_keypc.c
++++ linux-2.6/drivers/char/speakup/speakup_keypc.c
 @@ -0,0 +1,190 @@
 +/*
 +* written by David Borowski
@@ -9982,10 +9980,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_keypc.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_ltlk.c
+Index: linux-2.6/drivers/char/speakup/speakup_ltlk.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_ltlk.c
++++ linux-2.6/drivers/char/speakup/speakup_ltlk.c
 @@ -0,0 +1,229 @@
 +/*
 + * originally written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10216,10 +10214,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_ltlk.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_sftsyn.c
+Index: linux-2.6/drivers/char/speakup/speakup_sftsyn.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_sftsyn.c
++++ linux-2.6/drivers/char/speakup/speakup_sftsyn.c
 @@ -0,0 +1,207 @@
 +/* speakup_sftsynth.c - speakup driver to register and make available
 + * a user space device for software synthesizers.  written by: Kirk
@@ -10428,10 +10426,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_sftsyn.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_spkout.c
+Index: linux-2.6/drivers/char/speakup/speakup_spkout.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_spkout.c
++++ linux-2.6/drivers/char/speakup/speakup_spkout.c
 @@ -0,0 +1,201 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10634,10 +10632,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_spkout.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakup_txprt.c
+Index: linux-2.6/drivers/char/speakup/speakup_txprt.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakup_txprt.c
++++ linux-2.6/drivers/char/speakup/speakup_txprt.c
 @@ -0,0 +1,196 @@
 +/*
 + * originially written by: Kirk Reiser <kirk@braille.uwo.ca>
@@ -10835,10 +10833,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakup_txprt.c
 +#ifdef MODULE
 +#include "mod_code.c"
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/speakupconf
+Index: linux-2.6/drivers/char/speakup/speakupconf
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakupconf
++++ linux-2.6/drivers/char/speakup/speakupconf
 @@ -0,0 +1,51 @@
 +#!/bin/sh
 +# script to load/save all the vars in speakup
@@ -10891,10 +10889,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakupconf
 +  exit 1
 +;;
 +esac
-Index: linux-2.6.18/drivers/char/speakup/speakupmap.h
+Index: linux-2.6/drivers/char/speakup/speakupmap.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakupmap.h
++++ linux-2.6/drivers/char/speakup/speakupmap.h
 @@ -0,0 +1,65 @@
 +	119, 62, 6,
 +	0, 16, 17, 32, 20, 48, 0,
@@ -10961,10 +10959,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakupmap.h
 +	109, 0, 7, 0, 0, 0, 0,
 +	125, 128, 128, 0, 0, 0, 0,
 +	0, 119
-Index: linux-2.6.18/drivers/char/speakup/speakupmap.map
+Index: linux-2.6/drivers/char/speakup/speakupmap.map
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/speakupmap.map
++++ linux-2.6/drivers/char/speakup/speakupmap.map
 @@ -0,0 +1,92 @@
 +spk key_f9 = punc_level_dec
 +spk key_f10 = punc_level_inc
@@ -11058,10 +11056,10 @@ Index: linux-2.6.18/drivers/char/speakup/speakupmap.map
 +shift spk key_m = say_first_char
 + ctrl spk key_semicolon = say_last_char
 +spk key_r = read_all_doc
-Index: linux-2.6.18/drivers/char/speakup/spk_con_module.h
+Index: linux-2.6/drivers/char/speakup/spk_con_module.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/spk_con_module.h
++++ linux-2.6/drivers/char/speakup/spk_con_module.h
 @@ -0,0 +1,43 @@
 +/* written bby David Borowski.
 +    Copyright (C ) 2003  David Borowski.
@@ -11106,10 +11104,10 @@ Index: linux-2.6.18/drivers/char/speakup/spk_con_module.h
 +}
 +
 +EXPORT_SYMBOL(speakup_set_addresses);
-Index: linux-2.6.18/drivers/char/speakup/spk_priv.h
+Index: linux-2.6/drivers/char/speakup/spk_priv.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/spk_priv.h
++++ linux-2.6/drivers/char/speakup/spk_priv.h
 @@ -0,0 +1,289 @@
 +/* spk_priv.h
 +   review functions for the speakup screen review package.
@@ -11400,10 +11398,10 @@ Index: linux-2.6.18/drivers/char/speakup/spk_priv.h
 +#endif
 +
 +#endif
-Index: linux-2.6.18/drivers/char/speakup/synthlist.h
+Index: linux-2.6/drivers/char/speakup/synthlist.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/char/speakup/synthlist.h
++++ linux-2.6/drivers/char/speakup/synthlist.h
 @@ -0,0 +1,51 @@
 +/* this is included two times */
 +#if defined(PASS2)
@@ -11456,10 +11454,10 @@ Index: linux-2.6.18/drivers/char/speakup/synthlist.h
 +#endif
 +
 +#undef SYNTH_DECL
-Index: linux-2.6.18/drivers/char/vt.c
+Index: linux-2.6/drivers/char/vt.c
 ===================================================================
---- linux-2.6.18.orig/drivers/char/vt.c
-+++ linux-2.6.18/drivers/char/vt.c
+--- linux-2.6.orig/drivers/char/vt.c
++++ linux-2.6/drivers/char/vt.c
 @@ -738,6 +738,7 @@ int vc_allocate(unsigned int currcons)	/
  	    }
  	    vc->vc_kmalloced = 1;
@@ -11572,10 +11570,10 @@ Index: linux-2.6.18/drivers/char/vt.c
  EXPORT_SYMBOL(give_up_console);
  #endif
 +EXPORT_SYMBOL(screen_glyph);
-Index: linux-2.6.18/include/linux/keyboard.h
+Index: linux-2.6/include/linux/keyboard.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/keyboard.h
-+++ linux-2.6.18/include/linux/keyboard.h
+--- linux-2.6.orig/include/linux/keyboard.h
++++ linux-2.6/include/linux/keyboard.h
 @@ -45,6 +45,7 @@ extern unsigned short plain_map[NR_KEYS]
  #define KT_LOCK		10
  #define KT_SLOCK	12
@@ -11592,10 +11590,10 @@ Index: linux-2.6.18/include/linux/keyboard.h
  
  #define K_BRL_BLANK     K(KT_BRL, 0)
  #define K_BRL_DOT1      K(KT_BRL, 1)
-Index: linux-2.6.18/include/linux/miscdevice.h
+Index: linux-2.6/include/linux/miscdevice.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/miscdevice.h
-+++ linux-2.6.18/include/linux/miscdevice.h
+--- linux-2.6.orig/include/linux/miscdevice.h
++++ linux-2.6/include/linux/miscdevice.h
 @@ -12,6 +12,7 @@
  #define APOLLO_MOUSE_MINOR 7
  #define PC110PAD_MINOR 9
@@ -11604,10 +11602,10 @@ Index: linux-2.6.18/include/linux/miscdevice.h
  #define WATCHDOG_MINOR		130	/* Watchdog timer     */
  #define TEMP_MINOR		131	/* Temperature Sensor */
  #define RTC_MINOR 135
-Index: linux-2.6.18/include/linux/speakup.h
+Index: linux-2.6/include/linux/speakup.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/linux/speakup.h
++++ linux-2.6/include/linux/speakup.h
 @@ -0,0 +1,35 @@
 +#ifndef __SPEAKUP_H
 +#define __SPEAKUP_H
