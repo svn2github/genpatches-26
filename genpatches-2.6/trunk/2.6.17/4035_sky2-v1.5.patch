@@ -1,7 +1,7 @@
-Index: linux-2.6.17-gentoo/drivers/net/sky2.c
+Index: linux-2.6.17/drivers/net/sky2.c
 ===================================================================
---- linux-2.6.17-gentoo.orig/drivers/net/sky2.c
-+++ linux-2.6.17-gentoo/drivers/net/sky2.c
+--- linux-2.6.17.orig/drivers/net/sky2.c
++++ linux-2.6.17/drivers/net/sky2.c
 @@ -51,7 +51,7 @@
  #include "sky2.h"
  
@@ -120,26 +120,7 @@ Index: linux-2.6.17-gentoo/drivers/net/sky2.c
  	return work_done;
  }
  
-@@ -2187,9 +2206,6 @@ static int sky2_poll(struct net_device *
- 	int work_done = 0;
- 	u32 status = sky2_read32(hw, B0_Y2_SP_EISR);
- 
--	if (!~status)
--		goto out;
--
- 	if (status & Y2_IS_HW_ERR)
- 		sky2_hw_intr(hw);
- 
-@@ -2226,7 +2242,7 @@ static int sky2_poll(struct net_device *
- 
- 	if (sky2_more_work(hw))
- 		return 1;
--out:
-+
- 	netif_rx_complete(dev0);
- 
- 	sky2_read32(hw, B0_Y2_SP_LISR);
-@@ -2287,7 +2303,7 @@ static inline u32 sky2_clk2us(const stru
+@@ -2284,7 +2303,7 @@ static inline u32 sky2_clk2us(const stru
  }
  
  
@@ -148,7 +129,7 @@ Index: linux-2.6.17-gentoo/drivers/net/sky2.c
  {
  	u16 status;
  	u8 t8, pmd_type;
-@@ -3438,17 +3454,14 @@ static int sky2_suspend(struct pci_dev *
+@@ -3435,17 +3454,14 @@ static int sky2_suspend(struct pci_dev *
  		return -EINVAL;
  
  	del_timer_sync(&hw->idle_timer);
@@ -168,7 +149,7 @@ Index: linux-2.6.17-gentoo/drivers/net/sky2.c
  		}
  	}
  
-@@ -3475,9 +3488,8 @@ static int sky2_resume(struct pci_dev *p
+@@ -3472,9 +3488,8 @@ static int sky2_resume(struct pci_dev *p
  
  	for (i = 0; i < hw->ports; i++) {
  		struct net_device *dev = hw->dev[i];
@@ -179,7 +160,7 @@ Index: linux-2.6.17-gentoo/drivers/net/sky2.c
  
  			err = sky2_up(dev);
  			if (err) {
-@@ -3489,6 +3501,7 @@ static int sky2_resume(struct pci_dev *p
+@@ -3486,6 +3501,7 @@ static int sky2_resume(struct pci_dev *p
  		}
  	}
  
@@ -187,10 +168,10 @@ Index: linux-2.6.17-gentoo/drivers/net/sky2.c
  	sky2_idle_start(hw);
  out:
  	return err;
-Index: linux-2.6.17-gentoo/drivers/net/sky2.h
+Index: linux-2.6.17/drivers/net/sky2.h
 ===================================================================
---- linux-2.6.17-gentoo.orig/drivers/net/sky2.h
-+++ linux-2.6.17-gentoo/drivers/net/sky2.h
+--- linux-2.6.17.orig/drivers/net/sky2.h
++++ linux-2.6.17/drivers/net/sky2.h
 @@ -1480,7 +1480,7 @@ enum {
  	GM_TXCR_FORCE_JAM	= 1<<15, /* Bit 15:	Force Jam / Flow-Control */
  	GM_TXCR_CRC_DIS		= 1<<14, /* Bit 14:	Disable insertion of CRC */
