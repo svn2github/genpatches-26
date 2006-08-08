@@ -122,6 +122,10 @@ Patch:	4035_sky2-v1.5.patch
 From:	2.6.18 tree
 Desc:	sky2 bugfixes
 
+Patch:	4040_e1000-7.1.9-k4.patch
+From:	2.6.18 tree (backport by plasmaroo@gentoo.org)
+Desc:	Backport 7.1.9 driver (for ICH8 support and some other fixes)
+
 Patch:	4100_vt8251-sata.patch
 From:	2.6.18 tree (backport by dsd@gentoo.org)
 Desc:	Support VT8251 SATA controllers
