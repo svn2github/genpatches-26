@@ -2,9 +2,10 @@ Backport latest e1000 from 2.6.18_rc4 to 2.6.17.
 
 Signed-off-by: <plasmaroo@gentoo.org>
 
-diff -ur linux-2.6.17/drivers/net/e1000/Makefile linux-2.6.17-plasmaroo/drivers/net/e1000/Makefile
---- linux-2.6.17/drivers/net/e1000/Makefile	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/Makefile	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/Makefile
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/Makefile
++++ linux-2.6.17/drivers/net/e1000/Makefile
 @@ -1,7 +1,7 @@
  ################################################################################
  #
@@ -22,9 +23,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/Makefile linux-2.6.17-plasmaroo/drivers/
  # Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  #
  ################################################################################
-diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/net/e1000/e1000.h
---- linux-2.6.17/drivers/net/e1000/e1000.h	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000.h	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000.h
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000.h
++++ linux-2.6.17/drivers/net/e1000/e1000.h
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -58,7 +60,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  #include <linux/mii.h>
  #include <linux/ethtool.h>
  #include <linux/if_vlan.h>
-@@ -111,9 +110,14 @@
+@@ -111,9 +110,14 @@ struct e1000_adapter;
  #define E1000_MIN_RXD                       80
  #define E1000_MAX_82544_RXD               4096
  
@@ -73,7 +75,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  #define E1000_RXBUFFER_2048  2048
  #define E1000_RXBUFFER_4096  4096
  #define E1000_RXBUFFER_8192  8192
-@@ -141,6 +145,7 @@
+@@ -141,6 +145,7 @@ struct e1000_adapter;
  
  #define AUTO_ALL_MODES            0
  #define E1000_EEPROM_82544_APM    0x0004
@@ -81,7 +83,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  #define E1000_EEPROM_APME         0x0400
  
  #ifndef E1000_MASTER_SLAVE
-@@ -252,7 +257,6 @@
+@@ -252,7 +257,6 @@ struct e1000_adapter {
  	spinlock_t tx_queue_lock;
  #endif
  	atomic_t irq_sem;
@@ -89,7 +91,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  	struct work_struct reset_task;
  	uint8_t fc_autoneg;
  
-@@ -334,12 +338,17 @@
+@@ -334,12 +338,17 @@ struct e1000_adapter {
  	boolean_t have_msi;
  #endif
  	/* to not mess up cache alignment, always add to the bottom */
@@ -108,7 +110,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  
  /*  e1000_main.c  */
  extern char e1000_driver_name[];
-@@ -347,6 +356,7 @@
+@@ -347,6 +356,7 @@ extern char e1000_driver_version[];
  int e1000_up(struct e1000_adapter *adapter);
  void e1000_down(struct e1000_adapter *adapter);
  void e1000_reset(struct e1000_adapter *adapter);
@@ -116,9 +118,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000.h linux-2.6.17-plasmaroo/drivers/n
  int e1000_setup_all_tx_resources(struct e1000_adapter *adapter);
  void e1000_free_all_tx_resources(struct e1000_adapter *adapter);
  int e1000_setup_all_rx_resources(struct e1000_adapter *adapter);
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_ethtool.c
---- linux-2.6.17/drivers/net/e1000/e1000_ethtool.c	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_ethtool.c	2006-08-08 20:26:27.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_ethtool.c
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_ethtool.c
++++ linux-2.6.17/drivers/net/e1000/e1000_ethtool.c
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -136,7 +139,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
    Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  
  *******************************************************************************/
-@@ -108,7 +109,8 @@
+@@ -108,7 +109,8 @@ e1000_get_settings(struct net_device *ne
  		                   SUPPORTED_1000baseT_Full|
  		                   SUPPORTED_Autoneg |
  		                   SUPPORTED_TP);
@@ -146,7 +149,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		ecmd->advertising = ADVERTISED_TP;
  
  		if (hw->autoneg == 1) {
-@@ -202,11 +204,9 @@
+@@ -202,11 +204,9 @@ e1000_set_settings(struct net_device *ne
  
  	/* reset the link */
  
@@ -161,7 +164,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		e1000_reset(adapter);
  
  	return 0;
-@@ -253,10 +253,9 @@
+@@ -253,10 +253,9 @@ e1000_set_pauseparam(struct net_device *
  	hw->original_fc = hw->fc;
  
  	if (adapter->fc_autoneg == AUTONEG_ENABLE) {
@@ -175,7 +178,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  			e1000_reset(adapter);
  	} else
  		return ((hw->media_type == e1000_media_type_fiber) ?
-@@ -278,10 +277,9 @@
+@@ -278,10 +277,9 @@ e1000_set_rx_csum(struct net_device *net
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  	adapter->rx_csum = data;
  
@@ -189,7 +192,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		e1000_reset(adapter);
  	return 0;
  }
-@@ -576,6 +574,7 @@
+@@ -576,6 +574,7 @@ e1000_get_drvinfo(struct net_device *net
  	case e1000_82572:
  	case e1000_82573:
  	case e1000_80003es2lan:
@@ -197,7 +200,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		sprintf(firmware_version, "%d.%d-%d",
  			(eeprom_data & 0xF000) >> 12,
  			(eeprom_data & 0x0FF0) >> 4,
-@@ -630,6 +629,9 @@
+@@ -630,6 +629,9 @@ e1000_set_ringparam(struct net_device *n
  	tx_ring_size = sizeof(struct e1000_tx_ring) * adapter->num_tx_queues;
  	rx_ring_size = sizeof(struct e1000_rx_ring) * adapter->num_rx_queues;
  
@@ -207,7 +210,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	if (netif_running(adapter->netdev))
  		e1000_down(adapter);
  
-@@ -690,9 +692,11 @@
+@@ -690,9 +692,11 @@ e1000_set_ringparam(struct net_device *n
  		adapter->rx_ring = rx_new;
  		adapter->tx_ring = tx_new;
  		if ((err = e1000_up(adapter)))
@@ -220,7 +223,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	return 0;
  err_setup_tx:
  	e1000_free_all_rx_resources(adapter);
-@@ -700,6 +704,8 @@
+@@ -700,6 +704,8 @@ err_setup_rx:
  	adapter->rx_ring = rx_old;
  	adapter->tx_ring = tx_old;
  	e1000_up(adapter);
@@ -229,7 +232,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	return err;
  }
  
-@@ -753,6 +759,7 @@
+@@ -753,6 +759,7 @@ e1000_reg_test(struct e1000_adapter *ada
  		toggle = 0x7FFFF3FF;
  		break;
  	case e1000_82573:
@@ -237,7 +240,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		toggle = 0x7FFFF033;
  		break;
  	default:
-@@ -772,11 +779,12 @@
+@@ -772,11 +779,12 @@ e1000_reg_test(struct e1000_adapter *ada
  	}
  	/* restore previous status */
  	E1000_WRITE_REG(&adapter->hw, STATUS, before);
@@ -255,7 +258,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	REG_PATTERN_TEST(RDTR, 0x0000FFFF, 0xFFFFFFFF);
  	REG_PATTERN_TEST(RDBAH, 0xFFFFFFFF, 0xFFFFFFFF);
  	REG_PATTERN_TEST(RDLEN, 0x000FFF80, 0x000FFFFF);
-@@ -789,20 +797,22 @@
+@@ -789,20 +797,22 @@ e1000_reg_test(struct e1000_adapter *ada
  	REG_PATTERN_TEST(TDLEN, 0x000FFF80, 0x000FFFFF);
  
  	REG_SET_AND_CHECK(RCTL, 0xFFFFFFFF, 0x00000000);
@@ -285,7 +288,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  			REG_PATTERN_TEST(RA + (((i << 1) + 1) << 2), 0x8003FFFF,
  					 0xFFFFFFFF);
  		}
-@@ -816,7 +826,9 @@
+@@ -816,7 +826,9 @@ e1000_reg_test(struct e1000_adapter *ada
  
  	}
  
@@ -296,7 +299,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		REG_PATTERN_TEST(MTA + (i << 2), 0xFFFFFFFF, 0xFFFFFFFF);
  
  	*data = 0;
-@@ -864,8 +876,8 @@
+@@ -864,8 +876,8 @@ static int
  e1000_intr_test(struct e1000_adapter *adapter, uint64_t *data)
  {
  	struct net_device *netdev = adapter->netdev;
@@ -307,7 +310,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  
  	*data = 0;
  
-@@ -888,25 +900,27 @@
+@@ -888,25 +900,27 @@ e1000_intr_test(struct e1000_adapter *ad
  	/* Test each interrupt */
  	for (; i < 10; i++) {
  
@@ -351,7 +354,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		}
  
  		/* Enable the interrupt to be reported in
-@@ -925,7 +939,7 @@
+@@ -925,7 +939,7 @@ e1000_intr_test(struct e1000_adapter *ad
  			break;
  		}
  
@@ -360,7 +363,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  			/* Disable the other interrupts to be reported in
  			 * the cause register and then force the other
  			 * interrupts and see if any get posted.  If
-@@ -1245,18 +1259,33 @@
+@@ -1245,18 +1259,33 @@ e1000_integrated_phy_loopback(struct e10
  	} else if (adapter->hw.phy_type == e1000_phy_gg82563) {
  		e1000_write_phy_reg(&adapter->hw,
  		                    GG82563_PHY_KMRN_MODE_CTRL,
@@ -403,7 +406,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  
  	if (adapter->hw.media_type == e1000_media_type_copper &&
  	   adapter->hw.phy_type == e1000_phy_m88) {
-@@ -1316,6 +1345,7 @@
+@@ -1316,6 +1345,7 @@ e1000_set_phy_loopback(struct e1000_adap
  	case e1000_82572:
  	case e1000_82573:
  	case e1000_80003es2lan:
@@ -411,7 +414,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		return e1000_integrated_phy_loopback(adapter);
  		break;
  
-@@ -1567,6 +1597,7 @@
+@@ -1567,6 +1597,7 @@ e1000_diag_test(struct net_device *netde
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  	boolean_t if_running = netif_running(netdev);
  
@@ -419,7 +422,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	if (eth_test->flags == ETH_TEST_FL_OFFLINE) {
  		/* Offline tests */
  
-@@ -1581,7 +1612,8 @@
+@@ -1581,7 +1612,8 @@ e1000_diag_test(struct net_device *netde
  			eth_test->flags |= ETH_TEST_FL_FAILED;
  
  		if (if_running)
@@ -429,7 +432,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		else
  			e1000_reset(adapter);
  
-@@ -1606,8 +1638,9 @@
+@@ -1606,8 +1638,9 @@ e1000_diag_test(struct net_device *netde
  		adapter->hw.autoneg = autoneg;
  
  		e1000_reset(adapter);
@@ -440,7 +443,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	} else {
  		/* Online tests */
  		if (e1000_link_test(adapter, &data[4]))
-@@ -1618,6 +1651,8 @@
+@@ -1618,6 +1651,8 @@ e1000_diag_test(struct net_device *netde
  		data[1] = 0;
  		data[2] = 0;
  		data[3] = 0;
@@ -449,7 +452,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	}
  	msleep_interruptible(4 * 1000);
  }
-@@ -1777,21 +1812,18 @@
+@@ -1777,21 +1812,18 @@ e1000_phys_id(struct net_device *netdev,
  		mod_timer(&adapter->blink_timer, jiffies);
  		msleep_interruptible(data * 1000);
  		del_timer_sync(&adapter->blink_timer);
@@ -481,7 +484,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  		msleep_interruptible(data * 1000);
  	}
  
-@@ -1806,10 +1838,8 @@
+@@ -1806,10 +1838,8 @@ static int
  e1000_nway_reset(struct net_device *netdev)
  {
  	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -494,9 +497,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_ethtool.c linux-2.6.17-plasmaroo/d
  	return 0;
  }
  
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_hw.c
---- linux-2.6.17/drivers/net/e1000/e1000_hw.c	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_hw.c	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_hw.c
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_hw.c
++++ linux-2.6.17/drivers/net/e1000/e1000_hw.c
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -514,7 +518,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
    Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  
  *******************************************************************************/
-@@ -100,7 +101,8 @@
+@@ -100,7 +101,8 @@ static void e1000_write_reg_io(struct e1
  
  #define E1000_WRITE_REG_IO(a, reg, val) \
  	    e1000_write_reg_io((a), E1000_##reg, val)
@@ -524,7 +528,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  static int32_t e1000_configure_kmrn_for_1000(struct e1000_hw *hw);
  
  /* IGP cable length table */
-@@ -155,6 +157,14 @@
+@@ -155,6 +157,14 @@ e1000_set_phy_type(struct e1000_hw *hw)
              hw->phy_type = e1000_phy_igp;
              break;
          }
@@ -539,7 +543,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      case GG82563_E_PHY_ID:
          if (hw->mac_type == e1000_80003es2lan) {
              hw->phy_type = e1000_phy_gg82563;
-@@ -331,6 +341,7 @@
+@@ -331,6 +341,7 @@ e1000_set_mac_type(struct e1000_hw *hw)
          break;
      case E1000_DEV_ID_82541EI:
      case E1000_DEV_ID_82541EI_MOBILE:
@@ -547,7 +551,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->mac_type = e1000_82541;
          break;
      case E1000_DEV_ID_82541ER:
-@@ -340,6 +351,7 @@
+@@ -340,6 +351,7 @@ e1000_set_mac_type(struct e1000_hw *hw)
          hw->mac_type = e1000_82541_rev_2;
          break;
      case E1000_DEV_ID_82547EI:
@@ -555,15 +559,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->mac_type = e1000_82547;
          break;
      case E1000_DEV_ID_82547GI:
-@@ -353,6 +365,7 @@
-     case E1000_DEV_ID_82572EI_COPPER:
-     case E1000_DEV_ID_82572EI_FIBER:
-     case E1000_DEV_ID_82572EI_SERDES:
-+    case E1000_DEV_ID_82572EI:
-         hw->mac_type = e1000_82572;
-         break;
-     case E1000_DEV_ID_82573E:
-@@ -360,16 +373,29 @@
+@@ -361,16 +373,29 @@ e1000_set_mac_type(struct e1000_hw *hw)
      case E1000_DEV_ID_82573L:
          hw->mac_type = e1000_82573;
          break;
@@ -593,7 +589,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      case e1000_80003es2lan:
          hw->swfw_sync_present = TRUE;
          /* fall through */
-@@ -422,6 +448,7 @@
+@@ -423,6 +448,7 @@ e1000_set_media_type(struct e1000_hw *hw
          case e1000_82542_rev2_1:
              hw->media_type = e1000_media_type_fiber;
              break;
@@ -601,7 +597,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          case e1000_82573:
              /* The STATUS_TBIMODE bit is reserved or reused for the this
               * device.
-@@ -526,6 +553,14 @@
+@@ -527,6 +553,14 @@ e1000_reset_hw(struct e1000_hw *hw)
          } while(timeout);
      }
  
@@ -616,7 +612,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Issue a global reset to the MAC.  This will reset the chip's
       * transmit, receive, DMA, and link units.  It will not effect
       * the current PCI configuration.  The global reset bit is self-
-@@ -549,6 +584,20 @@
+@@ -550,6 +584,20 @@ e1000_reset_hw(struct e1000_hw *hw)
              /* Reset is performed on a shadow of the control register */
              E1000_WRITE_REG(hw, CTRL_DUP, (ctrl | E1000_CTRL_RST));
              break;
@@ -637,7 +633,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          default:
              E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
              break;
-@@ -590,6 +639,7 @@
+@@ -591,6 +639,7 @@ e1000_reset_hw(struct e1000_hw *hw)
              /* fall through */
          case e1000_82571:
          case e1000_82572:
@@ -645,7 +641,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          case e1000_80003es2lan:
              ret_val = e1000_get_auto_rd_done(hw);
              if(ret_val)
-@@ -632,6 +682,12 @@
+@@ -633,6 +682,12 @@ e1000_reset_hw(struct e1000_hw *hw)
              e1000_pci_set_mwi(hw);
      }
  
@@ -658,7 +654,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return E1000_SUCCESS;
  }
  
-@@ -674,9 +730,12 @@
+@@ -675,9 +730,12 @@ e1000_init_hw(struct e1000_hw *hw)
  
      /* Disabling VLAN filtering. */
      DEBUGOUT("Initializing the IEEE VLAN\n");
@@ -674,7 +670,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      /* For 82542 (rev 2.0), disable MWI and put the receiver into reset */
      if(hw->mac_type == e1000_82542_rev2_0) {
-@@ -704,8 +763,14 @@
+@@ -705,8 +763,14 @@ e1000_init_hw(struct e1000_hw *hw)
      /* Zero out the Multicast HASH table */
      DEBUGOUT("Zeroing the MTA\n");
      mta_size = E1000_MC_TBL_SIZE;
@@ -690,7 +686,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      /* Set the PCI priority bit correctly in the CTRL register.  This
       * determines if the adapter gives priority to receives, or if it
-@@ -743,6 +808,10 @@
+@@ -744,6 +808,10 @@ e1000_init_hw(struct e1000_hw *hw)
          break;
      }
  
@@ -701,7 +697,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Call a subroutine to configure the link and setup flow control. */
      ret_val = e1000_setup_link(hw);
  
-@@ -756,6 +825,7 @@
+@@ -757,6 +825,7 @@ e1000_init_hw(struct e1000_hw *hw)
          case e1000_82571:
          case e1000_82572:
          case e1000_82573:
@@ -709,7 +705,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          case e1000_80003es2lan:
              ctrl |= E1000_TXDCTL_COUNT_DESC;
              break;
-@@ -764,7 +834,7 @@
+@@ -765,7 +834,7 @@ e1000_init_hw(struct e1000_hw *hw)
      }
  
      if (hw->mac_type == e1000_82573) {
@@ -718,7 +714,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  
      switch (hw->mac_type) {
-@@ -794,6 +864,7 @@
+@@ -795,6 +864,7 @@ e1000_init_hw(struct e1000_hw *hw)
          /* Fall through */
      case e1000_82571:
      case e1000_82572:
@@ -726,7 +722,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          ctrl = E1000_READ_REG(hw, TXDCTL1);
          ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | E1000_TXDCTL_FULL_TX_DESC_WB;
          if(hw->mac_type >= e1000_82571)
-@@ -817,6 +888,11 @@
+@@ -818,6 +888,11 @@ e1000_init_hw(struct e1000_hw *hw)
       */
      e1000_clear_hw_cntrs(hw);
  
@@ -738,7 +734,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      if (hw->device_id == E1000_DEV_ID_82546GB_QUAD_COPPER ||
          hw->device_id == E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3) {
          ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
-@@ -860,7 +936,7 @@
+@@ -861,7 +936,7 @@ e1000_adjust_serdes_amplitude(struct e10
  
      if(eeprom_data != EEPROM_RESERVED_WORD) {
          /* Adjust SERDES output amplitude only. */
@@ -747,7 +743,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          ret_val = e1000_write_phy_reg(hw, M88E1000_PHY_EXT_CTRL, eeprom_data);
          if(ret_val)
              return ret_val;
-@@ -904,6 +980,7 @@
+@@ -905,6 +980,7 @@ e1000_setup_link(struct e1000_hw *hw)
       */
      if (hw->fc == e1000_fc_default) {
          switch (hw->mac_type) {
@@ -755,7 +751,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          case e1000_82573:
              hw->fc = e1000_fc_full;
              break;
-@@ -970,9 +1047,12 @@
+@@ -971,9 +1047,12 @@ e1000_setup_link(struct e1000_hw *hw)
       */
      DEBUGOUT("Initializing the Flow Control address, type and timer regs\n");
  
@@ -771,7 +767,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      E1000_WRITE_REG(hw, FCTTV, hw->fc_pause_time);
  
-@@ -1227,7 +1307,7 @@
+@@ -1228,7 +1307,7 @@ e1000_copper_link_igp_setup(struct e1000
  
      if (hw->phy_reset_disable)
          return E1000_SUCCESS;
@@ -780,7 +776,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      ret_val = e1000_phy_reset(hw);
      if (ret_val) {
          DEBUGOUT("Error Resetting the PHY\n");
-@@ -1236,12 +1316,13 @@
+@@ -1237,12 +1316,13 @@ e1000_copper_link_igp_setup(struct e1000
  
      /* Wait 10ms for MAC to configure PHY from eeprom settings */
      msec_delay(15);
@@ -795,7 +791,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      /* disable lplu d3 during driver init */
      ret_val = e1000_set_d3_lplu_state(hw, FALSE);
-@@ -1369,7 +1450,7 @@
+@@ -1370,7 +1450,7 @@ e1000_copper_link_ggp_setup(struct e1000
      DEBUGFUNC("e1000_copper_link_ggp_setup");
  
      if(!hw->phy_reset_disable) {
@@ -804,7 +800,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          /* Enable CRS on TX for half-duplex operation. */
          ret_val = e1000_read_phy_reg(hw, GG82563_PHY_MAC_SPEC_CTRL,
                                       &phy_data);
-@@ -1477,8 +1558,7 @@
+@@ -1478,8 +1558,7 @@ e1000_copper_link_ggp_setup(struct e1000
              if (ret_val)
                  return ret_val;
  
@@ -814,7 +810,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
              ret_val = e1000_write_phy_reg(hw, GG82563_PHY_KMRN_MODE_CTRL,
                                            phy_data);
-@@ -1518,7 +1598,7 @@
+@@ -1519,7 +1598,7 @@ e1000_copper_link_mgp_setup(struct e1000
  
      if(hw->phy_reset_disable)
          return E1000_SUCCESS;
@@ -823,7 +819,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Enable CRS on TX. This must be set for half-duplex operation. */
      ret_val = e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
      if(ret_val)
-@@ -1560,28 +1640,40 @@
+@@ -1561,28 +1640,40 @@ e1000_copper_link_mgp_setup(struct e1000
      phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
      if(hw->disable_polarity_correction == 1)
          phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
@@ -881,7 +877,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  
      /* SW Reset the PHY so all changes take effect */
-@@ -1619,6 +1711,10 @@
+@@ -1620,6 +1711,10 @@ e1000_copper_link_autoneg(struct e1000_h
      if(hw->autoneg_advertised == 0)
          hw->autoneg_advertised = AUTONEG_ADVERTISE_SPEED_DEFAULT;
  
@@ -892,7 +888,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      DEBUGOUT("Reconfiguring auto-neg advertisement params\n");
      ret_val = e1000_phy_setup_autoneg(hw);
      if(ret_val) {
-@@ -1664,7 +1760,7 @@
+@@ -1665,7 +1760,7 @@ e1000_copper_link_autoneg(struct e1000_h
  *      collision distance in the Transmit Control Register.
  *   2) Set up flow control on the MAC to that established with
  *      the link partner.
@@ -901,7 +897,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  *
  * hw - Struct containing variables accessed by shared code
  ******************************************************************************/
-@@ -1673,7 +1769,7 @@
+@@ -1674,7 +1769,7 @@ e1000_copper_link_postconfig(struct e100
  {
      int32_t ret_val;
      DEBUGFUNC("e1000_copper_link_postconfig");
@@ -910,7 +906,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      if(hw->mac_type >= e1000_82544) {
          e1000_config_collision_dist(hw);
      } else {
-@@ -1697,7 +1793,7 @@
+@@ -1698,7 +1793,7 @@ e1000_copper_link_postconfig(struct e100
              return ret_val;
          }
      }
@@ -919,7 +915,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return E1000_SUCCESS;
  }
  
-@@ -1716,6 +1812,26 @@
+@@ -1717,6 +1812,26 @@ e1000_setup_copper_link(struct e1000_hw 
  
      DEBUGFUNC("e1000_setup_copper_link");
  
@@ -946,7 +942,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Check if it is a valid PHY and set PHY mode if necessary. */
      ret_val = e1000_copper_link_preconfig(hw);
      if(ret_val)
-@@ -1723,10 +1839,8 @@
+@@ -1724,10 +1839,8 @@ e1000_setup_copper_link(struct e1000_hw 
  
      switch (hw->mac_type) {
      case e1000_80003es2lan:
@@ -959,7 +955,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          reg_data |= E1000_KUMCTRLSTA_INB_CTRL_DIS_PADDING;
          ret_val = e1000_write_kmrn_reg(hw, E1000_KUMCTRLSTA_OFFSET_INB_CTRL,
                                         reg_data);
-@@ -1738,6 +1852,7 @@
+@@ -1739,6 +1852,7 @@ e1000_setup_copper_link(struct e1000_hw 
      }
  
      if (hw->phy_type == e1000_phy_igp ||
@@ -967,7 +963,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->phy_type == e1000_phy_igp_2) {
          ret_val = e1000_copper_link_igp_setup(hw);
          if(ret_val)
-@@ -1753,11 +1868,11 @@
+@@ -1754,11 +1868,11 @@ e1000_setup_copper_link(struct e1000_hw 
      }
  
      if(hw->autoneg) {
@@ -982,7 +978,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      } else {
          /* PHY will be set to 10H, 10F, 100H,or 100F
            * depending on value from forced_speed_duplex. */
-@@ -1785,7 +1900,7 @@
+@@ -1786,7 +1900,7 @@ e1000_setup_copper_link(struct e1000_hw 
              ret_val = e1000_copper_link_postconfig(hw);
              if(ret_val)
                  return ret_val;
@@ -991,7 +987,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              DEBUGOUT("Valid link established!!!\n");
              return E1000_SUCCESS;
          }
-@@ -1802,7 +1917,7 @@
+@@ -1803,7 +1917,7 @@ e1000_setup_copper_link(struct e1000_hw 
  * hw - Struct containing variables accessed by shared code
  ******************************************************************************/
  static int32_t
@@ -1000,7 +996,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  {
      int32_t ret_val = E1000_SUCCESS;
      uint32_t tipg;
-@@ -1822,6 +1937,18 @@
+@@ -1823,6 +1937,18 @@ e1000_configure_kmrn_for_10_100(struct e
      tipg |= DEFAULT_80003ES2LAN_TIPG_IPGT_10_100;
      E1000_WRITE_REG(hw, TIPG, tipg);
  
@@ -1019,7 +1015,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return ret_val;
  }
  
-@@ -1846,6 +1973,14 @@
+@@ -1847,6 +1973,14 @@ e1000_configure_kmrn_for_1000(struct e10
      tipg |= DEFAULT_80003ES2LAN_TIPG_IPGT_1000;
      E1000_WRITE_REG(hw, TIPG, tipg);
  
@@ -1034,7 +1030,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return ret_val;
  }
  
-@@ -1868,10 +2003,13 @@
+@@ -1869,10 +2003,13 @@ e1000_phy_setup_autoneg(struct e1000_hw 
      if(ret_val)
          return ret_val;
  
@@ -1052,7 +1048,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      /* Need to parse both autoneg_advertised and fc and set up
       * the appropriate PHY registers.  First we will parse for
-@@ -1922,6 +2060,9 @@
+@@ -1923,6 +2060,9 @@ e1000_phy_setup_autoneg(struct e1000_hw 
      if(hw->autoneg_advertised & ADVERTISE_1000_FULL) {
          DEBUGOUT("Advertise 1000mb Full duplex\n");
          mii_1000t_ctrl_reg |= CR_1000T_FD_CAPS;
@@ -1062,7 +1058,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  
      /* Check for a software override of the flow control settings, and
-@@ -1983,9 +2124,11 @@
+@@ -1984,9 +2124,11 @@ e1000_phy_setup_autoneg(struct e1000_hw 
  
      DEBUGOUT1("Auto-Neg Advertising %x\n", mii_autoneg_adv_reg);
  
@@ -1077,7 +1073,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      return E1000_SUCCESS;
  }
-@@ -2088,6 +2231,18 @@
+@@ -2089,6 +2231,18 @@ e1000_phy_force_speed_duplex(struct e100
  
          /* Need to reset the PHY or these changes will be ignored */
          mii_ctrl_reg |= MII_CR_RESET;
@@ -1096,7 +1092,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      } else {
          /* Clear Auto-Crossover to force MDI manually.  IGP requires MDI
           * forced whenever speed or duplex are forced.
-@@ -2272,7 +2427,7 @@
+@@ -2273,7 +2427,7 @@ e1000_config_mac_to_phy(struct e1000_hw 
  
      DEBUGFUNC("e1000_config_mac_to_phy");
  
@@ -1105,7 +1101,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      * MAC speed/duplex configuration.*/
      if (hw->mac_type >= e1000_82544)
          return E1000_SUCCESS;
-@@ -2291,9 +2446,9 @@
+@@ -2292,9 +2446,9 @@ e1000_config_mac_to_phy(struct e1000_hw 
      if(ret_val)
          return ret_val;
  
@@ -1117,7 +1113,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          ctrl &= ~E1000_CTRL_FD;
  
      e1000_config_collision_dist(hw);
-@@ -2492,10 +2647,10 @@
+@@ -2493,10 +2647,10 @@ e1000_config_fc_after_link_up(struct e10
                   */
                  if(hw->original_fc == e1000_fc_full) {
                      hw->fc = e1000_fc_full;
@@ -1130,7 +1126,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
                  }
              }
              /* For receiving PAUSE frames ONLY.
-@@ -2511,7 +2666,7 @@
+@@ -2512,7 +2666,7 @@ e1000_config_fc_after_link_up(struct e10
                      (mii_nway_lp_ability_reg & NWAY_LPAR_PAUSE) &&
                      (mii_nway_lp_ability_reg & NWAY_LPAR_ASM_DIR)) {
                  hw->fc = e1000_fc_tx_pause;
@@ -1139,7 +1135,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              }
              /* For transmitting PAUSE frames ONLY.
               *
-@@ -2526,7 +2681,7 @@
+@@ -2527,7 +2681,7 @@ e1000_config_fc_after_link_up(struct e10
                      !(mii_nway_lp_ability_reg & NWAY_LPAR_PAUSE) &&
                      (mii_nway_lp_ability_reg & NWAY_LPAR_ASM_DIR)) {
                  hw->fc = e1000_fc_rx_pause;
@@ -1148,7 +1144,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              }
              /* Per the IEEE spec, at this point flow control should be
               * disabled.  However, we want to consider that we could
-@@ -2552,10 +2707,10 @@
+@@ -2553,10 +2707,10 @@ e1000_config_fc_after_link_up(struct e10
                       hw->original_fc == e1000_fc_tx_pause) ||
                      hw->fc_strict_ieee) {
                  hw->fc = e1000_fc_none;
@@ -1161,7 +1157,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              }
  
              /* Now we need to do one last check...  If we auto-
-@@ -2580,7 +2735,7 @@
+@@ -2581,7 +2735,7 @@ e1000_config_fc_after_link_up(struct e10
                  return ret_val;
              }
          } else {
@@ -1170,7 +1166,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          }
      }
      return E1000_SUCCESS;
-@@ -2720,8 +2875,12 @@
+@@ -2721,8 +2875,12 @@ e1000_check_for_link(struct e1000_hw *hw
           */
          if(hw->tbi_compatibility_en) {
              uint16_t speed, duplex;
@@ -1185,7 +1181,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
                  /* If link speed is not set to gigabit speed, we do not need
                   * to enable TBI compatibility.
                   */
-@@ -2763,7 +2922,7 @@
+@@ -2764,7 +2922,7 @@ e1000_check_for_link(struct e1000_hw *hw
              hw->autoneg_failed = 1;
              return 0;
          }
@@ -1194,7 +1190,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
          /* Disable auto-negotiation in the TXCW register */
          E1000_WRITE_REG(hw, TXCW, (hw->txcw & ~E1000_TXCW_ANE));
-@@ -2788,7 +2947,7 @@
+@@ -2789,7 +2947,7 @@ e1000_check_for_link(struct e1000_hw *hw
      else if(((hw->media_type == e1000_media_type_fiber) ||
               (hw->media_type == e1000_media_type_internal_serdes)) &&
              (ctrl & E1000_CTRL_SLU) && (rxcw & E1000_RXCW_C)) {
@@ -1203,7 +1199,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          E1000_WRITE_REG(hw, TXCW, hw->txcw);
          E1000_WRITE_REG(hw, CTRL, (ctrl & ~E1000_CTRL_SLU));
  
-@@ -2851,13 +3010,13 @@
+@@ -2852,13 +3010,13 @@ e1000_get_speed_and_duplex(struct e1000_
  
          if(status & E1000_STATUS_FD) {
              *duplex = FULL_DUPLEX;
@@ -1220,7 +1216,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          *speed = SPEED_1000;
          *duplex = FULL_DUPLEX;
      }
-@@ -2883,12 +3042,18 @@
+@@ -2884,12 +3042,18 @@ e1000_get_speed_and_duplex(struct e1000_
          }
      }
  
@@ -1241,7 +1237,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          if (ret_val)
              return ret_val;
      }
-@@ -3078,6 +3243,9 @@
+@@ -3079,6 +3243,9 @@ e1000_swfw_sync_acquire(struct e1000_hw 
  
      DEBUGFUNC("e1000_swfw_sync_acquire");
  
@@ -1251,7 +1247,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      if (!hw->swfw_sync_present)
          return e1000_get_hw_eeprom_semaphore(hw);
  
-@@ -3117,6 +3285,11 @@
+@@ -3118,6 +3285,11 @@ e1000_swfw_sync_release(struct e1000_hw 
  
      DEBUGFUNC("e1000_swfw_sync_release");
  
@@ -1263,7 +1259,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      if (!hw->swfw_sync_present) {
          e1000_put_hw_eeprom_semaphore(hw);
          return;
-@@ -3159,7 +3332,8 @@
+@@ -3160,7 +3332,8 @@ e1000_read_phy_reg(struct e1000_hw *hw,
      if (e1000_swfw_sync_acquire(hw, swfw))
          return -E1000_ERR_SWFW_SYNC;
  
@@ -1273,7 +1269,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->phy_type == e1000_phy_igp_2) &&
         (reg_addr > MAX_PHY_MULTI_PAGE_REG)) {
          ret_val = e1000_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
-@@ -3298,7 +3472,8 @@
+@@ -3299,7 +3472,8 @@ e1000_write_phy_reg(struct e1000_hw *hw,
      if (e1000_swfw_sync_acquire(hw, swfw))
          return -E1000_ERR_SWFW_SYNC;
  
@@ -1283,7 +1279,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->phy_type == e1000_phy_igp_2) &&
         (reg_addr > MAX_PHY_MULTI_PAGE_REG)) {
          ret_val = e1000_write_phy_reg_ex(hw, IGP01E1000_PHY_PAGE_SELECT,
-@@ -3496,24 +3671,24 @@
+@@ -3497,24 +3671,24 @@ e1000_phy_hw_reset(struct e1000_hw *hw)
          }
          /* Read the device control register and assert the E1000_CTRL_PHY_RST
           * bit. Then, take it out of reset.
@@ -1314,7 +1310,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          e1000_swfw_sync_release(hw, swfw);
      } else {
          /* Read the Extended Device Control Register, assert the PHY_RESET_DIR
-@@ -3543,6 +3718,12 @@
+@@ -3544,6 +3718,12 @@ e1000_phy_hw_reset(struct e1000_hw *hw)
      ret_val = e1000_get_phy_cfg_done(hw);
      e1000_release_software_semaphore(hw);
  
@@ -1327,7 +1323,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return ret_val;
  }
  
-@@ -3571,9 +3752,11 @@
+@@ -3572,9 +3752,11 @@ e1000_phy_reset(struct e1000_hw *hw)
      case e1000_82541_rev_2:
      case e1000_82571:
      case e1000_82572:
@@ -1339,7 +1335,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          break;
      default:
          ret_val = e1000_read_phy_reg(hw, PHY_CTRL, &phy_data);
-@@ -3596,11 +3779,120 @@
+@@ -3597,11 +3779,120 @@ e1000_phy_reset(struct e1000_hw *hw)
  }
  
  /******************************************************************************
@@ -1461,7 +1457,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  e1000_detect_gig_phy(struct e1000_hw *hw)
  {
      int32_t phy_init_status, ret_val;
-@@ -3612,8 +3904,8 @@
+@@ -3613,8 +3904,8 @@ e1000_detect_gig_phy(struct e1000_hw *hw
      /* The 82571 firmware may still be configuring the PHY.  In this
       * case, we cannot access the PHY until the configuration is done.  So
       * we explicitly set the PHY values. */
@@ -1472,7 +1468,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->phy_id = IGP01E1000_I_PHY_ID;
          hw->phy_type = e1000_phy_igp_2;
          return E1000_SUCCESS;
-@@ -3630,7 +3922,7 @@
+@@ -3631,7 +3922,7 @@ e1000_detect_gig_phy(struct e1000_hw *hw
  
      /* Read the PHY ID Registers to identify which PHY is onboard. */
      ret_val = e1000_read_phy_reg(hw, PHY_ID1, &phy_id_high);
@@ -1481,7 +1477,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          return ret_val;
  
      hw->phy_id = (uint32_t) (phy_id_high << 16);
-@@ -3668,6 +3960,12 @@
+@@ -3669,6 +3960,12 @@ e1000_detect_gig_phy(struct e1000_hw *hw
      case e1000_80003es2lan:
          if (hw->phy_id == GG82563_E_PHY_ID) match = TRUE;
          break;
@@ -1494,7 +1490,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      default:
          DEBUGOUT1("Invalid MAC type %d\n", hw->mac_type);
          return -E1000_ERR_CONFIG;
-@@ -3783,6 +4081,53 @@
+@@ -3784,6 +4081,53 @@ e1000_phy_igp_get_info(struct e1000_hw *
  }
  
  /******************************************************************************
@@ -1548,7 +1544,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  * Get PHY information from various PHY registers fot m88 PHY only.
  *
  * hw - Struct containing variables accessed by shared code
-@@ -3815,7 +4160,7 @@
+@@ -3816,7 +4160,7 @@ e1000_phy_m88_get_info(struct e1000_hw *
      /* Check polarity status */
      ret_val = e1000_check_polarity(hw, &polarity);
      if(ret_val)
@@ -1557,7 +1553,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      phy_info->cable_polarity = polarity;
  
      ret_val = e1000_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS, &phy_data);
-@@ -3897,9 +4242,12 @@
+@@ -3898,9 +4242,12 @@ e1000_phy_get_info(struct e1000_hw *hw,
          return -E1000_ERR_CONFIG;
      }
  
@@ -1571,7 +1567,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      else
          return e1000_phy_m88_get_info(hw, phy_info);
  }
-@@ -4048,6 +4396,35 @@
+@@ -4049,6 +4396,35 @@ e1000_init_eeprom_params(struct e1000_hw
          eeprom->use_eerd = TRUE;
          eeprom->use_eewr = FALSE;
          break;
@@ -1607,7 +1603,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      default:
          break;
      }
-@@ -4468,7 +4845,10 @@
+@@ -4469,7 +4845,10 @@ e1000_read_eeprom(struct e1000_hw *hw,
          return ret_val;
      }
  
@@ -1619,7 +1615,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          uint16_t word_in;
          uint8_t read_opcode = EEPROM_READ_OPCODE_SPI;
  
-@@ -4540,14 +4920,14 @@
+@@ -4541,14 +4920,14 @@ e1000_read_eeprom_eerd(struct e1000_hw *
  
          E1000_WRITE_REG(hw, EERD, eerd);
          error = e1000_poll_eerd_eewr_done(hw, E1000_EEPROM_POLL_READ);
@@ -1637,7 +1633,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return error;
  }
  
-@@ -4573,24 +4953,24 @@
+@@ -4574,24 +4953,24 @@ e1000_write_eeprom_eewr(struct e1000_hw 
          return -E1000_ERR_SWFW_SYNC;
  
      for (i = 0; i < words; i++) {
@@ -1669,7 +1665,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      e1000_swfw_sync_release(hw, E1000_SWFW_EEP_SM);
      return error;
  }
-@@ -4610,7 +4990,7 @@
+@@ -4611,7 +4990,7 @@ e1000_poll_eerd_eewr_done(struct e1000_h
      for(i = 0; i < attempts; i++) {
          if(eerd == E1000_EEPROM_POLL_READ)
              reg = E1000_READ_REG(hw, EERD);
@@ -1678,7 +1674,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              reg = E1000_READ_REG(hw, EEWR);
  
          if(reg & E1000_EEPROM_RW_REG_DONE) {
-@@ -4635,7 +5015,10 @@
+@@ -4636,7 +5015,10 @@ e1000_is_onboard_nvm_eeprom(struct e1000
  
      DEBUGFUNC("e1000_is_onboard_nvm_eeprom");
  
@@ -1690,7 +1686,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          eecd = E1000_READ_REG(hw, EECD);
  
          /* Isolate bits 15 & 16 */
-@@ -4685,8 +5068,22 @@
+@@ -4686,8 +5068,22 @@ e1000_validate_eeprom_checksum(struct e1
          }
      }
  
@@ -1715,7 +1711,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              DEBUGOUT("EEPROM Read Error\n");
              return -E1000_ERR_EEPROM;
          }
-@@ -4712,6 +5109,7 @@
+@@ -4713,6 +5109,7 @@ e1000_validate_eeprom_checksum(struct e1
  int32_t
  e1000_update_eeprom_checksum(struct e1000_hw *hw)
  {
@@ -1723,7 +1719,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      uint16_t checksum = 0;
      uint16_t i, eeprom_data;
  
-@@ -4730,6 +5128,14 @@
+@@ -4731,6 +5128,14 @@ e1000_update_eeprom_checksum(struct e100
          return -E1000_ERR_EEPROM;
      } else if (hw->eeprom.type == e1000_eeprom_flash) {
          e1000_commit_shadow_ram(hw);
@@ -1738,7 +1734,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
      return E1000_SUCCESS;
  }
-@@ -4769,6 +5175,9 @@
+@@ -4770,6 +5175,9 @@ e1000_write_eeprom(struct e1000_hw *hw,
      if(eeprom->use_eewr == TRUE)
          return e1000_write_eeprom_eewr(hw, offset, words, data);
  
@@ -1748,7 +1744,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Prepare the EEPROM for writing  */
      if (e1000_acquire_eeprom(hw) != E1000_SUCCESS)
          return -E1000_ERR_EEPROM;
-@@ -4956,11 +5365,17 @@
+@@ -4957,11 +5365,17 @@ e1000_commit_shadow_ram(struct e1000_hw 
      uint32_t flop = 0;
      uint32_t i = 0;
      int32_t error = E1000_SUCCESS;
@@ -1769,7 +1765,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          for (i=0; i < attempts; i++) {
              eecd = E1000_READ_REG(hw, EECD);
              if ((eecd & E1000_EECD_FLUPD) == 0) {
-@@ -4994,6 +5409,106 @@
+@@ -4995,6 +5409,106 @@ e1000_commit_shadow_ram(struct e1000_hw 
          }
      }
  
@@ -1876,7 +1872,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      return error;
  }
  
-@@ -5101,15 +5616,19 @@
+@@ -5102,15 +5616,19 @@ e1000_init_rx_addrs(struct e1000_hw *hw)
       * the other port. */
      if ((hw->mac_type == e1000_82571) && (hw->laa_is_present == TRUE))
          rar_num -= 1;
@@ -1897,7 +1893,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  /******************************************************************************
   * Updates the MAC's list of multicast addresses.
   *
-@@ -5135,7 +5654,7 @@
+@@ -5136,7 +5654,7 @@ e1000_mc_addr_list_update(struct e1000_h
      uint32_t i;
      uint32_t num_rar_entry;
      uint32_t num_mta_entry;
@@ -1906,7 +1902,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      DEBUGFUNC("e1000_mc_addr_list_update");
  
      /* Set the new number of MC addresses that we are being requested to use. */
-@@ -5144,6 +5663,8 @@
+@@ -5145,6 +5663,8 @@ e1000_mc_addr_list_update(struct e1000_h
      /* Clear RAR[1-15] */
      DEBUGOUT(" Clearing RAR[1-15]\n");
      num_rar_entry = E1000_RAR_ENTRIES;
@@ -1915,7 +1911,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      /* Reserve a spot for the Locally Administered Address to work around
       * an 82571 issue in which a reset on one port will reload the MAC on
       * the other port. */
-@@ -5152,14 +5673,19 @@
+@@ -5153,14 +5673,19 @@ e1000_mc_addr_list_update(struct e1000_h
  
      for(i = rar_used_count; i < num_rar_entry; i++) {
          E1000_WRITE_REG_ARRAY(hw, RA, (i << 1), 0);
@@ -1935,7 +1931,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  
      /* Add the new addresses */
-@@ -5193,7 +5719,6 @@
+@@ -5194,7 +5719,6 @@ e1000_mc_addr_list_update(struct e1000_h
      }
      DEBUGOUT("MC Update Complete\n");
  }
@@ -1943,7 +1939,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
  /******************************************************************************
   * Hashes an address to determine its location in the multicast table
-@@ -5216,24 +5741,46 @@
+@@ -5217,24 +5741,46 @@ e1000_hash_mc_addr(struct e1000_hw *hw,
       * LSB                 MSB
       */
      case 0:
@@ -1998,7 +1994,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      return hash_value;
  }
-@@ -5261,6 +5808,8 @@
+@@ -5262,6 +5808,8 @@ e1000_mta_set(struct e1000_hw *hw,
       * register are determined by the lower 5 bits of the value.
       */
      hash_reg = (hash_value >> 5) & 0x7F;
@@ -2007,7 +2003,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      hash_bit = hash_value & 0x1F;
  
      mta = E1000_READ_REG_ARRAY(hw, MTA, hash_reg);
-@@ -5274,9 +5823,12 @@
+@@ -5275,9 +5823,12 @@ e1000_mta_set(struct e1000_hw *hw,
      if((hw->mac_type == e1000_82544) && ((hash_reg & 0x1) == 1)) {
          temp = E1000_READ_REG_ARRAY(hw, MTA, (hash_reg - 1));
          E1000_WRITE_REG_ARRAY(hw, MTA, hash_reg, mta);
@@ -2020,7 +2016,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  }
  
-@@ -5333,7 +5885,9 @@
+@@ -5334,7 +5885,9 @@ e1000_rar_set(struct e1000_hw *hw,
      }
  
      E1000_WRITE_REG_ARRAY(hw, RA, (index << 1), rar_low);
@@ -2030,7 +2026,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  }
  
  /******************************************************************************
-@@ -5350,12 +5904,18 @@
+@@ -5351,12 +5904,18 @@ e1000_write_vfta(struct e1000_hw *hw,
  {
      uint32_t temp;
  
@@ -2050,7 +2046,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  }
  
-@@ -5372,6 +5932,9 @@
+@@ -5373,6 +5932,9 @@ e1000_clear_vfta(struct e1000_hw *hw)
      uint32_t vfta_offset = 0;
      uint32_t vfta_bit_in_reg = 0;
  
@@ -2060,7 +2056,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      if (hw->mac_type == e1000_82573) {
          if (hw->mng_cookie.vlan_id != 0) {
              /* The VFTA is a 4096b bit-field, each identifying a single VLAN
-@@ -5391,6 +5954,7 @@
+@@ -5392,6 +5954,7 @@ e1000_clear_vfta(struct e1000_hw *hw)
           * manageability unit */
          vfta_value = (offset == vfta_offset) ? vfta_bit_in_reg : 0;
          E1000_WRITE_REG_ARRAY(hw, VFTA, offset, vfta_value);
@@ -2068,7 +2064,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  }
  
-@@ -5420,9 +5984,18 @@
+@@ -5421,9 +5984,18 @@ e1000_id_led_init(struct e1000_hw * hw)
          DEBUGOUT("EEPROM Read Error\n");
          return -E1000_ERR_EEPROM;
      }
@@ -2090,7 +2086,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          temp = (eeprom_data >> (i << 2)) & led_mask;
          switch(temp) {
          case ID_LED_ON1_DEF2:
-@@ -5518,6 +6091,44 @@
+@@ -5519,6 +6091,44 @@ e1000_setup_led(struct e1000_hw *hw)
  }
  
  /******************************************************************************
@@ -2135,7 +2131,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
   * Restores the saved state of the SW controlable LED.
   *
   * hw - Struct containing variables accessed by shared code
-@@ -5547,6 +6158,10 @@
+@@ -5548,6 +6158,10 @@ e1000_cleanup_led(struct e1000_hw *hw)
              return ret_val;
          /* Fall Through */
      default:
@@ -2146,7 +2142,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          /* Restore LEDCTL settings */
          E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_default);
          break;
-@@ -5591,7 +6206,10 @@
+@@ -5592,7 +6206,10 @@ e1000_led_on(struct e1000_hw *hw)
              /* Clear SW Defineable Pin 0 to turn on the LED */
              ctrl &= ~E1000_CTRL_SWDPIN0;
              ctrl |= E1000_CTRL_SWDPIO0;
@@ -2158,7 +2154,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_mode2);
              return E1000_SUCCESS;
          }
-@@ -5639,7 +6257,10 @@
+@@ -5640,7 +6257,10 @@ e1000_led_off(struct e1000_hw *hw)
              /* Set SW Defineable Pin 0 to turn off the LED */
              ctrl |= E1000_CTRL_SWDPIN0;
              ctrl |= E1000_CTRL_SWDPIO0;
@@ -2170,7 +2166,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              E1000_WRITE_REG(hw, LEDCTL, hw->ledctl_mode1);
              return E1000_SUCCESS;
          }
-@@ -5677,12 +6298,16 @@
+@@ -5678,12 +6298,16 @@ e1000_clear_hw_cntrs(struct e1000_hw *hw
      temp = E1000_READ_REG(hw, XOFFRXC);
      temp = E1000_READ_REG(hw, XOFFTXC);
      temp = E1000_READ_REG(hw, FCRUC);
@@ -2187,7 +2183,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      temp = E1000_READ_REG(hw, GPRC);
      temp = E1000_READ_REG(hw, BPRC);
      temp = E1000_READ_REG(hw, MPRC);
-@@ -5702,12 +6327,16 @@
+@@ -5703,12 +6327,16 @@ e1000_clear_hw_cntrs(struct e1000_hw *hw
      temp = E1000_READ_REG(hw, TOTH);
      temp = E1000_READ_REG(hw, TPR);
      temp = E1000_READ_REG(hw, TPT);
@@ -2204,7 +2200,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      temp = E1000_READ_REG(hw, MPTC);
      temp = E1000_READ_REG(hw, BPTC);
  
-@@ -5730,6 +6359,9 @@
+@@ -5731,6 +6359,9 @@ e1000_clear_hw_cntrs(struct e1000_hw *hw
  
      temp = E1000_READ_REG(hw, IAC);
      temp = E1000_READ_REG(hw, ICRXOC);
@@ -2214,7 +2210,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      temp = E1000_READ_REG(hw, ICRXPTC);
      temp = E1000_READ_REG(hw, ICRXATC);
      temp = E1000_READ_REG(hw, ICTXPTC);
-@@ -5910,6 +6542,7 @@
+@@ -5911,6 +6542,7 @@ e1000_get_bus_info(struct e1000_hw *hw)
          hw->bus_width = e1000_bus_width_pciex_1;
          break;
      case e1000_82571:
@@ -2222,7 +2218,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      case e1000_80003es2lan:
          hw->bus_type = e1000_bus_type_pci_express;
          hw->bus_speed = e1000_bus_speed_2500;
-@@ -5947,8 +6580,6 @@
+@@ -5948,8 +6580,6 @@ e1000_get_bus_info(struct e1000_hw *hw)
          break;
      }
  }
@@ -2231,7 +2227,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  /******************************************************************************
   * Reads a value from one of the devices registers using port I/O (as opposed
   * memory mapped I/O). Only 82544 and newer devices support port I/O.
-@@ -5966,7 +6597,6 @@
+@@ -5967,7 +6597,6 @@ e1000_read_reg_io(struct e1000_hw *hw,
      e1000_io_write(hw, io_addr, offset);
      return e1000_io_read(hw, io_data);
  }
@@ -2239,7 +2235,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
  /******************************************************************************
   * Writes a value to one of the devices registers using port I/O (as opposed to
-@@ -6011,8 +6641,6 @@
+@@ -6012,8 +6641,6 @@ e1000_get_cable_length(struct e1000_hw *
  {
      int32_t ret_val;
      uint16_t agc_value = 0;
@@ -2248,7 +2244,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      uint16_t i, phy_data;
      uint16_t cable_length;
  
-@@ -6085,6 +6713,8 @@
+@@ -6086,6 +6713,8 @@ e1000_get_cable_length(struct e1000_hw *
              break;
          }
      } else if(hw->phy_type == e1000_phy_igp) { /* For IGP PHY */
@@ -2257,7 +2253,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          uint16_t agc_reg_array[IGP01E1000_PHY_CHANNEL_NUM] =
                                                           {IGP01E1000_PHY_AGC_A,
                                                            IGP01E1000_PHY_AGC_B,
-@@ -6097,23 +6727,23 @@
+@@ -6098,23 +6727,23 @@ e1000_get_cable_length(struct e1000_hw *
              if(ret_val)
                  return ret_val;
  
@@ -2290,7 +2286,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
              /* Get the average length of the remaining 3 channels */
              agc_value /= (IGP01E1000_PHY_CHANNEL_NUM - 1);
-@@ -6129,7 +6759,10 @@
+@@ -6130,7 +6759,10 @@ e1000_get_cable_length(struct e1000_hw *
                         IGP01E1000_AGC_RANGE) : 0;
          *max_length = e1000_igp_cable_length_table[agc_value] +
                        IGP01E1000_AGC_RANGE;
@@ -2302,7 +2298,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          uint16_t agc_reg_array[IGP02E1000_PHY_CHANNEL_NUM] =
                                                           {IGP02E1000_PHY_AGC_A,
                                                            IGP02E1000_PHY_AGC_B,
-@@ -6144,19 +6777,27 @@
+@@ -6145,19 +6777,27 @@ e1000_get_cable_length(struct e1000_hw *
  	    /* Getting bits 15:9, which represent the combination of course and
               * fine gain values.  The result is a number that can be put into
               * the lookup table to obtain the approximate cable length. */
@@ -2338,7 +2334,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          agc_value /= (IGP02E1000_PHY_CHANNEL_NUM - 2);
  
          /* Calculate cable length with the error range of +/- 10 meters. */
-@@ -6202,7 +6843,8 @@
+@@ -6203,7 +6843,8 @@ e1000_check_polarity(struct e1000_hw *hw
              return ret_val;
          *polarity = (phy_data & M88E1000_PSSR_REV_POLARITY) >>
                      M88E1000_PSSR_REV_POLARITY_SHIFT;
@@ -2348,7 +2344,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
                hw->phy_type == e1000_phy_igp_2) {
          /* Read the Status register to check the speed */
          ret_val = e1000_read_phy_reg(hw, IGP01E1000_PHY_PORT_STATUS,
-@@ -6228,6 +6870,13 @@
+@@ -6229,6 +6870,13 @@ e1000_check_polarity(struct e1000_hw *hw
               * 100 Mbps this bit is always 0) */
              *polarity = phy_data & IGP01E1000_PSSR_POLARITY_REVERSED;
          }
@@ -2362,7 +2358,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
      return E1000_SUCCESS;
  }
-@@ -6240,7 +6889,7 @@
+@@ -6241,7 +6889,7 @@ e1000_check_polarity(struct e1000_hw *hw
   *                                1 - Downshift ocured.
   *
   * returns: - E1000_ERR_XXX
@@ -2371,7 +2367,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
   *
   * For phy's older then IGP, this function reads the Downshift bit in the Phy
   * Specific Status register.  For IGP phy's, it reads the Downgrade bit in the
-@@ -6255,7 +6904,8 @@
+@@ -6256,7 +6904,8 @@ e1000_check_downshift(struct e1000_hw *h
  
      DEBUGFUNC("e1000_check_downshift");
  
@@ -2381,7 +2377,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          hw->phy_type == e1000_phy_igp_2) {
          ret_val = e1000_read_phy_reg(hw, IGP01E1000_PHY_LINK_HEALTH,
                                       &phy_data);
-@@ -6272,6 +6922,9 @@
+@@ -6273,6 +6922,9 @@ e1000_check_downshift(struct e1000_hw *h
  
          hw->speed_downgraded = (phy_data & M88E1000_PSSR_DOWNSHIFT) >>
                                 M88E1000_PSSR_DOWNSHIFT_SHIFT;
@@ -2391,7 +2387,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      }
  
      return E1000_SUCCESS;
-@@ -6316,7 +6969,9 @@
+@@ -6317,7 +6969,9 @@ e1000_config_dsp_after_link_change(struc
  
          if(speed == SPEED_1000) {
  
@@ -2402,7 +2398,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
              if((hw->dsp_config_state == e1000_dsp_config_enabled) &&
                  min_length >= e1000_igp_cable_length_50) {
-@@ -6524,20 +7179,27 @@
+@@ -6525,20 +7179,27 @@ static int32_t
  e1000_set_d3_lplu_state(struct e1000_hw *hw,
                          boolean_t active)
  {
@@ -2433,7 +2429,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      } else {
          ret_val = e1000_read_phy_reg(hw, IGP02E1000_PHY_POWER_MGMT, &phy_data);
          if(ret_val)
-@@ -6552,11 +7214,16 @@
+@@ -6553,11 +7214,16 @@ e1000_set_d3_lplu_state(struct e1000_hw 
              if(ret_val)
                  return ret_val;
          } else {
@@ -2450,7 +2446,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          }
  
          /* LPLU and SmartSpeed are mutually exclusive.  LPLU is used during
-@@ -6592,17 +7259,22 @@
+@@ -6593,17 +7259,22 @@ e1000_set_d3_lplu_state(struct e1000_hw 
                (hw->autoneg_advertised == AUTONEG_ADVERTISE_10_100_ALL)) {
  
          if(hw->mac_type == e1000_82541_rev_2 ||
@@ -2474,7 +2470,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          }
  
          /* When LPLU is enabled we should disable SmartSpeed */
-@@ -6637,6 +7309,7 @@
+@@ -6638,6 +7309,7 @@ static int32_t
  e1000_set_d0_lplu_state(struct e1000_hw *hw,
                          boolean_t active)
  {
@@ -2482,7 +2478,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      int32_t ret_val;
      uint16_t phy_data;
      DEBUGFUNC("e1000_set_d0_lplu_state");
-@@ -6644,15 +7317,24 @@
+@@ -6645,15 +7317,24 @@ e1000_set_d0_lplu_state(struct e1000_hw 
      if(hw->mac_type <= e1000_82547_rev_2)
          return E1000_SUCCESS;
  
@@ -2507,7 +2503,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
          /* LPLU and SmartSpeed are mutually exclusive.  LPLU is used during
           * Dx states where the power conservation is most important.  During
-@@ -6684,11 +7366,16 @@
+@@ -6685,11 +7366,16 @@ e1000_set_d0_lplu_state(struct e1000_hw 
  
  
      } else {
@@ -2526,7 +2522,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
          /* When LPLU is enabled we should disable SmartSpeed */
          ret_val = e1000_read_phy_reg(hw, IGP01E1000_PHY_PORT_CONFIG, &phy_data);
-@@ -6777,7 +7464,7 @@
+@@ -6778,7 +7464,7 @@ int32_t
  e1000_host_if_read_cookie(struct e1000_hw * hw, uint8_t *buffer)
  {
      uint8_t i;
@@ -2535,7 +2531,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      uint8_t length = E1000_MNG_DHCP_COOKIE_LENGTH;
  
      length = (length >> 2);
-@@ -6796,7 +7483,7 @@
+@@ -6797,7 +7483,7 @@ e1000_host_if_read_cookie(struct e1000_h
   * and also checks whether the previous command is completed.
   * It busy waits in case of previous command is not completed.
   *
@@ -2544,7 +2540,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
   *            timeout
   *          - E1000_SUCCESS for success.
   ****************************************************************************/
-@@ -6820,7 +7507,7 @@
+@@ -6821,7 +7507,7 @@ e1000_mng_enable_host_if(struct e1000_hw
          msec_delay_irq(1);
      }
  
@@ -2553,7 +2549,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          DEBUGOUT("Previous command timeout failed .\n");
          return -E1000_ERR_HOST_INTERFACE_COMMAND;
      }
-@@ -6927,8 +7614,10 @@
+@@ -6928,8 +7614,10 @@ e1000_mng_write_cmd_header(struct e1000_
  
      length >>= 2;
      /* The device driver writes the relevant command block into the ram area. */
@@ -2565,7 +2561,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      return E1000_SUCCESS;
  }
-@@ -6960,15 +7649,18 @@
+@@ -6961,15 +7649,18 @@ e1000_mng_write_commit(
   * returns  - TRUE when the mode is IAMT or FALSE.
   ****************************************************************************/
  boolean_t
@@ -2588,7 +2584,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          return TRUE;
  
      return FALSE;
-@@ -7208,7 +7900,6 @@
+@@ -7209,7 +7900,6 @@ e1000_set_pci_express_master_disable(str
      E1000_WRITE_REG(hw, CTRL, ctrl);
  }
  
@@ -2596,7 +2592,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  /***************************************************************************
   *
   * Enables PCI-Express master access.
-@@ -7232,7 +7923,6 @@
+@@ -7233,7 +7923,6 @@ e1000_enable_pciex_master(struct e1000_h
      ctrl &= ~E1000_CTRL_GIO_MASTER_DISABLE;
      E1000_WRITE_REG(hw, CTRL, ctrl);
  }
@@ -2604,7 +2600,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
  /*******************************************************************************
   *
-@@ -7298,8 +7988,10 @@
+@@ -7299,8 +7988,10 @@ e1000_get_auto_rd_done(struct e1000_hw *
      case e1000_82572:
      case e1000_82573:
      case e1000_80003es2lan:
@@ -2617,7 +2613,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
              else msec_delay(1);
              timeout--;
          }
-@@ -7339,7 +8031,7 @@
+@@ -7340,7 +8031,7 @@ e1000_get_phy_cfg_done(struct e1000_hw *
  
      switch (hw->mac_type) {
      default:
@@ -2626,7 +2622,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
          break;
      case e1000_80003es2lan:
          /* Separate *_CFG_DONE_* bit for each port */
-@@ -7522,6 +8214,13 @@
+@@ -7523,6 +8214,13 @@ int32_t
  e1000_check_phy_reset_block(struct e1000_hw *hw)
  {
      uint32_t manc = 0;
@@ -2640,7 +2636,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
  
      if (hw->mac_type > e1000_82547_rev_2)
          manc = E1000_READ_REG(hw, MANC);
-@@ -7548,6 +8247,8 @@
+@@ -7549,6 +8247,8 @@ e1000_arc_subsystem_valid(struct e1000_h
          if((fwsm & E1000_FWSM_MODE_MASK) != 0)
              return TRUE;
          break;
@@ -2649,7 +2645,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
      default:
          break;
      }
-@@ -7555,4 +8256,846 @@
+@@ -7556,4 +8256,846 @@ e1000_arc_subsystem_valid(struct e1000_h
  }
  
  
@@ -3496,9 +3492,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.c linux-2.6.17-plasmaroo/driver
 +
 +
  
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_hw.h
---- linux-2.6.17/drivers/net/e1000/e1000_hw.h	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_hw.h	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_hw.h
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_hw.h
++++ linux-2.6.17/drivers/net/e1000/e1000_hw.h
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -3516,7 +3513,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
    Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  
  *******************************************************************************/
-@@ -61,6 +62,7 @@
+@@ -61,6 +62,7 @@ typedef enum {
      e1000_82572,
      e1000_82573,
      e1000_80003es2lan,
@@ -3524,7 +3521,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
      e1000_num_macs
  } e1000_mac_type;
  
-@@ -69,6 +71,7 @@
+@@ -69,6 +71,7 @@ typedef enum {
      e1000_eeprom_spi,
      e1000_eeprom_microwire,
      e1000_eeprom_flash,
@@ -3532,7 +3529,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
      e1000_eeprom_none, /* No NVM support */
      e1000_num_eeprom_types
  } e1000_eeprom_type;
-@@ -97,6 +100,11 @@
+@@ -97,6 +100,11 @@ typedef enum {
      e1000_fc_default = 0xFF
  } e1000_fc_type;
  
@@ -3544,7 +3541,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* PCI bus types */
  typedef enum {
      e1000_bus_type_unknown = 0,
-@@ -217,6 +225,8 @@
+@@ -217,6 +225,8 @@ typedef enum {
      e1000_phy_igp,
      e1000_phy_igp_2,
      e1000_phy_gg82563,
@@ -3553,7 +3550,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
      e1000_phy_undefined = 0xFF
  } e1000_phy_type;
  
-@@ -312,6 +322,10 @@
+@@ -312,6 +322,10 @@ int32_t e1000_read_phy_reg(struct e1000_
  int32_t e1000_write_phy_reg(struct e1000_hw *hw, uint32_t reg_addr, uint16_t data);
  int32_t e1000_phy_hw_reset(struct e1000_hw *hw);
  int32_t e1000_phy_reset(struct e1000_hw *hw);
@@ -3564,7 +3561,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  int32_t e1000_phy_get_info(struct e1000_hw *hw, struct e1000_phy_info *phy_info);
  int32_t e1000_validate_mdi_setting(struct e1000_hw *hw);
  int32_t e1000_read_kmrn_reg(struct e1000_hw *hw, uint32_t reg_addr, uint16_t *data);
-@@ -330,6 +344,7 @@
+@@ -330,6 +344,7 @@ uint32_t e1000_enable_mng_pass_thru(stru
  #define E1000_MNG_DHCP_COOKIE_OFFSET	0x6F0   /* Cookie offset */
  #define E1000_MNG_DHCP_COOKIE_LENGTH	0x10    /* Cookie length */
  #define E1000_MNG_IAMT_MODE		0x3
@@ -3572,7 +3569,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_IAMT_SIGNATURE            0x544D4149 /* Intel(R) Active Management Technology signature */
  
  #define E1000_MNG_DHCP_COOKIE_STATUS_PARSING_SUPPORT 0x1 /* DHCP parsing enabled */
-@@ -374,7 +389,7 @@
+@@ -374,7 +389,7 @@ struct e1000_host_mng_dhcp_cookie{
  };
  #endif
  
@@ -3581,7 +3578,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  							uint16_t length);
  boolean_t e1000_check_mng_mode(struct e1000_hw *hw);
  boolean_t e1000_enable_tx_pkt_filtering(struct e1000_hw *hw);
-@@ -387,6 +402,8 @@
+@@ -387,6 +402,8 @@ int32_t e1000_read_part_num(struct e1000
  int32_t e1000_read_mac_addr(struct e1000_hw * hw);
  int32_t e1000_swfw_sync_acquire(struct e1000_hw *hw, uint16_t mask);
  void e1000_swfw_sync_release(struct e1000_hw *hw, uint16_t mask);
@@ -3590,7 +3587,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Filters (multicast, vlan, receive) */
  void e1000_mc_addr_list_update(struct e1000_hw *hw, uint8_t * mc_addr_list, uint32_t mc_addr_count, uint32_t pad, uint32_t rar_used_count);
-@@ -400,6 +417,7 @@
+@@ -400,6 +417,7 @@ int32_t e1000_setup_led(struct e1000_hw 
  int32_t e1000_cleanup_led(struct e1000_hw *hw);
  int32_t e1000_led_on(struct e1000_hw *hw);
  int32_t e1000_led_off(struct e1000_hw *hw);
@@ -3598,7 +3595,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Adaptive IFS Functions */
  
-@@ -421,6 +439,29 @@
+@@ -421,6 +439,29 @@ int32_t e1000_disable_pciex_master(struc
  int32_t e1000_get_software_semaphore(struct e1000_hw *hw);
  void e1000_release_software_semaphore(struct e1000_hw *hw);
  int32_t e1000_check_phy_reset_block(struct e1000_hw *hw);
@@ -3628,7 +3625,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* PCI Device IDs */
  #define E1000_DEV_ID_82542               0x1000
-@@ -445,6 +486,7 @@
+@@ -445,6 +486,7 @@ int32_t e1000_check_phy_reset_block(stru
  #define E1000_DEV_ID_82546EB_QUAD_COPPER 0x101D
  #define E1000_DEV_ID_82541EI             0x1013
  #define E1000_DEV_ID_82541EI_MOBILE      0x1018
@@ -3636,7 +3633,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_DEV_ID_82541ER             0x1078
  #define E1000_DEV_ID_82547GI             0x1075
  #define E1000_DEV_ID_82541GI             0x1076
-@@ -456,18 +498,28 @@
+@@ -456,6 +498,7 @@ int32_t e1000_check_phy_reset_block(stru
  #define E1000_DEV_ID_82546GB_PCIE        0x108A
  #define E1000_DEV_ID_82546GB_QUAD_COPPER 0x1099
  #define E1000_DEV_ID_82547EI             0x1019
@@ -3644,13 +3641,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_DEV_ID_82571EB_COPPER      0x105E
  #define E1000_DEV_ID_82571EB_FIBER       0x105F
  #define E1000_DEV_ID_82571EB_SERDES      0x1060
- #define E1000_DEV_ID_82572EI_COPPER      0x107D
- #define E1000_DEV_ID_82572EI_FIBER       0x107E
- #define E1000_DEV_ID_82572EI_SERDES      0x107F
-+#define E1000_DEV_ID_82572EI             0x10B9
- #define E1000_DEV_ID_82573E              0x108B
- #define E1000_DEV_ID_82573E_IAMT         0x108C
- #define E1000_DEV_ID_82573L              0x109A
+@@ -469,6 +512,14 @@ int32_t e1000_check_phy_reset_block(stru
  #define E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3 0x10B5
  #define E1000_DEV_ID_80003ES2LAN_COPPER_DPT     0x1096
  #define E1000_DEV_ID_80003ES2LAN_SERDES_DPT     0x1098
@@ -3665,7 +3656,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  
  #define NODE_ADDRESS_SIZE 6
-@@ -538,6 +590,14 @@
+@@ -539,6 +590,14 @@ int32_t e1000_check_phy_reset_block(stru
      E1000_IMS_RXSEQ  |    \
      E1000_IMS_LSC)
  
@@ -3680,7 +3671,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Number of high/low register pairs in the RAR. The RAR (Receive Address
   * Registers) holds the directed and multicast addresses that we monitor. We
-@@ -545,6 +605,7 @@
+@@ -546,6 +605,7 @@ int32_t e1000_check_phy_reset_block(stru
   * E1000_RAR_ENTRIES - 1 multicast addresses.
   */
  #define E1000_RAR_ENTRIES 15
@@ -3688,7 +3679,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  #define MIN_NUMBER_OF_DESCRIPTORS 8
  #define MAX_NUMBER_OF_DESCRIPTORS 0xFFF8
-@@ -766,6 +827,9 @@
+@@ -767,6 +827,9 @@ struct e1000_data_desc {
  #define E1000_MC_TBL_SIZE          128  /* Multicast Filter Table (4096 bits) */
  #define E1000_VLAN_FILTER_TBL_SIZE 128  /* VLAN Filter Table (4096 bits) */
  
@@ -3698,7 +3689,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Receive Address Register */
  struct e1000_rar {
-@@ -775,6 +839,7 @@
+@@ -776,6 +839,7 @@ struct e1000_rar {
  
  /* Number of entries in the Multicast Table Array (MTA). */
  #define E1000_NUM_MTA_REGISTERS 128
@@ -3706,7 +3697,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* IPv4 Address Table Entry */
  struct e1000_ipv4_at_entry {
-@@ -785,6 +850,7 @@
+@@ -786,6 +850,7 @@ struct e1000_ipv4_at_entry {
  /* Four wakeup IP addresses are supported */
  #define E1000_WAKEUP_IP_ADDRESS_COUNT_MAX 4
  #define E1000_IP4AT_SIZE                  E1000_WAKEUP_IP_ADDRESS_COUNT_MAX
@@ -3714,7 +3705,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_IP6AT_SIZE                  1
  
  /* IPv6 Address Table Entry */
-@@ -843,6 +909,7 @@
+@@ -844,6 +909,7 @@ struct e1000_ffvt_entry {
  #define E1000_FLA      0x0001C  /* Flash Access - RW */
  #define E1000_MDIC     0x00020  /* MDI Control - RW */
  #define E1000_SCTL     0x00024  /* SerDes Control - RW */
@@ -3722,7 +3713,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_FCAL     0x00028  /* Flow Control Address Low - RW */
  #define E1000_FCAH     0x0002C  /* Flow Control Address High -RW */
  #define E1000_FCT      0x00030  /* Flow Control Type - RW */
-@@ -871,6 +938,8 @@
+@@ -872,6 +938,8 @@ struct e1000_ffvt_entry {
  #define E1000_LEDCTL   0x00E00  /* LED Control - RW */
  #define E1000_EXTCNF_CTRL  0x00F00  /* Extended Configuration Control */
  #define E1000_EXTCNF_SIZE  0x00F08  /* Extended Configuration Size */
@@ -3731,7 +3722,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_PBA      0x01000  /* Packet Buffer Allocation - RW */
  #define E1000_PBS      0x01008  /* Packet Buffer Size */
  #define E1000_EEMNGCTL 0x01010  /* MNG EEprom Control */
-@@ -898,11 +967,13 @@
+@@ -899,11 +967,13 @@ struct e1000_ffvt_entry {
  #define E1000_RDH0     E1000_RDH   /* RX Desc Head (0) - RW */
  #define E1000_RDT0     E1000_RDT   /* RX Desc Tail (0) - RW */
  #define E1000_RDTR0    E1000_RDTR  /* RX Delay Timer (0) - RW */
@@ -3746,7 +3737,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_TDFH     0x03410  /* TX Data FIFO Head - RW */
  #define E1000_TDFT     0x03418  /* TX Data FIFO Tail - RW */
  #define E1000_TDFHS    0x03420  /* TX Data FIFO Head Saved - RW */
-@@ -1049,6 +1120,7 @@
+@@ -1050,6 +1120,7 @@ struct e1000_ffvt_entry {
  #define E1000_82542_FLA      E1000_FLA
  #define E1000_82542_MDIC     E1000_MDIC
  #define E1000_82542_SCTL     E1000_SCTL
@@ -3754,7 +3745,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_82542_FCAL     E1000_FCAL
  #define E1000_82542_FCAH     E1000_FCAH
  #define E1000_82542_FCT      E1000_FCT
-@@ -1072,6 +1144,19 @@
+@@ -1073,6 +1144,19 @@ struct e1000_ffvt_entry {
  #define E1000_82542_RDLEN0   E1000_82542_RDLEN
  #define E1000_82542_RDH0     E1000_82542_RDH
  #define E1000_82542_RDT0     E1000_82542_RDT
@@ -3774,7 +3765,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_82542_RDTR1    0x00130
  #define E1000_82542_RDBAL1   0x00138
  #define E1000_82542_RDBAH1   0x0013C
-@@ -1109,11 +1194,14 @@
+@@ -1110,11 +1194,14 @@ struct e1000_ffvt_entry {
  #define E1000_82542_FLOP     E1000_FLOP
  #define E1000_82542_EXTCNF_CTRL  E1000_EXTCNF_CTRL
  #define E1000_82542_EXTCNF_SIZE  E1000_EXTCNF_SIZE
@@ -3789,7 +3780,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_82542_TDFHS    E1000_TDFHS
  #define E1000_82542_TDFTS    E1000_TDFTS
  #define E1000_82542_TDFPC    E1000_TDFPC
-@@ -1309,13 +1397,16 @@
+@@ -1310,13 +1397,16 @@ struct e1000_hw_stats {
  
  /* Structure containing variables used by the shared code (e1000_hw.c) */
  struct e1000_hw {
@@ -3807,7 +3798,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
      e1000_fc_type fc;
      e1000_bus_speed bus_speed;
      e1000_bus_width bus_width;
-@@ -1327,6 +1418,7 @@
+@@ -1328,6 +1418,7 @@ struct e1000_hw {
      uint32_t asf_firmware_present;
      uint32_t eeprom_semaphore_present;
      uint32_t swfw_sync_present;
@@ -3815,7 +3806,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
      unsigned long io_base;
      uint32_t phy_id;
      uint32_t phy_revision;
-@@ -1386,6 +1478,7 @@
+@@ -1387,6 +1478,7 @@ struct e1000_hw {
      boolean_t in_ifs_mode;
      boolean_t mng_reg_access_disabled;
      boolean_t leave_av_bit_off;
@@ -3823,7 +3814,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  };
  
  
-@@ -1434,6 +1527,7 @@
+@@ -1435,6 +1527,7 @@ struct e1000_hw {
  #define E1000_CTRL_RTE      0x20000000  /* Routing tag enable */
  #define E1000_CTRL_VME      0x40000000  /* IEEE VLAN mode enable */
  #define E1000_CTRL_PHY_RST  0x80000000  /* PHY Reset */
@@ -3831,7 +3822,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Device Status */
  #define E1000_STATUS_FD         0x00000001      /* Full duplex.0=half,1=full */
-@@ -1448,6 +1542,8 @@
+@@ -1449,6 +1542,8 @@ struct e1000_hw {
  #define E1000_STATUS_SPEED_10   0x00000000      /* Speed 10Mb/s */
  #define E1000_STATUS_SPEED_100  0x00000040      /* Speed 100Mb/s */
  #define E1000_STATUS_SPEED_1000 0x00000080      /* Speed 1000Mb/s */
@@ -3840,7 +3831,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_STATUS_ASDV       0x00000300      /* Auto speed detect value */
  #define E1000_STATUS_DOCK_CI    0x00000800      /* Change in Dock/Undock state. Clear on write '0'. */
  #define E1000_STATUS_GIO_MASTER_ENABLE 0x00080000 /* Status of Master requests. */
-@@ -1505,6 +1601,10 @@
+@@ -1506,6 +1601,10 @@ struct e1000_hw {
  #define E1000_STM_OPCODE     0xDB00
  #define E1000_HICR_FW_RESET  0xC0
  
@@ -3851,7 +3842,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* EEPROM Read */
  #define E1000_EERD_START      0x00000001 /* Start Read */
  #define E1000_EERD_DONE       0x00000010 /* Read Done */
-@@ -1550,7 +1650,6 @@
+@@ -1551,7 +1650,6 @@ struct e1000_hw {
  #define E1000_CTRL_EXT_WR_WMARK_320   0x01000000
  #define E1000_CTRL_EXT_WR_WMARK_384   0x02000000
  #define E1000_CTRL_EXT_WR_WMARK_448   0x03000000
@@ -3859,7 +3850,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_CTRL_EXT_DRV_LOAD       0x10000000  /* Driver loaded bit for FW */
  #define E1000_CTRL_EXT_IAME           0x08000000  /* Interrupt acknowledge Auto-mask */
  #define E1000_CTRL_EXT_INT_TIMER_CLR  0x20000000  /* Clear Interrupt timers after IMS clear */
-@@ -1590,12 +1689,31 @@
+@@ -1591,12 +1689,31 @@ struct e1000_hw {
  #define E1000_KUMCTRLSTA_FIFO_CTRL_TX_BYPASS   0x00000800
  
  /* In-Band Control */
@@ -3891,7 +3882,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* LED Control */
  #define E1000_LEDCTL_LED0_MODE_MASK       0x0000000F
  #define E1000_LEDCTL_LED0_MODE_SHIFT      0
-@@ -1665,6 +1783,9 @@
+@@ -1666,6 +1783,9 @@ struct e1000_hw {
  #define E1000_ICR_RXD_FIFO_PAR1 0x01000000 /* queue 1 Rx descriptor FIFO parity error */
  #define E1000_ICR_TXD_FIFO_PAR1 0x02000000 /* queue 1 Tx descriptor FIFO parity error */
  #define E1000_ICR_ALL_PARITY    0x03F00000 /* all parity error bits */
@@ -3901,7 +3892,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Interrupt Cause Set */
  #define E1000_ICS_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
-@@ -1691,6 +1812,9 @@
+@@ -1692,6 +1812,9 @@ struct e1000_hw {
  #define E1000_ICS_PB_PAR        E1000_ICR_PB_PAR        /* packet buffer parity error */
  #define E1000_ICS_RXD_FIFO_PAR1 E1000_ICR_RXD_FIFO_PAR1 /* queue 1 Rx descriptor FIFO parity error */
  #define E1000_ICS_TXD_FIFO_PAR1 E1000_ICR_TXD_FIFO_PAR1 /* queue 1 Tx descriptor FIFO parity error */
@@ -3911,7 +3902,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Interrupt Mask Set */
  #define E1000_IMS_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
-@@ -1717,6 +1841,9 @@
+@@ -1718,6 +1841,9 @@ struct e1000_hw {
  #define E1000_IMS_PB_PAR        E1000_ICR_PB_PAR        /* packet buffer parity error */
  #define E1000_IMS_RXD_FIFO_PAR1 E1000_ICR_RXD_FIFO_PAR1 /* queue 1 Rx descriptor FIFO parity error */
  #define E1000_IMS_TXD_FIFO_PAR1 E1000_ICR_TXD_FIFO_PAR1 /* queue 1 Tx descriptor FIFO parity error */
@@ -3921,7 +3912,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Interrupt Mask Clear */
  #define E1000_IMC_TXDW      E1000_ICR_TXDW      /* Transmit desc written back */
-@@ -1743,6 +1870,9 @@
+@@ -1744,6 +1870,9 @@ struct e1000_hw {
  #define E1000_IMC_PB_PAR        E1000_ICR_PB_PAR        /* packet buffer parity error */
  #define E1000_IMC_RXD_FIFO_PAR1 E1000_ICR_RXD_FIFO_PAR1 /* queue 1 Rx descriptor FIFO parity error */
  #define E1000_IMC_TXD_FIFO_PAR1 E1000_ICR_TXD_FIFO_PAR1 /* queue 1 Tx descriptor FIFO parity error */
@@ -3931,7 +3922,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Receive Control */
  #define E1000_RCTL_RST            0x00000001    /* Software reset */
-@@ -1801,7 +1931,7 @@
+@@ -1802,7 +1931,7 @@ struct e1000_hw {
   *       value2 = [0..64512],    default=4096
   *       value3 = [0..64512],    default=0
   */
@@ -3940,7 +3931,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_PSRCTL_BSIZE0_MASK   0x0000007F
  #define E1000_PSRCTL_BSIZE1_MASK   0x00003F00
  #define E1000_PSRCTL_BSIZE2_MASK   0x003F0000
-@@ -1917,9 +2047,10 @@
+@@ -1918,9 +2047,10 @@ struct e1000_hw {
  #define E1000_MRQC_RSS_FIELD_MASK           0xFFFF0000
  #define E1000_MRQC_RSS_FIELD_IPV4_TCP       0x00010000
  #define E1000_MRQC_RSS_FIELD_IPV4           0x00020000
@@ -3952,7 +3943,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Definitions for power management and wakeup registers */
  /* Wake Up Control */
-@@ -2009,6 +2140,15 @@
+@@ -2010,6 +2140,15 @@ struct e1000_hw {
  #define E1000_FWSM_MODE_SHIFT            1
  #define E1000_FWSM_FW_VALID     0x00008000 /* FW established a valid mode */
  
@@ -3968,7 +3959,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* FFLT Debug Register */
  #define E1000_FFLT_DBG_INVC     0x00100000 /* Invalid /C/ code handling */
  
-@@ -2081,6 +2221,8 @@
+@@ -2082,6 +2221,8 @@ struct e1000_host_command_info {
                               E1000_GCR_TXDSCW_NO_SNOOP      | \
                               E1000_GCR_TXDSCR_NO_SNOOP)
  
@@ -3977,7 +3968,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define E1000_GCR_L1_ACT_WITHOUT_L0S_RX 0x08000000
  /* Function Active and Power State to MNG */
  #define E1000_FACTPS_FUNC0_POWER_STATE_MASK         0x00000003
-@@ -2139,8 +2281,10 @@
+@@ -2140,8 +2281,10 @@ struct e1000_host_command_info {
  #define EEPROM_PHY_CLASS_WORD         0x0007
  #define EEPROM_INIT_CONTROL1_REG      0x000A
  #define EEPROM_INIT_CONTROL2_REG      0x000F
@@ -3988,7 +3979,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define EEPROM_INIT_CONTROL3_PORT_A   0x0024
  #define EEPROM_CFG                    0x0012
  #define EEPROM_FLASH_VERSION          0x0032
-@@ -2152,10 +2296,16 @@
+@@ -2153,10 +2296,16 @@ struct e1000_host_command_info {
  /* Word definitions for ID LED Settings */
  #define ID_LED_RESERVED_0000 0x0000
  #define ID_LED_RESERVED_FFFF 0xFFFF
@@ -4005,7 +3996,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  #define ID_LED_DEF1_DEF2     0x1
  #define ID_LED_DEF1_ON2      0x2
  #define ID_LED_DEF1_OFF2     0x3
-@@ -2190,6 +2340,11 @@
+@@ -2191,6 +2340,11 @@ struct e1000_host_command_info {
  #define EEPROM_WORD0F_ASM_DIR    0x2000
  #define EEPROM_WORD0F_ANE        0x0800
  #define EEPROM_WORD0F_SWPDIO_EXT 0x00F0
@@ -4017,7 +4008,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  /* Mask bits for fields in Word 0x1a of the EEPROM */
  #define EEPROM_WORD1A_ASPM_MASK  0x000C
-@@ -2264,23 +2419,29 @@
+@@ -2265,23 +2419,29 @@ struct e1000_host_command_info {
  #define E1000_EXTCNF_CTRL_D_UD_OWNER        0x00000010
  #define E1000_EXTCNF_CTRL_MDIO_SW_OWNERSHIP 0x00000020
  #define E1000_EXTCNF_CTRL_MDIO_HW_OWNERSHIP 0x00000040
@@ -4048,7 +4039,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* Flow Control Constants */
  #define FLOW_CONTROL_ADDRESS_LOW  0x00C28001
  #define FLOW_CONTROL_ADDRESS_HIGH 0x00000100
-@@ -2335,7 +2496,7 @@
+@@ -2336,7 +2496,7 @@ struct e1000_host_command_info {
  /* Number of milliseconds we wait for Eeprom auto read bit done after MAC reset */
  #define AUTO_READ_DONE_TIMEOUT      10
  /* Number of milliseconds we wait for PHY configuration done after MAC reset */
@@ -4057,7 +4048,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  
  #define E1000_TX_BUFFER_SIZE ((uint32_t)1514)
  
-@@ -2763,6 +2924,17 @@
+@@ -2764,6 +2924,17 @@ struct e1000_host_command_info {
  #define M88E1000_EPSCR_TX_CLK_25      0x0070 /* 25  MHz TX_CLK */
  #define M88E1000_EPSCR_TX_CLK_0       0x0000 /* NO  TX_CLK */
  
@@ -4075,7 +4066,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* IGP01E1000 Specific Port Config Register - R/W */
  #define IGP01E1000_PSCFR_AUTO_MDIX_PAR_DETECT  0x0010
  #define IGP01E1000_PSCFR_PRE_EN                0x0020
-@@ -2989,6 +3161,221 @@
+@@ -2990,6 +3161,221 @@ struct e1000_host_command_info {
  #define L1LXT971A_PHY_ID   0x001378E0
  #define GG82563_E_PHY_ID   0x01410CA0
  
@@ -4297,9 +4288,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_hw.h linux-2.6.17-plasmaroo/driver
  /* Miscellaneous PHY bit definitions. */
  #define PHY_PREAMBLE        0xFFFFFFFF
  #define PHY_SOF             0x01
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_main.c
---- linux-2.6.17/drivers/net/e1000/e1000_main.c	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_main.c	2006-08-08 20:38:16.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_main.c
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_main.c
++++ linux-2.6.17/drivers/net/e1000/e1000_main.c
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -4362,7 +4354,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  char e1000_driver_name[] = "e1000";
  static char e1000_driver_string[] = "Intel(R) PRO/1000 Network Driver";
  #ifndef CONFIG_E1000_NAPI
-@@ -74,9 +36,9 @@
+@@ -74,9 +36,9 @@ static char e1000_driver_string[] = "Int
  #else
  #define DRIVERNAPI "-NAPI"
  #endif
@@ -4374,7 +4366,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  /* e1000_pci_tbl - PCI Device ID Table
   *
-@@ -111,6 +73,11 @@
+@@ -111,6 +73,11 @@ static struct pci_device_id e1000_pci_tb
  	INTEL_E1000_ETHERNET_DEVICE(0x1026),
  	INTEL_E1000_ETHERNET_DEVICE(0x1027),
  	INTEL_E1000_ETHERNET_DEVICE(0x1028),
@@ -4386,7 +4378,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	INTEL_E1000_ETHERNET_DEVICE(0x105E),
  	INTEL_E1000_ETHERNET_DEVICE(0x105F),
  	INTEL_E1000_ETHERNET_DEVICE(0x1060),
-@@ -134,6 +101,8 @@
+@@ -134,6 +101,8 @@ static struct pci_device_id e1000_pci_tb
  	INTEL_E1000_ETHERNET_DEVICE(0x109A),
  	INTEL_E1000_ETHERNET_DEVICE(0x10B5),
  	INTEL_E1000_ETHERNET_DEVICE(0x10B9),
@@ -4395,7 +4387,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	/* required last entry */
  	{0,}
  };
-@@ -171,7 +140,6 @@
+@@ -171,7 +140,6 @@ static void e1000_clean_rx_ring(struct e
  static void e1000_set_multi(struct net_device *netdev);
  static void e1000_update_phy_info(unsigned long data);
  static void e1000_watchdog(unsigned long data);
@@ -4403,7 +4395,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  static void e1000_82547_tx_fifo_stall(unsigned long data);
  static int e1000_xmit_frame(struct sk_buff *skb, struct net_device *netdev);
  static struct net_device_stats * e1000_get_stats(struct net_device *netdev);
-@@ -208,16 +176,16 @@
+@@ -208,16 +176,16 @@ static void e1000_leave_82542_rst(struct
  static void e1000_tx_timeout(struct net_device *dev);
  static void e1000_reset_task(struct net_device *dev);
  static void e1000_smartspeed(struct e1000_adapter *adapter);
@@ -4423,7 +4415,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  static int e1000_resume(struct pci_dev *pdev);
  #endif
  static void e1000_shutdown(struct pci_dev *pdev);
-@@ -227,6 +195,16 @@
+@@ -227,6 +195,16 @@ static void e1000_shutdown(struct pci_de
  static void e1000_netpoll (struct net_device *netdev);
  #endif
  
@@ -4440,7 +4432,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  static struct pci_driver e1000_driver = {
  	.name     = e1000_driver_name,
-@@ -234,11 +212,12 @@
+@@ -234,11 +212,12 @@ static struct pci_driver e1000_driver = 
  	.probe    = e1000_probe,
  	.remove   = __devexit_p(e1000_remove),
  	/* Power Managment Hooks */
@@ -4455,7 +4447,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  };
  
  MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
-@@ -288,12 +267,50 @@
+@@ -288,12 +267,50 @@ e1000_exit_module(void)
  
  module_exit(e1000_exit_module);
  
@@ -4507,7 +4499,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_irq_disable(struct e1000_adapter *adapter)
  {
  	atomic_inc(&adapter->irq_sem);
-@@ -307,7 +324,7 @@
+@@ -307,7 +324,7 @@ e1000_irq_disable(struct e1000_adapter *
   * @adapter: board private structure
   **/
  
@@ -4516,7 +4508,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_irq_enable(struct e1000_adapter *adapter)
  {
  	if (likely(atomic_dec_and_test(&adapter->irq_sem))) {
-@@ -348,19 +365,21 @@
+@@ -348,19 +365,21 @@ e1000_update_mng_vlan(struct e1000_adapt
   * For ASF and Pass Through versions of f/w this means that the
   * driver is no longer loaded. For AMT version (only with 82573) i
   * of the f/w this means that the netowrk i/f is closed.
@@ -4540,7 +4532,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		ctrl_ext = E1000_READ_REG(&adapter->hw, CTRL_EXT);
  		E1000_WRITE_REG(&adapter->hw, CTRL_EXT,
  				ctrl_ext & ~E1000_CTRL_EXT_DRV_LOAD);
-@@ -369,6 +388,11 @@
+@@ -369,6 +388,11 @@ e1000_release_hw_control(struct e1000_ad
  		swsm = E1000_READ_REG(&adapter->hw, SWSM);
  		E1000_WRITE_REG(&adapter->hw, SWSM,
  				swsm & ~E1000_SWSM_DRV_LOAD);
@@ -4552,7 +4544,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	default:
  		break;
  	}
-@@ -379,21 +403,23 @@
+@@ -379,21 +403,23 @@ e1000_release_hw_control(struct e1000_ad
   * @adapter: address of board private structure
   *
   * e1000_get_hw_control sets {CTRL_EXT|FWSM}:DRV_LOAD bit.
@@ -4580,7 +4572,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		ctrl_ext = E1000_READ_REG(&adapter->hw, CTRL_EXT);
  		E1000_WRITE_REG(&adapter->hw, CTRL_EXT,
  				ctrl_ext | E1000_CTRL_EXT_DRV_LOAD);
-@@ -403,6 +429,11 @@
+@@ -403,6 +429,11 @@ e1000_get_hw_control(struct e1000_adapte
  		E1000_WRITE_REG(&adapter->hw, SWSM,
  				swsm | E1000_SWSM_DRV_LOAD);
  		break;
@@ -4592,7 +4584,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	default:
  		break;
  	}
-@@ -412,18 +443,10 @@
+@@ -412,18 +443,10 @@ int
  e1000_up(struct e1000_adapter *adapter)
  {
  	struct net_device *netdev = adapter->netdev;
@@ -4612,7 +4604,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	e1000_set_multi(netdev);
  
  	e1000_restore_vlan(adapter);
-@@ -440,24 +463,6 @@
+@@ -440,24 +463,6 @@ e1000_up(struct e1000_adapter *adapter)
  		                      E1000_DESC_UNUSED(ring));
  	}
  
@@ -4637,7 +4629,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	adapter->tx_queue_len = netdev->tx_queue_len;
  
  	mod_timer(&adapter->watchdog_timer, jiffies);
-@@ -470,21 +475,60 @@
+@@ -470,21 +475,60 @@ e1000_up(struct e1000_adapter *adapter)
  	return 0;
  }
  
@@ -4706,7 +4698,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	del_timer_sync(&adapter->tx_fifo_stall_timer);
  	del_timer_sync(&adapter->watchdog_timer);
  	del_timer_sync(&adapter->phy_info_timer);
-@@ -501,23 +545,17 @@
+@@ -501,23 +545,17 @@ e1000_down(struct e1000_adapter *adapter
  	e1000_reset(adapter);
  	e1000_clean_all_tx_rings(adapter);
  	e1000_clean_all_rx_rings(adapter);
@@ -4740,7 +4732,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  }
  
  void
-@@ -543,6 +581,9 @@
+@@ -543,6 +581,9 @@ e1000_reset(struct e1000_adapter *adapte
  	case e1000_82573:
  		pba = E1000_PBA_12K;
  		break;
@@ -4750,7 +4742,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	default:
  		pba = E1000_PBA_48K;
  		break;
-@@ -567,6 +608,12 @@
+@@ -567,6 +608,12 @@ e1000_reset(struct e1000_adapter *adapte
  	/* Set the FC high water mark to 90% of the FIFO size.
  	 * Required to clear last 3 LSB */
  	fc_high_water_mark = ((pba * 9216)/10) & 0xFFF8;
@@ -4763,7 +4755,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	adapter->hw.fc_high_water = fc_high_water_mark;
  	adapter->hw.fc_low_water = fc_high_water_mark - 8;
-@@ -589,6 +636,23 @@
+@@ -589,6 +636,23 @@ e1000_reset(struct e1000_adapter *adapte
  
  	e1000_reset_adaptive(&adapter->hw);
  	e1000_phy_get_info(&adapter->hw, &adapter->phy_info);
@@ -4787,7 +4779,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if (adapter->en_mng_pt) {
  		manc = E1000_READ_REG(&adapter->hw, MANC);
  		manc |= (E1000_MANC_ARP_EN | E1000_MANC_EN_MNG2HOST);
-@@ -615,6 +679,7 @@
+@@ -615,6 +679,7 @@ e1000_probe(struct pci_dev *pdev,
  	struct net_device *netdev;
  	struct e1000_adapter *adapter;
  	unsigned long mmio_start, mmio_len;
@@ -4795,7 +4787,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	static int cards_found = 0;
  	static int e1000_ksp3_port_a = 0; /* global ksp3 port a indication */
-@@ -624,10 +689,12 @@
+@@ -624,10 +689,12 @@ e1000_probe(struct pci_dev *pdev,
  	if ((err = pci_enable_device(pdev)))
  		return err;
  
@@ -4810,7 +4802,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			E1000_ERR("No usable DMA configuration, aborting\n");
  			return err;
  		}
-@@ -707,12 +774,25 @@
+@@ -707,12 +774,25 @@ e1000_probe(struct pci_dev *pdev,
  	if ((err = e1000_sw_init(adapter)))
  		goto err_sw_init;
  
@@ -4838,7 +4830,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		adapter->ksp3_port_a = 1;
  	e1000_ksp3_port_a++;
  	/* Reset for multiple KP3 adapters */
-@@ -725,6 +805,8 @@
+@@ -725,6 +805,8 @@ e1000_probe(struct pci_dev *pdev,
  				   NETIF_F_HW_VLAN_TX |
  				   NETIF_F_HW_VLAN_RX |
  				   NETIF_F_HW_VLAN_FILTER;
@@ -4847,7 +4839,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	}
  
  #ifdef NETIF_F_TSO
-@@ -740,11 +822,17 @@
+@@ -740,11 +822,17 @@ e1000_probe(struct pci_dev *pdev,
  	if (pci_using_dac)
  		netdev->features |= NETIF_F_HIGHDMA;
  
@@ -4868,7 +4860,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	/* before reading the EEPROM, reset the controller to
  	 * put the device in a known good starting state */
  
-@@ -783,9 +871,6 @@
+@@ -783,9 +871,6 @@ e1000_probe(struct pci_dev *pdev,
  	adapter->watchdog_timer.function = &e1000_watchdog;
  	adapter->watchdog_timer.data = (unsigned long) adapter;
  
@@ -4878,7 +4870,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	init_timer(&adapter->phy_info_timer);
  	adapter->phy_info_timer.function = &e1000_update_phy_info;
  	adapter->phy_info_timer.data = (unsigned long) adapter;
-@@ -815,6 +900,11 @@
+@@ -815,6 +900,11 @@ e1000_probe(struct pci_dev *pdev,
  			EEPROM_INIT_CONTROL2_REG, 1, &eeprom_data);
  		eeprom_apme_mask = E1000_EEPROM_82544_APM;
  		break;
@@ -4890,7 +4882,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	case e1000_82546:
  	case e1000_82546_rev_3:
  	case e1000_82571:
-@@ -874,6 +964,9 @@
+@@ -874,6 +964,9 @@ e1000_probe(struct pci_dev *pdev,
  	return 0;
  
  err_register:
@@ -4900,7 +4892,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  err_sw_init:
  err_eeprom:
  	iounmap(adapter->hw.hw_addr);
-@@ -907,6 +1000,7 @@
+@@ -907,6 +1000,7 @@ e1000_remove(struct pci_dev *pdev)
  	flush_scheduled_work();
  
  	if (adapter->hw.mac_type >= e1000_82540 &&
@@ -4908,7 +4900,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	   adapter->hw.media_type == e1000_media_type_copper) {
  		manc = E1000_READ_REG(&adapter->hw, MANC);
  		if (manc & E1000_MANC_SMBUS_EN) {
-@@ -935,6 +1029,8 @@
+@@ -935,6 +1029,8 @@ e1000_remove(struct pci_dev *pdev)
  #endif
  
  	iounmap(adapter->hw.hw_addr);
@@ -4917,7 +4909,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	pci_release_regions(pdev);
  
  	free_netdev(netdev);
-@@ -972,8 +1068,8 @@
+@@ -972,8 +1068,8 @@ e1000_sw_init(struct e1000_adapter *adap
  
  	pci_read_config_word(pdev, PCI_COMMAND, &hw->pci_cmd_word);
  
@@ -4928,7 +4920,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	hw->max_frame_size = netdev->mtu +
  			     ENET_HEADER_SIZE + ETHERNET_FCS_SIZE;
  	hw->min_frame_size = MINIMUM_ETHERNET_FRAME_SIZE;
-@@ -985,13 +1081,6 @@
+@@ -985,13 +1081,6 @@ e1000_sw_init(struct e1000_adapter *adap
  		return -EIO;
  	}
  
@@ -4942,7 +4934,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	switch (hw->mac_type) {
  	default:
  		break;
-@@ -1103,6 +1192,10 @@
+@@ -1103,6 +1192,10 @@ e1000_open(struct net_device *netdev)
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  	int err;
  
@@ -4953,7 +4945,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	/* allocate transmit descriptors */
  
  	if ((err = e1000_setup_all_tx_resources(adapter)))
-@@ -1113,6 +1206,12 @@
+@@ -1113,6 +1206,12 @@ e1000_open(struct net_device *netdev)
  	if ((err = e1000_setup_all_rx_resources(adapter)))
  		goto err_setup_rx;
  
@@ -4966,7 +4958,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if ((err = e1000_up(adapter)))
  		goto err_up;
  	adapter->mng_vlan_id = E1000_MNG_VLAN_NONE;
-@@ -1156,7 +1255,10 @@
+@@ -1156,7 +1255,10 @@ e1000_close(struct net_device *netdev)
  {
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  
@@ -4977,7 +4969,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	e1000_free_all_tx_resources(adapter);
  	e1000_free_all_rx_resources(adapter);
-@@ -1181,7 +1283,7 @@
+@@ -1181,7 +1283,7 @@ e1000_close(struct net_device *netdev)
   * @start: address of beginning of memory
   * @len: length of memory
   **/
@@ -4986,7 +4978,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_check_64k_bound(struct e1000_adapter *adapter,
  		      void *start, unsigned long len)
  {
-@@ -1214,8 +1316,7 @@
+@@ -1214,8 +1316,7 @@ e1000_setup_tx_resources(struct e1000_ad
  	int size;
  
  	size = sizeof(struct e1000_buffer) * txdr->count;
@@ -4996,7 +4988,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if (!txdr->buffer_info) {
  		DPRINTK(PROBE, ERR,
  		"Unable to allocate memory for the transmit descriptor ring\n");
-@@ -1327,11 +1428,11 @@
+@@ -1327,11 +1428,11 @@ e1000_configure_tx(struct e1000_adapter 
  		tdba = adapter->tx_ring[0].dma;
  		tdlen = adapter->tx_ring[0].count *
  			sizeof(struct e1000_tx_desc);
@@ -5011,7 +5003,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		adapter->tx_ring[0].tdh = E1000_TDH;
  		adapter->tx_ring[0].tdt = E1000_TDT;
  		break;
-@@ -1443,7 +1544,7 @@
+@@ -1443,7 +1544,7 @@ e1000_setup_rx_resources(struct e1000_ad
  	int size, desc_len;
  
  	size = sizeof(struct e1000_buffer) * rxdr->count;
@@ -5020,7 +5012,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if (!rxdr->buffer_info) {
  		DPRINTK(PROBE, ERR,
  		"Unable to allocate memory for the receive descriptor ring\n");
-@@ -1585,9 +1686,6 @@
+@@ -1585,9 +1686,6 @@ e1000_setup_rctl(struct e1000_adapter *a
  		E1000_RCTL_LBM_NO | E1000_RCTL_RDMTS_HALF |
  		(adapter->hw.mc_filter_type << E1000_RCTL_MO_SHIFT);
  
@@ -5030,7 +5022,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if (adapter->hw.tbi_compatibility_on == 1)
  		rctl |= E1000_RCTL_SBP;
  	else
-@@ -1599,14 +1697,21 @@
+@@ -1599,14 +1697,21 @@ e1000_setup_rctl(struct e1000_adapter *a
  		rctl |= E1000_RCTL_LPE;
  
  	/* Setup buffer sizes */
@@ -5060,7 +5052,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		case E1000_RXBUFFER_2048:
  		default:
  			rctl |= E1000_RCTL_SZ_2048;
-@@ -1621,7 +1726,6 @@
+@@ -1621,7 +1726,6 @@ e1000_setup_rctl(struct e1000_adapter *a
  		case E1000_RXBUFFER_16384:
  			rctl |= E1000_RCTL_SZ_16384;
  			break;
@@ -5068,7 +5060,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	}
  
  #ifndef CONFIG_E1000_DISABLE_PACKET_SPLIT
-@@ -1647,7 +1751,7 @@
+@@ -1647,7 +1751,7 @@ e1000_setup_rctl(struct e1000_adapter *a
  		rfctl |= E1000_RFCTL_IPV6_DIS;
  		E1000_WRITE_REG(&adapter->hw, RFCTL, rfctl);
  
@@ -5077,7 +5069,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  		psrctl |= adapter->rx_ps_bsize0 >>
  			E1000_PSRCTL_BSIZE0_SHIFT;
-@@ -1715,7 +1819,7 @@
+@@ -1715,7 +1819,7 @@ e1000_configure_rx(struct e1000_adapter 
  	if (hw->mac_type >= e1000_82571) {
  		ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
  		/* Reset delay timers after every interrupt */
@@ -5086,7 +5078,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  #ifdef CONFIG_E1000_NAPI
  		/* Auto-Mask interrupts upon ICR read. */
  		ctrl_ext |= E1000_CTRL_EXT_IAME;
-@@ -1731,11 +1835,11 @@
+@@ -1731,11 +1835,11 @@ e1000_configure_rx(struct e1000_adapter 
  	case 1:
  	default:
  		rdba = adapter->rx_ring[0].dma;
@@ -5101,7 +5093,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		adapter->rx_ring[0].rdh = E1000_RDH;
  		adapter->rx_ring[0].rdt = E1000_RDT;
  		break;
-@@ -1760,9 +1864,6 @@
+@@ -1760,9 +1864,6 @@ e1000_configure_rx(struct e1000_adapter 
  		E1000_WRITE_REG(hw, RXCSUM, rxcsum);
  	}
  
@@ -5111,7 +5103,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	/* Enable Receives */
  	E1000_WRITE_REG(hw, RCTL, rctl);
  }
-@@ -1807,7 +1908,7 @@
+@@ -1807,7 +1908,7 @@ e1000_free_all_tx_resources(struct e1000
  		e1000_free_tx_resources(adapter, &adapter->tx_ring[i]);
  }
  
@@ -5120,7 +5112,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_unmap_and_free_tx_resource(struct e1000_adapter *adapter,
  			struct e1000_buffer *buffer_info)
  {
-@@ -2102,6 +2203,12 @@
+@@ -2102,6 +2203,12 @@ e1000_set_multi(struct net_device *netde
  	uint32_t rctl;
  	uint32_t hash_value;
  	int i, rar_entries = E1000_RAR_ENTRIES;
@@ -5133,7 +5125,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	/* reserve RAR[14] for LAA over-write work-around */
  	if (adapter->hw.mac_type == e1000_82571)
-@@ -2140,14 +2247,18 @@
+@@ -2140,14 +2247,18 @@ e1000_set_multi(struct net_device *netde
  			mc_ptr = mc_ptr->next;
  		} else {
  			E1000_WRITE_REG_ARRAY(hw, RA, i << 1, 0);
@@ -5153,7 +5145,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	/* load any remaining addresses into the hash table */
  
-@@ -2220,19 +2331,19 @@
+@@ -2220,19 +2331,19 @@ static void
  e1000_watchdog(unsigned long data)
  {
  	struct e1000_adapter *adapter = (struct e1000_adapter *) data;
@@ -5182,7 +5174,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	if (adapter->hw.mac_type == e1000_82573) {
  		e1000_enable_tx_pkt_filtering(&adapter->hw);
  		if (adapter->mng_vlan_id != adapter->hw.mng_cookie.vlan_id)
-@@ -2247,6 +2358,7 @@
+@@ -2247,6 +2358,7 @@ e1000_watchdog_task(struct e1000_adapter
  
  	if (link) {
  		if (!netif_carrier_ok(netdev)) {
@@ -5190,7 +5182,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			e1000_get_speed_and_duplex(&adapter->hw,
  			                           &adapter->link_speed,
  			                           &adapter->link_duplex);
-@@ -2260,23 +2372,22 @@
+@@ -2260,23 +2372,22 @@ e1000_watchdog_task(struct e1000_adapter
  			 * and adjust the timeout factor */
  			netdev->tx_queue_len = adapter->tx_queue_len;
  			adapter->tx_timeout_factor = 1;
@@ -5218,7 +5210,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  #define SPEED_MODE_BIT (1 << 21)
  				uint32_t tarc0;
  				tarc0 = E1000_READ_REG(&adapter->hw, TARC0);
-@@ -2400,7 +2511,7 @@
+@@ -2400,7 +2511,7 @@ e1000_watchdog_task(struct e1000_adapter
  #define E1000_TX_FLAGS_VLAN_MASK	0xffff0000
  #define E1000_TX_FLAGS_VLAN_SHIFT	16
  
@@ -5227,7 +5219,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_tso(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
            struct sk_buff *skb)
  {
-@@ -2422,7 +2533,7 @@
+@@ -2422,7 +2533,7 @@ e1000_tso(struct e1000_adapter *adapter,
  
  		hdr_len = ((skb->h.raw - skb->data) + (skb->h.th->doff << 2));
  		mss = skb_shinfo(skb)->tso_size;
@@ -5236,7 +5228,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			skb->nh.iph->tot_len = 0;
  			skb->nh.iph->check = 0;
  			skb->h.th->check =
-@@ -2480,7 +2591,7 @@
+@@ -2480,7 +2591,7 @@ e1000_tso(struct e1000_adapter *adapter,
  	return FALSE;
  }
  
@@ -5245,7 +5237,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_tx_csum(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
                struct sk_buff *skb)
  {
-@@ -2516,7 +2627,7 @@
+@@ -2516,7 +2627,7 @@ e1000_tx_csum(struct e1000_adapter *adap
  #define E1000_MAX_TXD_PWR	12
  #define E1000_MAX_DATA_PER_TXD	(1<<E1000_MAX_TXD_PWR)
  
@@ -5254,7 +5246,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_tx_map(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
               struct sk_buff *skb, unsigned int first, unsigned int max_per_txd,
               unsigned int nr_frags, unsigned int mss)
-@@ -2625,7 +2736,7 @@
+@@ -2625,7 +2736,7 @@ e1000_tx_map(struct e1000_adapter *adapt
  	return count;
  }
  
@@ -5263,7 +5255,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_tx_queue(struct e1000_adapter *adapter, struct e1000_tx_ring *tx_ring,
                 int tx_flags, int count)
  {
-@@ -2689,7 +2800,7 @@
+@@ -2689,7 +2800,7 @@ e1000_tx_queue(struct e1000_adapter *ada
  #define E1000_FIFO_HDR			0x10
  #define E1000_82547_PAD_LEN		0x3E0
  
@@ -5272,7 +5264,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_82547_fifo_workaround(struct e1000_adapter *adapter, struct sk_buff *skb)
  {
  	uint32_t fifo_space = adapter->tx_fifo_size - adapter->tx_fifo_head;
-@@ -2716,7 +2827,7 @@
+@@ -2716,7 +2827,7 @@ no_fifo_stall_required:
  }
  
  #define MINIMUM_DHCP_PACKET_SIZE 282
@@ -5281,7 +5273,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_transfer_dhcp_info(struct e1000_adapter *adapter, struct sk_buff *skb)
  {
  	struct e1000_hw *hw =  &adapter->hw;
-@@ -2764,7 +2875,7 @@
+@@ -2764,7 +2875,7 @@ e1000_xmit_frame(struct sk_buff *skb, st
  	unsigned int nr_frags = 0;
  	unsigned int mss = 0;
  	int count = 0;
@@ -5290,7 +5282,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	unsigned int f;
  	len -= skb->data_len;
  
-@@ -2777,7 +2888,7 @@
+@@ -2777,7 +2888,7 @@ e1000_xmit_frame(struct sk_buff *skb, st
  
  #ifdef NETIF_F_TSO
  	mss = skb_shinfo(skb)->tso_size;
@@ -5299,7 +5291,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	 * make sure there is enough room in the FIFO before
  	 * initiating the DMA for each buffer.  The calc is:
  	 * 4 = ceil(buffer len/mss).  To make sure we don't
-@@ -2798,9 +2909,10 @@
+@@ -2798,9 +2909,10 @@ e1000_xmit_frame(struct sk_buff *skb, st
  			case e1000_82571:
  			case e1000_82572:
  			case e1000_82573:
@@ -5311,7 +5303,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  						"__pskb_pull_tail failed.\n");
  					dev_kfree_skb_any(skb);
  					return NETDEV_TX_OK;
-@@ -2901,7 +3013,7 @@
+@@ -2901,7 +3013,7 @@ e1000_xmit_frame(struct sk_buff *skb, st
  	/* Old method was to assume IPv4 packet by default if TSO was enabled.
  	 * 82571 hardware supports TSO capabilities for IPv6 as well...
  	 * no longer assume, we must. */
@@ -5320,7 +5312,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		tx_flags |= E1000_TX_FLAGS_IPV4;
  
  	e1000_tx_queue(adapter, tx_ring, tx_flags,
-@@ -2938,8 +3050,7 @@
+@@ -2938,8 +3050,7 @@ e1000_reset_task(struct net_device *netd
  {
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  
@@ -5330,7 +5322,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  }
  
  /**
-@@ -2982,8 +3093,8 @@
+@@ -2982,8 +3093,8 @@ e1000_change_mtu(struct net_device *netd
  
  	/* Adapter-specific max frame size limits. */
  	switch (adapter->hw.mac_type) {
@@ -5341,7 +5333,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		if (max_frame > MAXIMUM_ETHERNET_FRAME_SIZE) {
  			DPRINTK(PROBE, ERR, "Jumbo Frames not supported.\n");
  			return -EINVAL;
-@@ -3017,34 +3128,36 @@
+@@ -3017,34 +3128,36 @@ e1000_change_mtu(struct net_device *netd
  		break;
  	}
  
@@ -5403,7 +5395,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	adapter->hw.max_frame_size = max_frame;
  
-@@ -3060,11 +3173,21 @@
+@@ -3060,11 +3173,21 @@ void
  e1000_update_stats(struct e1000_adapter *adapter)
  {
  	struct e1000_hw *hw = &adapter->hw;
@@ -5425,7 +5417,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	spin_lock_irqsave(&adapter->stats_lock, flags);
  
  	/* these counters are modified from e1000_adjust_tbi_stats,
-@@ -3079,12 +3202,15 @@
+@@ -3079,12 +3202,15 @@ e1000_update_stats(struct e1000_adapter 
  	adapter->stats.bprc += E1000_READ_REG(hw, BPRC);
  	adapter->stats.mprc += E1000_READ_REG(hw, MPRC);
  	adapter->stats.roc += E1000_READ_REG(hw, ROC);
@@ -5441,7 +5433,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	adapter->stats.symerrs += E1000_READ_REG(hw, SYMERRS);
  	adapter->stats.mpc += E1000_READ_REG(hw, MPC);
-@@ -3112,12 +3238,16 @@
+@@ -3112,12 +3238,16 @@ e1000_update_stats(struct e1000_adapter 
  	adapter->stats.totl += E1000_READ_REG(hw, TOTL);
  	adapter->stats.toth += E1000_READ_REG(hw, TOTH);
  	adapter->stats.tpr += E1000_READ_REG(hw, TPR);
@@ -5458,7 +5450,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	adapter->stats.mptc += E1000_READ_REG(hw, MPTC);
  	adapter->stats.bptc += E1000_READ_REG(hw, BPTC);
  
-@@ -3139,6 +3269,8 @@
+@@ -3139,6 +3269,8 @@ e1000_update_stats(struct e1000_adapter 
  	if (hw->mac_type > e1000_82547_rev_2) {
  		adapter->stats.iac += E1000_READ_REG(hw, IAC);
  		adapter->stats.icrxoc += E1000_READ_REG(hw, ICRXOC);
@@ -5467,7 +5459,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		adapter->stats.icrxptc += E1000_READ_REG(hw, ICRXPTC);
  		adapter->stats.icrxatc += E1000_READ_REG(hw, ICRXATC);
  		adapter->stats.ictxptc += E1000_READ_REG(hw, ICTXPTC);
-@@ -3146,6 +3278,7 @@
+@@ -3146,6 +3278,7 @@ e1000_update_stats(struct e1000_adapter 
  		adapter->stats.ictxqec += E1000_READ_REG(hw, ICTXQEC);
  		adapter->stats.ictxqmtc += E1000_READ_REG(hw, ICTXQMTC);
  		adapter->stats.icrxdmtc += E1000_READ_REG(hw, ICRXDMTC);
@@ -5475,7 +5467,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	}
  
  	/* Fill out the OS statistics structure */
-@@ -3165,7 +3298,6 @@
+@@ -3165,7 +3298,6 @@ e1000_update_stats(struct e1000_adapter 
  		adapter->stats.crcerrs + adapter->stats.algnerrc +
  		adapter->stats.ruc + adapter->stats.roc +
  		adapter->stats.cexterr;
@@ -5483,7 +5475,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	adapter->net_stats.rx_length_errors = adapter->stats.ruc +
  	                                      adapter->stats.roc;
  	adapter->net_stats.rx_crc_errors = adapter->stats.crcerrs;
-@@ -3255,8 +3387,8 @@
+@@ -3255,8 +3387,8 @@ e1000_intr(int irq, void *data, struct p
  		E1000_WRITE_REG(hw, IMC, ~0);
  		E1000_WRITE_FLUSH(hw);
  	}
@@ -5494,7 +5486,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	else
  		e1000_irq_enable(adapter);
  #else
-@@ -3299,34 +3431,26 @@
+@@ -3299,34 +3431,26 @@ e1000_clean(struct net_device *poll_dev,
  {
  	struct e1000_adapter *adapter;
  	int work_to_do = min(*budget, poll_dev->quota);
@@ -5541,7 +5533,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	                  &work_done, work_to_do);
  
  	*budget -= work_done;
-@@ -3334,7 +3458,7 @@
+@@ -3334,7 +3458,7 @@ e1000_clean(struct net_device *poll_dev,
  
  	/* If no Tx and not enough Rx work done, exit the polling mode */
  	if ((!tx_cleaned && (work_done == 0)) ||
@@ -5550,7 +5542,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  quit_polling:
  		netif_rx_complete(poll_dev);
  		e1000_irq_enable(adapter);
-@@ -3391,13 +3515,15 @@
+@@ -3391,13 +3515,15 @@ e1000_clean_tx_irq(struct e1000_adapter 
  
  	tx_ring->next_to_clean = i;
  
@@ -5572,7 +5564,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	if (adapter->detect_tx_hung) {
  		/* Detect a transmit hang in hardware, this serializes the
-@@ -3445,7 +3571,7 @@
+@@ -3445,7 +3571,7 @@ e1000_clean_tx_irq(struct e1000_adapter 
   * @sk_buff:     socket buffer with received data
   **/
  
@@ -5581,7 +5573,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  e1000_rx_checksum(struct e1000_adapter *adapter,
  		  uint32_t status_err, uint32_t csum,
  		  struct sk_buff *skb)
-@@ -3547,11 +3673,15 @@
+@@ -3547,11 +3673,15 @@ e1000_clean_rx_irq(struct e1000_adapter 
  
  		length = le16_to_cpu(rx_desc->length);
  
@@ -5598,7 +5590,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			goto next_desc;
  		}
  
-@@ -3567,7 +3697,8 @@
+@@ -3567,7 +3697,8 @@ e1000_clean_rx_irq(struct e1000_adapter 
  				                       flags);
  				length--;
  			} else {
@@ -5608,7 +5600,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  				goto next_desc;
  			}
  		}
-@@ -3675,9 +3806,9 @@
+@@ -3675,9 +3806,9 @@ e1000_clean_rx_irq_ps(struct e1000_adapt
  	i = rx_ring->next_to_clean;
  	rx_desc = E1000_RX_DESC_PS(*rx_ring, i);
  	staterr = le32_to_cpu(rx_desc->wb.middle.status_error);
@@ -5619,7 +5611,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		ps_page = &rx_ring->ps_page[i];
  		ps_page_dma = &rx_ring->ps_page_dma[i];
  #ifdef CONFIG_E1000_NAPI
-@@ -3733,9 +3864,9 @@
+@@ -3733,9 +3864,9 @@ e1000_clean_rx_irq_ps(struct e1000_adapt
  
  		/* page alloc/put takes too long and effects small packet
  		 * throughput, so unsplit small packets and save the alloc/put*/
@@ -5631,7 +5623,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			 * kmap_atomic, so we can't hold the mapping
  			 * very long */
  			pci_dma_sync_single_for_cpu(pdev,
-@@ -3749,8 +3880,9 @@
+@@ -3749,8 +3880,9 @@ e1000_clean_rx_irq_ps(struct e1000_adapt
  			pci_dma_sync_single_for_device(pdev,
  				ps_page_dma->ps_page_dma[0],
  				PAGE_SIZE, PCI_DMA_FROMDEVICE);
@@ -5642,7 +5634,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			goto copydone;
  		} /* if */
  		}
-@@ -3769,6 +3901,10 @@
+@@ -3769,6 +3901,10 @@ e1000_clean_rx_irq_ps(struct e1000_adapt
  			skb->truesize += length;
  		}
  
@@ -5653,7 +5645,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  copydone:
  		e1000_rx_checksum(adapter, staterr,
  				  le16_to_cpu(rx_desc->wb.lower.hi_dword.csum_ip.csum), skb);
-@@ -4155,7 +4291,7 @@
+@@ -4155,7 +4291,7 @@ e1000_mii_ioctl(struct net_device *netde
  			spin_unlock_irqrestore(&adapter->stats_lock, flags);
  			return -EIO;
  		}
@@ -5662,7 +5654,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  			switch (data->reg_num) {
  			case PHY_CTRL:
  				if (mii_reg & MII_CR_POWER_DOWN)
-@@ -4182,10 +4318,9 @@
+@@ -4182,10 +4318,9 @@ e1000_mii_ioctl(struct net_device *netde
  						return retval;
  					}
  				}
@@ -5676,7 +5668,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  					e1000_reset(adapter);
  				break;
  			case M88E1000_PHY_SPEC_CTRL:
-@@ -4202,10 +4337,9 @@
+@@ -4202,10 +4337,9 @@ e1000_mii_ioctl(struct net_device *netde
  			case PHY_CTRL:
  				if (mii_reg & MII_CR_POWER_DOWN)
  					break;
@@ -5690,7 +5682,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  					e1000_reset(adapter);
  				break;
  			}
-@@ -4279,18 +4413,21 @@
+@@ -4279,18 +4413,21 @@ e1000_vlan_rx_register(struct net_device
  		ctrl |= E1000_CTRL_VME;
  		E1000_WRITE_REG(&adapter->hw, CTRL, ctrl);
  
@@ -5712,7 +5704,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  		/* disable VLAN filtering */
  		rctl = E1000_READ_REG(&adapter->hw, RCTL);
  		rctl &= ~E1000_RCTL_VFE;
-@@ -4299,6 +4436,7 @@
+@@ -4299,6 +4436,7 @@ e1000_vlan_rx_register(struct net_device
  			e1000_vlan_rx_kill_vid(netdev, adapter->mng_vlan_id);
  			adapter->mng_vlan_id = E1000_MNG_VLAN_NONE;
  		}
@@ -5720,7 +5712,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	}
  
  	e1000_irq_enable(adapter);
-@@ -4460,12 +4598,16 @@
+@@ -4460,12 +4598,16 @@ e1000_suspend(struct pci_dev *pdev, pm_m
  	struct e1000_adapter *adapter = netdev_priv(netdev);
  	uint32_t ctrl, ctrl_ext, rctl, manc, status;
  	uint32_t wufc = adapter->wol;
@@ -5738,7 +5730,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  #ifdef CONFIG_PM
  	/* Implement our own version of pci_save_state(pdev) because pci-
-@@ -4514,48 +4656,38 @@
+@@ -4514,48 +4656,38 @@ e1000_suspend(struct pci_dev *pdev, pm_m
  
  		E1000_WRITE_REG(&adapter->hw, WUC, E1000_WUC_PME_EN);
  		E1000_WRITE_REG(&adapter->hw, WUFC, wufc);
@@ -5799,7 +5791,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	return 0;
  }
-@@ -4566,22 +4698,15 @@
+@@ -4566,22 +4698,15 @@ e1000_resume(struct pci_dev *pdev)
  {
  	struct net_device *netdev = pci_get_drvdata(pdev);
  	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -5825,7 +5817,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  
  	e1000_reset(adapter);
  	E1000_WRITE_REG(&adapter->hw, WUS, ~0);
-@@ -4591,7 +4716,9 @@
+@@ -4591,7 +4716,9 @@ e1000_resume(struct pci_dev *pdev)
  
  	netif_device_attach(netdev);
  
@@ -5835,7 +5827,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	   adapter->hw.media_type == e1000_media_type_copper) {
  		manc = E1000_READ_REG(&adapter->hw, MANC);
  		manc &= ~(E1000_MANC_ARP_EN);
-@@ -4625,6 +4752,7 @@
+@@ -4625,6 +4752,7 @@ static void
  e1000_netpoll(struct net_device *netdev)
  {
  	struct e1000_adapter *adapter = netdev_priv(netdev);
@@ -5843,7 +5835,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
  	disable_irq(adapter->pdev->irq);
  	e1000_intr(adapter->pdev->irq, netdev, NULL);
  	e1000_clean_tx_irq(adapter, adapter->tx_ring);
-@@ -4635,4 +4763,101 @@
+@@ -4635,4 +4763,101 @@ e1000_netpoll(struct net_device *netdev)
  }
  #endif
  
@@ -5945,9 +5937,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_main.c linux-2.6.17-plasmaroo/driv
 +}
 +
  /* e1000_main.c */
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_osdep.h linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_osdep.h
---- linux-2.6.17/drivers/net/e1000/e1000_osdep.h	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_osdep.h	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_osdep.h
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_osdep.h
++++ linux-2.6.17/drivers/net/e1000/e1000_osdep.h
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -5965,7 +5958,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_osdep.h linux-2.6.17-plasmaroo/dri
    Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  
  *******************************************************************************/
-@@ -126,4 +127,17 @@
+@@ -126,4 +127,17 @@ typedef enum {
  
  #define E1000_WRITE_FLUSH(a) E1000_READ_REG(a, STATUS)
  
@@ -5983,9 +5976,10 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_osdep.h linux-2.6.17-plasmaroo/dri
 +
 +
  #endif /* _E1000_OSDEP_H_ */
-diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_param.c
---- linux-2.6.17/drivers/net/e1000/e1000_param.c	2006-08-08 20:25:03.000000000 +0000
-+++ linux-2.6.17-plasmaroo/drivers/net/e1000/e1000_param.c	2006-08-08 20:25:13.000000000 +0000
+Index: linux-2.6.17/drivers/net/e1000/e1000_param.c
+===================================================================
+--- linux-2.6.17.orig/drivers/net/e1000/e1000_param.c
++++ linux-2.6.17/drivers/net/e1000/e1000_param.c
 @@ -1,7 +1,7 @@
  /*******************************************************************************
  
@@ -6020,7 +6014,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  #define E1000_PARAM(X, desc) \
  	static int __devinitdata X[E1000_MAX_NIC+1] = E1000_PARAM_INIT; \
  	static int num_##X = 0; \
-@@ -182,6 +193,24 @@
+@@ -182,6 +193,24 @@ E1000_PARAM(RxAbsIntDelay, "Receive Abso
  
  E1000_PARAM(InterruptThrottleRate, "Interrupt Throttling Rate");
  
@@ -6045,7 +6039,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  #define AUTONEG_ADV_DEFAULT  0x2F
  #define AUTONEG_ADV_MASK     0x2F
  #define FLOW_CONTROL_DEFAULT FLOW_CONTROL_FULL
-@@ -295,6 +324,7 @@
+@@ -295,6 +324,7 @@ e1000_check_options(struct e1000_adapter
  		DPRINTK(PROBE, NOTICE,
  		       "Warning: no configuration for board #%i\n", bd);
  		DPRINTK(PROBE, NOTICE, "Using defaults for all values\n");
@@ -6053,7 +6047,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  
  	{ /* Transmit Descriptor Count */
-@@ -312,14 +342,9 @@
+@@ -312,14 +342,9 @@ e1000_check_options(struct e1000_adapter
  		opt.arg.r.max = mac_type < e1000_82544 ?
  			E1000_MAX_TXD : E1000_MAX_82544_TXD;
  
@@ -6071,7 +6065,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  		for (i = 0; i < adapter->num_tx_queues; i++)
  			tx_ring[i].count = tx_ring->count;
  	}
-@@ -338,14 +363,9 @@
+@@ -338,14 +363,9 @@ e1000_check_options(struct e1000_adapter
  		opt.arg.r.max = mac_type < e1000_82544 ? E1000_MAX_RXD :
  			E1000_MAX_82544_RXD;
  
@@ -6089,7 +6083,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  		for (i = 0; i < adapter->num_rx_queues; i++)
  			rx_ring[i].count = rx_ring->count;
  	}
-@@ -357,13 +377,9 @@
+@@ -357,13 +377,9 @@ e1000_check_options(struct e1000_adapter
  			.def  = OPTION_ENABLED
  		};
  
@@ -6106,7 +6100,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Flow Control */
  
-@@ -383,13 +399,9 @@
+@@ -383,13 +399,9 @@ e1000_check_options(struct e1000_adapter
  					 .p = fc_list }}
  		};
  
@@ -6123,7 +6117,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Transmit Interrupt Delay */
  		struct e1000_option opt = {
-@@ -401,13 +413,8 @@
+@@ -401,13 +413,8 @@ e1000_check_options(struct e1000_adapter
  					 .max = MAX_TXDELAY }}
  		};
  
@@ -6139,7 +6133,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Transmit Absolute Interrupt Delay */
  		struct e1000_option opt = {
-@@ -419,13 +426,9 @@
+@@ -419,13 +426,9 @@ e1000_check_options(struct e1000_adapter
  					 .max = MAX_TXABSDELAY }}
  		};
  
@@ -6156,7 +6150,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Receive Interrupt Delay */
  		struct e1000_option opt = {
-@@ -437,13 +440,8 @@
+@@ -437,13 +440,8 @@ e1000_check_options(struct e1000_adapter
  					 .max = MAX_RXDELAY }}
  		};
  
@@ -6172,7 +6166,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Receive Absolute Interrupt Delay */
  		struct e1000_option opt = {
-@@ -455,13 +453,9 @@
+@@ -455,13 +453,9 @@ e1000_check_options(struct e1000_adapter
  					 .max = MAX_RXABSDELAY }}
  		};
  
@@ -6189,7 +6183,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Interrupt Throttling Rate */
  		struct e1000_option opt = {
-@@ -473,26 +467,44 @@
+@@ -473,26 +467,44 @@ e1000_check_options(struct e1000_adapter
  					 .max = MAX_ITR }}
  		};
  
@@ -6252,7 +6246,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  
  	switch (adapter->hw.media_type) {
  	case e1000_media_type_fiber:
-@@ -518,17 +530,18 @@
+@@ -518,17 +530,18 @@ static void __devinit
  e1000_check_fiber_options(struct e1000_adapter *adapter)
  {
  	int bd = adapter->bd_number;
@@ -6274,7 +6268,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  		DPRINTK(PROBE, INFO, "AutoNeg other than 1000/Full is "
  				 "not valid for fiber adapters, "
  				 "parameter ignored\n");
-@@ -547,6 +560,7 @@
+@@ -547,6 +560,7 @@ e1000_check_copper_options(struct e1000_
  {
  	int speed, dplx, an;
  	int bd = adapter->bd_number;
@@ -6282,7 +6276,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  
  	{ /* Speed */
  		struct e1000_opt_list speed_list[] = {{          0, "" },
-@@ -563,12 +577,8 @@
+@@ -563,12 +577,8 @@ e1000_check_copper_options(struct e1000_
  					 .p = speed_list }}
  		};
  
@@ -6297,7 +6291,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  	}
  	{ /* Duplex */
  		struct e1000_opt_list dplx_list[] = {{           0, "" },
-@@ -590,15 +600,11 @@
+@@ -590,15 +600,11 @@ e1000_check_copper_options(struct e1000_
  			        "Speed/Duplex/AutoNeg parameter ignored.\n");
  			return;
  		}
@@ -6316,7 +6310,7 @@ diff -ur linux-2.6.17/drivers/net/e1000/e1000_param.c linux-2.6.17-plasmaroo/dri
  		DPRINTK(PROBE, INFO,
  		       "AutoNeg specified along with Speed or Duplex, "
  		       "parameter ignored\n");
-@@ -647,19 +653,15 @@
+@@ -647,19 +653,15 @@ e1000_check_copper_options(struct e1000_
  					 .p = an_list }}
  		};
  
