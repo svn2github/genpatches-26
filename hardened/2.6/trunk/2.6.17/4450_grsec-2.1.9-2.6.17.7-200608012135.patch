@@ -1,7 +1,7 @@
-Index: hardened-sources-2.6.17/Makefile
+Index: linux-2.6.17/Makefile
 ===================================================================
---- hardened-sources-2.6.17.orig/Makefile
-+++ hardened-sources-2.6.17/Makefile
+--- linux-2.6.17.orig/Makefile
++++ linux-2.6.17/Makefile
 @@ -518,7 +518,7 @@ export MODLIB
  
  
@@ -11,10 +11,10 @@ Index: hardened-sources-2.6.17/Makefile
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-Index: hardened-sources-2.6.17/arch/alpha/kernel/module.c
+Index: linux-2.6.17/arch/alpha/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/alpha/kernel/module.c
-+++ hardened-sources-2.6.17/arch/alpha/kernel/module.c
+--- linux-2.6.17.orig/arch/alpha/kernel/module.c
++++ linux-2.6.17/arch/alpha/kernel/module.c
 @@ -177,7 +177,7 @@ apply_relocate_add(Elf64_Shdr *sechdrs, 
  
  	/* The small sections were sorted to the end of the segment.
@@ -24,10 +24,10 @@ Index: hardened-sources-2.6.17/arch/alpha/kernel/module.c
  	got = sechdrs[me->arch.gotsecindex].sh_addr;
  
  	for (i = 0; i < n; i++) {
-Index: hardened-sources-2.6.17/arch/alpha/kernel/osf_sys.c
+Index: linux-2.6.17/arch/alpha/kernel/osf_sys.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/alpha/kernel/osf_sys.c
-+++ hardened-sources-2.6.17/arch/alpha/kernel/osf_sys.c
+--- linux-2.6.17.orig/arch/alpha/kernel/osf_sys.c
++++ linux-2.6.17/arch/alpha/kernel/osf_sys.c
 @@ -1273,6 +1273,10 @@ arch_get_unmapped_area(struct file *filp
  	   merely specific addresses, but regions of memory -- perhaps
  	   this feature should be incorporated into all ports?  */
@@ -50,10 +50,10 @@ Index: hardened-sources-2.6.17/arch/alpha/kernel/osf_sys.c
  	if (addr != (unsigned long) -ENOMEM)
  		return addr;
  
-Index: hardened-sources-2.6.17/arch/alpha/kernel/ptrace.c
+Index: linux-2.6.17/arch/alpha/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/alpha/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/alpha/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/alpha/kernel/ptrace.c
++++ linux-2.6.17/arch/alpha/kernel/ptrace.c
 @@ -15,6 +15,7 @@
  #include <linux/slab.h>
  #include <linux/security.h>
@@ -72,10 +72,10 @@ Index: hardened-sources-2.6.17/arch/alpha/kernel/ptrace.c
  	if (request == PTRACE_ATTACH) {
  		ret = ptrace_attach(child);
  		goto out;
-Index: hardened-sources-2.6.17/arch/alpha/mm/fault.c
+Index: linux-2.6.17/arch/alpha/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/alpha/mm/fault.c
-+++ hardened-sources-2.6.17/arch/alpha/mm/fault.c
+--- linux-2.6.17.orig/arch/alpha/mm/fault.c
++++ linux-2.6.17/arch/alpha/mm/fault.c
 @@ -25,6 +25,7 @@
  #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
@@ -240,10 +240,10 @@ Index: hardened-sources-2.6.17/arch/alpha/mm/fault.c
  	} else if (!cause) {
  		/* Allow reads even for write-only mappings */
  		if (!(vma->vm_flags & (VM_READ | VM_WRITE)))
-Index: hardened-sources-2.6.17/arch/arm/mm/mmap.c
+Index: linux-2.6.17/arch/arm/mm/mmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/arm/mm/mmap.c
-+++ hardened-sources-2.6.17/arch/arm/mm/mmap.c
+--- linux-2.6.17.orig/arch/arm/mm/mmap.c
++++ linux-2.6.17/arch/arm/mm/mmap.c
 @@ -62,6 +62,10 @@ arch_get_unmapped_area(struct file *filp
  	if (len > TASK_SIZE)
  		return -ENOMEM;
@@ -275,10 +275,10 @@ Index: hardened-sources-2.6.17/arch/arm/mm/mmap.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
-Index: hardened-sources-2.6.17/arch/i386/Kconfig
+Index: linux-2.6.17/arch/i386/Kconfig
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/Kconfig
-+++ hardened-sources-2.6.17/arch/i386/Kconfig
+--- linux-2.6.17.orig/arch/i386/Kconfig
++++ linux-2.6.17/arch/i386/Kconfig
 @@ -980,7 +980,7 @@ endchoice
  
  config PCI_BIOS
@@ -288,10 +288,10 @@ Index: hardened-sources-2.6.17/arch/i386/Kconfig
  	default y
  
  config PCI_DIRECT
-Index: hardened-sources-2.6.17/arch/i386/Kconfig.cpu
+Index: linux-2.6.17/arch/i386/Kconfig.cpu
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/Kconfig.cpu
-+++ hardened-sources-2.6.17/arch/i386/Kconfig.cpu
+--- linux-2.6.17.orig/arch/i386/Kconfig.cpu
++++ linux-2.6.17/arch/i386/Kconfig.cpu
 @@ -251,7 +251,7 @@ config X86_PPRO_FENCE
  
  config X86_F00F_BUG
@@ -310,10 +310,10 @@ Index: hardened-sources-2.6.17/arch/i386/Kconfig.cpu
  	default y
  
  config X86_GOOD_APIC
-Index: hardened-sources-2.6.17/arch/i386/Kconfig.debug
+Index: linux-2.6.17/arch/i386/Kconfig.debug
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/Kconfig.debug
-+++ hardened-sources-2.6.17/arch/i386/Kconfig.debug
+--- linux-2.6.17.orig/arch/i386/Kconfig.debug
++++ linux-2.6.17/arch/i386/Kconfig.debug
 @@ -53,7 +53,7 @@ config DEBUG_PAGEALLOC
  
  config DEBUG_RODATA
@@ -323,10 +323,10 @@ Index: hardened-sources-2.6.17/arch/i386/Kconfig.debug
  	help
  	  Mark the kernel read-only data as write-protected in the pagetables,
  	  in order to catch accidental (and incorrect) writes to such const
-Index: hardened-sources-2.6.17/arch/i386/boot/compressed/head.S
+Index: linux-2.6.17/arch/i386/boot/compressed/head.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/boot/compressed/head.S
-+++ hardened-sources-2.6.17/arch/i386/boot/compressed/head.S
+--- linux-2.6.17.orig/arch/i386/boot/compressed/head.S
++++ linux-2.6.17/arch/i386/boot/compressed/head.S
 @@ -39,11 +39,13 @@ startup_32:
  	movl %eax,%gs
  
@@ -341,10 +341,10 @@ Index: hardened-sources-2.6.17/arch/i386/boot/compressed/head.S
  
  /*
   * Initialize eflags.  Some BIOS's leave bits like NT set.  This would
-Index: hardened-sources-2.6.17/arch/i386/kernel/acpi/sleep.c
+Index: linux-2.6.17/arch/i386/kernel/acpi/sleep.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/acpi/sleep.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/acpi/sleep.c
+--- linux-2.6.17.orig/arch/i386/kernel/acpi/sleep.c
++++ linux-2.6.17/arch/i386/kernel/acpi/sleep.c
 @@ -10,6 +10,7 @@
  #include <linux/dmi.h>
  #include <asm/smp.h>
@@ -395,10 +395,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/acpi/sleep.c
  }
  
  /**
-Index: hardened-sources-2.6.17/arch/i386/kernel/alternative.c
+Index: linux-2.6.17/arch/i386/kernel/alternative.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/alternative.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/alternative.c
+--- linux-2.6.17.orig/arch/i386/kernel/alternative.c
++++ linux-2.6.17/arch/i386/kernel/alternative.c
 @@ -3,6 +3,7 @@
  #include <linux/list.h>
  #include <asm/alternative.h>
@@ -550,10 +550,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/alternative.c
  }
  
  struct smp_alt_module {
-Index: hardened-sources-2.6.17/arch/i386/kernel/apic.c
+Index: linux-2.6.17/arch/i386/kernel/apic.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/apic.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/apic.c
+--- linux-2.6.17.orig/arch/i386/kernel/apic.c
++++ linux-2.6.17/arch/i386/kernel/apic.c
 @@ -1176,7 +1176,7 @@ inline void smp_local_timer_interrupt(st
  {
  	profile_tick(CPU_PROFILING, regs);
@@ -563,10 +563,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/apic.c
  #endif
  
  	/*
-Index: hardened-sources-2.6.17/arch/i386/kernel/apm.c
+Index: linux-2.6.17/arch/i386/kernel/apm.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/apm.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/apm.c
+--- linux-2.6.17.orig/arch/i386/kernel/apm.c
++++ linux-2.6.17/arch/i386/kernel/apm.c
 @@ -589,9 +589,18 @@ static u8 apm_bios_call(u32 func, u32 eb
  	struct desc_struct	save_desc_40;
  	struct desc_struct	*gdt;
@@ -629,10 +629,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/apm.c
  	put_cpu();
  	apm_restore_cpus(cpus);
  	return error;
-Index: hardened-sources-2.6.17/arch/i386/kernel/asm-offsets.c
+Index: linux-2.6.17/arch/i386/kernel/asm-offsets.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/asm-offsets.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/asm-offsets.c
+--- linux-2.6.17.orig/arch/i386/kernel/asm-offsets.c
++++ linux-2.6.17/arch/i386/kernel/asm-offsets.c
 @@ -68,5 +68,6 @@ void foo(void)
  		 sizeof(struct tss_struct));
  
@@ -640,10 +640,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/asm-offsets.c
 +	DEFINE(PTRS_PER_PTE_asm, PTRS_PER_PTE);
  	DEFINE(VSYSCALL_BASE, __fix_to_virt(FIX_VSYSCALL));
  }
-Index: hardened-sources-2.6.17/arch/i386/kernel/cpu/common.c
+Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/cpu/common.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/cpu/common.c
+--- linux-2.6.17.orig/arch/i386/kernel/cpu/common.c
++++ linux-2.6.17/arch/i386/kernel/cpu/common.c
 @@ -4,7 +4,6 @@
  #include <linux/smp.h>
  #include <linux/module.h>
@@ -751,10 +751,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/cpu/common.c
  
  	/* Clear all 6 debug registers: */
  	set_debugreg(0, 0);
-Index: hardened-sources-2.6.17/arch/i386/kernel/crash.c
+Index: linux-2.6.17/arch/i386/kernel/crash.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/crash.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/crash.c
+--- linux-2.6.17.orig/arch/i386/kernel/crash.c
++++ linux-2.6.17/arch/i386/kernel/crash.c
 @@ -105,7 +105,7 @@ static int crash_nmi_callback(struct pt_
  		return 1;
  	local_irq_disable();
@@ -764,10 +764,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/crash.c
  		crash_fixup_ss_esp(&fixed_regs, regs);
  		regs = &fixed_regs;
  	}
-Index: hardened-sources-2.6.17/arch/i386/kernel/doublefault.c
+Index: linux-2.6.17/arch/i386/kernel/doublefault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/doublefault.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/doublefault.c
+--- linux-2.6.17.orig/arch/i386/kernel/doublefault.c
++++ linux-2.6.17/arch/i386/kernel/doublefault.c
 @@ -11,7 +11,7 @@
  
  #define DOUBLEFAULT_STACKSIZE (1024)
@@ -790,10 +790,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/doublefault.c
  
  	.__cr3		= __pa(swapper_pg_dir)
  };
-Index: hardened-sources-2.6.17/arch/i386/kernel/efi.c
+Index: linux-2.6.17/arch/i386/kernel/efi.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/efi.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/efi.c
+--- linux-2.6.17.orig/arch/i386/kernel/efi.c
++++ linux-2.6.17/arch/i386/kernel/efi.c
 @@ -64,82 +64,48 @@ extern void * boot_ioremap(unsigned long
  
  static unsigned long efi_rt_eflags;
@@ -904,10 +904,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/efi.c
  phys_efi_get_time(efi_time_t *tm, efi_time_cap_t *tc)
  {
  	efi_status_t status;
-Index: hardened-sources-2.6.17/arch/i386/kernel/efi_stub.S
+Index: linux-2.6.17/arch/i386/kernel/efi_stub.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/efi_stub.S
-+++ hardened-sources-2.6.17/arch/i386/kernel/efi_stub.S
+--- linux-2.6.17.orig/arch/i386/kernel/efi_stub.S
++++ linux-2.6.17/arch/i386/kernel/efi_stub.S
 @@ -7,6 +7,7 @@
  
  #include <linux/config.h>
@@ -1010,10 +1010,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/efi_stub.S
  saved_return_addr:
  	.long 0
  efi_rt_function_ptr:
-Index: hardened-sources-2.6.17/arch/i386/kernel/entry.S
+Index: linux-2.6.17/arch/i386/kernel/entry.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/entry.S
-+++ hardened-sources-2.6.17/arch/i386/kernel/entry.S
+--- linux-2.6.17.orig/arch/i386/kernel/entry.S
++++ linux-2.6.17/arch/i386/kernel/entry.S
 @@ -82,7 +82,7 @@ VM_MASK		= 0x00020000
  #define resume_kernel		restore_nocheck
  #endif
@@ -1189,10 +1189,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/entry.S
  #include "syscall_table.S"
  
  syscall_table_size=(.-sys_call_table)
-Index: hardened-sources-2.6.17/arch/i386/kernel/head.S
+Index: linux-2.6.17/arch/i386/kernel/head.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/head.S
-+++ hardened-sources-2.6.17/arch/i386/kernel/head.S
+--- linux-2.6.17.orig/arch/i386/kernel/head.S
++++ linux-2.6.17/arch/i386/kernel/head.S
 @@ -46,6 +46,16 @@
   */
  #define INIT_MAP_BEYOND_END	(128*1024)
@@ -1519,10 +1519,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/head.S
 +#ifdef CONFIG_SMP
 +	.fill (NR_CPUS-1) * (PAGE_SIZE_asm / 8),8,0 /* other CPU's GDT */
 +#endif
-Index: hardened-sources-2.6.17/arch/i386/kernel/i386_ksyms.c
+Index: linux-2.6.17/arch/i386/kernel/i386_ksyms.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/i386_ksyms.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/i386_ksyms.c
+--- linux-2.6.17.orig/arch/i386/kernel/i386_ksyms.c
++++ linux-2.6.17/arch/i386/kernel/i386_ksyms.c
 @@ -3,12 +3,16 @@
  #include <asm/checksum.h>
  #include <asm/desc.h>
@@ -1540,10 +1540,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/i386_ksyms.c
  
  EXPORT_SYMBOL(__get_user_1);
  EXPORT_SYMBOL(__get_user_2);
-Index: hardened-sources-2.6.17/arch/i386/kernel/init_task.c
+Index: linux-2.6.17/arch/i386/kernel/init_task.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/init_task.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/init_task.c
+--- linux-2.6.17.orig/arch/i386/kernel/init_task.c
++++ linux-2.6.17/arch/i386/kernel/init_task.c
 @@ -42,5 +42,5 @@ EXPORT_SYMBOL(init_task);
   * per-CPU TSS segments. Threads are completely 'soft' on Linux,
   * no more per-task TSS's.
@@ -1551,10 +1551,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/init_task.c
 -DEFINE_PER_CPU(struct tss_struct, init_tss) ____cacheline_internodealigned_in_smp = INIT_TSS;
 +struct tss_struct init_tss[NR_CPUS] ____cacheline_internodealigned_in_smp = { [0 ... NR_CPUS-1] = INIT_TSS };
  
-Index: hardened-sources-2.6.17/arch/i386/kernel/ioport.c
+Index: linux-2.6.17/arch/i386/kernel/ioport.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/ioport.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/ioport.c
+--- linux-2.6.17.orig/arch/i386/kernel/ioport.c
++++ linux-2.6.17/arch/i386/kernel/ioport.c
 @@ -16,6 +16,7 @@
  #include <linux/stddef.h>
  #include <linux/slab.h>
@@ -1604,10 +1604,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/ioport.c
  	}
  	t->iopl = level << 12;
  	regs->eflags = (regs->eflags & ~X86_EFLAGS_IOPL) | t->iopl;
-Index: hardened-sources-2.6.17/arch/i386/kernel/irq.c
+Index: linux-2.6.17/arch/i386/kernel/irq.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/irq.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/irq.c
+--- linux-2.6.17.orig/arch/i386/kernel/irq.c
++++ linux-2.6.17/arch/i386/kernel/irq.c
 @@ -91,7 +91,7 @@ fastcall unsigned int do_IRQ(struct pt_r
  		int arg1, arg2, ebx;
  
@@ -1639,10 +1639,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/irq.c
  
  		asm volatile(
  			"       xchgl   %%ebx,%%esp     \n"
-Index: hardened-sources-2.6.17/arch/i386/kernel/ldt.c
+Index: linux-2.6.17/arch/i386/kernel/ldt.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/ldt.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/ldt.c
+--- linux-2.6.17.orig/arch/i386/kernel/ldt.c
++++ linux-2.6.17/arch/i386/kernel/ldt.c
 @@ -103,6 +103,19 @@ int init_new_context(struct task_struct 
  		retval = copy_ldt(&mm->context, &old_mm->context);
  		up(&old_mm->context.sem);
@@ -1686,10 +1686,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/ldt.c
  	entry_1 = LDT_entry_a(&ldt_info);
  	entry_2 = LDT_entry_b(&ldt_info);
  	if (oldmode)
-Index: hardened-sources-2.6.17/arch/i386/kernel/module.c
+Index: linux-2.6.17/arch/i386/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/module.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/module.c
+--- linux-2.6.17.orig/arch/i386/kernel/module.c
++++ linux-2.6.17/arch/i386/kernel/module.c
 @@ -21,6 +21,7 @@
  #include <linux/fs.h>
  #include <linux/string.h>
@@ -1809,10 +1809,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/module.c
  			break;
  		default:
  			printk(KERN_ERR "module %s: Unknown relocation: %u\n",
-Index: hardened-sources-2.6.17/arch/i386/kernel/process.c
+Index: linux-2.6.17/arch/i386/kernel/process.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/process.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/process.c
+--- linux-2.6.17.orig/arch/i386/kernel/process.c
++++ linux-2.6.17/arch/i386/kernel/process.c
 @@ -69,7 +69,7 @@ EXPORT_SYMBOL(boot_option_idle_override)
   */
  unsigned long thread_saved_pc(struct task_struct *tsk)
@@ -1988,10 +1988,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/process.c
 +	current->thread.esp0 = tss->esp0;
  }
 +#endif
-Index: hardened-sources-2.6.17/arch/i386/kernel/ptrace.c
+Index: linux-2.6.17/arch/i386/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/i386/kernel/ptrace.c
++++ linux-2.6.17/arch/i386/kernel/ptrace.c
 @@ -17,6 +17,7 @@
  #include <linux/audit.h>
  #include <linux/seccomp.h>
@@ -2039,10 +2039,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/ptrace.c
  
  	/* Send us the fakey SIGTRAP */
  	force_sig_info(SIGTRAP, &info, tsk);
-Index: hardened-sources-2.6.17/arch/i386/kernel/reboot.c
+Index: linux-2.6.17/arch/i386/kernel/reboot.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/reboot.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/reboot.c
+--- linux-2.6.17.orig/arch/i386/kernel/reboot.c
++++ linux-2.6.17/arch/i386/kernel/reboot.c
 @@ -138,18 +138,18 @@ core_initcall(reboot_init);
     doesn't work with at least one type of 486 motherboard.  It is easy
     to stop this code working; hence the copious comments. */
@@ -2095,10 +2095,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/reboot.c
  	/*
  	 * Use `swapper_pg_dir' as our page directory.
  	 */
-Index: hardened-sources-2.6.17/arch/i386/kernel/setup.c
+Index: linux-2.6.17/arch/i386/kernel/setup.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/setup.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/setup.c
+--- linux-2.6.17.orig/arch/i386/kernel/setup.c
++++ linux-2.6.17/arch/i386/kernel/setup.c
 @@ -88,7 +88,11 @@ struct cpuinfo_x86 new_cpu_data __initda
  struct cpuinfo_x86 boot_cpu_data __read_mostly = { 0, 0, 0, 0, -1, 1, 0, 0, -1 };
  EXPORT_SYMBOL(boot_cpu_data);
@@ -2131,10 +2131,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/setup.c
  	data_resource.end = virt_to_phys(_edata)-1;
  
  	parse_cmdline_early(cmdline_p);
-Index: hardened-sources-2.6.17/arch/i386/kernel/signal.c
+Index: linux-2.6.17/arch/i386/kernel/signal.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/signal.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/signal.c
+--- linux-2.6.17.orig/arch/i386/kernel/signal.c
++++ linux-2.6.17/arch/i386/kernel/signal.c
 @@ -351,7 +351,17 @@ static int setup_frame(int sig, struct k
  			goto give_sigsegv;
  	}
@@ -2181,10 +2181,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/signal.c
  		return;
  
  	if (test_thread_flag(TIF_RESTORE_SIGMASK))
-Index: hardened-sources-2.6.17/arch/i386/kernel/sys_i386.c
+Index: linux-2.6.17/arch/i386/kernel/sys_i386.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/sys_i386.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/sys_i386.c
+--- linux-2.6.17.orig/arch/i386/kernel/sys_i386.c
++++ linux-2.6.17/arch/i386/kernel/sys_i386.c
 @@ -99,6 +99,191 @@ out:
  	return err;
  }
@@ -2377,19 +2377,19 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/sys_i386.c
  
  struct sel_arg_struct {
  	unsigned long n;
-Index: hardened-sources-2.6.17/arch/i386/kernel/syscall_table.S
+Index: linux-2.6.17/arch/i386/kernel/syscall_table.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/syscall_table.S
-+++ hardened-sources-2.6.17/arch/i386/kernel/syscall_table.S
+--- linux-2.6.17.orig/arch/i386/kernel/syscall_table.S
++++ linux-2.6.17/arch/i386/kernel/syscall_table.S
 @@ -1,3 +1,4 @@
 +.section .rodata,"a",@progbits
  ENTRY(sys_call_table)
  	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
  	.long sys_exit
-Index: hardened-sources-2.6.17/arch/i386/kernel/sysenter.c
+Index: linux-2.6.17/arch/i386/kernel/sysenter.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/sysenter.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/sysenter.c
+--- linux-2.6.17.orig/arch/i386/kernel/sysenter.c
++++ linux-2.6.17/arch/i386/kernel/sysenter.c
 @@ -24,7 +24,7 @@ extern asmlinkage void sysenter_entry(vo
  void enable_sep_cpu(void)
  {
@@ -2415,10 +2415,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/sysenter.c
  
  	return 0;
  }
-Index: hardened-sources-2.6.17/arch/i386/kernel/traps.c
+Index: linux-2.6.17/arch/i386/kernel/traps.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/traps.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/traps.c
+--- linux-2.6.17.orig/arch/i386/kernel/traps.c
++++ linux-2.6.17/arch/i386/kernel/traps.c
 @@ -28,6 +28,7 @@
  #include <linux/utsname.h>
  #include <linux/kprobes.h>
@@ -2644,10 +2644,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/traps.c
  }
  
  /*
-Index: hardened-sources-2.6.17/arch/i386/kernel/vm86.c
+Index: linux-2.6.17/arch/i386/kernel/vm86.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/vm86.c
-+++ hardened-sources-2.6.17/arch/i386/kernel/vm86.c
+--- linux-2.6.17.orig/arch/i386/kernel/vm86.c
++++ linux-2.6.17/arch/i386/kernel/vm86.c
 @@ -123,7 +123,7 @@ struct pt_regs * fastcall save_v86_state
  		do_exit(SIGSEGV);
  	}
@@ -2666,10 +2666,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/vm86.c
  	tsk->thread.esp0 = (unsigned long) &info->VM86_TSS_ESP0;
  	if (cpu_has_sep)
  		tsk->thread.sysenter_cs = 0;
-Index: hardened-sources-2.6.17/arch/i386/kernel/vmlinux.lds.S
+Index: linux-2.6.17/arch/i386/kernel/vmlinux.lds.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/kernel/vmlinux.lds.S
-+++ hardened-sources-2.6.17/arch/i386/kernel/vmlinux.lds.S
+--- linux-2.6.17.orig/arch/i386/kernel/vmlinux.lds.S
++++ linux-2.6.17/arch/i386/kernel/vmlinux.lds.S
 @@ -4,10 +4,19 @@
  
  #define LOAD_OFFSET __PAGE_OFFSET
@@ -2889,10 +2889,10 @@ Index: hardened-sources-2.6.17/arch/i386/kernel/vmlinux.lds.S
    __bss_start = .;		/* BSS */
    .bss.page_aligned : AT(ADDR(.bss.page_aligned) - LOAD_OFFSET) {
  	*(.bss.page_aligned)
-Index: hardened-sources-2.6.17/arch/i386/lib/checksum.S
+Index: linux-2.6.17/arch/i386/lib/checksum.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/lib/checksum.S
-+++ hardened-sources-2.6.17/arch/i386/lib/checksum.S
+--- linux-2.6.17.orig/arch/i386/lib/checksum.S
++++ linux-2.6.17/arch/i386/lib/checksum.S
 @@ -27,7 +27,8 @@
  
  #include <linux/config.h>
@@ -3107,10 +3107,10 @@ Index: hardened-sources-2.6.17/arch/i386/lib/checksum.S
  	popl %esi
  	popl %edi
  	popl %ebx
-Index: hardened-sources-2.6.17/arch/i386/lib/getuser.S
+Index: linux-2.6.17/arch/i386/lib/getuser.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/lib/getuser.S
-+++ hardened-sources-2.6.17/arch/i386/lib/getuser.S
+--- linux-2.6.17.orig/arch/i386/lib/getuser.S
++++ linux-2.6.17/arch/i386/lib/getuser.S
 @@ -9,6 +9,7 @@
   * return value.
   */
@@ -3162,10 +3162,10 @@ Index: hardened-sources-2.6.17/arch/i386/lib/getuser.S
  	xorl %edx,%edx
  	movl $-14,%eax
  	ret
-Index: hardened-sources-2.6.17/arch/i386/lib/mmx.c
+Index: linux-2.6.17/arch/i386/lib/mmx.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/lib/mmx.c
-+++ hardened-sources-2.6.17/arch/i386/lib/mmx.c
+--- linux-2.6.17.orig/arch/i386/lib/mmx.c
++++ linux-2.6.17/arch/i386/lib/mmx.c
 @@ -48,14 +48,30 @@ void *_mmx_memcpy(void *to, const void *
  		"   prefetch 256(%0)\n"
  		"2:  \n"
@@ -3364,10 +3364,10 @@ Index: hardened-sources-2.6.17/arch/i386/lib/mmx.c
  		from+=64;
  		to+=64;
  	}
-Index: hardened-sources-2.6.17/arch/i386/lib/putuser.S
+Index: linux-2.6.17/arch/i386/lib/putuser.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/lib/putuser.S
-+++ hardened-sources-2.6.17/arch/i386/lib/putuser.S
+--- linux-2.6.17.orig/arch/i386/lib/putuser.S
++++ linux-2.6.17/arch/i386/lib/putuser.S
 @@ -9,6 +9,7 @@
   * return value.
   */
@@ -3431,10 +3431,10 @@ Index: hardened-sources-2.6.17/arch/i386/lib/putuser.S
  	movl $-14,%eax
  	EXIT
  
-Index: hardened-sources-2.6.17/arch/i386/lib/usercopy.c
+Index: linux-2.6.17/arch/i386/lib/usercopy.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/lib/usercopy.c
-+++ hardened-sources-2.6.17/arch/i386/lib/usercopy.c
+--- linux-2.6.17.orig/arch/i386/lib/usercopy.c
++++ linux-2.6.17/arch/i386/lib/usercopy.c
 @@ -33,6 +33,7 @@ do {									   \
  	int __d0, __d1, __d2;						   \
  	might_sleep();							   \
@@ -3770,10 +3770,10 @@ Index: hardened-sources-2.6.17/arch/i386/lib/usercopy.c
 +#endif
 +
 +EXPORT_SYMBOL(set_fs);
-Index: hardened-sources-2.6.17/arch/i386/mach-voyager/voyager_smp.c
+Index: linux-2.6.17/arch/i386/mach-voyager/voyager_smp.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mach-voyager/voyager_smp.c
-+++ hardened-sources-2.6.17/arch/i386/mach-voyager/voyager_smp.c
+--- linux-2.6.17.orig/arch/i386/mach-voyager/voyager_smp.c
++++ linux-2.6.17/arch/i386/mach-voyager/voyager_smp.c
 @@ -1295,7 +1295,7 @@ smp_local_timer_interrupt(struct pt_regs
  						per_cpu(prof_counter, cpu);
  		}
@@ -3783,10 +3783,10 @@ Index: hardened-sources-2.6.17/arch/i386/mach-voyager/voyager_smp.c
  	}
  
  	if( ((1<<cpu) & voyager_extended_vic_processors) == 0)
-Index: hardened-sources-2.6.17/arch/i386/mm/boot_ioremap.c
+Index: linux-2.6.17/arch/i386/mm/boot_ioremap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/boot_ioremap.c
-+++ hardened-sources-2.6.17/arch/i386/mm/boot_ioremap.c
+--- linux-2.6.17.orig/arch/i386/mm/boot_ioremap.c
++++ linux-2.6.17/arch/i386/mm/boot_ioremap.c
 @@ -8,53 +8,37 @@
   */
  
@@ -3855,10 +3855,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/boot_ioremap.c
  	}
  }
  
-Index: hardened-sources-2.6.17/arch/i386/mm/extable.c
+Index: linux-2.6.17/arch/i386/mm/extable.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/extable.c
-+++ hardened-sources-2.6.17/arch/i386/mm/extable.c
+--- linux-2.6.17.orig/arch/i386/mm/extable.c
++++ linux-2.6.17/arch/i386/mm/extable.c
 @@ -12,7 +12,7 @@ int fixup_exception(struct pt_regs *regs
  	const struct exception_table_entry *fixup;
  
@@ -3868,10 +3868,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/extable.c
  	{
  		extern u32 pnp_bios_fault_eip, pnp_bios_fault_esp;
  		extern u32 pnp_bios_is_utter_crap;
-Index: hardened-sources-2.6.17/arch/i386/mm/fault.c
+Index: linux-2.6.17/arch/i386/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/fault.c
-+++ hardened-sources-2.6.17/arch/i386/mm/fault.c
+--- linux-2.6.17.orig/arch/i386/mm/fault.c
++++ linux-2.6.17/arch/i386/mm/fault.c
 @@ -22,6 +22,9 @@
  #include <linux/highmem.h>
  #include <linux/module.h>
@@ -4287,10 +4287,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/fault.c
 +	printk("\n");
 +}
 +#endif
-Index: hardened-sources-2.6.17/arch/i386/mm/hugetlbpage.c
+Index: linux-2.6.17/arch/i386/mm/hugetlbpage.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/hugetlbpage.c
-+++ hardened-sources-2.6.17/arch/i386/mm/hugetlbpage.c
+--- linux-2.6.17.orig/arch/i386/mm/hugetlbpage.c
++++ linux-2.6.17/arch/i386/mm/hugetlbpage.c
 @@ -121,7 +121,12 @@ static unsigned long hugetlb_get_unmappe
  {
  	struct mm_struct *mm = current->mm;
@@ -4377,10 +4377,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/hugetlbpage.c
  		    (!vma || addr + len <= vma->vm_start))
  			return addr;
  	}
-Index: hardened-sources-2.6.17/arch/i386/mm/init.c
+Index: linux-2.6.17/arch/i386/mm/init.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/init.c
-+++ hardened-sources-2.6.17/arch/i386/mm/init.c
+--- linux-2.6.17.orig/arch/i386/mm/init.c
++++ linux-2.6.17/arch/i386/mm/init.c
 @@ -41,6 +41,7 @@
  #include <asm/tlb.h>
  #include <asm/tlbflush.h>
@@ -4662,10 +4662,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/init.c
  	free_init_pages("unused kernel memory",
  			(unsigned long)(&__init_begin),
  			(unsigned long)(&__init_end));
-Index: hardened-sources-2.6.17/arch/i386/mm/mmap.c
+Index: linux-2.6.17/arch/i386/mm/mmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/mmap.c
-+++ hardened-sources-2.6.17/arch/i386/mm/mmap.c
+--- linux-2.6.17.orig/arch/i386/mm/mmap.c
++++ linux-2.6.17/arch/i386/mm/mmap.c
 @@ -34,12 +34,18 @@
   * Leave an at least ~128 MB hole.
   */
@@ -4718,10 +4718,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/mmap.c
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
-Index: hardened-sources-2.6.17/arch/i386/mm/pageattr.c
+Index: linux-2.6.17/arch/i386/mm/pageattr.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/mm/pageattr.c
-+++ hardened-sources-2.6.17/arch/i386/mm/pageattr.c
+--- linux-2.6.17.orig/arch/i386/mm/pageattr.c
++++ linux-2.6.17/arch/i386/mm/pageattr.c
 @@ -14,6 +14,7 @@
  #include <asm/tlbflush.h>
  #include <asm/pgalloc.h>
@@ -4767,10 +4767,10 @@ Index: hardened-sources-2.6.17/arch/i386/mm/pageattr.c
  				? PAGE_KERNEL_EXEC : PAGE_KERNEL;
  			split = split_large_page(address, prot, ref_prot);
  			if (!split)
-Index: hardened-sources-2.6.17/arch/i386/oprofile/backtrace.c
+Index: linux-2.6.17/arch/i386/oprofile/backtrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/oprofile/backtrace.c
-+++ hardened-sources-2.6.17/arch/i386/oprofile/backtrace.c
+--- linux-2.6.17.orig/arch/i386/oprofile/backtrace.c
++++ linux-2.6.17/arch/i386/oprofile/backtrace.c
 @@ -116,7 +116,7 @@ x86_backtrace(struct pt_regs * const reg
  	head = (struct frame_head *)regs->ebp;
  #endif
@@ -4780,10 +4780,10 @@ Index: hardened-sources-2.6.17/arch/i386/oprofile/backtrace.c
  		while (depth-- && valid_kernel_stack(head, regs))
  			head = dump_kernel_backtrace(head);
  		return;
-Index: hardened-sources-2.6.17/arch/i386/power/cpu.c
+Index: linux-2.6.17/arch/i386/power/cpu.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/i386/power/cpu.c
-+++ hardened-sources-2.6.17/arch/i386/power/cpu.c
+--- linux-2.6.17.orig/arch/i386/power/cpu.c
++++ linux-2.6.17/arch/i386/power/cpu.c
 @@ -62,7 +62,7 @@ static void do_fpu_end(void)
  static void fix_processor_context(void)
  {
@@ -4793,10 +4793,10 @@ Index: hardened-sources-2.6.17/arch/i386/power/cpu.c
  
  	set_tss_desc(cpu,t);	/* This just modifies memory; should not be necessary. But... This is necessary, because 386 hardware has concept of busy TSS or some similar stupidity. */
  
-Index: hardened-sources-2.6.17/arch/ia64/ia32/binfmt_elf32.c
+Index: linux-2.6.17/arch/ia64/ia32/binfmt_elf32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/ia32/binfmt_elf32.c
-+++ hardened-sources-2.6.17/arch/ia64/ia32/binfmt_elf32.c
+--- linux-2.6.17.orig/arch/ia64/ia32/binfmt_elf32.c
++++ linux-2.6.17/arch/ia64/ia32/binfmt_elf32.c
 @@ -46,6 +46,17 @@ randomize_stack_top(unsigned long stack_
  
  #define elf_read_implies_exec(ex, have_pt_gnu_stack)	(!(have_pt_gnu_stack))
@@ -4815,10 +4815,10 @@ Index: hardened-sources-2.6.17/arch/ia64/ia32/binfmt_elf32.c
  /* Ugly but avoids duplication */
  #include "../../../fs/binfmt_elf.c"
  
-Index: hardened-sources-2.6.17/arch/ia64/ia32/ia32priv.h
+Index: linux-2.6.17/arch/ia64/ia32/ia32priv.h
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/ia32/ia32priv.h
-+++ hardened-sources-2.6.17/arch/ia64/ia32/ia32priv.h
+--- linux-2.6.17.orig/arch/ia64/ia32/ia32priv.h
++++ linux-2.6.17/arch/ia64/ia32/ia32priv.h
 @@ -305,7 +305,14 @@ struct old_linux32_dirent {
  #define ELF_DATA	ELFDATA2LSB
  #define ELF_ARCH	EM_386
@@ -4835,10 +4835,10 @@ Index: hardened-sources-2.6.17/arch/ia64/ia32/ia32priv.h
  #define IA32_GATE_OFFSET	IA32_PAGE_OFFSET
  #define IA32_GATE_END		IA32_PAGE_OFFSET + PAGE_SIZE
  
-Index: hardened-sources-2.6.17/arch/ia64/kernel/module.c
+Index: linux-2.6.17/arch/ia64/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/kernel/module.c
-+++ hardened-sources-2.6.17/arch/ia64/kernel/module.c
+--- linux-2.6.17.orig/arch/ia64/kernel/module.c
++++ linux-2.6.17/arch/ia64/kernel/module.c
 @@ -322,7 +322,7 @@ module_alloc (unsigned long size)
  void
  module_free (struct module *mod, void *module_region)
@@ -4926,10 +4926,10 @@ Index: hardened-sources-2.6.17/arch/ia64/kernel/module.c
  		mod->arch.gp = gp;
  		DEBUGP("%s: placing gp at 0x%lx\n", __FUNCTION__, gp);
  	}
-Index: hardened-sources-2.6.17/arch/ia64/kernel/ptrace.c
+Index: linux-2.6.17/arch/ia64/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/ia64/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/ia64/kernel/ptrace.c
++++ linux-2.6.17/arch/ia64/kernel/ptrace.c
 @@ -18,6 +18,7 @@
  #include <linux/security.h>
  #include <linux/audit.h>
@@ -4948,10 +4948,10 @@ Index: hardened-sources-2.6.17/arch/ia64/kernel/ptrace.c
  	if (request == PTRACE_ATTACH) {
  		ret = ptrace_attach(child);
  		goto out_tsk;
-Index: hardened-sources-2.6.17/arch/ia64/kernel/sys_ia64.c
+Index: linux-2.6.17/arch/ia64/kernel/sys_ia64.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/kernel/sys_ia64.c
-+++ hardened-sources-2.6.17/arch/ia64/kernel/sys_ia64.c
+--- linux-2.6.17.orig/arch/ia64/kernel/sys_ia64.c
++++ linux-2.6.17/arch/ia64/kernel/sys_ia64.c
 @@ -38,6 +38,13 @@ arch_get_unmapped_area (struct file *fil
  	if (REGION_NUMBER(addr) == RGN_HPAGE)
  		addr = 0;
@@ -4978,10 +4978,10 @@ Index: hardened-sources-2.6.17/arch/ia64/kernel/sys_ia64.c
  				goto full_search;
  			}
  			return -ENOMEM;
-Index: hardened-sources-2.6.17/arch/ia64/mm/fault.c
+Index: linux-2.6.17/arch/ia64/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/mm/fault.c
-+++ hardened-sources-2.6.17/arch/ia64/mm/fault.c
+--- linux-2.6.17.orig/arch/ia64/mm/fault.c
++++ linux-2.6.17/arch/ia64/mm/fault.c
 @@ -10,6 +10,7 @@
  #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
@@ -5039,10 +5039,10 @@ Index: hardened-sources-2.6.17/arch/ia64/mm/fault.c
    survive:
  	/*
  	 * If for any reason at all we couldn't handle the fault, make
-Index: hardened-sources-2.6.17/arch/ia64/mm/init.c
+Index: linux-2.6.17/arch/ia64/mm/init.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ia64/mm/init.c
-+++ hardened-sources-2.6.17/arch/ia64/mm/init.c
+--- linux-2.6.17.orig/arch/ia64/mm/init.c
++++ linux-2.6.17/arch/ia64/mm/init.c
 @@ -20,8 +20,8 @@
  #include <linux/swap.h>
  #include <linux/proc_fs.h>
@@ -5053,10 +5053,10 @@ Index: hardened-sources-2.6.17/arch/ia64/mm/init.c
  #include <asm/dma.h>
  #include <asm/ia32.h>
  #include <asm/io.h>
-Index: hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfn32.c
+Index: linux-2.6.17/arch/mips/kernel/binfmt_elfn32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/mips/kernel/binfmt_elfn32.c
-+++ hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfn32.c
+--- linux-2.6.17.orig/arch/mips/kernel/binfmt_elfn32.c
++++ linux-2.6.17/arch/mips/kernel/binfmt_elfn32.c
 @@ -50,6 +50,17 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_N
  #undef ELF_ET_DYN_BASE
  #define ELF_ET_DYN_BASE         (TASK32_SIZE / 3 * 2)
@@ -5075,10 +5075,10 @@ Index: hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfn32.c
  #include <asm/processor.h>
  #include <linux/module.h>
  #include <linux/elfcore.h>
-Index: hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfo32.c
+Index: linux-2.6.17/arch/mips/kernel/binfmt_elfo32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/mips/kernel/binfmt_elfo32.c
-+++ hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfo32.c
+--- linux-2.6.17.orig/arch/mips/kernel/binfmt_elfo32.c
++++ linux-2.6.17/arch/mips/kernel/binfmt_elfo32.c
 @@ -52,6 +52,17 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_N
  #undef ELF_ET_DYN_BASE
  #define ELF_ET_DYN_BASE         (TASK32_SIZE / 3 * 2)
@@ -5097,10 +5097,10 @@ Index: hardened-sources-2.6.17/arch/mips/kernel/binfmt_elfo32.c
  #include <asm/processor.h>
  #include <linux/module.h>
  #include <linux/elfcore.h>
-Index: hardened-sources-2.6.17/arch/mips/kernel/syscall.c
+Index: linux-2.6.17/arch/mips/kernel/syscall.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/mips/kernel/syscall.c
-+++ hardened-sources-2.6.17/arch/mips/kernel/syscall.c
+--- linux-2.6.17.orig/arch/mips/kernel/syscall.c
++++ linux-2.6.17/arch/mips/kernel/syscall.c
 @@ -89,6 +89,11 @@ unsigned long arch_get_unmapped_area(str
  	do_color_align = 0;
  	if (filp || (flags & MAP_SHARED))
@@ -5122,10 +5122,10 @@ Index: hardened-sources-2.6.17/arch/mips/kernel/syscall.c
  	if (do_color_align)
  		addr = COLOUR_ALIGN(addr, pgoff);
  	else
-Index: hardened-sources-2.6.17/arch/mips/mm/fault.c
+Index: linux-2.6.17/arch/mips/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/mips/mm/fault.c
-+++ hardened-sources-2.6.17/arch/mips/mm/fault.c
+--- linux-2.6.17.orig/arch/mips/mm/fault.c
++++ linux-2.6.17/arch/mips/mm/fault.c
 @@ -27,6 +27,23 @@
  #include <asm/ptrace.h>
  #include <asm/highmem.h>		/* For VMALLOC_END */
@@ -5150,10 +5150,10 @@ Index: hardened-sources-2.6.17/arch/mips/mm/fault.c
  /*
   * This routine handles page faults.  It determines the address,
   * and the problem, and then passes it off to one of the appropriate
-Index: hardened-sources-2.6.17/arch/parisc/kernel/module.c
+Index: linux-2.6.17/arch/parisc/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/parisc/kernel/module.c
-+++ hardened-sources-2.6.17/arch/parisc/kernel/module.c
+--- linux-2.6.17.orig/arch/parisc/kernel/module.c
++++ linux-2.6.17/arch/parisc/kernel/module.c
 @@ -72,16 +72,38 @@
  
  /* three functions to determine where in the module core
@@ -5285,10 +5285,10 @@ Index: hardened-sources-2.6.17/arch/parisc/kernel/module.c
  
  	DEBUGP("register_unwind_table(), sect = %d at 0x%p - 0x%p (gp=0x%lx)\n",
  	       me->arch.unwind_section, table, end, gp);
-Index: hardened-sources-2.6.17/arch/parisc/kernel/ptrace.c
+Index: linux-2.6.17/arch/parisc/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/parisc/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/parisc/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/parisc/kernel/ptrace.c
++++ linux-2.6.17/arch/parisc/kernel/ptrace.c
 @@ -18,6 +18,7 @@
  #include <linux/security.h>
  #include <linux/compat.h>
@@ -5297,10 +5297,10 @@ Index: hardened-sources-2.6.17/arch/parisc/kernel/ptrace.c
  
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-Index: hardened-sources-2.6.17/arch/parisc/kernel/sys_parisc.c
+Index: linux-2.6.17/arch/parisc/kernel/sys_parisc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/parisc/kernel/sys_parisc.c
-+++ hardened-sources-2.6.17/arch/parisc/kernel/sys_parisc.c
+--- linux-2.6.17.orig/arch/parisc/kernel/sys_parisc.c
++++ linux-2.6.17/arch/parisc/kernel/sys_parisc.c
 @@ -105,7 +105,7 @@ unsigned long arch_get_unmapped_area(str
  	if (len > TASK_SIZE)
  		return -ENOMEM;
@@ -5310,10 +5310,10 @@ Index: hardened-sources-2.6.17/arch/parisc/kernel/sys_parisc.c
  
  	if (filp) {
  		addr = get_shared_area(filp->f_mapping, addr, len, pgoff);
-Index: hardened-sources-2.6.17/arch/parisc/kernel/traps.c
+Index: linux-2.6.17/arch/parisc/kernel/traps.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/parisc/kernel/traps.c
-+++ hardened-sources-2.6.17/arch/parisc/kernel/traps.c
+--- linux-2.6.17.orig/arch/parisc/kernel/traps.c
++++ linux-2.6.17/arch/parisc/kernel/traps.c
 @@ -711,9 +711,7 @@ void handle_interruption(int code, struc
  
  			down_read(&current->mm->mmap_sem);
@@ -5325,10 +5325,10 @@ Index: hardened-sources-2.6.17/arch/parisc/kernel/traps.c
  				fault_address = regs->iaoq[0];
  				fault_space = regs->iasq[0];
  
-Index: hardened-sources-2.6.17/arch/parisc/mm/fault.c
+Index: linux-2.6.17/arch/parisc/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/parisc/mm/fault.c
-+++ hardened-sources-2.6.17/arch/parisc/mm/fault.c
+--- linux-2.6.17.orig/arch/parisc/mm/fault.c
++++ linux-2.6.17/arch/parisc/mm/fault.c
 @@ -16,6 +16,8 @@
  #include <linux/sched.h>
  #include <linux/interrupt.h>
@@ -5499,10 +5499,10 @@ Index: hardened-sources-2.6.17/arch/parisc/mm/fault.c
  
  	/*
  	 * If for any reason at all we couldn't handle the fault, make
-Index: hardened-sources-2.6.17/arch/powerpc/kernel/module_32.c
+Index: linux-2.6.17/arch/powerpc/kernel/module_32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/powerpc/kernel/module_32.c
-+++ hardened-sources-2.6.17/arch/powerpc/kernel/module_32.c
+--- linux-2.6.17.orig/arch/powerpc/kernel/module_32.c
++++ linux-2.6.17/arch/powerpc/kernel/module_32.c
 @@ -123,7 +123,7 @@ int module_frob_arch_sections(Elf32_Ehdr
  			me->arch.core_plt_section = i;
  	}
@@ -5532,10 +5532,10 @@ Index: hardened-sources-2.6.17/arch/powerpc/kernel/module_32.c
  
  	/* Find this entry, or if that fails, the next avail. entry */
  	while (entry->jump[0]) {
-Index: hardened-sources-2.6.17/arch/powerpc/mm/fault.c
+Index: linux-2.6.17/arch/powerpc/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/powerpc/mm/fault.c
-+++ hardened-sources-2.6.17/arch/powerpc/mm/fault.c
+--- linux-2.6.17.orig/arch/powerpc/mm/fault.c
++++ linux-2.6.17/arch/powerpc/mm/fault.c
 @@ -29,6 +29,7 @@
  #include <linux/highmem.h>
  #include <linux/module.h>
@@ -5603,10 +5603,10 @@ Index: hardened-sources-2.6.17/arch/powerpc/mm/fault.c
  		_exception(SIGSEGV, regs, code, address);
  		return 0;
  	}
-Index: hardened-sources-2.6.17/arch/powerpc/mm/mmap.c
+Index: linux-2.6.17/arch/powerpc/mm/mmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/powerpc/mm/mmap.c
-+++ hardened-sources-2.6.17/arch/powerpc/mm/mmap.c
+--- linux-2.6.17.orig/arch/powerpc/mm/mmap.c
++++ linux-2.6.17/arch/powerpc/mm/mmap.c
 @@ -74,10 +74,22 @@ void arch_pick_mmap_layout(struct mm_str
  	 */
  	if (mmap_is_legacy()) {
@@ -5630,10 +5630,10 @@ Index: hardened-sources-2.6.17/arch/powerpc/mm/mmap.c
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
-Index: hardened-sources-2.6.17/arch/ppc/mm/fault.c
+Index: linux-2.6.17/arch/ppc/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/ppc/mm/fault.c
-+++ hardened-sources-2.6.17/arch/ppc/mm/fault.c
+--- linux-2.6.17.orig/arch/ppc/mm/fault.c
++++ linux-2.6.17/arch/ppc/mm/fault.c
 @@ -26,6 +26,11 @@
  #include <linux/interrupt.h>
  #include <linux/highmem.h>
@@ -6080,10 +6080,10 @@ Index: hardened-sources-2.6.17/arch/ppc/mm/fault.c
  		_exception(SIGSEGV, regs, code, address);
  		return 0;
  	}
-Index: hardened-sources-2.6.17/arch/s390/kernel/module.c
+Index: linux-2.6.17/arch/s390/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/s390/kernel/module.c
-+++ hardened-sources-2.6.17/arch/s390/kernel/module.c
+--- linux-2.6.17.orig/arch/s390/kernel/module.c
++++ linux-2.6.17/arch/s390/kernel/module.c
 @@ -164,11 +164,11 @@ module_frob_arch_sections(Elf_Ehdr *hdr,
  
  	/* Increase core size by size of got & plt and set start
@@ -6155,10 +6155,10 @@ Index: hardened-sources-2.6.17/arch/s390/kernel/module.c
  			rela->r_addend - loc;
  		if (r_type == R_390_GOTPC)
  			*(unsigned int *) loc = val;
-Index: hardened-sources-2.6.17/arch/sparc/Makefile
+Index: linux-2.6.17/arch/sparc/Makefile
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/Makefile
-+++ hardened-sources-2.6.17/arch/sparc/Makefile
+--- linux-2.6.17.orig/arch/sparc/Makefile
++++ linux-2.6.17/arch/sparc/Makefile
 @@ -34,7 +34,7 @@ libs-y += arch/sparc/prom/ arch/sparc/li
  # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
  INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
@@ -6168,10 +6168,10 @@ Index: hardened-sources-2.6.17/arch/sparc/Makefile
  CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
  DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
  NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
-Index: hardened-sources-2.6.17/arch/sparc/kernel/ptrace.c
+Index: linux-2.6.17/arch/sparc/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/sparc/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/sparc/kernel/ptrace.c
++++ linux-2.6.17/arch/sparc/kernel/ptrace.c
 @@ -19,6 +19,7 @@
  #include <linux/smp_lock.h>
  #include <linux/security.h>
@@ -6192,10 +6192,10 @@ Index: hardened-sources-2.6.17/arch/sparc/kernel/ptrace.c
  	if ((current->personality == PER_SUNOS && request == PTRACE_SUNATTACH)
  	    || (current->personality != PER_SUNOS && request == PTRACE_ATTACH)) {
  		if (ptrace_attach(child)) {
-Index: hardened-sources-2.6.17/arch/sparc/kernel/sys_sparc.c
+Index: linux-2.6.17/arch/sparc/kernel/sys_sparc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/kernel/sys_sparc.c
-+++ hardened-sources-2.6.17/arch/sparc/kernel/sys_sparc.c
+--- linux-2.6.17.orig/arch/sparc/kernel/sys_sparc.c
++++ linux-2.6.17/arch/sparc/kernel/sys_sparc.c
 @@ -56,7 +56,7 @@ unsigned long arch_get_unmapped_area(str
  	if (ARCH_SUN4C_SUN4 && len > 0x20000000)
  		return -ENOMEM;
@@ -6205,10 +6205,10 @@ Index: hardened-sources-2.6.17/arch/sparc/kernel/sys_sparc.c
  
  	if (flags & MAP_SHARED)
  		addr = COLOUR_ALIGN(addr);
-Index: hardened-sources-2.6.17/arch/sparc/mm/fault.c
+Index: linux-2.6.17/arch/sparc/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/mm/fault.c
-+++ hardened-sources-2.6.17/arch/sparc/mm/fault.c
+--- linux-2.6.17.orig/arch/sparc/mm/fault.c
++++ linux-2.6.17/arch/sparc/mm/fault.c
 @@ -21,6 +21,10 @@
  #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
@@ -6498,10 +6498,10 @@ Index: hardened-sources-2.6.17/arch/sparc/mm/fault.c
  		/* Allow reads even for write-only mappings */
  		if(!(vma->vm_flags & (VM_READ | VM_EXEC)))
  			goto bad_area;
-Index: hardened-sources-2.6.17/arch/sparc/mm/init.c
+Index: linux-2.6.17/arch/sparc/mm/init.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/mm/init.c
-+++ hardened-sources-2.6.17/arch/sparc/mm/init.c
+--- linux-2.6.17.orig/arch/sparc/mm/init.c
++++ linux-2.6.17/arch/sparc/mm/init.c
 @@ -333,17 +333,17 @@ void __init paging_init(void)
  
  	/* Initialize the protection map with non-constant, MMU dependent values. */
@@ -6526,10 +6526,10 @@ Index: hardened-sources-2.6.17/arch/sparc/mm/init.c
  	protection_map[12] = PAGE_READONLY;
  	protection_map[13] = PAGE_READONLY;
  	protection_map[14] = PAGE_SHARED;
-Index: hardened-sources-2.6.17/arch/sparc/mm/srmmu.c
+Index: linux-2.6.17/arch/sparc/mm/srmmu.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc/mm/srmmu.c
-+++ hardened-sources-2.6.17/arch/sparc/mm/srmmu.c
+--- linux-2.6.17.orig/arch/sparc/mm/srmmu.c
++++ linux-2.6.17/arch/sparc/mm/srmmu.c
 @@ -2161,6 +2161,13 @@ void __init ld_mmu_srmmu(void)
  	BTFIXUPSET_INT(page_shared, pgprot_val(SRMMU_PAGE_SHARED));
  	BTFIXUPSET_INT(page_copy, pgprot_val(SRMMU_PAGE_COPY));
@@ -6544,10 +6544,10 @@ Index: hardened-sources-2.6.17/arch/sparc/mm/srmmu.c
  	BTFIXUPSET_INT(page_kernel, pgprot_val(SRMMU_PAGE_KERNEL));
  	page_kernel = pgprot_val(SRMMU_PAGE_KERNEL);
  
-Index: hardened-sources-2.6.17/arch/sparc64/kernel/ptrace.c
+Index: linux-2.6.17/arch/sparc64/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc64/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/sparc64/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/sparc64/kernel/ptrace.c
++++ linux-2.6.17/arch/sparc64/kernel/ptrace.c
 @@ -22,6 +22,7 @@
  #include <linux/seccomp.h>
  #include <linux/audit.h>
@@ -6568,10 +6568,10 @@ Index: hardened-sources-2.6.17/arch/sparc64/kernel/ptrace.c
  	if ((current->personality == PER_SUNOS && request == PTRACE_SUNATTACH)
  	    || (current->personality != PER_SUNOS && request == PTRACE_ATTACH)) {
  		if (ptrace_attach(child)) {
-Index: hardened-sources-2.6.17/arch/sparc64/kernel/sys_sparc.c
+Index: linux-2.6.17/arch/sparc64/kernel/sys_sparc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc64/kernel/sys_sparc.c
-+++ hardened-sources-2.6.17/arch/sparc64/kernel/sys_sparc.c
+--- linux-2.6.17.orig/arch/sparc64/kernel/sys_sparc.c
++++ linux-2.6.17/arch/sparc64/kernel/sys_sparc.c
 @@ -140,6 +140,10 @@ unsigned long arch_get_unmapped_area(str
  	if (filp || (flags & MAP_SHARED))
  		do_color_align = 1;
@@ -6606,10 +6606,10 @@ Index: hardened-sources-2.6.17/arch/sparc64/kernel/sys_sparc.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
-Index: hardened-sources-2.6.17/arch/sparc64/mm/fault.c
+Index: linux-2.6.17/arch/sparc64/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/sparc64/mm/fault.c
-+++ hardened-sources-2.6.17/arch/sparc64/mm/fault.c
+--- linux-2.6.17.orig/arch/sparc64/mm/fault.c
++++ linux-2.6.17/arch/sparc64/mm/fault.c
 @@ -19,6 +19,10 @@
  #include <linux/init.h>
  #include <linux/interrupt.h>
@@ -7033,10 +7033,10 @@ Index: hardened-sources-2.6.17/arch/sparc64/mm/fault.c
  	/* Pure DTLB misses do not tell us whether the fault causing
  	 * load/store/atomic was a write or not, it only says that there
  	 * was no match.  So in such a case we (carefully) read the
-Index: hardened-sources-2.6.17/arch/v850/kernel/module.c
+Index: linux-2.6.17/arch/v850/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/v850/kernel/module.c
-+++ hardened-sources-2.6.17/arch/v850/kernel/module.c
+--- linux-2.6.17.orig/arch/v850/kernel/module.c
++++ linux-2.6.17/arch/v850/kernel/module.c
 @@ -150,8 +150,8 @@ static uint32_t do_plt_call (void *locat
  	tramp[1] = ((val >> 16) & 0xffff) + 0x610000; /* ...; jmp r1 */
  
@@ -7048,10 +7048,10 @@ Index: hardened-sources-2.6.17/arch/v850/kernel/module.c
  		entry = (void *)sechdrs[mod->arch.core_plt_section].sh_addr;
  	else
  		entry = (void *)sechdrs[mod->arch.init_plt_section].sh_addr;
-Index: hardened-sources-2.6.17/arch/x86_64/boot/compressed/head.S
+Index: linux-2.6.17/arch/x86_64/boot/compressed/head.S
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/boot/compressed/head.S
-+++ hardened-sources-2.6.17/arch/x86_64/boot/compressed/head.S
+--- linux-2.6.17.orig/arch/x86_64/boot/compressed/head.S
++++ linux-2.6.17/arch/x86_64/boot/compressed/head.S
 @@ -41,11 +41,13 @@ startup_32:
  	movl %eax,%gs
  
@@ -7066,10 +7066,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/boot/compressed/head.S
  
  /*
   * Initialize eflags.  Some BIOS's leave bits like NT set.  This would
-Index: hardened-sources-2.6.17/arch/x86_64/ia32/ia32_binfmt.c
+Index: linux-2.6.17/arch/x86_64/ia32/ia32_binfmt.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/ia32/ia32_binfmt.c
-+++ hardened-sources-2.6.17/arch/x86_64/ia32/ia32_binfmt.c
+--- linux-2.6.17.orig/arch/x86_64/ia32/ia32_binfmt.c
++++ linux-2.6.17/arch/x86_64/ia32/ia32_binfmt.c
 @@ -186,6 +186,17 @@ struct elf_prpsinfo
  //#include <asm/ia32.h>
  #include <linux/elf.h>
@@ -7088,10 +7088,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/ia32/ia32_binfmt.c
  typedef struct user_i387_ia32_struct elf_fpregset_t;
  typedef struct user32_fxsr_struct elf_fpxregset_t;
  
-Index: hardened-sources-2.6.17/arch/x86_64/ia32/mmap32.c
+Index: linux-2.6.17/arch/x86_64/ia32/mmap32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/ia32/mmap32.c
-+++ hardened-sources-2.6.17/arch/x86_64/ia32/mmap32.c
+--- linux-2.6.17.orig/arch/x86_64/ia32/mmap32.c
++++ linux-2.6.17/arch/x86_64/ia32/mmap32.c
 @@ -68,10 +68,22 @@ void ia32_pick_mmap_layout(struct mm_str
  			(current->personality & ADDR_COMPAT_LAYOUT) ||
  			current->signal->rlim[RLIMIT_STACK].rlim_cur == RLIM_INFINITY) {
@@ -7115,10 +7115,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/ia32/mmap32.c
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
-Index: hardened-sources-2.6.17/arch/x86_64/kernel/process.c
+Index: linux-2.6.17/arch/x86_64/kernel/process.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/kernel/process.c
-+++ hardened-sources-2.6.17/arch/x86_64/kernel/process.c
+--- linux-2.6.17.orig/arch/x86_64/kernel/process.c
++++ linux-2.6.17/arch/x86_64/kernel/process.c
 @@ -830,9 +830,3 @@ int dump_task_regs(struct task_struct *t
  	return 1;
  }
@@ -7129,10 +7129,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/kernel/process.c
 -		sp -= get_random_int() % 8192;
 -	return sp & ~0xf;
 -}
-Index: hardened-sources-2.6.17/arch/x86_64/kernel/ptrace.c
+Index: linux-2.6.17/arch/x86_64/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/kernel/ptrace.c
-+++ hardened-sources-2.6.17/arch/x86_64/kernel/ptrace.c
+--- linux-2.6.17.orig/arch/x86_64/kernel/ptrace.c
++++ linux-2.6.17/arch/x86_64/kernel/ptrace.c
 @@ -19,6 +19,7 @@
  #include <linux/audit.h>
  #include <linux/seccomp.h>
@@ -7141,10 +7141,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/kernel/ptrace.c
  
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-Index: hardened-sources-2.6.17/arch/x86_64/kernel/setup64.c
+Index: linux-2.6.17/arch/x86_64/kernel/setup64.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/kernel/setup64.c
-+++ hardened-sources-2.6.17/arch/x86_64/kernel/setup64.c
+--- linux-2.6.17.orig/arch/x86_64/kernel/setup64.c
++++ linux-2.6.17/arch/x86_64/kernel/setup64.c
 @@ -38,7 +38,6 @@ struct desc_ptr idt_descr = { 256 * 16 -
  char boot_cpu_stack[IRQSTACKSIZE] __attribute__((section(".bss.page_aligned")));
  
@@ -7180,10 +7180,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/kernel/setup64.c
                  __supported_pte_mask &= ~_PAGE_NX; 
          }       
  }
-Index: hardened-sources-2.6.17/arch/x86_64/kernel/sys_x86_64.c
+Index: linux-2.6.17/arch/x86_64/kernel/sys_x86_64.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/kernel/sys_x86_64.c
-+++ hardened-sources-2.6.17/arch/x86_64/kernel/sys_x86_64.c
+--- linux-2.6.17.orig/arch/x86_64/kernel/sys_x86_64.c
++++ linux-2.6.17/arch/x86_64/kernel/sys_x86_64.c
 @@ -65,8 +65,8 @@ out:
  	return error;
  }
@@ -7221,10 +7221,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/kernel/sys_x86_64.c
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
  		vma = find_vma(mm, addr);
-Index: hardened-sources-2.6.17/arch/x86_64/mm/fault.c
+Index: linux-2.6.17/arch/x86_64/mm/fault.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/mm/fault.c
-+++ hardened-sources-2.6.17/arch/x86_64/mm/fault.c
+--- linux-2.6.17.orig/arch/x86_64/mm/fault.c
++++ linux-2.6.17/arch/x86_64/mm/fault.c
 @@ -24,6 +24,7 @@
  #include <linux/compiler.h>
  #include <linux/module.h>
@@ -7292,10 +7292,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/mm/fault.c
  		tsk->thread.cr2 = address;
  		/* Kernel addresses are always protection faults */
  		tsk->thread.error_code = error_code | (address >= TASK_SIZE);
-Index: hardened-sources-2.6.17/arch/x86_64/mm/mmap.c
+Index: linux-2.6.17/arch/x86_64/mm/mmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/arch/x86_64/mm/mmap.c
-+++ hardened-sources-2.6.17/arch/x86_64/mm/mmap.c
+--- linux-2.6.17.orig/arch/x86_64/mm/mmap.c
++++ linux-2.6.17/arch/x86_64/mm/mmap.c
 @@ -24,6 +24,12 @@ void arch_pick_mmap_layout(struct mm_str
  		unsigned rnd = get_random_int() & 0xfffffff;
  		mm->mmap_base += ((unsigned long)rnd) << PAGE_SHIFT;
@@ -7309,10 +7309,10 @@ Index: hardened-sources-2.6.17/arch/x86_64/mm/mmap.c
  	mm->get_unmapped_area = arch_get_unmapped_area;
  	mm->unmap_area = arch_unmap_area;
  }
-Index: hardened-sources-2.6.17/drivers/char/agp/frontend.c
+Index: linux-2.6.17/drivers/char/agp/frontend.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/char/agp/frontend.c
-+++ hardened-sources-2.6.17/drivers/char/agp/frontend.c
+--- linux-2.6.17.orig/drivers/char/agp/frontend.c
++++ linux-2.6.17/drivers/char/agp/frontend.c
 @@ -841,7 +841,7 @@ static int agpioc_reserve_wrap(struct ag
  	if (copy_from_user(&reserve, arg, sizeof(struct agp_region)))
  		return -EFAULT;
@@ -7322,10 +7322,10 @@ Index: hardened-sources-2.6.17/drivers/char/agp/frontend.c
  		return -EFAULT;
  
  	client = agp_find_client_by_pid(reserve.pid);
-Index: hardened-sources-2.6.17/drivers/char/keyboard.c
+Index: linux-2.6.17/drivers/char/keyboard.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/char/keyboard.c
-+++ hardened-sources-2.6.17/drivers/char/keyboard.c
+--- linux-2.6.17.orig/drivers/char/keyboard.c
++++ linux-2.6.17/drivers/char/keyboard.c
 @@ -618,6 +618,16 @@ static void k_spec(struct vc_data *vc, u
  	     kbd->kbdmode == VC_MEDIUMRAW) &&
  	     value != KVAL(K_SAK))
@@ -7343,10 +7343,10 @@ Index: hardened-sources-2.6.17/drivers/char/keyboard.c
  	fn_handler[value](vc, regs);
  }
  
-Index: hardened-sources-2.6.17/drivers/char/mem.c
+Index: linux-2.6.17/drivers/char/mem.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/char/mem.c
-+++ hardened-sources-2.6.17/drivers/char/mem.c
+--- linux-2.6.17.orig/drivers/char/mem.c
++++ linux-2.6.17/drivers/char/mem.c
 @@ -28,6 +28,7 @@
  #include <linux/backing-dev.h>
  #include <linux/bootmem.h>
@@ -7474,10 +7474,10 @@ Index: hardened-sources-2.6.17/drivers/char/mem.c
  };
  
  static struct class *mem_class;
-Index: hardened-sources-2.6.17/drivers/char/random.c
+Index: linux-2.6.17/drivers/char/random.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/char/random.c
-+++ hardened-sources-2.6.17/drivers/char/random.c
+--- linux-2.6.17.orig/drivers/char/random.c
++++ linux-2.6.17/drivers/char/random.c
 @@ -249,8 +249,13 @@
  /*
   * Configuration information
@@ -7536,10 +7536,10 @@ Index: hardened-sources-2.6.17/drivers/char/random.c
 +	return *(unsigned long *)secret;
 +}
 +#endif
-Index: hardened-sources-2.6.17/drivers/char/vt_ioctl.c
+Index: linux-2.6.17/drivers/char/vt_ioctl.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/char/vt_ioctl.c
-+++ hardened-sources-2.6.17/drivers/char/vt_ioctl.c
+--- linux-2.6.17.orig/drivers/char/vt_ioctl.c
++++ linux-2.6.17/drivers/char/vt_ioctl.c
 @@ -96,6 +96,12 @@ do_kdsk_ioctl(int cmd, struct kbentry __
  	case KDSKBENT:
  		if (!perm)
@@ -7567,10 +7567,10 @@ Index: hardened-sources-2.6.17/drivers/char/vt_ioctl.c
  		q = func_table[i];
  		first_free = funcbufptr + (funcbufsize - funcbufleft);
  		for (j = i+1; j < MAX_NR_FUNC && !func_table[j]; j++) 
-Index: hardened-sources-2.6.17/drivers/ieee1394/hosts.c
+Index: linux-2.6.17/drivers/ieee1394/hosts.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/ieee1394/hosts.c
-+++ hardened-sources-2.6.17/drivers/ieee1394/hosts.c
+--- linux-2.6.17.orig/drivers/ieee1394/hosts.c
++++ linux-2.6.17/drivers/ieee1394/hosts.c
 @@ -75,6 +75,7 @@ static int dummy_isoctl(struct hpsb_iso 
  }
  
@@ -7579,10 +7579,10 @@ Index: hardened-sources-2.6.17/drivers/ieee1394/hosts.c
  	.transmit_packet = dummy_transmit_packet,
  	.devctl =	   dummy_devctl,
  	.isoctl =	   dummy_isoctl
-Index: hardened-sources-2.6.17/drivers/ieee1394/ohci1394.c
+Index: linux-2.6.17/drivers/ieee1394/ohci1394.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/ieee1394/ohci1394.c
-+++ hardened-sources-2.6.17/drivers/ieee1394/ohci1394.c
+--- linux-2.6.17.orig/drivers/ieee1394/ohci1394.c
++++ linux-2.6.17/drivers/ieee1394/ohci1394.c
 @@ -162,9 +162,9 @@ printk(level "%s: " fmt "\n" , OHCI1394_
  printk(level "%s: fw-host%d: " fmt "\n" , OHCI1394_DRIVER_NAME, ohci->host->id , ## args)
  
@@ -7595,10 +7595,10 @@ Index: hardened-sources-2.6.17/drivers/ieee1394/ohci1394.c
  
  static void dma_trm_tasklet(unsigned long data);
  static void dma_trm_reset(struct dma_trm_ctx *d);
-Index: hardened-sources-2.6.17/drivers/mtd/devices/doc2001.c
+Index: linux-2.6.17/drivers/mtd/devices/doc2001.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/mtd/devices/doc2001.c
-+++ hardened-sources-2.6.17/drivers/mtd/devices/doc2001.c
+--- linux-2.6.17.orig/drivers/mtd/devices/doc2001.c
++++ linux-2.6.17/drivers/mtd/devices/doc2001.c
 @@ -423,6 +423,8 @@ static int doc_read_ecc (struct mtd_info
  	/* Don't allow read past end of device */
  	if (from >= this->totlen)
@@ -7608,10 +7608,10 @@ Index: hardened-sources-2.6.17/drivers/mtd/devices/doc2001.c
  
  	/* Don't allow a single read to cross a 512-byte block boundary */
  	if (from + len > ((from | 0x1ff) + 1))
-Index: hardened-sources-2.6.17/drivers/net/pcnet32.c
+Index: linux-2.6.17/drivers/net/pcnet32.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/net/pcnet32.c
-+++ hardened-sources-2.6.17/drivers/net/pcnet32.c
+--- linux-2.6.17.orig/drivers/net/pcnet32.c
++++ linux-2.6.17/drivers/net/pcnet32.c
 @@ -81,7 +81,7 @@ static int cards_found;
  /*
   * VLB I/O addresses
@@ -7621,10 +7621,10 @@ Index: hardened-sources-2.6.17/drivers/net/pcnet32.c
      { 0x300, 0x320, 0x340, 0x360, 0 };
  
  static int pcnet32_debug = 0;
-Index: hardened-sources-2.6.17/drivers/pci/proc.c
+Index: linux-2.6.17/drivers/pci/proc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/pci/proc.c
-+++ hardened-sources-2.6.17/drivers/pci/proc.c
+--- linux-2.6.17.orig/drivers/pci/proc.c
++++ linux-2.6.17/drivers/pci/proc.c
 @@ -473,7 +473,15 @@ static int __init pci_proc_init(void)
  {
  	struct proc_dir_entry *entry;
@@ -7641,10 +7641,10 @@ Index: hardened-sources-2.6.17/drivers/pci/proc.c
  	entry = create_proc_entry("devices", 0, proc_bus_pci_dir);
  	if (entry)
  		entry->proc_fops = &proc_bus_pci_dev_operations;
-Index: hardened-sources-2.6.17/drivers/pnp/pnpbios/bioscalls.c
+Index: linux-2.6.17/drivers/pnp/pnpbios/bioscalls.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/pnp/pnpbios/bioscalls.c
-+++ hardened-sources-2.6.17/drivers/pnp/pnpbios/bioscalls.c
+--- linux-2.6.17.orig/drivers/pnp/pnpbios/bioscalls.c
++++ linux-2.6.17/drivers/pnp/pnpbios/bioscalls.c
 @@ -65,7 +65,7 @@ set_base(gdt[(selname) >> 3], (u32)(addr
  set_limit(gdt[(selname) >> 3], size); \
  } while(0)
@@ -7692,10 +7692,10 @@ Index: hardened-sources-2.6.17/drivers/pnp/pnpbios/bioscalls.c
  	put_cpu();
  
  	/* If we get here and this is set then the PnP BIOS faulted on us. */
-Index: hardened-sources-2.6.17/drivers/video/i810/i810_main.c
+Index: linux-2.6.17/drivers/video/i810/i810_main.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/video/i810/i810_main.c
-+++ hardened-sources-2.6.17/drivers/video/i810/i810_main.c
+--- linux-2.6.17.orig/drivers/video/i810/i810_main.c
++++ linux-2.6.17/drivers/video/i810/i810_main.c
 @@ -1508,7 +1508,7 @@ static int i810fb_cursor(struct fb_info 
  		int size = ((cursor->image.width + 7) >> 3) *
  			cursor->image.height;
@@ -7705,10 +7705,10 @@ Index: hardened-sources-2.6.17/drivers/video/i810/i810_main.c
  
  		if (data == NULL)
  			return -ENOMEM;
-Index: hardened-sources-2.6.17/drivers/video/vesafb.c
+Index: linux-2.6.17/drivers/video/vesafb.c
 ===================================================================
---- hardened-sources-2.6.17.orig/drivers/video/vesafb.c
-+++ hardened-sources-2.6.17/drivers/video/vesafb.c
+--- linux-2.6.17.orig/drivers/video/vesafb.c
++++ linux-2.6.17/drivers/video/vesafb.c
 @@ -259,7 +259,7 @@ static int __init vesafb_probe(struct pl
  		size_remap = size_total;
  	vesafb_fix.smem_len = size_remap;
@@ -7718,10 +7718,10 @@ Index: hardened-sources-2.6.17/drivers/video/vesafb.c
  	screen_info.vesapm_seg = 0;
  #endif
  
-Index: hardened-sources-2.6.17/fs/Kconfig
+Index: linux-2.6.17/fs/Kconfig
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/Kconfig
-+++ hardened-sources-2.6.17/fs/Kconfig
+--- linux-2.6.17.orig/fs/Kconfig
++++ linux-2.6.17/fs/Kconfig
 @@ -794,7 +794,7 @@ config PROC_FS
  
  config PROC_KCORE
@@ -7731,10 +7731,10 @@ Index: hardened-sources-2.6.17/fs/Kconfig
  
  config PROC_VMCORE
          bool "/proc/vmcore support (EXPERIMENTAL)"
-Index: hardened-sources-2.6.17/fs/binfmt_aout.c
+Index: linux-2.6.17/fs/binfmt_aout.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/binfmt_aout.c
-+++ hardened-sources-2.6.17/fs/binfmt_aout.c
+--- linux-2.6.17.orig/fs/binfmt_aout.c
++++ linux-2.6.17/fs/binfmt_aout.c
 @@ -24,6 +24,7 @@
  #include <linux/binfmts.h>
  #include <linux/personality.h>
@@ -7816,10 +7816,10 @@ Index: hardened-sources-2.6.17/fs/binfmt_aout.c
  				MAP_FIXED | MAP_PRIVATE | MAP_DENYWRITE | MAP_EXECUTABLE,
  				fd_offset + ex.a_text);
  		up_write(&current->mm->mmap_sem);
-Index: hardened-sources-2.6.17/fs/binfmt_elf.c
+Index: linux-2.6.17/fs/binfmt_elf.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/binfmt_elf.c
-+++ hardened-sources-2.6.17/fs/binfmt_elf.c
+--- linux-2.6.17.orig/fs/binfmt_elf.c
++++ linux-2.6.17/fs/binfmt_elf.c
 @@ -38,11 +38,16 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -8402,10 +8402,10 @@ Index: hardened-sources-2.6.17/fs/binfmt_elf.c
  					if ((size += PAGE_SIZE) > limit ||
  					    !dump_write(file, kaddr,
  					    PAGE_SIZE)) {
-Index: hardened-sources-2.6.17/fs/binfmt_flat.c
+Index: linux-2.6.17/fs/binfmt_flat.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/binfmt_flat.c
-+++ hardened-sources-2.6.17/fs/binfmt_flat.c
+--- linux-2.6.17.orig/fs/binfmt_flat.c
++++ linux-2.6.17/fs/binfmt_flat.c
 @@ -552,7 +552,9 @@ static int load_flat_file(struct linux_b
  				realdatastart = (unsigned long) -ENOMEM;
  			printk("Unable to allocate RAM for process data, errno %d\n",
@@ -8438,10 +8438,10 @@ Index: hardened-sources-2.6.17/fs/binfmt_flat.c
  			ret = result;
  			goto err;
  		}
-Index: hardened-sources-2.6.17/fs/binfmt_misc.c
+Index: linux-2.6.17/fs/binfmt_misc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/binfmt_misc.c
-+++ hardened-sources-2.6.17/fs/binfmt_misc.c
+--- linux-2.6.17.orig/fs/binfmt_misc.c
++++ linux-2.6.17/fs/binfmt_misc.c
 @@ -112,9 +112,11 @@ static int load_misc_binary(struct linux
  	struct files_struct *files = NULL;
  
@@ -8455,10 +8455,10 @@ Index: hardened-sources-2.6.17/fs/binfmt_misc.c
  	/* to keep locking time low, we copy the interpreter string */
  	read_lock(&entries_lock);
  	fmt = check_file(bprm);
-Index: hardened-sources-2.6.17/fs/buffer.c
+Index: linux-2.6.17/fs/buffer.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/buffer.c
-+++ hardened-sources-2.6.17/fs/buffer.c
+--- linux-2.6.17.orig/fs/buffer.c
++++ linux-2.6.17/fs/buffer.c
 @@ -42,6 +42,7 @@
  #include <linux/bitops.h>
  #include <linux/mpage.h>
@@ -8467,7 +8467,7 @@ Index: hardened-sources-2.6.17/fs/buffer.c
  
  static int fsync_buffers_list(spinlock_t *lock, struct list_head *list);
  static void invalidate_bh_lrus(void);
-@@ -2162,6 +2163,7 @@ static int __generic_cont_expand(struct 
+@@ -2167,6 +2168,7 @@ static int __generic_cont_expand(struct 
  
  	err = -EFBIG;
          limit = current->signal->rlim[RLIMIT_FSIZE].rlim_cur;
@@ -8475,10 +8475,10 @@ Index: hardened-sources-2.6.17/fs/buffer.c
  	if (limit != RLIM_INFINITY && size > (loff_t)limit) {
  		send_sig(SIGXFSZ, current, 0);
  		goto out;
-Index: hardened-sources-2.6.17/fs/compat.c
+Index: linux-2.6.17/fs/compat.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/compat.c
-+++ hardened-sources-2.6.17/fs/compat.c
+--- linux-2.6.17.orig/fs/compat.c
++++ linux-2.6.17/fs/compat.c
 @@ -46,6 +46,7 @@
  #include <linux/rwsem.h>
  #include <linux/acct.h>
@@ -8569,10 +8569,10 @@ Index: hardened-sources-2.6.17/fs/compat.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-Index: hardened-sources-2.6.17/fs/dcache.c
+Index: linux-2.6.17/fs/dcache.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/dcache.c
-+++ hardened-sources-2.6.17/fs/dcache.c
+--- linux-2.6.17.orig/fs/dcache.c
++++ linux-2.6.17/fs/dcache.c
 @@ -1389,7 +1389,7 @@ already_unhashed:
   *
   * "buflen" should be positive. Caller holds the dcache_lock.
@@ -8582,10 +8582,10 @@ Index: hardened-sources-2.6.17/fs/dcache.c
  			struct dentry *root, struct vfsmount *rootmnt,
  			char *buffer, int buflen)
  {
-Index: hardened-sources-2.6.17/fs/exec.c
+Index: linux-2.6.17/fs/exec.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/exec.c
-+++ hardened-sources-2.6.17/fs/exec.c
+--- linux-2.6.17.orig/fs/exec.c
++++ linux-2.6.17/fs/exec.c
 @@ -49,6 +49,8 @@
  #include <linux/rmap.h>
  #include <linux/acct.h>
@@ -8962,10 +8962,10 @@ Index: hardened-sources-2.6.17/fs/exec.c
  	if (current->signal->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
  		goto fail_unlock;
  
-Index: hardened-sources-2.6.17/fs/fcntl.c
+Index: linux-2.6.17/fs/fcntl.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/fcntl.c
-+++ hardened-sources-2.6.17/fs/fcntl.c
+--- linux-2.6.17.orig/fs/fcntl.c
++++ linux-2.6.17/fs/fcntl.c
 @@ -18,6 +18,7 @@
  #include <linux/ptrace.h>
  #include <linux/signal.h>
@@ -9009,10 +9009,10 @@ Index: hardened-sources-2.6.17/fs/fcntl.c
  }
  
  static void send_sigio_to_task(struct task_struct *p,
-Index: hardened-sources-2.6.17/fs/namei.c
+Index: linux-2.6.17/fs/namei.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/namei.c
-+++ hardened-sources-2.6.17/fs/namei.c
+--- linux-2.6.17.orig/fs/namei.c
++++ linux-2.6.17/fs/namei.c
 @@ -32,6 +32,7 @@
  #include <linux/file.h>
  #include <linux/fcntl.h>
@@ -9309,10 +9309,10 @@ Index: hardened-sources-2.6.17/fs/namei.c
  exit5:
  	dput(new_dentry);
  exit4:
-Index: hardened-sources-2.6.17/fs/namespace.c
+Index: linux-2.6.17/fs/namespace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/namespace.c
-+++ hardened-sources-2.6.17/fs/namespace.c
+--- linux-2.6.17.orig/fs/namespace.c
++++ linux-2.6.17/fs/namespace.c
 @@ -23,6 +23,8 @@
  #include <linux/namei.h>
  #include <linux/security.h>
@@ -9373,10 +9373,10 @@ Index: hardened-sources-2.6.17/fs/namespace.c
  	lock_kernel();
  
  	error = __user_walk(new_root, LOOKUP_FOLLOW | LOOKUP_DIRECTORY,
-Index: hardened-sources-2.6.17/fs/open.c
+Index: linux-2.6.17/fs/open.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/open.c
-+++ hardened-sources-2.6.17/fs/open.c
+--- linux-2.6.17.orig/fs/open.c
++++ linux-2.6.17/fs/open.c
 @@ -28,6 +28,7 @@
  #include <linux/syscalls.h>
  #include <linux/rcupdate.h>
@@ -9583,10 +9583,10 @@ Index: hardened-sources-2.6.17/fs/open.c
  	if (fd >= current->signal->rlim[RLIMIT_NOFILE].rlim_cur)
  		goto out;
  
-Index: hardened-sources-2.6.17/fs/pipe.c
+Index: linux-2.6.17/fs/pipe.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/pipe.c
-+++ hardened-sources-2.6.17/fs/pipe.c
+--- linux-2.6.17.orig/fs/pipe.c
++++ linux-2.6.17/fs/pipe.c
 @@ -842,7 +842,7 @@ void free_pipe_info(struct inode *inode)
  	inode->i_pipe = NULL;
  }
@@ -9596,10 +9596,10 @@ Index: hardened-sources-2.6.17/fs/pipe.c
  static int pipefs_delete_dentry(struct dentry *dentry)
  {
  	return 1;
-Index: hardened-sources-2.6.17/fs/proc/array.c
+Index: linux-2.6.17/fs/proc/array.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/array.c
-+++ hardened-sources-2.6.17/fs/proc/array.c
+--- linux-2.6.17.orig/fs/proc/array.c
++++ linux-2.6.17/fs/proc/array.c
 @@ -293,6 +293,21 @@ static inline char *task_cap(struct task
  			    cap_t(p->cap_effective));
  }
@@ -9694,10 +9694,10 @@ Index: hardened-sources-2.6.17/fs/proc/array.c
 +}
 +#endif
 +
-Index: hardened-sources-2.6.17/fs/proc/base.c
+Index: linux-2.6.17/fs/proc/base.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/base.c
-+++ hardened-sources-2.6.17/fs/proc/base.c
+--- linux-2.6.17.orig/fs/proc/base.c
++++ linux-2.6.17/fs/proc/base.c
 @@ -72,6 +72,7 @@
  #include <linux/cpuset.h>
  #include <linux/audit.h>
@@ -9762,8 +9762,8 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
 +	return ret;
  }
  
- static int proc_task_permission(struct inode *inode, int mask, struct nameidata *nd)
-@@ -1372,6 +1395,9 @@ static struct inode *proc_pid_make_inode
+ static int proc_setattr(struct dentry *dentry, struct iattr *attr)
+@@ -1396,6 +1419,9 @@ static struct inode *proc_pid_make_inode
  		inode->i_uid = task->euid;
  		inode->i_gid = task->egid;
  	}
@@ -9773,7 +9773,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  	security_task_to_inode(task, inode);
  
  out:
-@@ -1400,7 +1426,9 @@ static int pid_revalidate(struct dentry 
+@@ -1424,7 +1450,9 @@ static int pid_revalidate(struct dentry 
  	if (pid_alive(task)) {
  		if (proc_type(inode) == PROC_TGID_INO || proc_type(inode) == PROC_TID_INO || task_dumpable(task)) {
  			inode->i_uid = task->euid;
@@ -9783,7 +9783,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1730,6 +1758,12 @@ static struct dentry *proc_pident_lookup
+@@ -1756,6 +1784,12 @@ static struct dentry *proc_pident_lookup
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_pid_status;
  			break;
@@ -9796,7 +9796,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  		case PROC_TID_STAT:
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_tid_stat;
-@@ -2038,6 +2072,22 @@ struct dentry *proc_pid_lookup(struct in
+@@ -2069,6 +2103,22 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -9819,7 +9819,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  	inode = proc_pid_make_inode(dir->i_sb, task, PROC_TGID_INO);
  
  
-@@ -2045,7 +2095,15 @@ struct dentry *proc_pid_lookup(struct in
+@@ -2076,7 +2126,15 @@ struct dentry *proc_pid_lookup(struct in
  		put_task_struct(task);
  		goto out;
  	}
@@ -9835,7 +9835,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2137,6 +2195,9 @@ out:
+@@ -2168,6 +2226,9 @@ out:
  static int get_tgid_list(int index, unsigned long version, unsigned int *tgids)
  {
  	struct task_struct *p;
@@ -9845,7 +9845,7 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  	int nr_tgids = 0;
  
  	index--;
-@@ -2157,6 +2218,18 @@ static int get_tgid_list(int index, unsi
+@@ -2188,6 +2249,18 @@ static int get_tgid_list(int index, unsi
  		int tgid = p->pid;
  		if (!pid_alive(p))
  			continue;
@@ -9864,10 +9864,10 @@ Index: hardened-sources-2.6.17/fs/proc/base.c
  		if (--index >= 0)
  			continue;
  		tgids[nr_tgids] = tgid;
-Index: hardened-sources-2.6.17/fs/proc/inode.c
+Index: linux-2.6.17/fs/proc/inode.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/inode.c
-+++ hardened-sources-2.6.17/fs/proc/inode.c
+--- linux-2.6.17.orig/fs/proc/inode.c
++++ linux-2.6.17/fs/proc/inode.c
 @@ -169,7 +169,11 @@ struct inode *proc_get_inode(struct supe
  		if (de->mode) {
  			inode->i_mode = de->mode;
@@ -9880,10 +9880,10 @@ Index: hardened-sources-2.6.17/fs/proc/inode.c
  		}
  		if (de->size)
  			inode->i_size = de->size;
-Index: hardened-sources-2.6.17/fs/proc/internal.h
+Index: linux-2.6.17/fs/proc/internal.h
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/internal.h
-+++ hardened-sources-2.6.17/fs/proc/internal.h
+--- linux-2.6.17.orig/fs/proc/internal.h
++++ linux-2.6.17/fs/proc/internal.h
 @@ -36,6 +36,9 @@ extern int proc_tid_stat(struct task_str
  extern int proc_tgid_stat(struct task_struct *, char *);
  extern int proc_pid_status(struct task_struct *, char *);
@@ -9894,10 +9894,10 @@ Index: hardened-sources-2.6.17/fs/proc/internal.h
  
  void free_proc_entry(struct proc_dir_entry *de);
  
-Index: hardened-sources-2.6.17/fs/proc/proc_misc.c
+Index: linux-2.6.17/fs/proc/proc_misc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/proc_misc.c
-+++ hardened-sources-2.6.17/fs/proc/proc_misc.c
+--- linux-2.6.17.orig/fs/proc/proc_misc.c
++++ linux-2.6.17/fs/proc/proc_misc.c
 @@ -651,6 +651,8 @@ void create_seq_entry(char *name, mode_t
  void __init proc_misc_init(void)
  {
@@ -9963,10 +9963,10 @@ Index: hardened-sources-2.6.17/fs/proc/proc_misc.c
  	proc_root_kcore = create_proc_entry("kcore", S_IRUSR, NULL);
  	if (proc_root_kcore) {
  		proc_root_kcore->proc_fops = &proc_kcore_operations;
-Index: hardened-sources-2.6.17/fs/proc/root.c
+Index: linux-2.6.17/fs/proc/root.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/root.c
-+++ hardened-sources-2.6.17/fs/proc/root.c
+--- linux-2.6.17.orig/fs/proc/root.c
++++ linux-2.6.17/fs/proc/root.c
 @@ -53,7 +53,13 @@ void __init proc_root_init(void)
  		return;
  	}
@@ -9997,10 +9997,10 @@ Index: hardened-sources-2.6.17/fs/proc/root.c
  }
  
  static int proc_root_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat
-Index: hardened-sources-2.6.17/fs/proc/task_mmu.c
+Index: linux-2.6.17/fs/proc/task_mmu.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/proc/task_mmu.c
-+++ hardened-sources-2.6.17/fs/proc/task_mmu.c
+--- linux-2.6.17.orig/fs/proc/task_mmu.c
++++ linux-2.6.17/fs/proc/task_mmu.c
 @@ -43,15 +43,27 @@ char *task_mem(struct mm_struct *mm, cha
  		"VmStk:\t%8lu kB\n"
  		"VmExe:\t%8lu kB\n"
@@ -10129,10 +10129,10 @@ Index: hardened-sources-2.6.17/fs/proc/task_mmu.c
  
  	if (m->count < m->size)  /* vma is copied successfully */
  		m->version = (vma != get_gate_vma(task))? vma->vm_start: 0;
-Index: hardened-sources-2.6.17/fs/readdir.c
+Index: linux-2.6.17/fs/readdir.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/readdir.c
-+++ hardened-sources-2.6.17/fs/readdir.c
+--- linux-2.6.17.orig/fs/readdir.c
++++ linux-2.6.17/fs/readdir.c
 @@ -16,6 +16,8 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -10223,10 +10223,10 @@ Index: hardened-sources-2.6.17/fs/readdir.c
  	buf.count = count;
  	buf.error = 0;
  
-Index: hardened-sources-2.6.17/fs/xfs/linux-2.6/xfs_file.c
+Index: linux-2.6.17/fs/xfs/linux-2.6/xfs_file.c
 ===================================================================
---- hardened-sources-2.6.17.orig/fs/xfs/linux-2.6/xfs_file.c
-+++ hardened-sources-2.6.17/fs/xfs/linux-2.6/xfs_file.c
+--- linux-2.6.17.orig/fs/xfs/linux-2.6/xfs_file.c
++++ linux-2.6.17/fs/xfs/linux-2.6/xfs_file.c
 @@ -461,6 +461,11 @@ xfs_file_mmap(
  	vattr_t		vattr;
  	int		error;
@@ -10239,10 +10239,10 @@ Index: hardened-sources-2.6.17/fs/xfs/linux-2.6/xfs_file.c
  	vma->vm_ops = &xfs_file_vm_ops;
  
  #ifdef CONFIG_XFS_DMAPI
-Index: hardened-sources-2.6.17/grsecurity/Kconfig
+Index: linux-2.6.17/grsecurity/Kconfig
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/Kconfig
++++ linux-2.6.17/grsecurity/Kconfig
 @@ -0,0 +1,890 @@
 +#
 +# grecurity configuration
@@ -11134,10 +11134,10 @@ Index: hardened-sources-2.6.17/grsecurity/Kconfig
 +endmenu
 +
 +endmenu
-Index: hardened-sources-2.6.17/grsecurity/Makefile
+Index: linux-2.6.17/grsecurity/Makefile
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/Makefile
++++ linux-2.6.17/grsecurity/Makefile
 @@ -0,0 +1,20 @@
 +# grsecurity's ACL system was originally written in 2001 by Michael Dalton
 +# during 2001-2005 it has been completely redesigned by Brad Spengler
@@ -11159,10 +11159,10 @@ Index: hardened-sources-2.6.17/grsecurity/Makefile
 +obj-y += grsec_disabled.o
 +endif
 +
-Index: hardened-sources-2.6.17/grsecurity/gracl.c
+Index: linux-2.6.17/grsecurity/gracl.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl.c
++++ linux-2.6.17/grsecurity/gracl.c
 @@ -0,0 +1,3547 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -14711,10 +14711,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl.c
 +EXPORT_SYMBOL(gr_check_group_change);
 +#endif
 +
-Index: hardened-sources-2.6.17/grsecurity/gracl_alloc.c
+Index: linux-2.6.17/grsecurity/gracl_alloc.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_alloc.c
++++ linux-2.6.17/grsecurity/gracl_alloc.c
 @@ -0,0 +1,91 @@
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
@@ -14807,10 +14807,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_alloc.c
 +	else
 +		return 1;
 +}
-Index: hardened-sources-2.6.17/grsecurity/gracl_cap.c
+Index: linux-2.6.17/grsecurity/gracl_cap.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_cap.c
++++ linux-2.6.17/grsecurity/gracl_cap.c
 @@ -0,0 +1,110 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -14922,10 +14922,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_cap.c
 +	return 0;
 +}
 +
-Index: hardened-sources-2.6.17/grsecurity/gracl_fs.c
+Index: linux-2.6.17/grsecurity/gracl_fs.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_fs.c
++++ linux-2.6.17/grsecurity/gracl_fs.c
 @@ -0,0 +1,423 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -15350,10 +15350,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_fs.c
 +
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/gracl_ip.c
+Index: linux-2.6.17/grsecurity/gracl_ip.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_ip.c
++++ linux-2.6.17/grsecurity/gracl_ip.c
 @@ -0,0 +1,313 @@
 +#include <linux/kernel.h>
 +#include <asm/uaccess.h>
@@ -15668,10 +15668,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_ip.c
 +
 +	return gr_search_connectbind(GR_CONNECT, sk, &sin, SOCK_DGRAM);
 +}
-Index: hardened-sources-2.6.17/grsecurity/gracl_learn.c
+Index: linux-2.6.17/grsecurity/gracl_learn.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_learn.c
++++ linux-2.6.17/grsecurity/gracl_learn.c
 @@ -0,0 +1,204 @@
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
@@ -15877,10 +15877,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_learn.c
 +	.release	= close_learn,
 +	.poll		= poll_learn,
 +};
-Index: hardened-sources-2.6.17/grsecurity/gracl_res.c
+Index: linux-2.6.17/grsecurity/gracl_res.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_res.c
++++ linux-2.6.17/grsecurity/gracl_res.c
 @@ -0,0 +1,45 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -15927,10 +15927,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_res.c
 +
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/gracl_segv.c
+Index: linux-2.6.17/grsecurity/gracl_segv.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_segv.c
++++ linux-2.6.17/grsecurity/gracl_segv.c
 @@ -0,0 +1,295 @@
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
@@ -16227,10 +16227,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_segv.c
 +
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/gracl_shm.c
+Index: linux-2.6.17/grsecurity/gracl_shm.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/gracl_shm.c
++++ linux-2.6.17/grsecurity/gracl_shm.c
 @@ -0,0 +1,33 @@
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
@@ -16265,10 +16265,10 @@ Index: hardened-sources-2.6.17/grsecurity/gracl_shm.c
 +
 +	return 1;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_chdir.c
+Index: linux-2.6.17/grsecurity/grsec_chdir.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_chdir.c
++++ linux-2.6.17/grsecurity/grsec_chdir.c
 @@ -0,0 +1,19 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -16289,10 +16289,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_chdir.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_chroot.c
+Index: linux-2.6.17/grsecurity/grsec_chroot.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_chroot.c
++++ linux-2.6.17/grsecurity/grsec_chroot.c
 @@ -0,0 +1,332 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -16626,10 +16626,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_chroot.c
 +#ifdef CONFIG_SECURITY
 +EXPORT_SYMBOL(gr_handle_chroot_caps);
 +#endif
-Index: hardened-sources-2.6.17/grsecurity/grsec_disabled.c
+Index: linux-2.6.17/grsecurity/grsec_disabled.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_disabled.c
++++ linux-2.6.17/grsecurity/grsec_disabled.c
 @@ -0,0 +1,418 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -17049,10 +17049,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_disabled.c
 +EXPORT_SYMBOL(gr_check_user_change);
 +EXPORT_SYMBOL(gr_check_group_change);
 +#endif
-Index: hardened-sources-2.6.17/grsecurity/grsec_exec.c
+Index: linux-2.6.17/grsecurity/grsec_exec.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_exec.c
++++ linux-2.6.17/grsecurity/grsec_exec.c
 @@ -0,0 +1,88 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17142,10 +17142,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_exec.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_fifo.c
+Index: linux-2.6.17/grsecurity/grsec_fifo.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_fifo.c
++++ linux-2.6.17/grsecurity/grsec_fifo.c
 @@ -0,0 +1,22 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17169,10 +17169,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_fifo.c
 +#endif
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_fork.c
+Index: linux-2.6.17/grsecurity/grsec_fork.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_fork.c
++++ linux-2.6.17/grsecurity/grsec_fork.c
 @@ -0,0 +1,15 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17189,10 +17189,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_fork.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_init.c
+Index: linux-2.6.17/grsecurity/grsec_init.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_init.c
++++ linux-2.6.17/grsecurity/grsec_init.c
 @@ -0,0 +1,236 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17430,10 +17430,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_init.c
 +
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_ipc.c
+Index: linux-2.6.17/grsecurity/grsec_ipc.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_ipc.c
++++ linux-2.6.17/grsecurity/grsec_ipc.c
 @@ -0,0 +1,81 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17516,10 +17516,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_ipc.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_link.c
+Index: linux-2.6.17/grsecurity/grsec_link.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_link.c
++++ linux-2.6.17/grsecurity/grsec_link.c
 @@ -0,0 +1,39 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17560,10 +17560,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_link.c
 +#endif
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_log.c
+Index: linux-2.6.17/grsecurity/grsec_log.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_log.c
++++ linux-2.6.17/grsecurity/grsec_log.c
 @@ -0,0 +1,265 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17830,10 +17830,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_log.c
 +	gr_log_end(audit);
 +	END_LOCKS(audit);
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_mem.c
+Index: linux-2.6.17/grsecurity/grsec_mem.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_mem.c
++++ linux-2.6.17/grsecurity/grsec_mem.c
 @@ -0,0 +1,71 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17906,10 +17906,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_mem.c
 +
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_mount.c
+Index: linux-2.6.17/grsecurity/grsec_mount.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_mount.c
++++ linux-2.6.17/grsecurity/grsec_mount.c
 @@ -0,0 +1,34 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17945,10 +17945,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_mount.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_rand.c
+Index: linux-2.6.17/grsecurity/grsec_rand.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_rand.c
++++ linux-2.6.17/grsecurity/grsec_rand.c
 @@ -0,0 +1,26 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -17976,10 +17976,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_rand.c
 +#endif
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_sig.c
+Index: linux-2.6.17/grsecurity/grsec_sig.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_sig.c
++++ linux-2.6.17/grsecurity/grsec_sig.c
 @@ -0,0 +1,59 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18040,10 +18040,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_sig.c
 +	return;
 +}
 +
-Index: hardened-sources-2.6.17/grsecurity/grsec_sock.c
+Index: linux-2.6.17/grsecurity/grsec_sock.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_sock.c
++++ linux-2.6.17/grsecurity/grsec_sock.c
 @@ -0,0 +1,263 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -18308,10 +18308,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_sock.c
 +	return current->cap_effective;
 +#endif
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_sysctl.c
+Index: linux-2.6.17/grsecurity/grsec_sysctl.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_sysctl.c
++++ linux-2.6.17/grsecurity/grsec_sysctl.c
 @@ -0,0 +1,466 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18779,10 +18779,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_sysctl.c
 +#endif
 +	return 0;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_textrel.c
+Index: linux-2.6.17/grsecurity/grsec_textrel.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_textrel.c
++++ linux-2.6.17/grsecurity/grsec_textrel.c
 @@ -0,0 +1,16 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18800,10 +18800,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_textrel.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_time.c
+Index: linux-2.6.17/grsecurity/grsec_time.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_time.c
++++ linux-2.6.17/grsecurity/grsec_time.c
 @@ -0,0 +1,13 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18818,10 +18818,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_time.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsec_tpe.c
+Index: linux-2.6.17/grsecurity/grsec_tpe.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsec_tpe.c
++++ linux-2.6.17/grsecurity/grsec_tpe.c
 @@ -0,0 +1,37 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18860,10 +18860,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsec_tpe.c
 +#endif
 +	return 1;
 +}
-Index: hardened-sources-2.6.17/grsecurity/grsum.c
+Index: linux-2.6.17/grsecurity/grsum.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/grsecurity/grsum.c
++++ linux-2.6.17/grsecurity/grsum.c
 @@ -0,0 +1,59 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -18924,10 +18924,10 @@ Index: hardened-sources-2.6.17/grsecurity/grsum.c
 +
 +	return retval;
 +}
-Index: hardened-sources-2.6.17/include/asm-alpha/a.out.h
+Index: linux-2.6.17/include/asm-alpha/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-alpha/a.out.h
-+++ hardened-sources-2.6.17/include/asm-alpha/a.out.h
+--- linux-2.6.17.orig/include/asm-alpha/a.out.h
++++ linux-2.6.17/include/asm-alpha/a.out.h
 @@ -98,7 +98,7 @@ struct exec
  	set_personality (((BFPM->sh_bang || EX.ah.entry < 0x100000000L \
  			   ? ADDR_LIMIT_32BIT : 0) | PER_OSF4))
@@ -18937,10 +18937,10 @@ Index: hardened-sources-2.6.17/include/asm-alpha/a.out.h
    (current->personality & ADDR_LIMIT_32BIT ? 0x80000000 : 0x00120000000UL)
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-alpha/elf.h
+Index: linux-2.6.17/include/asm-alpha/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-alpha/elf.h
-+++ hardened-sources-2.6.17/include/asm-alpha/elf.h
+--- linux-2.6.17.orig/include/asm-alpha/elf.h
++++ linux-2.6.17/include/asm-alpha/elf.h
 @@ -91,6 +91,17 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_N
  
  #define ELF_ET_DYN_BASE		(TASK_UNMAPPED_BASE + 0x1000000)
@@ -18959,10 +18959,10 @@ Index: hardened-sources-2.6.17/include/asm-alpha/elf.h
  /* $0 is set by ld.so to a pointer to a function which might be 
     registered using atexit.  This provides a mean for the dynamic
     linker to call DT_FINI functions for shared libraries that have
-Index: hardened-sources-2.6.17/include/asm-alpha/kmap_types.h
+Index: linux-2.6.17/include/asm-alpha/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-alpha/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-alpha/kmap_types.h
+--- linux-2.6.17.orig/include/asm-alpha/kmap_types.h
++++ linux-2.6.17/include/asm-alpha/kmap_types.h
 @@ -25,7 +25,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -18973,10 +18973,10 @@ Index: hardened-sources-2.6.17/include/asm-alpha/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-alpha/page.h
+Index: linux-2.6.17/include/asm-alpha/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-alpha/page.h
-+++ hardened-sources-2.6.17/include/asm-alpha/page.h
+--- linux-2.6.17.orig/include/asm-alpha/page.h
++++ linux-2.6.17/include/asm-alpha/page.h
 @@ -93,6 +93,16 @@ typedef unsigned long pgprot_t;
  
  #define VM_DATA_DEFAULT_FLAGS		(VM_READ | VM_WRITE | VM_EXEC | \
@@ -18994,10 +18994,10 @@ Index: hardened-sources-2.6.17/include/asm-alpha/page.h
  #endif /* __KERNEL__ */
  
  #include <asm-generic/memory_model.h>
-Index: hardened-sources-2.6.17/include/asm-alpha/pgtable.h
+Index: linux-2.6.17/include/asm-alpha/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-alpha/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-alpha/pgtable.h
+--- linux-2.6.17.orig/include/asm-alpha/pgtable.h
++++ linux-2.6.17/include/asm-alpha/pgtable.h
 @@ -102,6 +102,17 @@ struct vm_area_struct;
  #define PAGE_SHARED	__pgprot(_PAGE_VALID | __ACCESS_BITS)
  #define PAGE_COPY	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOW)
@@ -19016,10 +19016,10 @@ Index: hardened-sources-2.6.17/include/asm-alpha/pgtable.h
  #define PAGE_KERNEL	__pgprot(_PAGE_VALID | _PAGE_ASM | _PAGE_KRE | _PAGE_KWE)
  
  #define _PAGE_NORMAL(x) __pgprot(_PAGE_VALID | __ACCESS_BITS | (x))
-Index: hardened-sources-2.6.17/include/asm-arm/a.out.h
+Index: linux-2.6.17/include/asm-arm/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-arm/a.out.h
-+++ hardened-sources-2.6.17/include/asm-arm/a.out.h
+--- linux-2.6.17.orig/include/asm-arm/a.out.h
++++ linux-2.6.17/include/asm-arm/a.out.h
 @@ -28,7 +28,7 @@ struct exec
  #define M_ARM 103
  
@@ -19029,10 +19029,10 @@ Index: hardened-sources-2.6.17/include/asm-arm/a.out.h
  			 TASK_SIZE : TASK_SIZE_26)
  #endif
  
-Index: hardened-sources-2.6.17/include/asm-arm/elf.h
+Index: linux-2.6.17/include/asm-arm/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-arm/elf.h
-+++ hardened-sources-2.6.17/include/asm-arm/elf.h
+--- linux-2.6.17.orig/include/asm-arm/elf.h
++++ linux-2.6.17/include/asm-arm/elf.h
 @@ -56,6 +56,17 @@ typedef struct user_fp elf_fpregset_t;
  
  #define ELF_ET_DYN_BASE	(2 * TASK_SIZE / 3)
@@ -19051,10 +19051,10 @@ Index: hardened-sources-2.6.17/include/asm-arm/elf.h
  /* When the program starts, a1 contains a pointer to a function to be 
     registered with atexit, as per the SVR4 ABI.  A value of 0 means we 
     have no such handler.  */
-Index: hardened-sources-2.6.17/include/asm-arm/kmap_types.h
+Index: linux-2.6.17/include/asm-arm/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-arm/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-arm/kmap_types.h
+--- linux-2.6.17.orig/include/asm-arm/kmap_types.h
++++ linux-2.6.17/include/asm-arm/kmap_types.h
 @@ -18,6 +18,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -19063,10 +19063,10 @@ Index: hardened-sources-2.6.17/include/asm-arm/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-arm26/kmap_types.h
+Index: linux-2.6.17/include/asm-arm26/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-arm26/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-arm26/kmap_types.h
+--- linux-2.6.17.orig/include/asm-arm26/kmap_types.h
++++ linux-2.6.17/include/asm-arm26/kmap_types.h
 @@ -6,7 +6,8 @@
   */
  enum km_type {
@@ -19077,10 +19077,10 @@ Index: hardened-sources-2.6.17/include/asm-arm26/kmap_types.h
  };
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-cris/kmap_types.h
+Index: linux-2.6.17/include/asm-cris/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-cris/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-cris/kmap_types.h
+--- linux-2.6.17.orig/include/asm-cris/kmap_types.h
++++ linux-2.6.17/include/asm-cris/kmap_types.h
 @@ -19,6 +19,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -19089,10 +19089,10 @@ Index: hardened-sources-2.6.17/include/asm-cris/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-frv/kmap_types.h
+Index: linux-2.6.17/include/asm-frv/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-frv/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-frv/kmap_types.h
+--- linux-2.6.17.orig/include/asm-frv/kmap_types.h
++++ linux-2.6.17/include/asm-frv/kmap_types.h
 @@ -23,6 +23,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -19101,10 +19101,10 @@ Index: hardened-sources-2.6.17/include/asm-frv/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-h8300/kmap_types.h
+Index: linux-2.6.17/include/asm-h8300/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-h8300/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-h8300/kmap_types.h
+--- linux-2.6.17.orig/include/asm-h8300/kmap_types.h
++++ linux-2.6.17/include/asm-h8300/kmap_types.h
 @@ -15,6 +15,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -19113,10 +19113,10 @@ Index: hardened-sources-2.6.17/include/asm-h8300/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-i386/a.out.h
+Index: linux-2.6.17/include/asm-i386/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/a.out.h
-+++ hardened-sources-2.6.17/include/asm-i386/a.out.h
+--- linux-2.6.17.orig/include/asm-i386/a.out.h
++++ linux-2.6.17/include/asm-i386/a.out.h
 @@ -19,7 +19,11 @@ struct exec
  
  #ifdef __KERNEL__
@@ -19130,10 +19130,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/a.out.h
  
  #endif
  
-Index: hardened-sources-2.6.17/include/asm-i386/alternative.h
+Index: linux-2.6.17/include/asm-i386/alternative.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/alternative.h
-+++ hardened-sources-2.6.17/include/asm-i386/alternative.h
+--- linux-2.6.17.orig/include/asm-i386/alternative.h
++++ linux-2.6.17/include/asm-i386/alternative.h
 @@ -47,7 +47,7 @@ extern void alternatives_smp_switch(int 
  		      "  .byte 662b-661b\n"       /* sourcelen */	\
  		      "  .byte 664f-663f\n"       /* replacementlen */	\
@@ -19161,10 +19161,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/alternative.h
  		      "663:\n\t" upinstr "\n"     /* replacement */	\
  		      "664:\n\t.fill 662b-661b,1,0x42\n" /* space for original */ \
  		      ".previous" : args)
-Index: hardened-sources-2.6.17/include/asm-i386/auxvec.h
+Index: linux-2.6.17/include/asm-i386/auxvec.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/auxvec.h
-+++ hardened-sources-2.6.17/include/asm-i386/auxvec.h
+--- linux-2.6.17.orig/include/asm-i386/auxvec.h
++++ linux-2.6.17/include/asm-i386/auxvec.h
 @@ -5,7 +5,9 @@
   * Architecture-neutral AT_ values in 0-17, leave some room
   * for more of them, start the x86-specific ones at 32.
@@ -19175,10 +19175,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/auxvec.h
 +#endif
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-i386/checksum.h
+Index: linux-2.6.17/include/asm-i386/checksum.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/checksum.h
-+++ hardened-sources-2.6.17/include/asm-i386/checksum.h
+--- linux-2.6.17.orig/include/asm-i386/checksum.h
++++ linux-2.6.17/include/asm-i386/checksum.h
 @@ -30,6 +30,12 @@ asmlinkage unsigned int csum_partial(con
  asmlinkage unsigned int csum_partial_copy_generic(const unsigned char *src, unsigned char *dst,
  						  int len, int sum, int *src_err_ptr, int *dst_err_ptr);
@@ -19210,10 +19210,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/checksum.h
  
  	if (len)
  		*err_ptr = -EFAULT;
-Index: hardened-sources-2.6.17/include/asm-i386/desc.h
+Index: linux-2.6.17/include/asm-i386/desc.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/desc.h
-+++ hardened-sources-2.6.17/include/asm-i386/desc.h
+--- linux-2.6.17.orig/include/asm-i386/desc.h
++++ linux-2.6.17/include/asm-i386/desc.h
 @@ -10,11 +10,13 @@
  
  #include <linux/preempt.h>
@@ -19377,10 +19377,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/desc.h
  #endif /* !__ASSEMBLY__ */
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-i386/elf.h
+Index: linux-2.6.17/include/asm-i386/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/elf.h
-+++ hardened-sources-2.6.17/include/asm-i386/elf.h
+--- linux-2.6.17.orig/include/asm-i386/elf.h
++++ linux-2.6.17/include/asm-i386/elf.h
 @@ -71,7 +71,22 @@ typedef struct user_fxsr_struct elf_fpxr
     the loader.  We need to make sure that it is out of the way of the program
     that it will "exec", and that there is sufficient room for the brk.  */
@@ -19425,10 +19425,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/elf.h
  #endif
 +
 +#endif
-Index: hardened-sources-2.6.17/include/asm-i386/kmap_types.h
+Index: linux-2.6.17/include/asm-i386/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-i386/kmap_types.h
+--- linux-2.6.17.orig/include/asm-i386/kmap_types.h
++++ linux-2.6.17/include/asm-i386/kmap_types.h
 @@ -23,7 +23,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -19439,10 +19439,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-i386/mach-default/apm.h
+Index: linux-2.6.17/include/asm-i386/mach-default/apm.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mach-default/apm.h
-+++ hardened-sources-2.6.17/include/asm-i386/mach-default/apm.h
+--- linux-2.6.17.orig/include/asm-i386/mach-default/apm.h
++++ linux-2.6.17/include/asm-i386/mach-default/apm.h
 @@ -36,7 +36,7 @@ static inline void apm_bios_call_asm(u32
  	__asm__ __volatile__(APM_DO_ZERO_SEGS
  		"pushl %%edi\n\t"
@@ -19461,10 +19461,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mach-default/apm.h
  		"setc %%bl\n\t"
  		"popl %%ebp\n\t"
  		"popl %%edi\n\t"
-Index: hardened-sources-2.6.17/include/asm-i386/mach-default/do_timer.h
+Index: linux-2.6.17/include/asm-i386/mach-default/do_timer.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mach-default/do_timer.h
-+++ hardened-sources-2.6.17/include/asm-i386/mach-default/do_timer.h
+--- linux-2.6.17.orig/include/asm-i386/mach-default/do_timer.h
++++ linux-2.6.17/include/asm-i386/mach-default/do_timer.h
 @@ -18,7 +18,7 @@ static inline void do_timer_interrupt_ho
  {
  	do_timer(regs);
@@ -19474,10 +19474,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mach-default/do_timer.h
  #endif
  /*
   * In the SMP case we use the local APIC timer interrupt to do the
-Index: hardened-sources-2.6.17/include/asm-i386/mach-visws/do_timer.h
+Index: linux-2.6.17/include/asm-i386/mach-visws/do_timer.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mach-visws/do_timer.h
-+++ hardened-sources-2.6.17/include/asm-i386/mach-visws/do_timer.h
+--- linux-2.6.17.orig/include/asm-i386/mach-visws/do_timer.h
++++ linux-2.6.17/include/asm-i386/mach-visws/do_timer.h
 @@ -11,7 +11,7 @@ static inline void do_timer_interrupt_ho
  
  	do_timer(regs);
@@ -19487,10 +19487,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mach-visws/do_timer.h
  #endif
  /*
   * In the SMP case we use the local APIC timer interrupt to do the
-Index: hardened-sources-2.6.17/include/asm-i386/mach-voyager/do_timer.h
+Index: linux-2.6.17/include/asm-i386/mach-voyager/do_timer.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mach-voyager/do_timer.h
-+++ hardened-sources-2.6.17/include/asm-i386/mach-voyager/do_timer.h
+--- linux-2.6.17.orig/include/asm-i386/mach-voyager/do_timer.h
++++ linux-2.6.17/include/asm-i386/mach-voyager/do_timer.h
 @@ -5,7 +5,7 @@ static inline void do_timer_interrupt_ho
  {
  	do_timer(regs);
@@ -19500,10 +19500,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mach-voyager/do_timer.h
  #endif
  
  	voyager_timer_interrupt(regs);
-Index: hardened-sources-2.6.17/include/asm-i386/mman.h
+Index: linux-2.6.17/include/asm-i386/mman.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mman.h
-+++ hardened-sources-2.6.17/include/asm-i386/mman.h
+--- linux-2.6.17.orig/include/asm-i386/mman.h
++++ linux-2.6.17/include/asm-i386/mman.h
 @@ -11,6 +11,10 @@
  #define MAP_POPULATE	0x8000		/* populate (prefault) pagetables */
  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
@@ -19515,10 +19515,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mman.h
  #define MCL_CURRENT	1		/* lock all current mappings */
  #define MCL_FUTURE	2		/* lock all future mappings */
  
-Index: hardened-sources-2.6.17/include/asm-i386/mmu.h
+Index: linux-2.6.17/include/asm-i386/mmu.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mmu.h
-+++ hardened-sources-2.6.17/include/asm-i386/mmu.h
+--- linux-2.6.17.orig/include/asm-i386/mmu.h
++++ linux-2.6.17/include/asm-i386/mmu.h
 @@ -12,6 +12,17 @@ typedef struct { 
  	int size;
  	struct semaphore sem;
@@ -19537,10 +19537,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mmu.h
  } mm_context_t;
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-i386/mmu_context.h
+Index: linux-2.6.17/include/asm-i386/mmu_context.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/mmu_context.h
-+++ hardened-sources-2.6.17/include/asm-i386/mmu_context.h
+--- linux-2.6.17.orig/include/asm-i386/mmu_context.h
++++ linux-2.6.17/include/asm-i386/mmu_context.h
 @@ -46,6 +46,18 @@ static inline void switch_mm(struct mm_s
  		 */
  		if (unlikely(prev->context.ldt != next->context.ldt))
@@ -19573,10 +19573,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/mmu_context.h
  		}
  	}
  #endif
-Index: hardened-sources-2.6.17/include/asm-i386/module.h
+Index: linux-2.6.17/include/asm-i386/module.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/module.h
-+++ hardened-sources-2.6.17/include/asm-i386/module.h
+--- linux-2.6.17.orig/include/asm-i386/module.h
++++ linux-2.6.17/include/asm-i386/module.h
 @@ -72,6 +72,12 @@ struct mod_arch_specific
  #define MODULE_STACKSIZE ""
  #endif
@@ -19591,10 +19591,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/module.h
 +#define MODULE_ARCH_VERMAGIC MODULE_PROC_FAMILY MODULE_REGPARM MODULE_STACKSIZE MODULE_GRSEC
  
  #endif /* _ASM_I386_MODULE_H */
-Index: hardened-sources-2.6.17/include/asm-i386/page.h
+Index: linux-2.6.17/include/asm-i386/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/page.h
-+++ hardened-sources-2.6.17/include/asm-i386/page.h
+--- linux-2.6.17.orig/include/asm-i386/page.h
++++ linux-2.6.17/include/asm-i386/page.h
 @@ -57,7 +57,6 @@ typedef struct { unsigned long long pgpr
  typedef struct { unsigned long pte_low; } pte_t;
  typedef struct { unsigned long pgd; } pgd_t;
@@ -19639,10 +19639,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/page.h
  #endif /* __KERNEL__ */
  
  #include <asm-generic/memory_model.h>
-Index: hardened-sources-2.6.17/include/asm-i386/pgalloc.h
+Index: linux-2.6.17/include/asm-i386/pgalloc.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/pgalloc.h
-+++ hardened-sources-2.6.17/include/asm-i386/pgalloc.h
+--- linux-2.6.17.orig/include/asm-i386/pgalloc.h
++++ linux-2.6.17/include/asm-i386/pgalloc.h
 @@ -3,11 +3,17 @@
  
  #include <linux/config.h>
@@ -19661,10 +19661,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/pgalloc.h
  
  #define pmd_populate(mm, pmd, pte) 				\
  	set_pmd(pmd, __pmd(_PAGE_TABLE +			\
-Index: hardened-sources-2.6.17/include/asm-i386/pgtable.h
+Index: linux-2.6.17/include/asm-i386/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-i386/pgtable.h
+--- linux-2.6.17.orig/include/asm-i386/pgtable.h
++++ linux-2.6.17/include/asm-i386/pgtable.h
 @@ -34,7 +34,6 @@ struct vm_area_struct;
   */
  #define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
@@ -19763,10 +19763,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/pgtable.h
  #ifdef CONFIG_FLATMEM
  #define kern_addr_valid(addr)	(1)
  #endif /* CONFIG_FLATMEM */
-Index: hardened-sources-2.6.17/include/asm-i386/processor.h
+Index: linux-2.6.17/include/asm-i386/processor.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/processor.h
-+++ hardened-sources-2.6.17/include/asm-i386/processor.h
+--- linux-2.6.17.orig/include/asm-i386/processor.h
++++ linux-2.6.17/include/asm-i386/processor.h
 @@ -19,7 +19,6 @@
  #include <linux/cache.h>
  #include <linux/config.h>
@@ -19853,10 +19853,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/processor.h
         __regs__ - 1;                                                   \
  })
  
-Index: hardened-sources-2.6.17/include/asm-i386/ptrace.h
+Index: linux-2.6.17/include/asm-i386/ptrace.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/ptrace.h
-+++ hardened-sources-2.6.17/include/asm-i386/ptrace.h
+--- linux-2.6.17.orig/include/asm-i386/ptrace.h
++++ linux-2.6.17/include/asm-i386/ptrace.h
 @@ -65,17 +65,18 @@ struct task_struct;
  extern void send_sigtrap(struct task_struct *tsk, struct pt_regs *regs, int error_code);
  
@@ -19880,10 +19880,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/ptrace.h
  {
  	return ((regs->xcs & 3) | (regs->eflags & VM_MASK)) != 0;
  }
-Index: hardened-sources-2.6.17/include/asm-i386/system.h
+Index: linux-2.6.17/include/asm-i386/system.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/system.h
-+++ hardened-sources-2.6.17/include/asm-i386/system.h
+--- linux-2.6.17.orig/include/asm-i386/system.h
++++ linux-2.6.17/include/asm-i386/system.h
 @@ -5,6 +5,7 @@
  #include <linux/kernel.h>
  #include <asm/segment.h>
@@ -19910,10 +19910,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/system.h
  extern void free_init_pages(char *what, unsigned long begin, unsigned long end);
  
  void default_idle(void);
-Index: hardened-sources-2.6.17/include/asm-i386/uaccess.h
+Index: linux-2.6.17/include/asm-i386/uaccess.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-i386/uaccess.h
-+++ hardened-sources-2.6.17/include/asm-i386/uaccess.h
+--- linux-2.6.17.orig/include/asm-i386/uaccess.h
++++ linux-2.6.17/include/asm-i386/uaccess.h
 @@ -10,6 +10,8 @@
  #include <linux/prefetch.h>
  #include <linux/string.h>
@@ -20003,10 +20003,10 @@ Index: hardened-sources-2.6.17/include/asm-i386/uaccess.h
  
  
  unsigned long __must_check __copy_to_user_ll(void __user *to,
-Index: hardened-sources-2.6.17/include/asm-ia64/elf.h
+Index: linux-2.6.17/include/asm-ia64/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/elf.h
-+++ hardened-sources-2.6.17/include/asm-ia64/elf.h
+--- linux-2.6.17.orig/include/asm-ia64/elf.h
++++ linux-2.6.17/include/asm-ia64/elf.h
 @@ -163,6 +163,16 @@ typedef elf_greg_t elf_gregset_t[ELF_NGR
  typedef struct ia64_fpreg elf_fpreg_t;
  typedef elf_fpreg_t elf_fpregset_t[ELF_NFPREG];
@@ -20024,10 +20024,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/elf.h
  
  
  struct pt_regs;	/* forward declaration... */
-Index: hardened-sources-2.6.17/include/asm-ia64/kmap_types.h
+Index: linux-2.6.17/include/asm-ia64/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-ia64/kmap_types.h
+--- linux-2.6.17.orig/include/asm-ia64/kmap_types.h
++++ linux-2.6.17/include/asm-ia64/kmap_types.h
 @@ -23,7 +23,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -20038,10 +20038,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-ia64/page.h
+Index: linux-2.6.17/include/asm-ia64/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/page.h
-+++ hardened-sources-2.6.17/include/asm-ia64/page.h
+--- linux-2.6.17.orig/include/asm-ia64/page.h
++++ linux-2.6.17/include/asm-ia64/page.h
 @@ -229,4 +229,13 @@ get_order (unsigned long size)
  					 (((current->personality & READ_IMPLIES_EXEC) != 0)	\
  					  ? VM_EXEC : 0))
@@ -20056,10 +20056,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/page.h
 +#endif
 +
  #endif /* _ASM_IA64_PAGE_H */
-Index: hardened-sources-2.6.17/include/asm-ia64/pgtable.h
+Index: linux-2.6.17/include/asm-ia64/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-ia64/pgtable.h
+--- linux-2.6.17.orig/include/asm-ia64/pgtable.h
++++ linux-2.6.17/include/asm-ia64/pgtable.h
 @@ -144,6 +144,17 @@
  #define PAGE_READONLY	__pgprot(__ACCESS_BITS | _PAGE_PL_3 | _PAGE_AR_R)
  #define PAGE_COPY	__pgprot(__ACCESS_BITS | _PAGE_PL_3 | _PAGE_AR_R)
@@ -20078,10 +20078,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/pgtable.h
  #define PAGE_GATE	__pgprot(__ACCESS_BITS | _PAGE_PL_0 | _PAGE_AR_X_RX)
  #define PAGE_KERNEL	__pgprot(__DIRTY_BITS  | _PAGE_PL_0 | _PAGE_AR_RWX)
  #define PAGE_KERNELRX	__pgprot(__ACCESS_BITS | _PAGE_PL_0 | _PAGE_AR_RX)
-Index: hardened-sources-2.6.17/include/asm-ia64/processor.h
+Index: linux-2.6.17/include/asm-ia64/processor.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/processor.h
-+++ hardened-sources-2.6.17/include/asm-ia64/processor.h
+--- linux-2.6.17.orig/include/asm-ia64/processor.h
++++ linux-2.6.17/include/asm-ia64/processor.h
 @@ -284,7 +284,7 @@ struct thread_struct {
  	.on_ustack =	0,					\
  	.ksp =		0,					\
@@ -20091,10 +20091,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/processor.h
  	.task_size =	DEFAULT_TASK_SIZE,			\
  	.last_fph_cpu =  -1,					\
  	INIT_THREAD_IA32					\
-Index: hardened-sources-2.6.17/include/asm-ia64/ustack.h
+Index: linux-2.6.17/include/asm-ia64/ustack.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ia64/ustack.h
-+++ hardened-sources-2.6.17/include/asm-ia64/ustack.h
+--- linux-2.6.17.orig/include/asm-ia64/ustack.h
++++ linux-2.6.17/include/asm-ia64/ustack.h
 @@ -11,6 +11,6 @@
  #define MAX_USER_STACK_SIZE	(RGN_MAP_LIMIT/2)
  /* Make a default stack size of 2GB */
@@ -20103,10 +20103,10 @@ Index: hardened-sources-2.6.17/include/asm-ia64/ustack.h
 +#define __STACK_TOP		(0x6000000000000000UL + RGN_MAP_LIMIT)
  
  #endif /* _ASM_IA64_USTACK_H */
-Index: hardened-sources-2.6.17/include/asm-m32r/kmap_types.h
+Index: linux-2.6.17/include/asm-m32r/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-m32r/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-m32r/kmap_types.h
+--- linux-2.6.17.orig/include/asm-m32r/kmap_types.h
++++ linux-2.6.17/include/asm-m32r/kmap_types.h
 @@ -25,7 +25,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -20117,10 +20117,10 @@ Index: hardened-sources-2.6.17/include/asm-m32r/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-m68k/kmap_types.h
+Index: linux-2.6.17/include/asm-m68k/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-m68k/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-m68k/kmap_types.h
+--- linux-2.6.17.orig/include/asm-m68k/kmap_types.h
++++ linux-2.6.17/include/asm-m68k/kmap_types.h
 @@ -15,6 +15,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20129,10 +20129,10 @@ Index: hardened-sources-2.6.17/include/asm-m68k/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-m68knommu/kmap_types.h
+Index: linux-2.6.17/include/asm-m68knommu/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-m68knommu/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-m68knommu/kmap_types.h
+--- linux-2.6.17.orig/include/asm-m68knommu/kmap_types.h
++++ linux-2.6.17/include/asm-m68knommu/kmap_types.h
 @@ -15,6 +15,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20141,10 +20141,10 @@ Index: hardened-sources-2.6.17/include/asm-m68knommu/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-mips/a.out.h
+Index: linux-2.6.17/include/asm-mips/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-mips/a.out.h
-+++ hardened-sources-2.6.17/include/asm-mips/a.out.h
+--- linux-2.6.17.orig/include/asm-mips/a.out.h
++++ linux-2.6.17/include/asm-mips/a.out.h
 @@ -36,10 +36,10 @@ struct exec
  #ifdef __KERNEL__
  
@@ -20158,10 +20158,10 @@ Index: hardened-sources-2.6.17/include/asm-mips/a.out.h
  #endif
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-mips/elf.h
+Index: linux-2.6.17/include/asm-mips/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-mips/elf.h
-+++ hardened-sources-2.6.17/include/asm-mips/elf.h
+--- linux-2.6.17.orig/include/asm-mips/elf.h
++++ linux-2.6.17/include/asm-mips/elf.h
 @@ -372,4 +372,15 @@ extern int dump_task_fpu(struct task_str
  #define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
  #endif
@@ -20178,10 +20178,10 @@ Index: hardened-sources-2.6.17/include/asm-mips/elf.h
 +#endif
 +
  #endif /* _ASM_ELF_H */
-Index: hardened-sources-2.6.17/include/asm-mips/kmap_types.h
+Index: linux-2.6.17/include/asm-mips/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-mips/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-mips/kmap_types.h
+--- linux-2.6.17.orig/include/asm-mips/kmap_types.h
++++ linux-2.6.17/include/asm-mips/kmap_types.h
 @@ -23,7 +23,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -20192,10 +20192,10 @@ Index: hardened-sources-2.6.17/include/asm-mips/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-mips/page.h
+Index: linux-2.6.17/include/asm-mips/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-mips/page.h
-+++ hardened-sources-2.6.17/include/asm-mips/page.h
+--- linux-2.6.17.orig/include/asm-mips/page.h
++++ linux-2.6.17/include/asm-mips/page.h
 @@ -151,6 +151,15 @@ typedef struct { unsigned long pgprot; }
  #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
@@ -20212,10 +20212,10 @@ Index: hardened-sources-2.6.17/include/asm-mips/page.h
  #define UNCAC_ADDR(addr)	((addr) - PAGE_OFFSET + UNCAC_BASE)
  #define CAC_ADDR(addr)		((addr) - UNCAC_BASE + PAGE_OFFSET)
  
-Index: hardened-sources-2.6.17/include/asm-parisc/a.out.h
+Index: linux-2.6.17/include/asm-parisc/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-parisc/a.out.h
-+++ hardened-sources-2.6.17/include/asm-parisc/a.out.h
+--- linux-2.6.17.orig/include/asm-parisc/a.out.h
++++ linux-2.6.17/include/asm-parisc/a.out.h
 @@ -22,7 +22,7 @@ struct exec
  /* XXX: STACK_TOP actually should be STACK_BOTTOM for parisc.
   * prumpf */
@@ -20225,10 +20225,10 @@ Index: hardened-sources-2.6.17/include/asm-parisc/a.out.h
  
  #endif
  
-Index: hardened-sources-2.6.17/include/asm-parisc/elf.h
+Index: linux-2.6.17/include/asm-parisc/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-parisc/elf.h
-+++ hardened-sources-2.6.17/include/asm-parisc/elf.h
+--- linux-2.6.17.orig/include/asm-parisc/elf.h
++++ linux-2.6.17/include/asm-parisc/elf.h
 @@ -337,6 +337,17 @@ struct pt_regs;	/* forward declaration..
  
  #define ELF_ET_DYN_BASE         (TASK_UNMAPPED_BASE + 0x01000000)
@@ -20247,10 +20247,10 @@ Index: hardened-sources-2.6.17/include/asm-parisc/elf.h
  /* This yields a mask that user programs can use to figure out what
     instruction set this CPU supports.  This could be done in user space,
     but it's not easy, and we've already done it here.  */
-Index: hardened-sources-2.6.17/include/asm-parisc/kmap_types.h
+Index: linux-2.6.17/include/asm-parisc/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-parisc/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-parisc/kmap_types.h
+--- linux-2.6.17.orig/include/asm-parisc/kmap_types.h
++++ linux-2.6.17/include/asm-parisc/kmap_types.h
 @@ -23,7 +23,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -20261,10 +20261,10 @@ Index: hardened-sources-2.6.17/include/asm-parisc/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-parisc/page.h
+Index: linux-2.6.17/include/asm-parisc/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-parisc/page.h
-+++ hardened-sources-2.6.17/include/asm-parisc/page.h
+--- linux-2.6.17.orig/include/asm-parisc/page.h
++++ linux-2.6.17/include/asm-parisc/page.h
 @@ -189,6 +189,15 @@ extern int npmem_ranges;
  #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
@@ -20281,10 +20281,10 @@ Index: hardened-sources-2.6.17/include/asm-parisc/page.h
  #endif /* __KERNEL__ */
  
  #include <asm-generic/memory_model.h>
-Index: hardened-sources-2.6.17/include/asm-parisc/pgtable.h
+Index: linux-2.6.17/include/asm-parisc/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-parisc/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-parisc/pgtable.h
+--- linux-2.6.17.orig/include/asm-parisc/pgtable.h
++++ linux-2.6.17/include/asm-parisc/pgtable.h
 @@ -220,6 +220,17 @@ extern  void *vmalloc_start;
  #define PAGE_EXECREAD   __pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_READ | _PAGE_EXEC |_PAGE_ACCESSED)
  #define PAGE_COPY       PAGE_EXECREAD
@@ -20303,10 +20303,10 @@ Index: hardened-sources-2.6.17/include/asm-parisc/pgtable.h
  #define PAGE_KERNEL	__pgprot(_PAGE_KERNEL)
  #define PAGE_KERNEL_RO	__pgprot(_PAGE_KERNEL & ~_PAGE_WRITE)
  #define PAGE_KERNEL_UNC	__pgprot(_PAGE_KERNEL | _PAGE_NO_CACHE)
-Index: hardened-sources-2.6.17/include/asm-powerpc/a.out.h
+Index: linux-2.6.17/include/asm-powerpc/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-powerpc/a.out.h
-+++ hardened-sources-2.6.17/include/asm-powerpc/a.out.h
+--- linux-2.6.17.orig/include/asm-powerpc/a.out.h
++++ linux-2.6.17/include/asm-powerpc/a.out.h
 @@ -23,12 +23,12 @@ struct exec
  #define STACK_TOP_USER64 TASK_SIZE_USER64
  #define STACK_TOP_USER32 TASK_SIZE_USER32
@@ -20322,10 +20322,10 @@ Index: hardened-sources-2.6.17/include/asm-powerpc/a.out.h
  
  #endif /* __powerpc64__ */
  #endif /* __KERNEL__ */
-Index: hardened-sources-2.6.17/include/asm-powerpc/elf.h
+Index: linux-2.6.17/include/asm-powerpc/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-powerpc/elf.h
-+++ hardened-sources-2.6.17/include/asm-powerpc/elf.h
+--- linux-2.6.17.orig/include/asm-powerpc/elf.h
++++ linux-2.6.17/include/asm-powerpc/elf.h
 @@ -176,6 +176,26 @@ typedef elf_vrreg_t elf_vrregset_t32[ELF
  
  #define ELF_ET_DYN_BASE         (0x08000000)
@@ -20353,10 +20353,10 @@ Index: hardened-sources-2.6.17/include/asm-powerpc/elf.h
  #ifdef __KERNEL__
  
  /* Common routine for both 32-bit and 64-bit processes */
-Index: hardened-sources-2.6.17/include/asm-powerpc/kmap_types.h
+Index: linux-2.6.17/include/asm-powerpc/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-powerpc/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-powerpc/kmap_types.h
+--- linux-2.6.17.orig/include/asm-powerpc/kmap_types.h
++++ linux-2.6.17/include/asm-powerpc/kmap_types.h
 @@ -26,6 +26,7 @@ enum km_type {
  	KM_SOFTIRQ1,
  	KM_PPC_SYNC_PAGE,
@@ -20365,10 +20365,10 @@ Index: hardened-sources-2.6.17/include/asm-powerpc/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-powerpc/page_64.h
+Index: linux-2.6.17/include/asm-powerpc/page_64.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-powerpc/page_64.h
-+++ hardened-sources-2.6.17/include/asm-powerpc/page_64.h
+--- linux-2.6.17.orig/include/asm-powerpc/page_64.h
++++ linux-2.6.17/include/asm-powerpc/page_64.h
 @@ -170,6 +170,15 @@ extern unsigned int HPAGE_SHIFT;
  	(test_thread_flag(TIF_32BIT) ? \
  	 VM_STACK_DEFAULT_FLAGS32 : VM_STACK_DEFAULT_FLAGS64)
@@ -20385,10 +20385,10 @@ Index: hardened-sources-2.6.17/include/asm-powerpc/page_64.h
  #include <asm-generic/page.h>
  
  #endif /* __KERNEL__ */
-Index: hardened-sources-2.6.17/include/asm-ppc/page.h
+Index: linux-2.6.17/include/asm-ppc/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ppc/page.h
-+++ hardened-sources-2.6.17/include/asm-ppc/page.h
+--- linux-2.6.17.orig/include/asm-ppc/page.h
++++ linux-2.6.17/include/asm-ppc/page.h
 @@ -175,6 +175,15 @@ extern __inline__ int get_order(unsigned
  /* We do define AT_SYSINFO_EHDR but don't use the gate mecanism */
  #define __HAVE_ARCH_GATE_AREA		1
@@ -20405,10 +20405,10 @@ Index: hardened-sources-2.6.17/include/asm-ppc/page.h
  #include <asm-generic/memory_model.h>
  #endif /* __KERNEL__ */
  #endif /* _PPC_PAGE_H */
-Index: hardened-sources-2.6.17/include/asm-ppc/pgtable.h
+Index: linux-2.6.17/include/asm-ppc/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-ppc/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-ppc/pgtable.h
+--- linux-2.6.17.orig/include/asm-ppc/pgtable.h
++++ linux-2.6.17/include/asm-ppc/pgtable.h
 @@ -441,11 +441,21 @@ extern unsigned long ioremap_bot, iorema
  
  #define PAGE_NONE	__pgprot(_PAGE_BASE)
@@ -20466,10 +20466,10 @@ Index: hardened-sources-2.6.17/include/asm-ppc/pgtable.h
  #define __S111	PAGE_SHARED_X
  
  #ifndef __ASSEMBLY__
-Index: hardened-sources-2.6.17/include/asm-s390/kmap_types.h
+Index: linux-2.6.17/include/asm-s390/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-s390/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-s390/kmap_types.h
+--- linux-2.6.17.orig/include/asm-s390/kmap_types.h
++++ linux-2.6.17/include/asm-s390/kmap_types.h
 @@ -16,6 +16,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20478,10 +20478,10 @@ Index: hardened-sources-2.6.17/include/asm-s390/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-sh/kmap_types.h
+Index: linux-2.6.17/include/asm-sh/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sh/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-sh/kmap_types.h
+--- linux-2.6.17.orig/include/asm-sh/kmap_types.h
++++ linux-2.6.17/include/asm-sh/kmap_types.h
 @@ -25,7 +25,8 @@ D(9)	KM_IRQ0,
  D(10)	KM_IRQ1,
  D(11)	KM_SOFTIRQ0,
@@ -20492,10 +20492,10 @@ Index: hardened-sources-2.6.17/include/asm-sh/kmap_types.h
  };
  
  #undef D
-Index: hardened-sources-2.6.17/include/asm-sparc/a.out.h
+Index: linux-2.6.17/include/asm-sparc/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/a.out.h
-+++ hardened-sources-2.6.17/include/asm-sparc/a.out.h
+--- linux-2.6.17.orig/include/asm-sparc/a.out.h
++++ linux-2.6.17/include/asm-sparc/a.out.h
 @@ -91,7 +91,7 @@ struct relocation_info /* used when head
  
  #include <asm/page.h>
@@ -20505,10 +20505,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/a.out.h
  
  #endif /* __KERNEL__ */
  
-Index: hardened-sources-2.6.17/include/asm-sparc/elf.h
+Index: linux-2.6.17/include/asm-sparc/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/elf.h
-+++ hardened-sources-2.6.17/include/asm-sparc/elf.h
+--- linux-2.6.17.orig/include/asm-sparc/elf.h
++++ linux-2.6.17/include/asm-sparc/elf.h
 @@ -145,6 +145,17 @@ typedef struct {
  
  #define ELF_ET_DYN_BASE         (TASK_UNMAPPED_BASE)
@@ -20527,10 +20527,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/elf.h
  /* This yields a mask that user programs can use to figure out what
     instruction set this cpu supports.  This can NOT be done in userspace
     on Sparc.  */
-Index: hardened-sources-2.6.17/include/asm-sparc/kmap_types.h
+Index: linux-2.6.17/include/asm-sparc/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-sparc/kmap_types.h
+--- linux-2.6.17.orig/include/asm-sparc/kmap_types.h
++++ linux-2.6.17/include/asm-sparc/kmap_types.h
 @@ -15,6 +15,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20539,10 +20539,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-sparc/page.h
+Index: linux-2.6.17/include/asm-sparc/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/page.h
-+++ hardened-sources-2.6.17/include/asm-sparc/page.h
+--- linux-2.6.17.orig/include/asm-sparc/page.h
++++ linux-2.6.17/include/asm-sparc/page.h
 @@ -161,6 +161,15 @@ extern unsigned long pfn_base;
  #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
@@ -20559,10 +20559,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/page.h
  #endif /* __KERNEL__ */
  
  #include <asm-generic/memory_model.h>
-Index: hardened-sources-2.6.17/include/asm-sparc/pgtable.h
+Index: linux-2.6.17/include/asm-sparc/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-sparc/pgtable.h
+--- linux-2.6.17.orig/include/asm-sparc/pgtable.h
++++ linux-2.6.17/include/asm-sparc/pgtable.h
 @@ -50,6 +50,13 @@ BTFIXUPDEF_INT(page_none)
  BTFIXUPDEF_INT(page_shared)
  BTFIXUPDEF_INT(page_copy)
@@ -20594,10 +20594,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/pgtable.h
  extern unsigned long page_kernel;
  
  #ifdef MODULE
-Index: hardened-sources-2.6.17/include/asm-sparc/pgtsrmmu.h
+Index: linux-2.6.17/include/asm-sparc/pgtsrmmu.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/pgtsrmmu.h
-+++ hardened-sources-2.6.17/include/asm-sparc/pgtsrmmu.h
+--- linux-2.6.17.orig/include/asm-sparc/pgtsrmmu.h
++++ linux-2.6.17/include/asm-sparc/pgtsrmmu.h
 @@ -115,6 +115,16 @@
  				    SRMMU_EXEC | SRMMU_REF)
  #define SRMMU_PAGE_RDONLY  __pgprot(SRMMU_VALID | SRMMU_CACHE | \
@@ -20615,10 +20615,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/pgtsrmmu.h
  #define SRMMU_PAGE_KERNEL  __pgprot(SRMMU_VALID | SRMMU_CACHE | SRMMU_PRIV | \
  				    SRMMU_DIRTY | SRMMU_REF)
  
-Index: hardened-sources-2.6.17/include/asm-sparc/uaccess.h
+Index: linux-2.6.17/include/asm-sparc/uaccess.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc/uaccess.h
-+++ hardened-sources-2.6.17/include/asm-sparc/uaccess.h
+--- linux-2.6.17.orig/include/asm-sparc/uaccess.h
++++ linux-2.6.17/include/asm-sparc/uaccess.h
 @@ -41,7 +41,7 @@
   * No one can read/write anything from userland in the kernel space by setting
   * large size and address near to PAGE_OFFSET - a fault will break his intentions.
@@ -20628,10 +20628,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc/uaccess.h
  #define __kernel_ok (segment_eq(get_fs(), KERNEL_DS))
  #define __access_ok(addr,size) (__user_ok((addr) & get_fs().seg,(size)))
  #define access_ok(type, addr, size)					\
-Index: hardened-sources-2.6.17/include/asm-sparc64/a.out.h
+Index: linux-2.6.17/include/asm-sparc64/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc64/a.out.h
-+++ hardened-sources-2.6.17/include/asm-sparc64/a.out.h
+--- linux-2.6.17.orig/include/asm-sparc64/a.out.h
++++ linux-2.6.17/include/asm-sparc64/a.out.h
 @@ -98,7 +98,7 @@ struct relocation_info /* used when head
  #define STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
  #define STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
@@ -20641,10 +20641,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc64/a.out.h
  		   STACK_TOP32 : STACK_TOP64)
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-sparc64/elf.h
+Index: linux-2.6.17/include/asm-sparc64/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc64/elf.h
-+++ hardened-sources-2.6.17/include/asm-sparc64/elf.h
+--- linux-2.6.17.orig/include/asm-sparc64/elf.h
++++ linux-2.6.17/include/asm-sparc64/elf.h
 @@ -142,6 +142,16 @@ typedef struct {
  #define ELF_ET_DYN_BASE         0x0000010000000000UL
  #endif
@@ -20662,10 +20662,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc64/elf.h
  
  /* This yields a mask that user programs can use to figure out what
     instruction set this cpu supports.  */
-Index: hardened-sources-2.6.17/include/asm-sparc64/kmap_types.h
+Index: linux-2.6.17/include/asm-sparc64/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc64/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-sparc64/kmap_types.h
+--- linux-2.6.17.orig/include/asm-sparc64/kmap_types.h
++++ linux-2.6.17/include/asm-sparc64/kmap_types.h
 @@ -19,6 +19,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20674,10 +20674,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc64/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-sparc64/page.h
+Index: linux-2.6.17/include/asm-sparc64/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-sparc64/page.h
-+++ hardened-sources-2.6.17/include/asm-sparc64/page.h
+--- linux-2.6.17.orig/include/asm-sparc64/page.h
++++ linux-2.6.17/include/asm-sparc64/page.h
 @@ -142,6 +142,15 @@ typedef unsigned long pgprot_t;
  #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
@@ -20694,10 +20694,10 @@ Index: hardened-sources-2.6.17/include/asm-sparc64/page.h
  #endif /* !(__KERNEL__) */
  
  #include <asm-generic/page.h>
-Index: hardened-sources-2.6.17/include/asm-v850/kmap_types.h
+Index: linux-2.6.17/include/asm-v850/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-v850/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-v850/kmap_types.h
+--- linux-2.6.17.orig/include/asm-v850/kmap_types.h
++++ linux-2.6.17/include/asm-v850/kmap_types.h
 @@ -13,6 +13,7 @@ enum km_type {
  	KM_PTE1,
  	KM_IRQ0,
@@ -20706,10 +20706,10 @@ Index: hardened-sources-2.6.17/include/asm-v850/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-x86_64/a.out.h
+Index: linux-2.6.17/include/asm-x86_64/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/a.out.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/a.out.h
+--- linux-2.6.17.orig/include/asm-x86_64/a.out.h
++++ linux-2.6.17/include/asm-x86_64/a.out.h
 @@ -21,7 +21,7 @@ struct exec
  
  #ifdef __KERNEL__
@@ -20719,10 +20719,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/a.out.h
  #endif
  
  #endif /* __A_OUT_GNU_H__ */
-Index: hardened-sources-2.6.17/include/asm-x86_64/elf.h
+Index: linux-2.6.17/include/asm-x86_64/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/elf.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/elf.h
+--- linux-2.6.17.orig/include/asm-x86_64/elf.h
++++ linux-2.6.17/include/asm-x86_64/elf.h
 @@ -90,6 +90,17 @@ typedef struct user_i387_struct elf_fpre
  
  #define ELF_ET_DYN_BASE         (2 * TASK_SIZE / 3)
@@ -20741,10 +20741,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/elf.h
  /* regs is struct pt_regs, pr_reg is elf_gregset_t (which is
     now struct_user_regs, they are different). Assumes current is the process
     getting dumped. */
-Index: hardened-sources-2.6.17/include/asm-x86_64/ia32.h
+Index: linux-2.6.17/include/asm-x86_64/ia32.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/ia32.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/ia32.h
+--- linux-2.6.17.orig/include/asm-x86_64/ia32.h
++++ linux-2.6.17/include/asm-x86_64/ia32.h
 @@ -157,7 +157,13 @@ struct ustat32 {
  	char			f_fpack[6];
  };
@@ -20760,10 +20760,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/ia32.h
  
  #ifdef __KERNEL__
  struct user_desc;
-Index: hardened-sources-2.6.17/include/asm-x86_64/kmap_types.h
+Index: linux-2.6.17/include/asm-x86_64/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/kmap_types.h
+--- linux-2.6.17.orig/include/asm-x86_64/kmap_types.h
++++ linux-2.6.17/include/asm-x86_64/kmap_types.h
 @@ -13,6 +13,7 @@ enum km_type {
  	KM_IRQ1,
  	KM_SOFTIRQ0,
@@ -20772,10 +20772,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/asm-x86_64/page.h
+Index: linux-2.6.17/include/asm-x86_64/page.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/page.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/page.h
+--- linux-2.6.17.orig/include/asm-x86_64/page.h
++++ linux-2.6.17/include/asm-x86_64/page.h
 @@ -134,6 +134,15 @@ typedef struct { unsigned long pgprot; }
  	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
  	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
@@ -20792,10 +20792,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/page.h
  #define __HAVE_ARCH_GATE_AREA 1	
  
  #endif /* __KERNEL__ */
-Index: hardened-sources-2.6.17/include/asm-x86_64/pgalloc.h
+Index: linux-2.6.17/include/asm-x86_64/pgalloc.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/pgalloc.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/pgalloc.h
+--- linux-2.6.17.orig/include/asm-x86_64/pgalloc.h
++++ linux-2.6.17/include/asm-x86_64/pgalloc.h
 @@ -7,7 +7,7 @@
  #include <linux/mm.h>
  
@@ -20805,10 +20805,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/pgalloc.h
  #define pud_populate(mm, pud, pmd) \
  		set_pud(pud, __pud(_PAGE_TABLE | __pa(pmd)))
  #define pgd_populate(mm, pgd, pud) \
-Index: hardened-sources-2.6.17/include/asm-x86_64/pgtable.h
+Index: linux-2.6.17/include/asm-x86_64/pgtable.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/pgtable.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/pgtable.h
+--- linux-2.6.17.orig/include/asm-x86_64/pgtable.h
++++ linux-2.6.17/include/asm-x86_64/pgtable.h
 @@ -180,6 +180,10 @@ static inline pte_t ptep_get_and_clear_f
  #define PAGE_COPY_EXEC __pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
  #define PAGE_READONLY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
@@ -20864,10 +20864,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/pgtable.h
  static inline pte_t pte_mkdirty(pte_t pte)	{ set_pte(&pte, __pte(pte_val(pte) | _PAGE_DIRTY)); return pte; }
  static inline pte_t pte_mkyoung(pte_t pte)	{ set_pte(&pte, __pte(pte_val(pte) | _PAGE_ACCESSED)); return pte; }
  static inline pte_t pte_mkwrite(pte_t pte)	{ set_pte(&pte, __pte(pte_val(pte) | _PAGE_RW)); return pte; }
-Index: hardened-sources-2.6.17/include/asm-x86_64/system.h
+Index: linux-2.6.17/include/asm-x86_64/system.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-x86_64/system.h
-+++ hardened-sources-2.6.17/include/asm-x86_64/system.h
+--- linux-2.6.17.orig/include/asm-x86_64/system.h
++++ linux-2.6.17/include/asm-x86_64/system.h
 @@ -366,6 +366,6 @@ static inline unsigned long __cmpxchg(vo
  
  void cpu_idle_wait(void);
@@ -20876,10 +20876,10 @@ Index: hardened-sources-2.6.17/include/asm-x86_64/system.h
 +#define arch_align_stack(x) (x)
  
  #endif
-Index: hardened-sources-2.6.17/include/asm-xtensa/kmap_types.h
+Index: linux-2.6.17/include/asm-xtensa/kmap_types.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/asm-xtensa/kmap_types.h
-+++ hardened-sources-2.6.17/include/asm-xtensa/kmap_types.h
+--- linux-2.6.17.orig/include/asm-xtensa/kmap_types.h
++++ linux-2.6.17/include/asm-xtensa/kmap_types.h
 @@ -25,6 +25,7 @@ enum km_type {
    KM_IRQ1,
    KM_SOFTIRQ0,
@@ -20888,10 +20888,10 @@ Index: hardened-sources-2.6.17/include/asm-xtensa/kmap_types.h
    KM_TYPE_NR
  };
  
-Index: hardened-sources-2.6.17/include/linux/a.out.h
+Index: linux-2.6.17/include/linux/a.out.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/a.out.h
-+++ hardened-sources-2.6.17/include/linux/a.out.h
+--- linux-2.6.17.orig/include/linux/a.out.h
++++ linux-2.6.17/include/linux/a.out.h
 @@ -7,6 +7,16 @@
  
  #include <asm/a.out.h>
@@ -20924,10 +20924,10 @@ Index: hardened-sources-2.6.17/include/linux/a.out.h
  #if !defined (N_MAGIC)
  #define N_MAGIC(exec) ((exec).a_info & 0xffff)
  #endif
-Index: hardened-sources-2.6.17/include/linux/binfmts.h
+Index: linux-2.6.17/include/linux/binfmts.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/binfmts.h
-+++ hardened-sources-2.6.17/include/linux/binfmts.h
+--- linux-2.6.17.orig/include/linux/binfmts.h
++++ linux-2.6.17/include/linux/binfmts.h
 @@ -7,10 +7,10 @@ struct pt_regs;
  
  /*
@@ -20959,10 +20959,10 @@ Index: hardened-sources-2.6.17/include/linux/binfmts.h
 +
  #endif /* __KERNEL__ */
  #endif /* _LINUX_BINFMTS_H */
-Index: hardened-sources-2.6.17/include/linux/capability.h
+Index: linux-2.6.17/include/linux/capability.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/capability.h
-+++ hardened-sources-2.6.17/include/linux/capability.h
+--- linux-2.6.17.orig/include/linux/capability.h
++++ linux-2.6.17/include/linux/capability.h
 @@ -358,6 +358,7 @@ static inline kernel_cap_t cap_invert(ke
  #define cap_is_fs_cap(c)     (CAP_TO_MASK(c) & CAP_FS_MASK)
  
@@ -20971,10 +20971,10 @@ Index: hardened-sources-2.6.17/include/linux/capability.h
  int __capable(struct task_struct *t, int cap);
  
  #endif /* __KERNEL__ */
-Index: hardened-sources-2.6.17/include/linux/elf.h
+Index: linux-2.6.17/include/linux/elf.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/elf.h
-+++ hardened-sources-2.6.17/include/linux/elf.h
+--- linux-2.6.17.orig/include/linux/elf.h
++++ linux-2.6.17/include/linux/elf.h
 @@ -5,6 +5,10 @@
  #include <linux/auxvec.h>
  #include <asm/elf.h>
@@ -21057,10 +21057,10 @@ Index: hardened-sources-2.6.17/include/linux/elf.h
  
  #endif
  
-Index: hardened-sources-2.6.17/include/linux/gracl.h
+Index: linux-2.6.17/include/linux/gracl.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/gracl.h
++++ linux-2.6.17/include/linux/gracl.h
 @@ -0,0 +1,316 @@
 +#ifndef GR_ACL_H
 +#define GR_ACL_H
@@ -21378,10 +21378,10 @@ Index: hardened-sources-2.6.17/include/linux/gracl.h
 +
 +#endif
 +
-Index: hardened-sources-2.6.17/include/linux/gralloc.h
+Index: linux-2.6.17/include/linux/gralloc.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/gralloc.h
++++ linux-2.6.17/include/linux/gralloc.h
 @@ -0,0 +1,8 @@
 +#ifndef __GRALLOC_H
 +#define __GRALLOC_H
@@ -21391,10 +21391,10 @@ Index: hardened-sources-2.6.17/include/linux/gralloc.h
 +void *acl_alloc(unsigned long len);
 +
 +#endif
-Index: hardened-sources-2.6.17/include/linux/grdefs.h
+Index: linux-2.6.17/include/linux/grdefs.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/grdefs.h
++++ linux-2.6.17/include/linux/grdefs.h
 @@ -0,0 +1,131 @@
 +#ifndef GRDEFS_H
 +#define GRDEFS_H
@@ -21527,10 +21527,10 @@ Index: hardened-sources-2.6.17/include/linux/grdefs.h
 +};
 +
 +#endif
-Index: hardened-sources-2.6.17/include/linux/grinternal.h
+Index: linux-2.6.17/include/linux/grinternal.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/grinternal.h
++++ linux-2.6.17/include/linux/grinternal.h
 @@ -0,0 +1,211 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
@@ -21743,10 +21743,10 @@ Index: hardened-sources-2.6.17/include/linux/grinternal.h
 +#endif
 +
 +#endif
-Index: hardened-sources-2.6.17/include/linux/grmsg.h
+Index: linux-2.6.17/include/linux/grmsg.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/grmsg.h
++++ linux-2.6.17/include/linux/grmsg.h
 @@ -0,0 +1,108 @@
 +#define DEFAULTSECMSG "%.256s[%.16s:%d] uid/euid:%u/%u gid/egid:%u/%u, parent %.256s[%.16s:%d] uid/euid:%u/%u gid/egid:%u/%u"
 +#define GR_ACL_PROCACCT_MSG "%.256s[%.16s:%d] IP:%u.%u.%u.%u TTY:%.64s uid/euid:%u/%u gid/egid:%u/%u run time:[%ud %uh %um %us] cpu time:[%ud %uh %um %us] %s with exit code %ld, parent %.256s[%.16s:%d] IP:%u.%u.%u.%u TTY:%.64s uid/euid:%u/%u gid/egid:%u/%u"
@@ -21856,10 +21856,10 @@ Index: hardened-sources-2.6.17/include/linux/grmsg.h
 +#define GR_SHMR_AUDIT_MSG "shared memory of uid:%u euid:%u removed by "
 +#define GR_RESOURCE_MSG "denied resource overstep by requesting %lu for %.16s against limit %lu for "
 +#define GR_TEXTREL_AUDIT_MSG "text relocation in %s, VMA:0x%08lx 0x%08lx by "
-Index: hardened-sources-2.6.17/include/linux/grsecurity.h
+Index: linux-2.6.17/include/linux/grsecurity.h
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/include/linux/grsecurity.h
++++ linux-2.6.17/include/linux/grsecurity.h
 @@ -0,0 +1,196 @@
 +#ifndef GR_SECURITY_H
 +#define GR_SECURITY_H
@@ -22057,10 +22057,10 @@ Index: hardened-sources-2.6.17/include/linux/grsecurity.h
 +#endif
 +
 +#endif
-Index: hardened-sources-2.6.17/include/linux/highmem.h
+Index: linux-2.6.17/include/linux/highmem.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/highmem.h
-+++ hardened-sources-2.6.17/include/linux/highmem.h
+--- linux-2.6.17.orig/include/linux/highmem.h
++++ linux-2.6.17/include/linux/highmem.h
 @@ -70,9 +70,9 @@ alloc_zeroed_user_highpage(struct vm_are
  
  static inline void clear_highpage(struct page *page)
@@ -22073,10 +22073,10 @@ Index: hardened-sources-2.6.17/include/linux/highmem.h
  }
  
  /*
-Index: hardened-sources-2.6.17/include/linux/mm.h
+Index: linux-2.6.17/include/linux/mm.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/mm.h
-+++ hardened-sources-2.6.17/include/linux/mm.h
+--- linux-2.6.17.orig/include/linux/mm.h
++++ linux-2.6.17/include/linux/mm.h
 @@ -38,6 +38,7 @@ extern int sysctl_legacy_va_layout;
  #include <asm/pgtable.h>
  #include <asm/processor.h>
@@ -22160,10 +22160,10 @@ Index: hardened-sources-2.6.17/include/linux/mm.h
 +
  #endif /* __KERNEL__ */
  #endif /* _LINUX_MM_H */
-Index: hardened-sources-2.6.17/include/linux/mman.h
+Index: linux-2.6.17/include/linux/mman.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/mman.h
-+++ hardened-sources-2.6.17/include/linux/mman.h
+--- linux-2.6.17.orig/include/linux/mman.h
++++ linux-2.6.17/include/linux/mman.h
 @@ -59,6 +59,11 @@ static inline unsigned long
  calc_vm_flag_bits(unsigned long flags)
  {
@@ -22176,10 +22176,10 @@ Index: hardened-sources-2.6.17/include/linux/mman.h
  	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
  	       _calc_vm_trans(flags, MAP_EXECUTABLE, VM_EXECUTABLE) |
  	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
-Index: hardened-sources-2.6.17/include/linux/module.h
+Index: linux-2.6.17/include/linux/module.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/module.h
-+++ hardened-sources-2.6.17/include/linux/module.h
+--- linux-2.6.17.orig/include/linux/module.h
++++ linux-2.6.17/include/linux/module.h
 @@ -273,16 +273,16 @@ struct module
  	int (*init)(void);
  
@@ -22201,10 +22201,10 @@ Index: hardened-sources-2.6.17/include/linux/module.h
  
  	/* Arch-specific module values */
  	struct mod_arch_specific arch;
-Index: hardened-sources-2.6.17/include/linux/moduleloader.h
+Index: linux-2.6.17/include/linux/moduleloader.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/moduleloader.h
-+++ hardened-sources-2.6.17/include/linux/moduleloader.h
+--- linux-2.6.17.orig/include/linux/moduleloader.h
++++ linux-2.6.17/include/linux/moduleloader.h
 @@ -17,9 +17,21 @@ int module_frob_arch_sections(Elf_Ehdr *
     sections.  Returns NULL on failure. */
  void *module_alloc(unsigned long size);
@@ -22227,10 +22227,10 @@ Index: hardened-sources-2.6.17/include/linux/moduleloader.h
  /* Apply the given relocation to the (simplified) ELF.  Return -error
     or 0. */
  int apply_relocate(Elf_Shdr *sechdrs,
-Index: hardened-sources-2.6.17/include/linux/random.h
+Index: linux-2.6.17/include/linux/random.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/random.h
-+++ hardened-sources-2.6.17/include/linux/random.h
+--- linux-2.6.17.orig/include/linux/random.h
++++ linux-2.6.17/include/linux/random.h
 @@ -62,6 +62,8 @@ extern __u32 secure_tcpv6_sequence_numbe
  extern u64 secure_dccp_sequence_number(__u32 saddr, __u32 daddr,
  				       __u16 sport, __u16 dport);
@@ -22240,10 +22240,10 @@ Index: hardened-sources-2.6.17/include/linux/random.h
  #ifndef MODULE
  extern struct file_operations random_fops, urandom_fops;
  #endif
-Index: hardened-sources-2.6.17/include/linux/sched.h
+Index: linux-2.6.17/include/linux/sched.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/sched.h
-+++ hardened-sources-2.6.17/include/linux/sched.h
+--- linux-2.6.17.orig/include/linux/sched.h
++++ linux-2.6.17/include/linux/sched.h
 @@ -40,6 +40,7 @@
  #include <linux/auxvec.h>	/* For AT_VECTOR_SIZE */
  
@@ -22334,10 +22334,10 @@ Index: hardened-sources-2.6.17/include/linux/sched.h
  	mm->get_unmapped_area = arch_get_unmapped_area;
  	mm->unmap_area = arch_unmap_area;
  }
-Index: hardened-sources-2.6.17/include/linux/shm.h
+Index: linux-2.6.17/include/linux/shm.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/shm.h
-+++ hardened-sources-2.6.17/include/linux/shm.h
+--- linux-2.6.17.orig/include/linux/shm.h
++++ linux-2.6.17/include/linux/shm.h
 @@ -86,6 +86,10 @@ struct shmid_kernel /* private to the ke
  	pid_t			shm_cprid;
  	pid_t			shm_lprid;
@@ -22349,10 +22349,10 @@ Index: hardened-sources-2.6.17/include/linux/shm.h
  };
  
  /* shm_mode upper byte flags */
-Index: hardened-sources-2.6.17/include/linux/sysctl.h
+Index: linux-2.6.17/include/linux/sysctl.h
 ===================================================================
---- hardened-sources-2.6.17.orig/include/linux/sysctl.h
-+++ hardened-sources-2.6.17/include/linux/sysctl.h
+--- linux-2.6.17.orig/include/linux/sysctl.h
++++ linux-2.6.17/include/linux/sysctl.h
 @@ -148,8 +148,21 @@ enum
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
@@ -22375,10 +22375,10 @@ Index: hardened-sources-2.6.17/include/linux/sysctl.h
  
  /* CTL_VM names: */
  enum
-Index: hardened-sources-2.6.17/init/Kconfig
+Index: linux-2.6.17/init/Kconfig
 ===================================================================
---- hardened-sources-2.6.17.orig/init/Kconfig
-+++ hardened-sources-2.6.17/init/Kconfig
+--- linux-2.6.17.orig/init/Kconfig
++++ linux-2.6.17/init/Kconfig
 @@ -268,6 +268,7 @@ menuconfig EMBEDDED
  config KALLSYMS
  	 bool "Load all symbols for debugging/kksymoops" if EMBEDDED
@@ -22387,10 +22387,10 @@ Index: hardened-sources-2.6.17/init/Kconfig
  	 help
  	   Say Y here to let the kernel print out symbolic crash information and
  	   symbolic stack backtraces. This increases the size of the kernel
-Index: hardened-sources-2.6.17/init/main.c
+Index: linux-2.6.17/init/main.c
 ===================================================================
---- hardened-sources-2.6.17.orig/init/main.c
-+++ hardened-sources-2.6.17/init/main.c
+--- linux-2.6.17.orig/init/main.c
++++ linux-2.6.17/init/main.c
 @@ -100,6 +100,7 @@ static inline void mark_rodata_ro(void) 
  #ifdef CONFIG_TC
  extern void tc_init(void);
@@ -22424,10 +22424,10 @@ Index: hardened-sources-2.6.17/init/main.c
  	/*
  	 * Ok, we have completed the initial bootup, and
  	 * we're essentially up and running. Get rid of the
-Index: hardened-sources-2.6.17/ipc/msg.c
+Index: linux-2.6.17/ipc/msg.c
 ===================================================================
---- hardened-sources-2.6.17.orig/ipc/msg.c
-+++ hardened-sources-2.6.17/ipc/msg.c
+--- linux-2.6.17.orig/ipc/msg.c
++++ linux-2.6.17/ipc/msg.c
 @@ -32,6 +32,7 @@
  #include <linux/audit.h>
  #include <linux/seq_file.h>
@@ -22455,10 +22455,10 @@ Index: hardened-sources-2.6.17/ipc/msg.c
  		freeque (msq, msqid); 
  		break;
  	}
-Index: hardened-sources-2.6.17/ipc/sem.c
+Index: linux-2.6.17/ipc/sem.c
 ===================================================================
---- hardened-sources-2.6.17.orig/ipc/sem.c
-+++ hardened-sources-2.6.17/ipc/sem.c
+--- linux-2.6.17.orig/ipc/sem.c
++++ linux-2.6.17/ipc/sem.c
 @@ -79,6 +79,7 @@
  #include <linux/capability.h>
  #include <linux/seq_file.h>
@@ -22486,10 +22486,10 @@ Index: hardened-sources-2.6.17/ipc/sem.c
  		freeary(sma, semid);
  		err = 0;
  		break;
-Index: hardened-sources-2.6.17/ipc/shm.c
+Index: linux-2.6.17/ipc/shm.c
 ===================================================================
---- hardened-sources-2.6.17.orig/ipc/shm.c
-+++ hardened-sources-2.6.17/ipc/shm.c
+--- linux-2.6.17.orig/ipc/shm.c
++++ linux-2.6.17/ipc/shm.c
 @@ -33,6 +33,7 @@
  #include <linux/ptrace.h>
  #include <linux/seq_file.h>
@@ -22612,10 +22612,10 @@ Index: hardened-sources-2.6.17/ipc/shm.c
 +#endif
 +	return;
 +}
-Index: hardened-sources-2.6.17/kernel/capability.c
+Index: linux-2.6.17/kernel/capability.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/capability.c
-+++ hardened-sources-2.6.17/kernel/capability.c
+--- linux-2.6.17.orig/kernel/capability.c
++++ linux-2.6.17/kernel/capability.c
 @@ -12,6 +12,7 @@
  #include <linux/module.h>
  #include <linux/security.h>
@@ -22656,10 +22656,10 @@ Index: hardened-sources-2.6.17/kernel/capability.c
  }
  EXPORT_SYMBOL(capable);
 +EXPORT_SYMBOL(capable_nolog);
-Index: hardened-sources-2.6.17/kernel/configs.c
+Index: linux-2.6.17/kernel/configs.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/configs.c
-+++ hardened-sources-2.6.17/kernel/configs.c
+--- linux-2.6.17.orig/kernel/configs.c
++++ linux-2.6.17/kernel/configs.c
 @@ -89,8 +89,16 @@ static int __init ikconfig_init(void)
  	struct proc_dir_entry *entry;
  
@@ -22677,10 +22677,10 @@ Index: hardened-sources-2.6.17/kernel/configs.c
  	if (!entry)
  		return -ENOMEM;
  
-Index: hardened-sources-2.6.17/kernel/exit.c
+Index: linux-2.6.17/kernel/exit.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/exit.c
-+++ hardened-sources-2.6.17/kernel/exit.c
+--- linux-2.6.17.orig/kernel/exit.c
++++ linux-2.6.17/kernel/exit.c
 @@ -36,6 +36,11 @@
  #include <linux/compat.h>
  #include <linux/pipe_fs_i.h>
@@ -22759,10 +22759,10 @@ Index: hardened-sources-2.6.17/kernel/exit.c
  	__exit_files(tsk);
  	__exit_fs(tsk);
  	exit_namespace(tsk);
-Index: hardened-sources-2.6.17/kernel/fork.c
+Index: linux-2.6.17/kernel/fork.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/fork.c
-+++ hardened-sources-2.6.17/kernel/fork.c
+--- linux-2.6.17.orig/kernel/fork.c
++++ linux-2.6.17/kernel/fork.c
 @@ -44,6 +44,7 @@
  #include <linux/rmap.h>
  #include <linux/acct.h>
@@ -22828,10 +22828,10 @@ Index: hardened-sources-2.6.17/kernel/fork.c
  		if (clone_flags & CLONE_VFORK) {
  			p->vfork_done = &vfork;
  			init_completion(&vfork);
-Index: hardened-sources-2.6.17/kernel/futex.c
+Index: linux-2.6.17/kernel/futex.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/futex.c
-+++ hardened-sources-2.6.17/kernel/futex.c
+--- linux-2.6.17.orig/kernel/futex.c
++++ linux-2.6.17/kernel/futex.c
 @@ -151,6 +151,11 @@ static int get_futex_key(unsigned long u
  	struct page *page;
  	int err;
@@ -22844,10 +22844,10 @@ Index: hardened-sources-2.6.17/kernel/futex.c
  	/*
  	 * The futex address must be "naturally" aligned.
  	 */
-Index: hardened-sources-2.6.17/kernel/kallsyms.c
+Index: linux-2.6.17/kernel/kallsyms.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/kallsyms.c
-+++ hardened-sources-2.6.17/kernel/kallsyms.c
+--- linux-2.6.17.orig/kernel/kallsyms.c
++++ linux-2.6.17/kernel/kallsyms.c
 @@ -301,7 +301,6 @@ static unsigned long get_ksymbol_core(st
  
  static void reset_iter(struct kallsym_iter *iter, loff_t new_pos)
@@ -22881,10 +22881,10 @@ Index: hardened-sources-2.6.17/kernel/kallsyms.c
  	if (entry)
  		entry->proc_fops = &kallsyms_operations;
  	return 0;
-Index: hardened-sources-2.6.17/kernel/kprobes.c
+Index: linux-2.6.17/kernel/kprobes.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/kprobes.c
-+++ hardened-sources-2.6.17/kernel/kprobes.c
+--- linux-2.6.17.orig/kernel/kprobes.c
++++ linux-2.6.17/kernel/kprobes.c
 @@ -106,7 +106,7 @@ kprobe_opcode_t __kprobes *get_insn_slot
  	 * kernel image and loaded module images reside. This is required
  	 * so x86_64 can correctly handle the %rip-relative fixups.
@@ -22894,10 +22894,10 @@ Index: hardened-sources-2.6.17/kernel/kprobes.c
  	if (!kip->insns) {
  		kfree(kip);
  		return NULL;
-Index: hardened-sources-2.6.17/kernel/module.c
+Index: linux-2.6.17/kernel/module.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/module.c
-+++ hardened-sources-2.6.17/kernel/module.c
+--- linux-2.6.17.orig/kernel/module.c
++++ linux-2.6.17/kernel/module.c
 @@ -40,10 +40,15 @@
  #include <linux/string.h>
  #include <linux/sched.h>
@@ -23337,10 +23337,10 @@ Index: hardened-sources-2.6.17/kernel/module.c
  			return mod;
  	return NULL;
  }
-Index: hardened-sources-2.6.17/kernel/pid.c
+Index: linux-2.6.17/kernel/pid.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/pid.c
-+++ hardened-sources-2.6.17/kernel/pid.c
+--- linux-2.6.17.orig/kernel/pid.c
++++ linux-2.6.17/kernel/pid.c
 @@ -26,6 +26,7 @@
  #include <linux/init.h>
  #include <linux/bootmem.h>
@@ -23376,10 +23376,10 @@ Index: hardened-sources-2.6.17/kernel/pid.c
  }
  
  EXPORT_SYMBOL(find_task_by_pid_type);
-Index: hardened-sources-2.6.17/kernel/posix-cpu-timers.c
+Index: linux-2.6.17/kernel/posix-cpu-timers.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/posix-cpu-timers.c
-+++ hardened-sources-2.6.17/kernel/posix-cpu-timers.c
+--- linux-2.6.17.orig/kernel/posix-cpu-timers.c
++++ linux-2.6.17/kernel/posix-cpu-timers.c
 @@ -6,6 +6,7 @@
  #include <linux/posix-timers.h>
  #include <asm/uaccess.h>
@@ -23396,10 +23396,10 @@ Index: hardened-sources-2.6.17/kernel/posix-cpu-timers.c
  		if (psecs >= sig->rlim[RLIMIT_CPU].rlim_cur) {
  			/*
  			 * At the soft limit, send a SIGXCPU every second.
-Index: hardened-sources-2.6.17/kernel/printk.c
+Index: linux-2.6.17/kernel/printk.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/printk.c
-+++ hardened-sources-2.6.17/kernel/printk.c
+--- linux-2.6.17.orig/kernel/printk.c
++++ linux-2.6.17/kernel/printk.c
 @@ -31,6 +31,7 @@
  #include <linux/security.h>
  #include <linux/bootmem.h>
@@ -23420,10 +23420,10 @@ Index: hardened-sources-2.6.17/kernel/printk.c
  	error = security_syslog(type);
  	if (error)
  		return error;
-Index: hardened-sources-2.6.17/kernel/ptrace.c
+Index: linux-2.6.17/kernel/ptrace.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/ptrace.c
-+++ hardened-sources-2.6.17/kernel/ptrace.c
+--- linux-2.6.17.orig/kernel/ptrace.c
++++ linux-2.6.17/kernel/ptrace.c
 @@ -18,6 +18,7 @@
  #include <linux/ptrace.h>
  #include <linux/security.h>
@@ -23457,10 +23457,10 @@ Index: hardened-sources-2.6.17/kernel/ptrace.c
  	ret = arch_ptrace(child, request, addr, data);
  	if (ret < 0)
  		goto out_put_task_struct;
-Index: hardened-sources-2.6.17/kernel/resource.c
+Index: linux-2.6.17/kernel/resource.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/resource.c
-+++ hardened-sources-2.6.17/kernel/resource.c
+--- linux-2.6.17.orig/kernel/resource.c
++++ linux-2.6.17/kernel/resource.c
 @@ -136,10 +136,27 @@ static int __init ioresources_init(void)
  {
  	struct proc_dir_entry *entry;
@@ -23489,10 +23489,10 @@ Index: hardened-sources-2.6.17/kernel/resource.c
  	if (entry)
  		entry->proc_fops = &proc_iomem_operations;
  	return 0;
-Index: hardened-sources-2.6.17/kernel/sched.c
+Index: linux-2.6.17/kernel/sched.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/sched.c
-+++ hardened-sources-2.6.17/kernel/sched.c
+--- linux-2.6.17.orig/kernel/sched.c
++++ linux-2.6.17/kernel/sched.c
 @@ -50,6 +50,7 @@
  #include <linux/times.h>
  #include <linux/acct.h>
@@ -23511,10 +23511,10 @@ Index: hardened-sources-2.6.17/kernel/sched.c
  		return -EPERM;
  
  	retval = security_task_setnice(current, nice);
-Index: hardened-sources-2.6.17/kernel/signal.c
+Index: linux-2.6.17/kernel/signal.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/signal.c
-+++ hardened-sources-2.6.17/kernel/signal.c
+--- linux-2.6.17.orig/kernel/signal.c
++++ linux-2.6.17/kernel/signal.c
 @@ -25,6 +25,7 @@
  #include <linux/signal.h>
  #include <linux/audit.h>
@@ -23565,10 +23565,10 @@ Index: hardened-sources-2.6.17/kernel/signal.c
  	spin_unlock_irqrestore(&t->sighand->siglock, flags);
  
  	return ret;
-Index: hardened-sources-2.6.17/kernel/sys.c
+Index: linux-2.6.17/kernel/sys.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/sys.c
-+++ hardened-sources-2.6.17/kernel/sys.c
+--- linux-2.6.17.orig/kernel/sys.c
++++ linux-2.6.17/kernel/sys.c
 @@ -30,6 +30,7 @@
  #include <linux/tty.h>
  #include <linux/signal.h>
@@ -23642,10 +23642,10 @@ Index: hardened-sources-2.6.17/kernel/sys.c
  	if (sgid != (gid_t) -1)
  		current->sgid = sgid;
  
-Index: hardened-sources-2.6.17/kernel/sysctl.c
+Index: linux-2.6.17/kernel/sysctl.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/sysctl.c
-+++ hardened-sources-2.6.17/kernel/sysctl.c
+--- linux-2.6.17.orig/kernel/sysctl.c
++++ linux-2.6.17/kernel/sysctl.c
 @@ -54,6 +54,14 @@ extern int proc_nr_files(ctl_table *tabl
                       void __user *buffer, size_t *lenp, loff_t *ppos);
  
@@ -23731,10 +23731,10 @@ Index: hardened-sources-2.6.17/kernel/sysctl.c
  			error = do_sysctl_strategy(table, name, nlen,
  						   oldval, oldlenp,
  						   newval, newlen, context);
-Index: hardened-sources-2.6.17/kernel/time.c
+Index: linux-2.6.17/kernel/time.c
 ===================================================================
---- hardened-sources-2.6.17.orig/kernel/time.c
-+++ hardened-sources-2.6.17/kernel/time.c
+--- linux-2.6.17.orig/kernel/time.c
++++ linux-2.6.17/kernel/time.c
 @@ -36,6 +36,7 @@
  #include <linux/security.h>
  #include <linux/fs.h>
@@ -23762,10 +23762,10 @@ Index: hardened-sources-2.6.17/kernel/time.c
  	return do_sys_settimeofday(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
  }
  
-Index: hardened-sources-2.6.17/mm/filemap.c
+Index: linux-2.6.17/mm/filemap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/filemap.c
-+++ hardened-sources-2.6.17/mm/filemap.c
+--- linux-2.6.17.orig/mm/filemap.c
++++ linux-2.6.17/mm/filemap.c
 @@ -30,6 +30,7 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -23797,10 +23797,10 @@ Index: hardened-sources-2.6.17/mm/filemap.c
  			if (*pos >= limit) {
  				send_sig(SIGXFSZ, current, 0);
  				return -EFBIG;
-Index: hardened-sources-2.6.17/mm/madvise.c
+Index: linux-2.6.17/mm/madvise.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/madvise.c
-+++ hardened-sources-2.6.17/mm/madvise.c
+--- linux-2.6.17.orig/mm/madvise.c
++++ linux-2.6.17/mm/madvise.c
 @@ -15,9 +15,46 @@
   * We can potentially split a vm area into separate
   * areas, each area with its own behavior.
@@ -23848,10 +23848,10 @@ Index: hardened-sources-2.6.17/mm/madvise.c
  {
  	struct mm_struct * mm = vma->vm_mm;
  	int error = 0;
-Index: hardened-sources-2.6.17/mm/memory.c
+Index: linux-2.6.17/mm/memory.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/memory.c
-+++ hardened-sources-2.6.17/mm/memory.c
+--- linux-2.6.17.orig/mm/memory.c
++++ linux-2.6.17/mm/memory.c
 @@ -48,6 +48,7 @@
  #include <linux/rmap.h>
  #include <linux/module.h>
@@ -24105,10 +24105,10 @@ Index: hardened-sources-2.6.17/mm/memory.c
  	pgd = pgd_offset(mm, address);
  	pud = pud_alloc(mm, pgd, address);
  	if (!pud)
-Index: hardened-sources-2.6.17/mm/mempolicy.c
+Index: linux-2.6.17/mm/mempolicy.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/mempolicy.c
-+++ hardened-sources-2.6.17/mm/mempolicy.c
+--- linux-2.6.17.orig/mm/mempolicy.c
++++ linux-2.6.17/mm/mempolicy.c
 @@ -346,6 +346,12 @@ check_range(struct mm_struct *mm, unsign
  			if (prev && prev->vm_end < vma->vm_start)
  				return ERR_PTR(-EFAULT);
@@ -24122,10 +24122,10 @@ Index: hardened-sources-2.6.17/mm/mempolicy.c
  		if (!is_vm_hugetlb_page(vma) &&
  		    ((flags & MPOL_MF_STRICT) ||
  		     ((flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) &&
-Index: hardened-sources-2.6.17/mm/mlock.c
+Index: linux-2.6.17/mm/mlock.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/mlock.c
-+++ hardened-sources-2.6.17/mm/mlock.c
+--- linux-2.6.17.orig/mm/mlock.c
++++ linux-2.6.17/mm/mlock.c
 @@ -10,14 +10,85 @@
  #include <linux/mm.h>
  #include <linux/mempolicy.h>
@@ -24306,10 +24306,10 @@ Index: hardened-sources-2.6.17/mm/mlock.c
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
  		ret = do_mlockall(flags);
-Index: hardened-sources-2.6.17/mm/mmap.c
+Index: linux-2.6.17/mm/mmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/mmap.c
-+++ hardened-sources-2.6.17/mm/mmap.c
+--- linux-2.6.17.orig/mm/mmap.c
++++ linux-2.6.17/mm/mmap.c
 @@ -25,6 +25,7 @@
  #include <linux/mount.h>
  #include <linux/mempolicy.h>
@@ -24897,10 +24897,10 @@ Index: hardened-sources-2.6.17/mm/mmap.c
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-Index: hardened-sources-2.6.17/mm/mprotect.c
+Index: linux-2.6.17/mm/mprotect.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/mprotect.c
-+++ hardened-sources-2.6.17/mm/mprotect.c
+--- linux-2.6.17.orig/mm/mprotect.c
++++ linux-2.6.17/mm/mprotect.c
 @@ -19,11 +19,18 @@
  #include <linux/mempolicy.h>
  #include <linux/personality.h>
@@ -25164,10 +25164,10 @@ Index: hardened-sources-2.6.17/mm/mprotect.c
  out:
  	up_write(&current->mm->mmap_sem);
  	return error;
-Index: hardened-sources-2.6.17/mm/mremap.c
+Index: linux-2.6.17/mm/mremap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/mremap.c
-+++ hardened-sources-2.6.17/mm/mremap.c
+--- linux-2.6.17.orig/mm/mremap.c
++++ linux-2.6.17/mm/mremap.c
 @@ -106,6 +106,12 @@ static void move_ptes(struct vm_area_str
  		pte = ptep_clear_flush(vma, old_addr, old_pte);
  		/* ZERO_PAGE can be dependant on virtual addr */
@@ -25279,10 +25279,10 @@ Index: hardened-sources-2.6.17/mm/mremap.c
  	}
  out:
  	if (ret & ~PAGE_MASK)
-Index: hardened-sources-2.6.17/mm/page_alloc.c
+Index: linux-2.6.17/mm/page_alloc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/page_alloc.c
-+++ hardened-sources-2.6.17/mm/page_alloc.c
+--- linux-2.6.17.orig/mm/page_alloc.c
++++ linux-2.6.17/mm/page_alloc.c
 @@ -334,7 +334,7 @@ static inline int page_is_buddy(struct p
  static inline void __free_one_page(struct page *page,
  		struct zone *zone, unsigned int order)
@@ -25304,10 +25304,10 @@ Index: hardened-sources-2.6.17/mm/page_alloc.c
  	zone->free_pages += order_size;
  	while (order < MAX_ORDER-1) {
  		unsigned long combined_idx;
-Index: hardened-sources-2.6.17/mm/rmap.c
+Index: linux-2.6.17/mm/rmap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/rmap.c
-+++ hardened-sources-2.6.17/mm/rmap.c
+--- linux-2.6.17.orig/mm/rmap.c
++++ linux-2.6.17/mm/rmap.c
 @@ -106,6 +106,19 @@ int anon_vma_prepare(struct vm_area_stru
  			list_add(&vma->anon_vma_node, &anon_vma->head);
  			allocated = NULL;
@@ -25328,10 +25328,10 @@ Index: hardened-sources-2.6.17/mm/rmap.c
  		spin_unlock(&mm->page_table_lock);
  
  		if (locked)
-Index: hardened-sources-2.6.17/mm/shmem.c
+Index: linux-2.6.17/mm/shmem.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/shmem.c
-+++ hardened-sources-2.6.17/mm/shmem.c
+--- linux-2.6.17.orig/mm/shmem.c
++++ linux-2.6.17/mm/shmem.c
 @@ -2245,7 +2245,7 @@ static struct file_system_type tmpfs_fs_
  	.get_sb		= shmem_get_sb,
  	.kill_sb	= kill_litter_super,
@@ -25341,10 +25341,10 @@ Index: hardened-sources-2.6.17/mm/shmem.c
  
  static int __init init_tmpfs(void)
  {
-Index: hardened-sources-2.6.17/mm/tiny-shmem.c
+Index: linux-2.6.17/mm/tiny-shmem.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/tiny-shmem.c
-+++ hardened-sources-2.6.17/mm/tiny-shmem.c
+--- linux-2.6.17.orig/mm/tiny-shmem.c
++++ linux-2.6.17/mm/tiny-shmem.c
 @@ -27,7 +27,7 @@ static struct file_system_type tmpfs_fs_
  	.kill_sb	= kill_litter_super,
  };
@@ -25354,10 +25354,10 @@ Index: hardened-sources-2.6.17/mm/tiny-shmem.c
  
  static int __init init_tmpfs(void)
  {
-Index: hardened-sources-2.6.17/mm/vmalloc.c
+Index: linux-2.6.17/mm/vmalloc.c
 ===================================================================
---- hardened-sources-2.6.17.orig/mm/vmalloc.c
-+++ hardened-sources-2.6.17/mm/vmalloc.c
+--- linux-2.6.17.orig/mm/vmalloc.c
++++ linux-2.6.17/mm/vmalloc.c
 @@ -193,6 +193,8 @@ struct vm_struct *__get_vm_area_node(uns
  
  	write_lock(&vmlist_lock);
@@ -25376,10 +25376,10 @@ Index: hardened-sources-2.6.17/mm/vmalloc.c
  	}
  
  found:
-Index: hardened-sources-2.6.17/net/ipv4/inet_connection_sock.c
+Index: linux-2.6.17/net/ipv4/inet_connection_sock.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/inet_connection_sock.c
-+++ hardened-sources-2.6.17/net/ipv4/inet_connection_sock.c
+--- linux-2.6.17.orig/net/ipv4/inet_connection_sock.c
++++ linux-2.6.17/net/ipv4/inet_connection_sock.c
 @@ -16,6 +16,7 @@
  #include <linux/config.h>
  #include <linux/module.h>
@@ -25388,10 +25388,10 @@ Index: hardened-sources-2.6.17/net/ipv4/inet_connection_sock.c
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
-Index: hardened-sources-2.6.17/net/ipv4/inet_hashtables.c
+Index: linux-2.6.17/net/ipv4/inet_hashtables.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/inet_hashtables.c
-+++ hardened-sources-2.6.17/net/ipv4/inet_hashtables.c
+--- linux-2.6.17.orig/net/ipv4/inet_hashtables.c
++++ linux-2.6.17/net/ipv4/inet_hashtables.c
 @@ -19,11 +19,14 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
@@ -25416,10 +25416,10 @@ Index: hardened-sources-2.6.17/net/ipv4/inet_hashtables.c
   		if (tw) {
   			inet_twsk_deschedule(tw, death_row);
   			inet_twsk_put(tw);
-Index: hardened-sources-2.6.17/net/ipv4/netfilter/Kconfig
+Index: linux-2.6.17/net/ipv4/netfilter/Kconfig
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/netfilter/Kconfig
-+++ hardened-sources-2.6.17/net/ipv4/netfilter/Kconfig
+--- linux-2.6.17.orig/net/ipv4/netfilter/Kconfig
++++ linux-2.6.17/net/ipv4/netfilter/Kconfig
 @@ -314,6 +314,21 @@ config IP_NF_MATCH_HASHLIMIT
  	  destination IP' or `500pps from any given source IP'  with a single
  	  IPtables rule.
@@ -25447,10 +25447,10 @@ Index: hardened-sources-2.6.17/net/ipv4/netfilter/Kconfig
  
  endmenu
 -
-Index: hardened-sources-2.6.17/net/ipv4/netfilter/Makefile
+Index: linux-2.6.17/net/ipv4/netfilter/Makefile
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/netfilter/Makefile
-+++ hardened-sources-2.6.17/net/ipv4/netfilter/Makefile
+--- linux-2.6.17.orig/net/ipv4/netfilter/Makefile
++++ linux-2.6.17/net/ipv4/netfilter/Makefile
 @@ -61,6 +61,7 @@ obj-$(CONFIG_IP_NF_MATCH_DSCP) += ipt_ds
  obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
  obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
@@ -25459,10 +25459,10 @@ Index: hardened-sources-2.6.17/net/ipv4/netfilter/Makefile
  
  # targets
  obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
-Index: hardened-sources-2.6.17/net/ipv4/netfilter/ipt_stealth.c
+Index: linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 ===================================================================
 --- /dev/null
-+++ hardened-sources-2.6.17/net/ipv4/netfilter/ipt_stealth.c
++++ linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 @@ -0,0 +1,112 @@
 +/* Kernel module to add stealth support.
 + *
@@ -25576,10 +25576,10 @@ Index: hardened-sources-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 +
 +module_init(init);
 +module_exit(fini);
-Index: hardened-sources-2.6.17/net/ipv4/tcp_ipv4.c
+Index: linux-2.6.17/net/ipv4/tcp_ipv4.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/tcp_ipv4.c
-+++ hardened-sources-2.6.17/net/ipv4/tcp_ipv4.c
+--- linux-2.6.17.orig/net/ipv4/tcp_ipv4.c
++++ linux-2.6.17/net/ipv4/tcp_ipv4.c
 @@ -62,6 +62,7 @@
  #include <linux/jhash.h>
  #include <linux/init.h>
@@ -25588,10 +25588,10 @@ Index: hardened-sources-2.6.17/net/ipv4/tcp_ipv4.c
  
  #include <net/icmp.h>
  #include <net/inet_hashtables.h>
-Index: hardened-sources-2.6.17/net/ipv4/udp.c
+Index: linux-2.6.17/net/ipv4/udp.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/ipv4/udp.c
-+++ hardened-sources-2.6.17/net/ipv4/udp.c
+--- linux-2.6.17.orig/net/ipv4/udp.c
++++ linux-2.6.17/net/ipv4/udp.c
 @@ -102,6 +102,7 @@
  #include <linux/skbuff.h>
  #include <linux/proc_fs.h>
@@ -25652,10 +25652,10 @@ Index: hardened-sources-2.6.17/net/ipv4/udp.c
    	copied = skb->len - sizeof(struct udphdr);
  	if (copied > len) {
  		copied = len;
-Index: hardened-sources-2.6.17/net/socket.c
+Index: linux-2.6.17/net/socket.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/socket.c
-+++ hardened-sources-2.6.17/net/socket.c
+--- linux-2.6.17.orig/net/socket.c
++++ linux-2.6.17/net/socket.c
 @@ -86,6 +86,7 @@
  #include <linux/kmod.h>
  #include <linux/audit.h>
@@ -25808,10 +25808,10 @@ Index: hardened-sources-2.6.17/net/socket.c
  	return err;
  }
  
-Index: hardened-sources-2.6.17/net/unix/af_unix.c
+Index: linux-2.6.17/net/unix/af_unix.c
 ===================================================================
---- hardened-sources-2.6.17.orig/net/unix/af_unix.c
-+++ hardened-sources-2.6.17/net/unix/af_unix.c
+--- linux-2.6.17.orig/net/unix/af_unix.c
++++ linux-2.6.17/net/unix/af_unix.c
 @@ -117,6 +117,7 @@
  #include <linux/mount.h>
  #include <net/checksum.h>
@@ -25876,10 +25876,10 @@ Index: hardened-sources-2.6.17/net/unix/af_unix.c
  		list = &unix_socket_table[addr->hash];
  	} else {
  		list = &unix_socket_table[dentry->d_inode->i_ino & (UNIX_HASH_SIZE-1)];
-Index: hardened-sources-2.6.17/security/Kconfig
+Index: linux-2.6.17/security/Kconfig
 ===================================================================
---- hardened-sources-2.6.17.orig/security/Kconfig
-+++ hardened-sources-2.6.17/security/Kconfig
+--- linux-2.6.17.orig/security/Kconfig
++++ linux-2.6.17/security/Kconfig
 @@ -4,6 +4,453 @@
  
  menu "Security options"
@@ -26334,10 +26334,10 @@ Index: hardened-sources-2.6.17/security/Kconfig
  config KEYS
  	bool "Enable access key retention support"
  	help
-Index: hardened-sources-2.6.17/security/commoncap.c
+Index: linux-2.6.17/security/commoncap.c
 ===================================================================
---- hardened-sources-2.6.17.orig/security/commoncap.c
-+++ hardened-sources-2.6.17/security/commoncap.c
+--- linux-2.6.17.orig/security/commoncap.c
++++ linux-2.6.17/security/commoncap.c
 @@ -24,6 +24,7 @@
  #include <linux/ptrace.h>
  #include <linux/xattr.h>
@@ -26401,10 +26401,10 @@ Index: hardened-sources-2.6.17/security/commoncap.c
  EXPORT_SYMBOL(cap_settime);
  EXPORT_SYMBOL(cap_ptrace);
  EXPORT_SYMBOL(cap_capget);
-Index: hardened-sources-2.6.17/security/dummy.c
+Index: linux-2.6.17/security/dummy.c
 ===================================================================
---- hardened-sources-2.6.17.orig/security/dummy.c
-+++ hardened-sources-2.6.17/security/dummy.c
+--- linux-2.6.17.orig/security/dummy.c
++++ linux-2.6.17/security/dummy.c
 @@ -29,6 +29,7 @@
  #include <linux/hugetlb.h>
  #include <linux/ptrace.h>
