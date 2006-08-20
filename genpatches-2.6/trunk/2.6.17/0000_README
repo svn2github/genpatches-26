@@ -70,6 +70,10 @@ Patch:	1007_linux-2.6.17.8.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1008_linux-2.6.17.9.patch
+From:	www.kernel.org
+Desc:	PPC970 clear EN_ATTN fix. Fixing CVE-2006-4093
+
 Patch:	1700_sparc-obp64-naming.patch
 From:	http://marc.theaimsgroup.com/?l=linux-sparc&m=110314220200915&w=2
 Desc:	Fix OBP naming on some sparc systems
