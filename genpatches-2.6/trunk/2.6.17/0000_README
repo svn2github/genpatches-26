@@ -86,6 +86,10 @@ Patch:	1710_alpha-ev56-kconfig.patch
 From:	Fernando J. Pereda <ferdy@gentoo.org>
 Desc:	Update EV56 Kconfig dependencies
 
+Patch:	1900_nfs-stall.patch
+From:	http://bugs.gentoo.org/144263
+Desc:	Fix NFS stall bug
+
 Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
