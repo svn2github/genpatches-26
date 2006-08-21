@@ -1,3 +1,16 @@
+Index: linux-2.6.17/Documentation/dontdiff
+===================================================================
+--- linux-2.6.17.orig/Documentation/dontdiff
++++ linux-2.6.17/Documentation/dontdiff
+@@ -55,7 +55,7 @@ aic7*seq.h*
+ aicasm
+ aicdb.h*
+ asm
+-asm-offsets.*
++asm-offsets.h
+ asm_offsets.*
+ autoconf.h*
+ bbootsect
 Index: linux-2.6.17/Makefile
 ===================================================================
 --- linux-2.6.17.orig/Makefile
@@ -279,6 +292,15 @@ Index: linux-2.6.17/arch/i386/Kconfig
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/Kconfig
 +++ linux-2.6.17/arch/i386/Kconfig
+@@ -948,7 +948,7 @@ config PCI
+ choice
+ 	prompt "PCI access mode"
+ 	depends on PCI && !X86_VISWS
+-	default PCI_GOANY
++	default PCI_GODIRECT
+ 	---help---
+ 	  On PCI systems, the BIOS can be used to detect the PCI devices and
+ 	  determine their configuration. However, some old PCI motherboards
 @@ -980,7 +980,7 @@ endchoice
  
  config PCI_BIOS
@@ -567,6 +589,15 @@ Index: linux-2.6.17/arch/i386/kernel/apm.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/apm.c
 +++ linux-2.6.17/arch/i386/kernel/apm.c
+@@ -235,7 +235,7 @@
+ #include "io_ports.h"
+ 
+ extern unsigned long get_cmos_time(void);
+-extern void machine_real_restart(unsigned char *, int);
++extern void machine_real_restart(const unsigned char *, unsigned int);
+ 
+ #if defined(CONFIG_APM_DISPLAY_BLANK) && defined(CONFIG_VT)
+ extern int (*console_blank_hook)(int);
 @@ -589,9 +589,18 @@ static u8 apm_bios_call(u32 func, u32 eb
  	struct desc_struct	save_desc_40;
  	struct desc_struct	*gdt;
@@ -629,6 +660,15 @@ Index: linux-2.6.17/arch/i386/kernel/apm.c
  	put_cpu();
  	apm_restore_cpus(cpus);
  	return error;
+@@ -910,7 +938,7 @@ recalc:
+  
+ static void apm_power_off(void)
+ {
+-	unsigned char	po_bios_call[] = {
++	const unsigned char	po_bios_call[] = {
+ 		0xb8, 0x00, 0x10,	/* movw  $0x1000,ax  */
+ 		0x8e, 0xd0,		/* movw  ax,ss       */
+ 		0xbc, 0x00, 0xf0,	/* movw  $0xf000,sp  */
 Index: linux-2.6.17/arch/i386/kernel/asm-offsets.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/asm-offsets.c
@@ -652,7 +692,7 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  #include <asm/semaphore.h>
  #include <asm/processor.h>
  #include <asm/i387.h>
-@@ -19,9 +18,6 @@
+@@ -19,16 +18,18 @@
  
  #include "cpu.h"
  
@@ -662,18 +702,19 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  DEFINE_PER_CPU(unsigned char, cpu_16bit_stack[CPU_16BIT_STACK_SIZE]);
  EXPORT_PER_CPU_SYMBOL(cpu_16bit_stack);
  
-@@ -401,6 +397,10 @@ void __cpuinit identify_cpu(struct cpuin
- 	if (this_cpu->c_init)
- 		this_cpu->c_init(c);
- 
-+#if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_KERNEXEC) || defined(CONFIG_PAX_NOVSYSCALL)
-+	clear_bit(X86_FEATURE_SEP, c->x86_capability);
-+#endif
+ static int cachesize_override __cpuinitdata = -1;
+ static int disable_x86_fxsr __cpuinitdata;
+ static int disable_x86_serial_nr __cpuinitdata = 1;
 +
- 	/* Disable the PN if appropriate */
- 	squash_the_stupid_serial_number(c);
++#ifdef CONFIG_PAX_NOVSYSCALL
++static int disable_x86_sep __cpuinitdata = 1;
++#else
+ static int disable_x86_sep __cpuinitdata;
++#endif
  
-@@ -590,11 +590,10 @@ void __init early_cpu_init(void)
+ struct cpu_dev * cpu_devs[X86_VENDOR_NUM] = {};
+ 
+@@ -590,11 +591,10 @@ void __init early_cpu_init(void)
  void __cpuinit cpu_init(void)
  {
  	int cpu = smp_processor_id();
@@ -687,7 +728,7 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  
  	if (cpu_test_and_set(cpu, cpu_initialized)) {
  		printk(KERN_WARNING "CPU#%d already initialized!\n", cpu);
-@@ -612,29 +611,11 @@ void __cpuinit cpu_init(void)
+@@ -612,29 +612,11 @@ void __cpuinit cpu_init(void)
  	}
  
  	/*
@@ -719,7 +760,7 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  
  	/* Set up GDT entry for 16bit stack */
   	*(__u64 *)(&gdt[GDT_ENTRY_ESPFIX_SS]) |=
-@@ -642,10 +623,10 @@ void __cpuinit cpu_init(void)
+@@ -642,10 +624,10 @@ void __cpuinit cpu_init(void)
  		((((__u64)stk16_off) << 32) & 0xff00000000000000ULL) |
  		(CPU_16BIT_STACK_SIZE - 1);
  
@@ -733,7 +774,7 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  	load_idt(&idt_descr);
  
  	/*
-@@ -660,7 +641,7 @@ void __cpuinit cpu_init(void)
+@@ -660,7 +642,7 @@ void __cpuinit cpu_init(void)
  	load_esp0(t, thread);
  	set_tss_desc(cpu,t);
  	load_TR_desc();
@@ -742,7 +783,7 @@ Index: linux-2.6.17/arch/i386/kernel/cpu/common.c
  
  #ifdef CONFIG_DOUBLEFAULT
  	/* Set up doublefault TSS pointer in the GDT */
-@@ -668,7 +649,7 @@ void __cpuinit cpu_init(void)
+@@ -668,7 +650,7 @@ void __cpuinit cpu_init(void)
  #endif
  
  	/* Clear %fs and %gs. */
@@ -794,7 +835,7 @@ Index: linux-2.6.17/arch/i386/kernel/efi.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/efi.c
 +++ linux-2.6.17/arch/i386/kernel/efi.c
-@@ -64,82 +64,48 @@ extern void * boot_ioremap(unsigned long
+@@ -64,82 +64,43 @@ extern void * boot_ioremap(unsigned long
  
  static unsigned long efi_rt_eflags;
  static DEFINE_SPINLOCK(efi_rt_lock);
@@ -835,14 +876,10 @@ Index: linux-2.6.17/arch/i386/kernel/efi.c
 -		temp = PAGE_OFFSET + 0x400000;
 -		swapper_pg_dir[pgd_index(0x400000)].pgd =
 -		    swapper_pg_dir[pgd_index(temp)].pgd;
+-	}
 +	clone_pgd_range(efi_bak_pg_dir_pointer, swapper_pg_dir, KERNEL_PGD_PTRS);
-+	if (USER_PTRS_PER_PGD >= KERNEL_PGD_PTRS)
-+		clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PTRS_PER_PGD, KERNEL_PGD_PTRS);
-+	else {
-+		unsigned long i;
-+		for (i = 0; i < KERNEL_PGD_PTRS; ++i)
-+			clone_pgd_range(swapper_pg_dir + i, swapper_pg_dir + USER_PTRS_PER_PGD + i, 1);
- 	}
++	clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
++			USER_PGD_PTRS >= KERNEL_PGD_PTRS ? KERNEL_PGD_PTRS : USER_PGD_PTRS);
  
  	/*
  	 * After the lock is released, the original page table is restored.
@@ -895,7 +932,7 @@ Index: linux-2.6.17/arch/i386/kernel/efi.c
  phys_efi_set_virtual_address_map(unsigned long memory_map_size,
  				 unsigned long descriptor_size,
  				 u32 descriptor_version,
-@@ -155,7 +121,7 @@ phys_efi_set_virtual_address_map(unsigne
+@@ -155,7 +116,7 @@ phys_efi_set_virtual_address_map(unsigne
  	return status;
  }
  
@@ -1069,7 +1106,25 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  ENTRY(resume_userspace)
   	cli				# make sure we don't miss an interrupt
  					# setting need_resched or sigpending
-@@ -213,13 +239,33 @@ sysenter_past_esp:
+@@ -190,9 +216,17 @@ sysenter_past_esp:
+  * Load the potential sixth argument from user stack.
+  * Careful about security.
+  */
++
++#ifdef CONFIG_PAX_MEMORY_UDEREF
++	pushl $(__USER_DS)
++	pop %ds
++1:	movl %ds:(%ebp),%ebp
++#else
+ 	cmpl $__PAGE_OFFSET-3,%ebp
+ 	jae syscall_fault
+ 1:	movl (%ebp),%ebp
++#endif
++
+ .section __ex_table,"a"
+ 	.align 4
+ 	.long 1b,syscall_fault
+@@ -213,13 +247,33 @@ sysenter_past_esp:
  	movl TI_flags(%ebp), %ecx
  	testw $_TIF_ALLWORK_MASK, %cx
  	jne syscall_exit_work
@@ -1103,7 +1158,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  
  	# system call handler stub
  ENTRY(system_call)
-@@ -247,6 +293,10 @@ syscall_exit:
+@@ -247,6 +301,10 @@ syscall_exit:
  	testw $_TIF_ALLWORK_MASK, %cx	# current->work
  	jne syscall_exit_work
  
@@ -1114,7 +1169,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  restore_all:
  	movl EFLAGS(%esp), %eax		# mix EFLAGS, SS and CS
  	# Warning: OLDSS(%esp) contains the wrong/random values if we
-@@ -402,7 +452,7 @@ syscall_badsys:
+@@ -402,7 +460,7 @@ syscall_badsys:
   * Build the entry stubs and pointer table with
   * some assembler magic.
   */
@@ -1123,7 +1178,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  ENTRY(interrupt)
  .text
  
-@@ -412,7 +462,7 @@ ENTRY(irq_entries_start)
+@@ -412,7 +470,7 @@ ENTRY(irq_entries_start)
  	ALIGN
  1:	pushl $vector-256
  	jmp common_interrupt
@@ -1132,7 +1187,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  	.long 1b
  .text
  vector=vector+1
-@@ -459,10 +509,19 @@ error_code:
+@@ -459,10 +517,19 @@ error_code:
  	movl ORIG_EAX(%esp), %edx	# get the error code
  	movl %eax, ORIG_EAX(%esp)
  	movl %ecx, ES(%esp)
@@ -1153,7 +1208,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  	call *%edi
  	jmp ret_from_exception
  
-@@ -558,6 +617,13 @@ nmi_stack_correct:
+@@ -558,6 +625,13 @@ nmi_stack_correct:
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
@@ -1167,7 +1222,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  	jmp restore_all
  
  nmi_stack_fixup:
-@@ -588,6 +654,13 @@ nmi_16bit_stack:
+@@ -588,6 +662,13 @@ nmi_16bit_stack:
  	FIXUP_ESPFIX_STACK		# %eax == %esp
  	xorl %edx,%edx			# zero error code
  	call do_nmi
@@ -1181,7 +1236,7 @@ Index: linux-2.6.17/arch/i386/kernel/entry.S
  	RESTORE_REGS
  	lss 12+4(%esp), %esp		# back to 16bit stack
  1:	iret
-@@ -663,7 +736,6 @@ ENTRY(spurious_interrupt_bug)
+@@ -663,7 +744,6 @@ ENTRY(spurious_interrupt_bug)
  	pushl $do_spurious_interrupt_bug
  	jmp error_code
  
@@ -1371,7 +1426,66 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  	movl %eax,%ds
  	movl %eax,%es
  
-@@ -412,32 +460,50 @@ ignore_int:
+@@ -378,13 +426,35 @@ rp_sidt:
+ 	addl $8,%edi
+ 	dec %ecx
+ 	jne rp_sidt
++
++	lea ignore_int_error_code,%edx
++	movw %dx,%ax		/* selector = 0x0010 = cs */
++	movw $0x8E00,%dx	/* interrupt gate - dpl=0, present */
++
++	lea idt_table,%edi
++	movl %eax,8*8(%edi)
++	movl %edx,8*8+4(%edi)
++	movl %eax,10*8(%edi)
++	movl %edx,10*8+4(%edi)
++	movl %eax,11*8(%edi)
++	movl %edx,11*8+4(%edi)
++	movl %eax,12*8(%edi)
++	movl %edx,12*8+4(%edi)
++	movl %eax,13*8(%edi)
++	movl %edx,13*8+4(%edi)
++	movl %eax,14*8(%edi)
++	movl %edx,14*8+4(%edi)
++	movl %eax,17*8(%edi)
++	movl %edx,17*8+4(%edi)
+ 	ret
+ 
+ /* This is the default interrupt "handler" :-) */
+ 	ALIGN
++ignore_int_error_code:
++	addl $4,%esp
+ ignore_int:
+-	cld
+ #ifdef CONFIG_PRINTK
++	cld
+ 	pushl %eax
+ 	pushl %ecx
+ 	pushl %edx
+@@ -393,17 +463,16 @@ ignore_int:
+ 	movl $(__KERNEL_DS),%eax
+ 	movl %eax,%ds
+ 	movl %eax,%es
+-	pushl 16(%esp)
+-	pushl 24(%esp)
+-	pushl 32(%esp)
+-	pushl 40(%esp)
++	pushl 28(%esp)
++	pushl 28(%esp)
++	pushl 28(%esp)
+ 	pushl $int_msg
+ #ifdef CONFIG_EARLY_PRINTK
+ 	call early_printk
+ #else
+ 	call printk
+ #endif
+-	addl $(5*4),%esp
++	addl $(4*4),%esp
+ 	popl %ds
+ 	popl %es
+ 	popl %edx
+@@ -412,32 +481,50 @@ ignore_int:
  #endif
  	iret
  
@@ -1438,7 +1552,7 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  int_msg:
  	.asciz "Unknown interrupt or fault at EIP %p %p %p\n"
  
-@@ -465,7 +531,7 @@ idt_descr:
+@@ -465,10 +552,12 @@ idt_descr:
  
  # boot GDT descriptor (later on used by CPU#0):
  	.word 0				# 32 bit align gdt_desc.address
@@ -1447,7 +1561,12 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  	.word GDT_ENTRIES*8-1
  	.long cpu_gdt_table
  
-@@ -476,13 +542,13 @@ cpu_gdt_descr:
++	.fill NR_CPUS*8-6,1,0		# space for the other GDT descriptors
++
+ /*
+  * The boot_gdt_table must mirror the equivalent in setup.S and is
+  * used only for booting.
+@@ -476,13 +565,13 @@ cpu_gdt_descr:
  	.align L1_CACHE_BYTES
  ENTRY(boot_gdt_table)
  	.fill GDT_ENTRY_BOOT_CS,8,0
@@ -1460,11 +1579,11 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
   * The Global Descriptor Table contains 28 quadwords, per-CPU.
   */
 -	.align L1_CACHE_BYTES
-+	.align 4096
++	.align PAGE_SIZE_asm
  ENTRY(cpu_gdt_table)
  	.quad 0x0000000000000000	/* NULL descriptor */
  	.quad 0x0000000000000000	/* 0x0b reserved */
-@@ -497,10 +563,10 @@ ENTRY(cpu_gdt_table)
+@@ -497,10 +586,10 @@ ENTRY(cpu_gdt_table)
  	.quad 0x0000000000000000	/* 0x53 reserved */
  	.quad 0x0000000000000000	/* 0x5b reserved */
  
@@ -1479,7 +1598,7 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  
  	.quad 0x0000000000000000	/* 0x80 TSS descriptor */
  	.quad 0x0000000000000000	/* 0x88 LDT descriptor */
-@@ -510,24 +576,30 @@ ENTRY(cpu_gdt_table)
+@@ -510,24 +599,30 @@ ENTRY(cpu_gdt_table)
  	 * They code segments and data segments have fixed 64k limits,
  	 * the transfer segment sizes are set at run time.
  	 */
@@ -2043,6 +2162,15 @@ Index: linux-2.6.17/arch/i386/kernel/reboot.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/reboot.c
 +++ linux-2.6.17/arch/i386/kernel/reboot.c
+@@ -25,7 +25,7 @@
+ void (*pm_power_off)(void);
+ EXPORT_SYMBOL(pm_power_off);
+ 
+-static int reboot_mode;
++static unsigned short reboot_mode;
+ static int reboot_thru_bios;
+ 
+ #ifdef CONFIG_SMP
 @@ -138,18 +138,18 @@ core_initcall(reboot_init);
     doesn't work with at least one type of 486 motherboard.  It is easy
     to stop this code working; hence the copious comments. */
@@ -2066,7 +2194,30 @@ Index: linux-2.6.17/arch/i386/kernel/reboot.c
  }
  real_mode_gdt = { sizeof (real_mode_gdt_entries) - 1, real_mode_gdt_entries },
  real_mode_idt = { 0x3ff, NULL },
-@@ -203,6 +203,10 @@ void machine_real_restart(unsigned char 
+@@ -175,7 +175,7 @@ no_idt = { 0, NULL };
+    More could be done here to set up the registers as if a CPU reset had
+    occurred; hopefully real BIOSs don't assume much. */
+ 
+-static unsigned char real_mode_switch [] =
++static const unsigned char real_mode_switch [] =
+ {
+ 	0x66, 0x0f, 0x20, 0xc0,			/*    movl  %cr0,%eax        */
+ 	0x66, 0x83, 0xe0, 0x11,			/*    andl  $0x00000011,%eax */
+@@ -189,7 +189,7 @@ static unsigned char real_mode_switch []
+ 	0x24, 0x10,				/* f: andb  $0x10,al         */
+ 	0x66, 0x0f, 0x22, 0xc0			/*    movl  %eax,%cr0        */
+ };
+-static unsigned char jump_to_bios [] =
++static const unsigned char jump_to_bios [] =
+ {
+ 	0xea, 0x00, 0x00, 0xff, 0xff		/*    ljmp  $0xffff,$0x0000  */
+ };
+@@ -199,10 +199,14 @@ static unsigned char jump_to_bios [] =
+  * specified by the code and length parameters.
+  * We assume that length will aways be less that 100!
+  */
+-void machine_real_restart(unsigned char *code, int length)
++void machine_real_restart(const unsigned char *code, unsigned int length)
  {
  	unsigned long flags;
  
@@ -2077,24 +2228,55 @@ Index: linux-2.6.17/arch/i386/kernel/reboot.c
  	local_irq_disable();
  
  	/* Write zero to CMOS register number 0x0f, which the BIOS POST
-@@ -223,9 +227,17 @@ void machine_real_restart(unsigned char 
+@@ -223,8 +227,16 @@ void machine_real_restart(unsigned char 
  	   from the kernel segment.  This assumes the kernel segment starts at
  	   virtual address PAGE_OFFSET. */
  
+-	memcpy (swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
+-		sizeof (swapper_pg_dir [0]) * KERNEL_PGD_PTRS);
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
 +
- 	memcpy (swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
- 		sizeof (swapper_pg_dir [0]) * KERNEL_PGD_PTRS);
- 
++	clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
++			USER_PGD_PTRS >= KERNEL_PGD_PTRS ? KERNEL_PGD_PTRS : USER_PGD_PTRS);
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
 +#endif
-+
+ 
  	/*
  	 * Use `swapper_pg_dir' as our page directory.
- 	 */
+@@ -237,7 +249,7 @@ void machine_real_restart(unsigned char 
+ 	   REBOOT.COM programs, and the previous reset routine did this
+ 	   too. */
+ 
+-	*((unsigned short *)0x472) = reboot_mode;
++	__put_user(reboot_mode, (unsigned short __user *)0x472);
+ 
+ 	/* For the switch to real mode, copy some code to low memory.  It has
+ 	   to be in the first 64k because it is running in 16-bit mode, and it
+@@ -245,9 +257,9 @@ void machine_real_restart(unsigned char 
+ 	   off paging.  Copy it near the end of the first page, out of the way
+ 	   of BIOS variables. */
+ 
+-	memcpy ((void *) (0x1000 - sizeof (real_mode_switch) - 100),
++	flags = __copy_to_user ((void __user *) (0x1000 - sizeof (real_mode_switch) - 100),
+ 		real_mode_switch, sizeof (real_mode_switch));
+-	memcpy ((void *) (0x1000 - 100), code, length);
++	flags = __copy_to_user ((void __user *) (0x1000 - 100), code, length);
+ 
+ 	/* Set up the IDT for real mode. */
+ 
+@@ -329,7 +341,7 @@ void machine_emergency_restart(void)
+ 			__asm__ __volatile__("int3");
+ 		}
+ 		/* rebooting needs to touch the page at absolute addr 0 */
+-		*((unsigned short *)__va(0x472)) = reboot_mode;
++		__put_user(reboot_mode, (unsigned short __user *)0x472);
+ 		for (;;) {
+ 			mach_reboot_fixups(); /* for board specific fixups */
+ 			mach_reboot();
 Index: linux-2.6.17/arch/i386/kernel/setup.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/setup.c
@@ -2181,6 +2363,19 @@ Index: linux-2.6.17/arch/i386/kernel/signal.c
  		return;
  
  	if (test_thread_flag(TIF_RESTORE_SIGMASK))
+Index: linux-2.6.17/arch/i386/kernel/smpboot.c
+===================================================================
+--- linux-2.6.17.orig/arch/i386/kernel/smpboot.c
++++ linux-2.6.17/arch/i386/kernel/smpboot.c
+@@ -1069,7 +1069,7 @@ static int __cpuinit __smp_prepare_cpu(i
+ 
+ 	/* init low mem mapping */
+ 	clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
+-			KERNEL_PGD_PTRS);
++			USER_PGD_PTRS >= KERNEL_PGD_PTRS ? KERNEL_PGD_PTRS : USER_PGD_PTRS);
+ 	flush_tlb_all();
+ 	schedule_work(&task);
+ 	wait_for_completion(&done);
 Index: linux-2.6.17/arch/i386/kernel/sys_i386.c
 ===================================================================
 --- linux-2.6.17.orig/arch/i386/kernel/sys_i386.c
@@ -2465,7 +2660,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	while (valid_stack_ptr(tinfo, stack)) {
  		addr = *stack++;
 -		if (__kernel_text_address(addr))
-+		if (__kernel_text_address(addr)) {
++		if (__kernel_text_address(addr + __KERNEL_TEXT_OFFSET)) {
  			printed = print_addr_and_symbol(addr, log_lvl, printed);
 +			--i;
 +		}
@@ -2512,7 +2707,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	}
  	printk("\n");
  }	
-@@ -306,9 +309,11 @@ static void handle_BUG(struct pt_regs *r
+@@ -306,29 +309,34 @@ static void handle_BUG(struct pt_regs *r
  	char *file;
  	char c;
  	unsigned long eip;
@@ -2525,7 +2720,20 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	if (eip < PAGE_OFFSET)
  		goto no_bug;
  	if (__get_user(ud2, (unsigned short __user *)eip))
-@@ -325,10 +330,12 @@ static void handle_BUG(struct pt_regs *r
+ 		goto no_bug;
+ 	if (ud2 != 0x0b0f)
+ 		goto no_bug;
+-	if (__get_user(line, (unsigned short __user *)(eip + 2)))
++	if (__get_user(line, (unsigned short __user *)(eip + 3)))
+ 		goto bug;
+-	if (__get_user(file, (char * __user *)(eip + 4)) ||
+-		(unsigned long)file < PAGE_OFFSET || __get_user(c, file))
++	if (__get_user(file, (char * __user *)(eip + 8)) || file < _text + __KERNEL_TEXT_OFFSET)
++		goto bug;
++	if (__get_user(c, file))
+ 		file = "<bad filename>";
+ 
+ 	printk(KERN_EMERG "------------[ cut here ]------------\n");
  	printk(KERN_EMERG "kernel BUG at %s:%d!\n", file, line);
  
  no_bug:
@@ -2538,7 +2746,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	printk(KERN_EMERG "Kernel BUG\n");
  }
  
-@@ -430,7 +437,7 @@ void die(const char * str, struct pt_reg
+@@ -430,7 +438,7 @@ void die(const char * str, struct pt_reg
  
  static inline void die_if_kernel(const char * str, struct pt_regs * regs, long err)
  {
@@ -2547,7 +2755,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  		die(str, regs, err);
  }
  
-@@ -448,7 +455,7 @@ static void __kprobes do_trap(int trapnr
+@@ -448,7 +456,7 @@ static void __kprobes do_trap(int trapnr
  		goto trap_signal;
  	}
  
@@ -2556,7 +2764,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  		goto kernel_trap;
  
  	trap_signal: {
-@@ -536,7 +543,7 @@ fastcall void __kprobes do_general_prote
+@@ -536,7 +544,7 @@ fastcall void __kprobes do_general_prote
  					      long error_code)
  {
  	int cpu = get_cpu();
@@ -2565,7 +2773,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	struct thread_struct *thread = &current->thread;
  
  	/*
-@@ -572,9 +579,25 @@ fastcall void __kprobes do_general_prote
+@@ -572,9 +580,25 @@ fastcall void __kprobes do_general_prote
  	if (regs->eflags & VM_MASK)
  		goto gp_in_vm86;
  
@@ -2592,7 +2800,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	current->thread.error_code = error_code;
  	current->thread.trap_no = 13;
  	force_sig(SIGSEGV, current);
-@@ -590,6 +613,13 @@ gp_in_kernel:
+@@ -590,6 +614,13 @@ gp_in_kernel:
  		if (notify_die(DIE_GPF, "general protection fault", regs,
  				error_code, 13, SIGSEGV) == NOTIFY_STOP)
  			return;
@@ -2606,7 +2814,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  		die("general protection fault", regs, error_code);
  	}
  }
-@@ -663,7 +693,7 @@ void die_nmi (struct pt_regs *regs, cons
+@@ -663,7 +694,7 @@ void die_nmi (struct pt_regs *regs, cons
  	/* If we are in kernel we are probably nested up pretty bad
  	 * and might aswell get out now while we still can.
  	*/
@@ -2615,7 +2823,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  		current->thread.trap_no = 2;
  		crash_kexec(regs);
  	}
-@@ -816,7 +846,7 @@ fastcall void __kprobes do_debug(struct 
+@@ -816,7 +847,7 @@ fastcall void __kprobes do_debug(struct 
  		 * check for kernel mode by just checking the CPL
  		 * of CS.
  		 */
@@ -2624,7 +2832,7 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  			goto clear_TF_reenable;
  	}
  
-@@ -1106,7 +1136,19 @@ do { \
+@@ -1106,7 +1137,19 @@ do { \
   */
  void set_intr_gate(unsigned int n, void *addr)
  {
@@ -3864,7 +4072,7 @@ Index: linux-2.6.17/arch/i386/mm/extable.c
  
  #ifdef CONFIG_PNPBIOS
 -	if (unlikely((regs->xcs & ~15) == (GDT_ENTRY_PNPBIOS_BASE << 3)))
-+	if (unlikely(regs->xcs == (GDT_ENTRY_PNPBIOS_BASE << 3)))
++	if (unlikely(!(regs->eflags & VM_MASK) && ((regs->xcs & 0xFFFCU) == PNP_CS32 || (regs->xcs & 0xFFFCU) == PNP_CS16)))
  	{
  		extern u32 pnp_bios_fault_eip, pnp_bios_fault_esp;
  		extern u32 pnp_bios_is_utter_crap;
@@ -6606,6 +6814,32 @@ Index: linux-2.6.17/arch/sparc64/kernel/sys_sparc.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
+@@ -379,6 +383,12 @@ void arch_pick_mmap_layout(struct mm_str
+ 	    current->signal->rlim[RLIMIT_STACK].rlim_cur == RLIM_INFINITY ||
+ 	    sysctl_legacy_va_layout) {
+ 		mm->mmap_base = TASK_UNMAPPED_BASE + random_factor;
++
++#ifdef CONFIG_PAX_RANDMMAP
++		if (mm->pax_flags & MF_PAX_RANDMMAP)
++			mm->mmap_base += mm->delta_mmap;
++#endif
++
+ 		mm->get_unmapped_area = arch_get_unmapped_area;
+ 		mm->unmap_area = arch_unmap_area;
+ 	} else {
+@@ -393,6 +403,12 @@ void arch_pick_mmap_layout(struct mm_str
+ 			gap = (task_size / 6 * 5);
+ 
+ 		mm->mmap_base = PAGE_ALIGN(task_size - gap - random_factor);
++
++#ifdef CONFIG_PAX_RANDMMAP
++		if (mm->pax_flags & MF_PAX_RANDMMAP)
++			mm->mmap_base -= mm->delta_mmap + mm->delta_stack;
++#endif
++
+ 		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
+ 		mm->unmap_area = arch_unmap_area_topdown;
+ 	}
 Index: linux-2.6.17/arch/sparc64/mm/fault.c
 ===================================================================
 --- linux-2.6.17.orig/arch/sparc64/mm/fault.c
@@ -8655,37 +8889,41 @@ Index: linux-2.6.17/fs/exec.c
  #ifdef CONFIG_STACK_GROWSUP
  	/* Move the argument and environment strings to the bottom of the
  	 * stack space.
-@@ -410,6 +441,18 @@ int setup_arg_pages(struct linux_binprm 
+@@ -404,11 +435,19 @@ int setup_arg_pages(struct linux_binprm 
+ 		bprm->loader += stack_base;
+ 	bprm->exec += stack_base;
  
- 	memset(mpnt, 0, sizeof(*mpnt));
+-	mpnt = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
++	mpnt = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
+ 	if (!mpnt)
+ 		return -ENOMEM;
  
+-	memset(mpnt, 0, sizeof(*mpnt));
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if ((mm->pax_flags & MF_PAX_SEGMEXEC) && (VM_STACK_FLAGS & VM_MAYEXEC)) {
-+		mpnt_m = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
++		mpnt_m = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
 +		if (!mpnt_m) {
 +			kmem_cache_free(vm_area_cachep, mpnt);
 +			return -ENOMEM;
 +		}
-+
-+		memset(mpnt_m, 0, sizeof(*mpnt_m));
 +	}
 +#endif
-+
+ 
  	down_write(&mm->mmap_sem);
  	{
- 		mpnt->vm_mm = mm;
-@@ -430,13 +473,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -430,13 +469,50 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
+-		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & 0x7];
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
 +		if (!(mm->pax_flags & MF_PAX_PAGEEXEC))
-+			mpnt->vm_page_prot = protection_map[(mpnt->vm_flags | VM_EXEC) & 0x7];
++			mpnt->vm_page_prot = protection_map[(mpnt->vm_flags | VM_EXEC) & (VM_READ|VM_WRITE|VM_EXEC)];
 +		else
 +#endif
 +
- 		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & 0x7];
++		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & (VM_READ|VM_WRITE|VM_EXEC)];
  		if ((ret = insert_vm_struct(mm, mpnt))) {
  			up_write(&mm->mmap_sem);
  			kmem_cache_free(vm_area_cachep, mpnt);
@@ -8725,7 +8963,7 @@ Index: linux-2.6.17/fs/exec.c
  	}
  
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -444,6 +524,14 @@ int setup_arg_pages(struct linux_binprm 
+@@ -444,6 +520,14 @@ int setup_arg_pages(struct linux_binprm 
  		if (page) {
  			bprm->page[i] = NULL;
  			install_arg_page(mpnt, page, stack_base);
@@ -8740,7 +8978,7 @@ Index: linux-2.6.17/fs/exec.c
  		}
  		stack_base += PAGE_SIZE;
  	}
-@@ -1147,6 +1235,11 @@ int do_execve(char * filename,
+@@ -1147,6 +1231,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
  	int i;
@@ -8752,7 +8990,7 @@ Index: linux-2.6.17/fs/exec.c
  
  	retval = -ENOMEM;
  	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
-@@ -1158,10 +1251,29 @@ int do_execve(char * filename,
+@@ -1158,10 +1247,29 @@ int do_execve(char * filename,
  	if (IS_ERR(file))
  		goto out_kfree;
  
@@ -8782,7 +9020,7 @@ Index: linux-2.6.17/fs/exec.c
  	bprm->file = file;
  	bprm->filename = filename;
  	bprm->interp = filename;
-@@ -1203,8 +1315,38 @@ int do_execve(char * filename,
+@@ -1203,8 +1311,38 @@ int do_execve(char * filename,
  	if (retval < 0)
  		goto out;
  
@@ -8821,7 +9059,7 @@ Index: linux-2.6.17/fs/exec.c
  		free_arg_pages(bprm);
  
  		/* execve success */
-@@ -1214,6 +1356,14 @@ int do_execve(char * filename,
+@@ -1214,6 +1352,14 @@ int do_execve(char * filename,
  		return retval;
  	}
  
@@ -8836,7 +9074,7 @@ Index: linux-2.6.17/fs/exec.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1374,6 +1524,114 @@ static void format_corename(char *corena
+@@ -1374,6 +1520,114 @@ static void format_corename(char *corena
  	*out_ptr = 0;
  }
  
@@ -8951,7 +9189,7 @@ Index: linux-2.6.17/fs/exec.c
  static void zap_threads (struct mm_struct *mm)
  {
  	struct task_struct *g, *p;
-@@ -1491,6 +1749,10 @@ int do_coredump(long signr, int exit_cod
+@@ -1491,6 +1745,10 @@ int do_coredump(long signr, int exit_cod
  	 */
  	clear_thread_flag(TIF_SIGPENDING);
  
@@ -10231,9 +10469,9 @@ Index: linux-2.6.17/fs/xfs/linux-2.6/xfs_file.c
  	vattr_t		vattr;
  	int		error;
  
-+#ifdef CONFIG_PAX_PAGEEXEC
-+	if (vma->vm_mm->pax_flags & MF_PAX_PAGEEXEC)
-+		vma->vm_page_prot = protection_map[vma->vm_flags & 0x0f];
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
++	if ((vma->vm_mm->pax_flags & MF_PAX_PAGEEXEC) && !(vma->vm_flags & VM_EXEC))
++		vma->vm_page_prot = __pgprot(pte_val(pte_exprotect(__pte(pgprot_val(vma->vm_page_prot)))));
 +#endif
 +
  	vma->vm_ops = &xfs_file_vm_ops;
@@ -19175,6 +19413,25 @@ Index: linux-2.6.17/include/asm-i386/auxvec.h
 +#endif
  
  #endif
+Index: linux-2.6.17/include/asm-i386/bug.h
+===================================================================
+--- linux-2.6.17.orig/include/asm-i386/bug.h
++++ linux-2.6.17/include/asm-i386/bug.h
+@@ -12,10 +12,10 @@
+ #ifdef CONFIG_BUG
+ #define HAVE_ARCH_BUG
+ #ifdef CONFIG_DEBUG_BUGVERBOSE
+-#define BUG()				\
+- __asm__ __volatile__(	"ud2\n"		\
+-			"\t.word %c0\n"	\
+-			"\t.long %c1\n"	\
++#define BUG()					\
++ __asm__ __volatile__(	"ud2\n\t"		\
++			"testl %c0, %%eax\n\t"	\
++			"testl %c1, %%eax\n\t"	\
+ 			 : : "i" (__LINE__), "i" (__FILE__))
+ #else
+ #define BUG() __asm__ __volatile__("ud2\n")
 Index: linux-2.6.17/include/asm-i386/checksum.h
 ===================================================================
 --- linux-2.6.17.orig/include/asm-i386/checksum.h
@@ -19425,6 +19682,26 @@ Index: linux-2.6.17/include/asm-i386/elf.h
  #endif
 +
 +#endif
+Index: linux-2.6.17/include/asm-i386/i387.h
+===================================================================
+--- linux-2.6.17.orig/include/asm-i386/i387.h
++++ linux-2.6.17/include/asm-i386/i387.h
+@@ -40,13 +40,8 @@ extern void kernel_fpu_begin(void);
+ #define kernel_fpu_end() do { stts(); preempt_enable(); } while(0)
+ 
+ /* We need a safe address that is cheap to find and that is already
+-   in L1 during context switch. The best choices are unfortunately
+-   different for UP and SMP */
+-#ifdef CONFIG_SMP
+-#define safe_address (__per_cpu_offset[0])
+-#else
+-#define safe_address (kstat_cpu(0).cpustat.user)
+-#endif
++   in L1 during context switch. */
++#define safe_address (init_tss[smp_processor_id()].esp0)
+ 
+ /*
+  * These must be called with preempt disabled
 Index: linux-2.6.17/include/asm-i386/kmap_types.h
 ===================================================================
 --- linux-2.6.17.orig/include/asm-i386/kmap_types.h
@@ -19595,15 +19872,31 @@ Index: linux-2.6.17/include/asm-i386/page.h
 ===================================================================
 --- linux-2.6.17.orig/include/asm-i386/page.h
 +++ linux-2.6.17/include/asm-i386/page.h
-@@ -57,7 +57,6 @@ typedef struct { unsigned long long pgpr
+@@ -52,13 +52,14 @@ typedef struct { unsigned long long pgpr
+ #define pmd_val(x)	((x).pmd)
+ #define pte_val(x)	((x).pte_low | ((unsigned long long)(x).pte_high << 32))
+ #define __pmd(x) ((pmd_t) { (x) } )
++#define __pte(x) ({ pte_t __pte = {(x), (x) >> 32}; __pte;})
+ #define HPAGE_SHIFT	21
+ #else
  typedef struct { unsigned long pte_low; } pte_t;
  typedef struct { unsigned long pgd; } pgd_t;
  typedef struct { unsigned long pgprot; } pgprot_t;
 -#define boot_pte_t pte_t /* or would you rather have a typedef */
  #define pte_val(x)	((x).pte_low)
++#define __pte(x) ((pte_t) { (x) } )
  #define HPAGE_SHIFT	22
  #endif
-@@ -118,6 +117,15 @@ extern int page_is_ram(unsigned long pag
+ #define PTE_MASK	PAGE_MASK
+@@ -73,7 +74,6 @@ typedef struct { unsigned long pgprot; }
+ #define pgd_val(x)	((x).pgd)
+ #define pgprot_val(x)	((x).pgprot)
+ 
+-#define __pte(x) ((pte_t) { (x) } )
+ #define __pgd(x) ((pgd_t) { (x) } )
+ #define __pgprot(x)	((pgprot_t) { (x) } )
+ 
+@@ -118,6 +118,15 @@ extern int page_is_ram(unsigned long pag
  #endif
  #define __KERNEL_START		(__PAGE_OFFSET + __PHYSICAL_START)
  
@@ -19619,7 +19912,7 @@ Index: linux-2.6.17/include/asm-i386/page.h
  
  #define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
  #define VMALLOC_RESERVE		((unsigned long)__VMALLOC_RESERVE)
-@@ -137,6 +145,19 @@ extern int page_is_ram(unsigned long pag
+@@ -137,6 +146,19 @@ extern int page_is_ram(unsigned long pag
  	((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
  		 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
  
@@ -20196,7 +20489,26 @@ Index: linux-2.6.17/include/asm-mips/page.h
 ===================================================================
 --- linux-2.6.17.orig/include/asm-mips/page.h
 +++ linux-2.6.17/include/asm-mips/page.h
-@@ -151,6 +151,15 @@ typedef struct { unsigned long pgprot; }
+@@ -79,15 +79,17 @@ static inline void copy_user_page(void *
+   #ifdef CONFIG_CPU_MIPS32
+     typedef struct { unsigned long pte_low, pte_high; } pte_t;
+     #define pte_val(x)    ((x).pte_low | ((unsigned long long)(x).pte_high << 32))
++    #define __pte(x)	({ pte_t __pte = {(x), (x) >> 32}; __pte;})
+   #else
+      typedef struct { unsigned long long pte; } pte_t;
+      #define pte_val(x)	((x).pte)
++     #define __pte(x)	((pte_t) { (x) } )
+   #endif
+ #else
+ typedef struct { unsigned long pte; } pte_t;
+ #define pte_val(x)	((x).pte)
+-#endif
+ #define __pte(x)	((pte_t) { (x) } )
++#endif
+ 
+ /*
+  * For 3-level pagetables we defines these ourselves, for 2-level the
+@@ -151,6 +153,15 @@ typedef struct { unsigned long pgprot; }
  #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
  
@@ -23012,12 +23324,17 @@ Index: linux-2.6.17/kernel/module.c
 -	mod->module_core = ptr;
 +	memset(ptr, 0, mod->core_size_rw);
 +	mod->module_core_rw = ptr;
-+
+ 
+-	ptr = module_alloc(mod->init_size);
+-	if (!ptr && mod->init_size) {
 +	ptr = module_alloc(mod->init_size_rw);
 +	if (!ptr && mod->init_size_rw) {
-+		err = -ENOMEM;
+ 		err = -ENOMEM;
+-		goto free_core;
 +		goto free_core_rw;
-+	}
+ 	}
+-	memset(ptr, 0, mod->init_size);
+-	mod->module_init = ptr;
 +	memset(ptr, 0, mod->init_size_rw);
 +	mod->module_init_rw = ptr;
 +
@@ -23038,17 +23355,12 @@ Index: linux-2.6.17/kernel/module.c
 +#endif
 +
 +	mod->module_core_rx = ptr;
- 
--	ptr = module_alloc(mod->init_size);
--	if (!ptr && mod->init_size) {
++
 +	ptr = module_alloc_exec(mod->init_size_rx);
 +	if (!ptr && mod->init_size_rx) {
- 		err = -ENOMEM;
--		goto free_core;
++		err = -ENOMEM;
 +		goto free_core_rx;
- 	}
--	memset(ptr, 0, mod->init_size);
--	mod->module_init = ptr;
++	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
@@ -23088,17 +23400,17 @@ Index: linux-2.6.17/kernel/module.c
 +		}
 +
 +		if (sechdrs[i].sh_type != SHT_NOBITS) {
-+
+ 
+-		if (sechdrs[i].sh_type != SHT_NOBITS)
+-			memcpy(dest, (void *)sechdrs[i].sh_addr,
+-			       sechdrs[i].sh_size);
 +#ifdef CONFIG_PAX_KERNEXEC
 +			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
 +				pax_open_kernel(cr0);
 +#endif
 +
 +			memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
- 
--		if (sechdrs[i].sh_type != SHT_NOBITS)
--			memcpy(dest, (void *)sechdrs[i].sh_addr,
--			       sechdrs[i].sh_size);
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
 +				pax_close_kernel(cr0);
@@ -23321,14 +23633,9 @@ Index: linux-2.6.17/kernel/module.c
  
  	seq_printf(m, "\n");
  	return 0;
-@@ -2071,9 +2207,13 @@ struct module *__module_text_address(uns
- {
+@@ -2072,8 +2208,8 @@ struct module *__module_text_address(uns
  	struct module *mod;
  
-+#ifdef CONFIG_PAX_KERNEXEC
-+	addr += __KERNEL_TEXT_OFFSET;
-+#endif
-+
  	list_for_each_entry(mod, &modules, list)
 -		if (within(addr, mod->module_init, mod->init_text_size)
 -		    || within(addr, mod->module_core, mod->core_text_size))
@@ -23726,7 +24033,7 @@ Index: linux-2.6.17/kernel/sysctl.c
  			}
 +
 +			if (!gr_handle_sysctl(table, oldval, newval))
-+				return -EACCES;
++				return -EPERM;
 +
  			error = do_sysctl_strategy(table, name, nlen,
  						   oldval, oldlenp,
@@ -23781,9 +24088,9 @@ Index: linux-2.6.17/mm/filemap.c
 -		return -ENOEXEC;
 +		return -ENODEV;
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
-+	if (vma->vm_mm->pax_flags & MF_PAX_PAGEEXEC)
-+		vma->vm_page_prot = protection_map[vma->vm_flags & 0x0f];
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
++	if ((vma->vm_mm->pax_flags & MF_PAX_PAGEEXEC) && !(vma->vm_flags & VM_EXEC))
++		vma->vm_page_prot = __pgprot(pte_val(pte_exprotect(__pte(pgprot_val(vma->vm_page_prot)))));
 +#endif
 +
  	file_accessed(file);
@@ -24318,16 +24625,7 @@ Index: linux-2.6.17/mm/mmap.c
  
  #include <asm/uaccess.h>
  #include <asm/cacheflush.h>
-@@ -60,6 +61,8 @@ pgprot_t protection_map[16] = {
- 	__S000, __S001, __S010, __S011, __S100, __S101, __S110, __S111
- };
- 
-+EXPORT_SYMBOL(protection_map);
-+
- int sysctl_overcommit_memory = OVERCOMMIT_GUESS;  /* heuristic overcommit */
- int sysctl_overcommit_ratio = 50;	/* default is 50% */
- int sysctl_max_map_count __read_mostly = DEFAULT_MAX_MAP_COUNT;
-@@ -240,6 +243,7 @@ asmlinkage unsigned long sys_brk(unsigne
+@@ -240,6 +241,7 @@ asmlinkage unsigned long sys_brk(unsigne
  	 * not page aligned -Ram Gupta
  	 */
  	rlim = current->signal->rlim[RLIMIT_DATA].rlim_cur;
@@ -24335,7 +24633,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (rlim < RLIM_INFINITY && brk - mm->start_data > rlim)
  		goto out;
  
-@@ -628,11 +632,17 @@ again:			remove_next = 1 + (end > next->
+@@ -628,11 +630,17 @@ again:			remove_next = 1 + (end > next->
   * If the vma has a ->close operation then the driver probably needs to release
   * per-vma resources, so we don't attempt to merge those.
   */
@@ -24353,7 +24651,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (vma->vm_flags != vm_flags)
  		return 0;
  	if (vma->vm_file != file)
-@@ -857,14 +867,11 @@ none:
+@@ -857,14 +865,11 @@ none:
  void vm_stat_account(struct mm_struct *mm, unsigned long flags,
  						struct file *file, long pages)
  {
@@ -24369,7 +24667,7 @@ Index: linux-2.6.17/mm/mmap.c
  		mm->stack_vm += pages;
  	if (flags & (VM_RESERVED|VM_IO))
  		mm->reserved_vm += pages;
-@@ -875,10 +882,55 @@ void vm_stat_account(struct mm_struct *m
+@@ -875,10 +880,55 @@ void vm_stat_account(struct mm_struct *m
   * The caller must hold down_write(current->mm->mmap_sem).
   */
  
@@ -24425,7 +24723,7 @@ Index: linux-2.6.17/mm/mmap.c
  	struct mm_struct * mm = current->mm;
  	struct vm_area_struct * vma, * prev;
  	struct inode *inode;
-@@ -889,6 +941,28 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -889,6 +939,28 @@ unsigned long do_mmap_pgoff(struct file 
  	int accountable = 1;
  	unsigned long charged = 0, reqprot = prot;
  
@@ -24454,7 +24752,16 @@ Index: linux-2.6.17/mm/mmap.c
  	if (file) {
  		if (is_file_hugepages(file))
  			accountable = 0;
-@@ -929,7 +1003,7 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -906,7 +978,7 @@ unsigned long do_mmap_pgoff(struct file 
+ 	 * (the exception is when the underlying filesystem is noexec
+ 	 *  mounted, in which case we dont add PROT_EXEC.)
+ 	 */
+-	if ((prot & PROT_READ) && (current->personality & READ_IMPLIES_EXEC))
++	if ((prot & (PROT_READ | PROT_WRITE)) && (current->personality & READ_IMPLIES_EXEC))
+ 		if (!(file && (file->f_vfsmnt->mnt_flags & MNT_NOEXEC)))
+ 			prot |= PROT_EXEC;
+ 
+@@ -929,7 +1001,7 @@ unsigned long do_mmap_pgoff(struct file 
  	/* Obtain the address to map to. we verify (or select) it and ensure
  	 * that it represents a valid section of the address space.
  	 */
@@ -24463,7 +24770,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (addr & ~PAGE_MASK)
  		return addr;
  
-@@ -940,6 +1014,24 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -940,6 +1012,24 @@ unsigned long do_mmap_pgoff(struct file 
  	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
@@ -24488,7 +24795,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (flags & MAP_LOCKED) {
  		if (!can_do_mlock())
  			return -EPERM;
-@@ -952,6 +1044,7 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -952,6 +1042,7 @@ unsigned long do_mmap_pgoff(struct file 
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
@@ -24496,7 +24803,7 @@ Index: linux-2.6.17/mm/mmap.c
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -999,6 +1092,11 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -999,6 +1090,11 @@ unsigned long do_mmap_pgoff(struct file 
  			/*
  			 * Set pgoff according to addr for anon_vma.
  			 */
@@ -24508,7 +24815,7 @@ Index: linux-2.6.17/mm/mmap.c
  			pgoff = addr >> PAGE_SHIFT;
  			break;
  		default:
-@@ -1010,14 +1108,17 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -1010,14 +1106,17 @@ unsigned long do_mmap_pgoff(struct file 
  	if (error)
  		return error;
  		
@@ -24528,21 +24835,23 @@ Index: linux-2.6.17/mm/mmap.c
  	}
  
  	/* Check against address space limit. */
-@@ -1065,6 +1166,13 @@ munmap_back:
+@@ -1065,7 +1164,14 @@ munmap_back:
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  	vma->vm_flags = vm_flags;
+-	vma->vm_page_prot = protection_map[vm_flags & 0x0f];
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
 +	if ((file || !(mm->pax_flags & MF_PAX_PAGEEXEC)) && (vm_flags & (VM_READ|VM_WRITE)))
-+		vma->vm_page_prot = protection_map[(vm_flags | VM_EXEC) & 0x0f];
++		vma->vm_page_prot = protection_map[(vm_flags | VM_EXEC) & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
 +	else
 +#endif
 +
- 	vma->vm_page_prot = protection_map[vm_flags & 0x0f];
++	vma->vm_page_prot = protection_map[vm_flags & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
  	vma->vm_pgoff = pgoff;
  
-@@ -1089,6 +1197,14 @@ munmap_back:
+ 	if (file) {
+@@ -1089,6 +1195,14 @@ munmap_back:
  			goto free_vma;
  	}
  
@@ -24557,7 +24866,7 @@ Index: linux-2.6.17/mm/mmap.c
  	/* We set VM_ACCOUNT in a shared mapping's vm_flags, to inform
  	 * shmem_zero_setup (perhaps called through /dev/zero's ->mmap)
  	 * that memory reservation must be checked; but that reservation
-@@ -1124,6 +1240,7 @@ munmap_back:
+@@ -1124,6 +1238,7 @@ munmap_back:
  out:	
  	mm->total_vm += len >> PAGE_SHIFT;
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
@@ -24565,7 +24874,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (vm_flags & VM_LOCKED) {
  		mm->locked_vm += len >> PAGE_SHIFT;
  		make_pages_present(addr, addr + len);
-@@ -1178,6 +1295,10 @@ arch_get_unmapped_area(struct file *filp
+@@ -1178,6 +1293,10 @@ arch_get_unmapped_area(struct file *filp
  	if (len > TASK_SIZE)
  		return -ENOMEM;
  
@@ -24576,7 +24885,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
  		vma = find_vma(mm, addr);
-@@ -1188,7 +1309,7 @@ arch_get_unmapped_area(struct file *filp
+@@ -1188,7 +1307,7 @@ arch_get_unmapped_area(struct file *filp
  	if (len > mm->cached_hole_size) {
  	        start_addr = addr = mm->free_area_cache;
  	} else {
@@ -24585,7 +24894,7 @@ Index: linux-2.6.17/mm/mmap.c
  	        mm->cached_hole_size = 0;
  	}
  
-@@ -1200,9 +1321,8 @@ full_search:
+@@ -1200,9 +1319,8 @@ full_search:
  			 * Start a new search - just in case we missed
  			 * some holes.
  			 */
@@ -24597,7 +24906,7 @@ Index: linux-2.6.17/mm/mmap.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
-@@ -1227,7 +1347,7 @@ void arch_unmap_area(struct mm_struct *m
+@@ -1227,7 +1345,7 @@ void arch_unmap_area(struct mm_struct *m
  	/*
  	 * Is this a new hole at the lowest possible address?
  	 */
@@ -24606,7 +24915,7 @@ Index: linux-2.6.17/mm/mmap.c
  		mm->free_area_cache = addr;
  		mm->cached_hole_size = ~0UL;
  	}
-@@ -1245,12 +1365,16 @@ arch_get_unmapped_area_topdown(struct fi
+@@ -1245,12 +1363,16 @@ arch_get_unmapped_area_topdown(struct fi
  {
  	struct vm_area_struct *vma;
  	struct mm_struct *mm = current->mm;
@@ -24624,7 +24933,7 @@ Index: linux-2.6.17/mm/mmap.c
  	/* requesting a specific address */
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
-@@ -1308,13 +1432,21 @@ bottomup:
+@@ -1308,13 +1430,21 @@ bottomup:
  	 * can happen with large stack limits and large mmap()
  	 * allocations.
  	 */
@@ -24648,7 +24957,7 @@ Index: linux-2.6.17/mm/mmap.c
  	mm->cached_hole_size = ~0UL;
  
  	return addr;
-@@ -1330,8 +1462,10 @@ void arch_unmap_area_topdown(struct mm_s
+@@ -1330,8 +1460,10 @@ void arch_unmap_area_topdown(struct mm_s
  		mm->free_area_cache = addr;
  
  	/* dont allow allocations above current base */
@@ -24660,7 +24969,7 @@ Index: linux-2.6.17/mm/mmap.c
  }
  
  unsigned long
-@@ -1464,6 +1598,7 @@ static int acct_stack_growth(struct vm_a
+@@ -1464,6 +1596,7 @@ static int acct_stack_growth(struct vm_a
  		return -ENOMEM;
  
  	/* Stack limit test */
@@ -24668,7 +24977,7 @@ Index: linux-2.6.17/mm/mmap.c
  	if (size > rlim[RLIMIT_STACK].rlim_cur)
  		return -ENOMEM;
  
-@@ -1473,6 +1608,7 @@ static int acct_stack_growth(struct vm_a
+@@ -1473,6 +1606,7 @@ static int acct_stack_growth(struct vm_a
  		unsigned long limit;
  		locked = mm->locked_vm + grow;
  		limit = rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
@@ -24676,7 +24985,7 @@ Index: linux-2.6.17/mm/mmap.c
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1590,13 +1726,49 @@ int expand_stack(struct vm_area_struct *
+@@ -1590,13 +1724,49 @@ int expand_stack(struct vm_area_struct *
  	if (address < vma->vm_start) {
  		unsigned long size, grow;
  
@@ -24726,7 +25035,7 @@ Index: linux-2.6.17/mm/mmap.c
  		}
  	}
  	anon_vma_unlock(vma);
-@@ -1758,7 +1930,24 @@ int split_vma(struct mm_struct * mm, str
+@@ -1758,7 +1928,24 @@ int split_vma(struct mm_struct * mm, str
   * work.  This now handles partial unmappings.
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
@@ -24751,7 +25060,7 @@ Index: linux-2.6.17/mm/mmap.c
  {
  	unsigned long end;
  	struct vm_area_struct *vma, *prev, *last;
-@@ -1812,6 +2001,8 @@ int do_munmap(struct mm_struct *mm, unsi
+@@ -1812,6 +1999,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
  
@@ -24760,7 +25069,7 @@ Index: linux-2.6.17/mm/mmap.c
  	return 0;
  }
  
-@@ -1824,6 +2015,12 @@ asmlinkage long sys_munmap(unsigned long
+@@ -1824,6 +2013,12 @@ asmlinkage long sys_munmap(unsigned long
  
  	profile_munmap(addr);
  
@@ -24773,15 +25082,15 @@ Index: linux-2.6.17/mm/mmap.c
  	down_write(&mm->mmap_sem);
  	ret = do_munmap(mm, addr, len);
  	up_write(&mm->mmap_sem);
-@@ -1845,11 +2042,35 @@ static inline void verify_mm_writelocked
+@@ -1845,11 +2040,35 @@ static inline void verify_mm_writelocked
   *  anonymous maps.  eventually we may be able to do some
   *  brk-specific accounting here.
   */
 +#ifdef CONFIG_PAX_SEGMEXEC
 +static unsigned long __do_brk(unsigned long addr, unsigned long len);
 +
- unsigned long do_brk(unsigned long addr, unsigned long len)
- {
++unsigned long do_brk(unsigned long addr, unsigned long len)
++{
 +	unsigned long ret;
 +
 +	ret = __do_brk(addr, len);
@@ -24800,9 +25109,9 @@ Index: linux-2.6.17/mm/mmap.c
 +
 +static unsigned long __do_brk(unsigned long addr, unsigned long len)
 +#else
-+unsigned long do_brk(unsigned long addr, unsigned long len)
+ unsigned long do_brk(unsigned long addr, unsigned long len)
 +#endif
-+{
+ {
  	struct mm_struct * mm = current->mm;
  	struct vm_area_struct * vma, * prev;
 -	unsigned long flags;
@@ -24810,7 +25119,7 @@ Index: linux-2.6.17/mm/mmap.c
  	struct rb_node ** rb_link, * rb_parent;
  	pgoff_t pgoff = addr >> PAGE_SHIFT;
  
-@@ -1857,7 +2078,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -1857,7 +2076,12 @@ unsigned long do_brk(unsigned long addr,
  	if (!len)
  		return addr;
  
@@ -24824,7 +25133,7 @@ Index: linux-2.6.17/mm/mmap.c
  		return -EINVAL;
  
  	/*
-@@ -1869,6 +2095,7 @@ unsigned long do_brk(unsigned long addr,
+@@ -1869,6 +2093,7 @@ unsigned long do_brk(unsigned long addr,
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
@@ -24832,7 +25141,7 @@ Index: linux-2.6.17/mm/mmap.c
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -1882,12 +2109,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -1882,12 +2107,12 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -24847,7 +25156,7 @@ Index: linux-2.6.17/mm/mmap.c
  	}
  
  	/* Check against address space limits *after* clearing old maps... */
-@@ -1902,6 +2129,18 @@ unsigned long do_brk(unsigned long addr,
+@@ -1902,6 +2127,18 @@ unsigned long do_brk(unsigned long addr,
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -24866,21 +25175,23 @@ Index: linux-2.6.17/mm/mmap.c
  	/* Can we just expand an old private anonymous mapping? */
  	if (vma_merge(mm, prev, addr, addr + len, flags,
  					NULL, NULL, pgoff, NULL))
-@@ -1921,6 +2160,13 @@ unsigned long do_brk(unsigned long addr,
+@@ -1921,7 +2158,14 @@ unsigned long do_brk(unsigned long addr,
  	vma->vm_end = addr + len;
  	vma->vm_pgoff = pgoff;
  	vma->vm_flags = flags;
+-	vma->vm_page_prot = protection_map[flags & 0x0f];
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
-+	if (!(mm->pax_flags & MF_PAX_PAGEEXEC) && (flags & (VM_READ|VM_WRITE)))
-+		vma->vm_page_prot = protection_map[(flags | VM_EXEC) & 0x0f];
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
++	if (!(mm->pax_flags & MF_PAX_PAGEEXEC))
++		vma->vm_page_prot = protection_map[(flags | VM_EXEC) & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
 +	else
 +#endif
 +
- 	vma->vm_page_prot = protection_map[flags & 0x0f];
++	vma->vm_page_prot = protection_map[flags & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
-@@ -1929,6 +2175,7 @@ out:
+ 	mm->total_vm += len >> PAGE_SHIFT;
+@@ -1929,6 +2173,7 @@ out:
  		mm->locked_vm += len >> PAGE_SHIFT;
  		make_pages_present(addr, addr + len);
  	}
@@ -24888,7 +25199,7 @@ Index: linux-2.6.17/mm/mmap.c
  	return addr;
  }
  
-@@ -2061,7 +2308,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2061,7 +2306,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -25023,19 +25334,21 @@ Index: linux-2.6.17/mm/mprotect.c
  
  	/*
  	 * If we make a private mapping writable we increase our commit;
-@@ -132,6 +228,12 @@ mprotect_fixup(struct vm_area_struct *vm
+@@ -132,7 +228,13 @@ mprotect_fixup(struct vm_area_struct *vm
  		}
  	}
  
-+#ifdef CONFIG_PAX_PAGEEXEC
+-	newprot = protection_map[newflags & 0xf];
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
 +	if (!(mm->pax_flags & MF_PAX_PAGEEXEC) && (newflags & (VM_READ|VM_WRITE)))
-+		newprot = protection_map[(newflags | VM_EXEC) & 0xf];
++		newprot = protection_map[(newflags | VM_EXEC) & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
 +	else
 +#endif
 +
- 	newprot = protection_map[newflags & 0xf];
++	newprot = protection_map[newflags & (VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
  
  	/*
+ 	 * First try to merge with previous and/or next vma.
 @@ -179,6 +281,69 @@ fail:
  	return error;
  }
@@ -25123,6 +25436,15 @@ Index: linux-2.6.17/mm/mprotect.c
 +
  	if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM))
  		return -EINVAL;
+ 
+@@ -205,7 +381,7 @@ sys_mprotect(unsigned long start, size_t
+ 	/*
+ 	 * Does the application expect PROT_READ to imply PROT_EXEC:
+ 	 */
+-	if (unlikely((prot & PROT_READ) &&
++	if (unlikely((prot & (PROT_READ | PROT_WRITE)) &&
+ 			(current->personality & READ_IMPLIES_EXEC)))
+ 		prot |= PROT_EXEC;
  
 @@ -238,6 +414,16 @@ sys_mprotect(unsigned long start, size_t
  	if (start > vma->vm_start)
@@ -25341,6 +25663,22 @@ Index: linux-2.6.17/mm/shmem.c
  
  static int __init init_tmpfs(void)
  {
+Index: linux-2.6.17/mm/slab.c
+===================================================================
+--- linux-2.6.17.orig/mm/slab.c
++++ linux-2.6.17/mm/slab.c
+@@ -1532,6 +1532,11 @@ static void store_stackinfo(struct kmem_
+ 
+ 		while (!kstack_end(sptr)) {
+ 			svalue = *sptr++;
++
++#ifdef CONFIG_PAX_KERNEXEC
++			svalue += __KERNEL_TEXT_OFFSET;
++#endif
++
+ 			if (kernel_text_address(svalue)) {
+ 				*addr++ = svalue;
+ 				size -= sizeof(unsigned long);
 Index: linux-2.6.17/mm/tiny-shmem.c
 ===================================================================
 --- linux-2.6.17.orig/mm/tiny-shmem.c
@@ -25558,8 +25896,8 @@ Index: linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 +
 +static struct ipt_match stealth_match = {
 +	.name = "stealth",
-+	.match = &match,
-+	.checkentry = &checkentry,
++	.match = match,
++	.checkentry = checkentry,
 +	.destroy = NULL,
 +	.me = THIS_MODULE
 +};
