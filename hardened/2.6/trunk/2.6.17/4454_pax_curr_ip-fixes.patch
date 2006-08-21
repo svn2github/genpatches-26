@@ -19,7 +19,7 @@ Index: linux-2.6.17/fs/exec.c
 ===================================================================
 --- linux-2.6.17.orig/fs/exec.c
 +++ linux-2.6.17/fs/exec.c
-@@ -1618,9 +1618,11 @@ void pax_report_fault(struct pt_regs *re
+@@ -1614,9 +1614,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
  	}
