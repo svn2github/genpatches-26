@@ -82,6 +82,10 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1710_alpha-ev56-kconfig.patch
+From:	Fernando J. Pereda <ferdy@gentoo.org>
+Desc:	Update EV56 Kconfig dependencies
+
 Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
