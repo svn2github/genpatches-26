@@ -7,7 +7,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  
  #define DRV_NAME		"sky2"
 -#define DRV_VERSION		"1.4"
-+#define DRV_VERSION		"1.5"
++#define DRV_VERSION		"1.6"
  #define PFX			DRV_NAME " "
  
  /*
@@ -19,31 +19,40 @@ Index: linux-2.6.17/drivers/net/sky2.c
  
  #define TX_RING_SIZE		512
  #define TX_DEF_PENDING		(TX_RING_SIZE - 1)
-@@ -121,6 +122,7 @@ static const struct pci_device_id sky2_i
+@@ -121,6 +122,11 @@ static const struct pci_device_id sky2_i
  	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4361) },
  	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4362) },
  	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4363) },
 +	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4364) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4365) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4366) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4367) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4368) },
  	{ 0 }
  };
  
-@@ -235,7 +237,6 @@ static void sky2_set_power_state(struct 
+@@ -233,9 +239,10 @@ static void sky2_set_power_state(struct 
+ 			if (hw->ports > 1)
+ 				reg1 |= PCI_Y2_PHY2_COMA;
  		}
++		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
++		udelay(100);
  
  		if (hw->chip_id == CHIP_ID_YUKON_EC_U) {
 -			sky2_write16(hw, B0_CTST, Y2_HW_WOL_ON);
  			sky2_pci_write32(hw, PCI_DEV_REG3, 0);
  			reg1 = sky2_pci_read32(hw, PCI_DEV_REG4);
  			reg1 &= P_ASPM_CONTROL_MSK;
-@@ -244,6 +245,7 @@ static void sky2_set_power_state(struct 
+@@ -243,8 +250,6 @@ static void sky2_set_power_state(struct 
+ 			sky2_pci_write32(hw, PCI_DEV_REG5, 0);
  		}
  
- 		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
-+		udelay(100);
- 
+-		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
+-
  		break;
  
-@@ -256,6 +258,7 @@ static void sky2_set_power_state(struct 
+ 	case PCI_D3hot:
+@@ -256,6 +261,7 @@ static void sky2_set_power_state(struct 
  		else
  			reg1 |= (PCI_Y2_PHY1_POWD | PCI_Y2_PHY2_POWD);
  		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
@@ -51,7 +60,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  
  		if (hw->chip_id == CHIP_ID_YUKON_XL && hw->chip_rev > 1)
  			sky2_write8(hw, B2_Y2_CLK_GATE, 0);
-@@ -1390,7 +1393,7 @@ static void sky2_tx_complete(struct sky2
+@@ -1390,7 +1396,7 @@ static void sky2_tx_complete(struct sky2
  	}
  
  	sky2->tx_cons = put;
@@ -60,7 +69,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  		netif_wake_queue(dev);
  }
  
-@@ -1889,9 +1892,6 @@ resubmit:
+@@ -1889,9 +1895,6 @@ resubmit:
  	re->skb->ip_summed = CHECKSUM_NONE;
  	sky2_rx_add(sky2, re->mapaddr);
  
@@ -70,7 +79,16 @@ Index: linux-2.6.17/drivers/net/sky2.c
  	return skb;
  
  oversize:
-@@ -1938,7 +1938,9 @@ static inline int sky2_more_work(const s
+@@ -1929,16 +1932,12 @@ static inline void sky2_tx_done(struct n
+ 	}
+ }
+ 
+-/* Is status ring empty or is there more to do? */
+-static inline int sky2_more_work(const struct sky2_hw *hw)
+-{
+-	return (hw->st_idx != sky2_read16(hw, STAT_PUT_IDX));
+-}
+-
  /* Process status response ring */
  static int sky2_status_intr(struct sky2_hw *hw, int to_do)
  {
@@ -80,7 +98,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  	u16 hwidx = sky2_read16(hw, STAT_PUT_IDX);
  
  	rmb();
-@@ -1946,7 +1948,6 @@ static int sky2_status_intr(struct sky2_
+@@ -1946,7 +1945,6 @@ static int sky2_status_intr(struct sky2_
  	while (hw->st_idx != hwidx) {
  		struct sky2_status_le *le  = hw->st_le + hw->st_idx;
  		struct net_device *dev;
@@ -88,7 +106,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  		struct sk_buff *skb;
  		u32 status;
  		u16 length;
-@@ -1979,6 +1980,14 @@ static int sky2_status_intr(struct sky2_
+@@ -1979,6 +1977,14 @@ static int sky2_status_intr(struct sky2_
  #endif
  				netif_receive_skb(skb);
  
@@ -103,9 +121,13 @@ Index: linux-2.6.17/drivers/net/sky2.c
  			if (++work_done >= to_do)
  				goto exit_loop;
  			break;
-@@ -2017,6 +2026,16 @@ static int sky2_status_intr(struct sky2_
+@@ -2016,7 +2022,20 @@ static int sky2_status_intr(struct sky2_
+ 		}
  	}
  
++	/* Fully processed status ring so clear irq */
++	sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
++
  exit_loop:
 +	if (buf_write[0]) {
 +		sky2 = netdev_priv(hw->dev[0]);
@@ -120,7 +142,35 @@ Index: linux-2.6.17/drivers/net/sky2.c
  	return work_done;
  }
  
-@@ -2284,7 +2303,7 @@ static inline u32 sky2_clk2us(const stru
+@@ -2215,19 +2234,16 @@ static int sky2_poll(struct net_device *
+ 		sky2_descriptor_error(hw, 1, "transmit", Y2_IS_CHK_TXA2);
+ 
+ 	work_done = sky2_status_intr(hw, work_limit);
+-	*budget -= work_done;
+-	dev0->quota -= work_done;
++	if (work_done < work_limit) {
++		netif_rx_complete(dev0);
+ 
+-	if (status & Y2_IS_STAT_BMU)
+-		sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
+-
+-	if (sky2_more_work(hw))
++		sky2_read32(hw, B0_Y2_SP_LISR);
++		return 0;
++	} else {
++		*budget -= work_done;
++		dev0->quota -= work_done;
+ 		return 1;
+-
+-	netif_rx_complete(dev0);
+-
+-	sky2_read32(hw, B0_Y2_SP_LISR);
+-	return 0;
++	}
+ }
+ 
+ static irqreturn_t sky2_intr(int irq, void *dev_id, struct pt_regs *regs)
+@@ -2284,7 +2300,7 @@ static inline u32 sky2_clk2us(const stru
  }
  
  
@@ -129,7 +179,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  {
  	u16 status;
  	u8 t8, pmd_type;
-@@ -3435,17 +3454,14 @@ static int sky2_suspend(struct pci_dev *
+@@ -3435,17 +3451,14 @@ static int sky2_suspend(struct pci_dev *
  		return -EINVAL;
  
  	del_timer_sync(&hw->idle_timer);
@@ -149,7 +199,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  		}
  	}
  
-@@ -3472,9 +3488,8 @@ static int sky2_resume(struct pci_dev *p
+@@ -3472,9 +3485,8 @@ static int sky2_resume(struct pci_dev *p
  
  	for (i = 0; i < hw->ports; i++) {
  		struct net_device *dev = hw->dev[i];
@@ -160,7 +210,7 @@ Index: linux-2.6.17/drivers/net/sky2.c
  
  			err = sky2_up(dev);
  			if (err) {
-@@ -3486,6 +3501,7 @@ static int sky2_resume(struct pci_dev *p
+@@ -3486,6 +3498,7 @@ static int sky2_resume(struct pci_dev *p
  		}
  	}
  
