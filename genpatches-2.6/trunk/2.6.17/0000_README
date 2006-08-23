@@ -91,7 +91,7 @@ From:	Fernando J. Pereda <ferdy@gentoo.org>
 Desc:	Update EV56 Kconfig dependencies
 
 Patch:	1715_sparc64-pgtable.patch
-From:	David S. Miller <davem@sunset.davemloft.net>
+From:	sparc-2.6.git tree (David S. Miller <davem@sunset.davemloft.net>)
 Desc:	Fix runtime issues on ultrasparc T1 (sun4v)
 
 Patch:	1900_nfs-stall.patch
