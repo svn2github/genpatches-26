@@ -76,6 +76,10 @@ Desc:	PPC970 clear EN_ATTN fix. Fixing CVE-2006-4093
 
 Patch:	1009_linux-2.6.17.10.patch
 From:	www.kernel.org
+Desc:	Misc security fixes
+
+Patch:	1010_linux-2.6.17.11.patch
+From:	www.kernel.org
 Desc:	Misc fixes
 
 Patch:	1700_sparc-obp64-naming.patch
