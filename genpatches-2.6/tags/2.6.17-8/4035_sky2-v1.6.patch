@@ -1,0 +1,220 @@
+Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
+===================================================================
+--- linux-2.6.17-gentoo-r6.orig/drivers/net/sky2.c
++++ linux-2.6.17-gentoo-r6/drivers/net/sky2.c
+@@ -51,7 +51,7 @@
+ #include "sky2.h"
+ 
+ #define DRV_NAME		"sky2"
+-#define DRV_VERSION		"1.4"
++#define DRV_VERSION		"1.6"
+ #define PFX			DRV_NAME " "
+ 
+ /*
+@@ -66,6 +66,7 @@
+ #define RX_MAX_PENDING		(RX_LE_SIZE/2 - 2)
+ #define RX_DEF_PENDING		RX_MAX_PENDING
+ #define RX_SKB_ALIGN		8
++#define RX_BUF_WRITE		16
+ 
+ #define TX_RING_SIZE		512
+ #define TX_DEF_PENDING		(TX_RING_SIZE - 1)
+@@ -121,6 +122,11 @@ static const struct pci_device_id sky2_i
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4361) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4362) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4363) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4364) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4365) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4366) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4367) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4368) },
+ 	{ 0 }
+ };
+ 
+@@ -237,7 +243,6 @@ static void sky2_set_power_state(struct 
+ 		udelay(100);
+ 
+ 		if (hw->chip_id == CHIP_ID_YUKON_EC_U) {
+-			sky2_write16(hw, B0_CTST, Y2_HW_WOL_ON);
+ 			sky2_pci_write32(hw, PCI_DEV_REG3, 0);
+ 			reg1 = sky2_pci_read32(hw, PCI_DEV_REG4);
+ 			reg1 &= P_ASPM_CONTROL_MSK;
+@@ -256,6 +261,7 @@ static void sky2_set_power_state(struct 
+ 		else
+ 			reg1 |= (PCI_Y2_PHY1_POWD | PCI_Y2_PHY2_POWD);
+ 		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
++		udelay(100);
+ 
+ 		if (hw->chip_id == CHIP_ID_YUKON_XL && hw->chip_rev > 1)
+ 			sky2_write8(hw, B2_Y2_CLK_GATE, 0);
+@@ -1390,7 +1396,7 @@ static void sky2_tx_complete(struct sky2
+ 	}
+ 
+ 	sky2->tx_cons = put;
+-	if (tx_avail(sky2) > MAX_SKB_TX_LE)
++	if (tx_avail(sky2) > MAX_SKB_TX_LE + 4)
+ 		netif_wake_queue(dev);
+ }
+ 
+@@ -1889,9 +1895,6 @@ resubmit:
+ 	re->skb->ip_summed = CHECKSUM_NONE;
+ 	sky2_rx_add(sky2, re->mapaddr);
+ 
+-	/* Tell receiver about new buffers. */
+-	sky2_put_idx(sky2->hw, rxqaddr[sky2->port], sky2->rx_put);
+-
+ 	return skb;
+ 
+ oversize:
+@@ -1929,16 +1932,12 @@ static inline void sky2_tx_done(struct n
+ 	}
+ }
+ 
+-/* Is status ring empty or is there more to do? */
+-static inline int sky2_more_work(const struct sky2_hw *hw)
+-{
+-	return (hw->st_idx != sky2_read16(hw, STAT_PUT_IDX));
+-}
+-
+ /* Process status response ring */
+ static int sky2_status_intr(struct sky2_hw *hw, int to_do)
+ {
++	struct sky2_port *sky2;
+ 	int work_done = 0;
++	unsigned buf_write[2] = { 0, 0 };
+ 	u16 hwidx = sky2_read16(hw, STAT_PUT_IDX);
+ 
+ 	rmb();
+@@ -1946,7 +1945,6 @@ static int sky2_status_intr(struct sky2_
+ 	while (hw->st_idx != hwidx) {
+ 		struct sky2_status_le *le  = hw->st_le + hw->st_idx;
+ 		struct net_device *dev;
+-		struct sky2_port *sky2;
+ 		struct sk_buff *skb;
+ 		u32 status;
+ 		u16 length;
+@@ -1979,6 +1977,14 @@ static int sky2_status_intr(struct sky2_
+ #endif
+ 				netif_receive_skb(skb);
+ 
++			/* Update receiver after 16 frames */
++			if (++buf_write[le->link] == RX_BUF_WRITE) {
++				sky2_put_idx(hw, rxqaddr[le->link],
++					     sky2->rx_put);
++				buf_write[le->link] = 0;
++			}
++
++			/* Stop after net poll weight */
+ 			if (++work_done >= to_do)
+ 				goto exit_loop;
+ 			break;
+@@ -2016,7 +2022,20 @@ static int sky2_status_intr(struct sky2_
+ 		}
+ 	}
+ 
++	/* Fully processed status ring so clear irq */
++	sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
++
+ exit_loop:
++	if (buf_write[0]) {
++		sky2 = netdev_priv(hw->dev[0]);
++		sky2_put_idx(hw, Q_R1, sky2->rx_put);
++	}
++
++	if (buf_write[1]) {
++		sky2 = netdev_priv(hw->dev[1]);
++		sky2_put_idx(hw, Q_R2, sky2->rx_put);
++	}
++
+ 	return work_done;
+ }
+ 
+@@ -2215,19 +2234,16 @@ static int sky2_poll(struct net_device *
+ 		sky2_descriptor_error(hw, 1, "transmit", Y2_IS_CHK_TXA2);
+ 
+ 	work_done = sky2_status_intr(hw, work_limit);
+-	*budget -= work_done;
+-	dev0->quota -= work_done;
+-
+-	if (status & Y2_IS_STAT_BMU)
+-		sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
++	if (work_done < work_limit) {
++		netif_rx_complete(dev0);
+ 
+-	if (sky2_more_work(hw))
++		sky2_read32(hw, B0_Y2_SP_LISR);
++		return 0;
++	} else {
++		*budget -= work_done;
++		dev0->quota -= work_done;
+ 		return 1;
+-
+-	netif_rx_complete(dev0);
+-
+-	sky2_read32(hw, B0_Y2_SP_LISR);
+-	return 0;
++	}
+ }
+ 
+ static irqreturn_t sky2_intr(int irq, void *dev_id, struct pt_regs *regs)
+@@ -2284,7 +2300,7 @@ static inline u32 sky2_clk2us(const stru
+ }
+ 
+ 
+-static int __devinit sky2_reset(struct sky2_hw *hw)
++static int sky2_reset(struct sky2_hw *hw)
+ {
+ 	u16 status;
+ 	u8 t8, pmd_type;
+@@ -3435,17 +3451,14 @@ static int sky2_suspend(struct pci_dev *
+ 		return -EINVAL;
+ 
+ 	del_timer_sync(&hw->idle_timer);
++	netif_poll_disable(hw->dev[0]);
+ 
+ 	for (i = 0; i < hw->ports; i++) {
+ 		struct net_device *dev = hw->dev[i];
+ 
+-		if (dev) {
+-			if (!netif_running(dev))
+-				continue;
+-
++		if (netif_running(dev)) {
+ 			sky2_down(dev);
+ 			netif_device_detach(dev);
+-			netif_poll_disable(dev);
+ 		}
+ 	}
+ 
+@@ -3472,9 +3485,8 @@ static int sky2_resume(struct pci_dev *p
+ 
+ 	for (i = 0; i < hw->ports; i++) {
+ 		struct net_device *dev = hw->dev[i];
+-		if (dev && netif_running(dev)) {
++		if (netif_running(dev)) {
+ 			netif_device_attach(dev);
+-			netif_poll_enable(dev);
+ 
+ 			err = sky2_up(dev);
+ 			if (err) {
+@@ -3486,6 +3498,7 @@ static int sky2_resume(struct pci_dev *p
+ 		}
+ 	}
+ 
++	netif_poll_enable(hw->dev[0]);
+ 	sky2_idle_start(hw);
+ out:
+ 	return err;
+Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.h
+===================================================================
+--- linux-2.6.17-gentoo-r6.orig/drivers/net/sky2.h
++++ linux-2.6.17-gentoo-r6/drivers/net/sky2.h
+@@ -1480,7 +1480,7 @@ enum {
+ 	GM_TXCR_FORCE_JAM	= 1<<15, /* Bit 15:	Force Jam / Flow-Control */
+ 	GM_TXCR_CRC_DIS		= 1<<14, /* Bit 14:	Disable insertion of CRC */
+ 	GM_TXCR_PAD_DIS		= 1<<13, /* Bit 13:	Disable padding of packets */
+-	GM_TXCR_COL_THR_MSK	= 1<<10, /* Bit 12..10:	Collision Threshold */
++	GM_TXCR_COL_THR_MSK	= 7<<10, /* Bit 12..10:	Collision Threshold */
+ };
+ 
+ #define TX_COL_THR(x)		(((x)<<10) & GM_TXCR_COL_THR_MSK)
