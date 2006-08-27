@@ -194,7 +194,7 @@ Patch:	4206_vesafb-tng-mtrr.patch
 From:	spock@gentoo.org
 Desc:	Fix mtrr module parameter
 
-Patch:	4300_squashfs-3.0.patch
+Patch:	4300_squashfs-3.1.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
