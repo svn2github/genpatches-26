@@ -2,7 +2,7 @@ Index: linux-2.6.18/drivers/scsi/libata-core.c
 ===================================================================
 --- linux-2.6.18.orig/drivers/scsi/libata-core.c
 +++ linux-2.6.18/drivers/scsi/libata-core.c
-@@ -5279,6 +5279,7 @@ static void ata_host_init(struct ata_por
+@@ -5257,6 +5257,7 @@ static void ata_host_init(struct ata_por
  	ap->mwdma_mask = ent->mwdma_mask;
  	ap->udma_mask = ent->udma_mask;
  	ap->flags |= ent->host_flags;

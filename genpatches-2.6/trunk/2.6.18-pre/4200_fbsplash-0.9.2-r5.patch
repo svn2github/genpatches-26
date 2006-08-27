@@ -1727,7 +1727,7 @@ Index: linux-2.6.18/include/linux/fb.h
 ===================================================================
 --- linux-2.6.18.orig/include/linux/fb.h
 +++ linux-2.6.18/include/linux/fb.h
-@@ -9,6 +9,13 @@
+@@ -8,6 +8,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
  
@@ -1741,7 +1741,7 @@ Index: linux-2.6.18/include/linux/fb.h
  /* ioctls
     0x46 is 'F'								*/
  #define FBIOGET_VSCREENINFO	0x4600
-@@ -36,7 +43,15 @@
+@@ -35,7 +42,15 @@
  #define FBIOGET_HWCINFO         0x4616
  #define FBIOPUT_MODEINFO        0x4617
  #define FBIOGET_DISPINFO        0x4618
