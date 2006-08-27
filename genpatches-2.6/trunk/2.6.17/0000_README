@@ -114,6 +114,10 @@ Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
 
+Patch:	2705_fbdev-userspace-header.patch
+From:	spock@gentoo.org
+Desc:	Fix userspace compilation against fb.h
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge

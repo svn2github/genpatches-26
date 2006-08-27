@@ -1,0 +1,35 @@
+From: Michal Januszewski <spock@gentoo.org>
+Date: Mon, 14 Aug 2006 06:24:26 +0000 (-0700)
+Subject: [PATCH] fbdev: include backlight.h only when __KERNEL__ is defined
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=2b25742556b1a351ce4821f6feddcba23bdd930b
+
+[PATCH] fbdev: include backlight.h only when __KERNEL__ is defined
+
+linux/backlight.h pulls in header files (eg.  ioport.h) that break
+compilation of userspace programs.  To solve the problem, only include
+backlight.h in fb.h if compiling kernel stuff.
+
+Signed-off-by: Michal Januszewski <spock@gentoo.org>
+Cc: "Antonino A. Daplas" <adaplas@pol.net>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+--- a/include/linux/fb.h
++++ b/include/linux/fb.h
+@@ -1,7 +1,6 @@
+ #ifndef _LINUX_FB_H
+ #define _LINUX_FB_H
+ 
+-#include <linux/backlight.h>
+ #include <asm/types.h>
+ 
+ /* Definitions of frame buffers						*/
+@@ -381,6 +380,7 @@ struct fb_cursor {
+ #include <linux/workqueue.h>
+ #include <linux/notifier.h>
+ #include <linux/list.h>
++#include <linux/backlight.h>
+ #include <asm/io.h>
+ 
+ struct vm_area_struct;
