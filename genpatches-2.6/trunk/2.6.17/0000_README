@@ -106,7 +106,11 @@ Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
 
-Patch:	2500_logips2pp.patch
+Patch:	2500_via-irq-quirk-revert.patch
+From:	dsd@gentoo.org
+Desc:	Revert to old VIA IRQ quirking behaviour
+
+Patch:	2600_logips2pp.patch
 From:	2.6.18 tree
 Desc:	Fix issues with Logitech MX300 (and the fourth button)
 
