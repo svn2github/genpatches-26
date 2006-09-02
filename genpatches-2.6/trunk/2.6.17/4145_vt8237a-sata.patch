@@ -1,0 +1,25 @@
+From: Jay Cliburn <jacliburn@bellsouth.net>
+Date: Tue, 8 Aug 2006 03:08:30 +0000 (-0500)
+Subject: [PATCH] sata_via: Add SATA support for vt8237a
+X-Git-Tag: v2.6.12-rc2
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/jgarzik/libata-dev.git;a=commitdiff;h=08be09b7c38a71b1677285c10a08725833ff9b95
+
+[PATCH] sata_via: Add SATA support for vt8237a
+
+This patch adds support for the VIA Technologies VT8237A SATA controller,
+used, for example, on the ASUS M2V socket AM2 motherboard.
+
+Signed-off-by: Jay Cliburn <jacliburn@bellsouth.net>
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+--- a/drivers/scsi/sata_via.c
++++ b/drivers/scsi/sata_via.c
+@@ -76,6 +76,7 @@ static u32 svia_scr_read (struct ata_por
+ static void svia_scr_write (struct ata_port *ap, unsigned int sc_reg, u32 val);
+ 
+ static const struct pci_device_id svia_pci_tbl[] = {
++	{ 0x1106, 0x0591, PCI_ANY_ID, PCI_ANY_ID, 0, 0, vt6420 },
+ 	{ 0x1106, 0x3149, PCI_ANY_ID, PCI_ANY_ID, 0, 0, vt6420 },
+ 	{ 0x1106, 0x3249, PCI_ANY_ID, PCI_ANY_ID, 0, 0, vt6421 },
+ 

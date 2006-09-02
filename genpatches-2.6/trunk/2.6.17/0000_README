@@ -190,6 +190,10 @@ Patch:	4140_vt8237a-ide.patch
 From:	http://bugs.gentoo.org/145690
 Desc:	Add support for VIA VT8237A IDE
 
+Patch:	4145_vt8237a-sata.patch
+From:	http://bugs.gentoo.org/145690
+Desc:	Add support for VIA VT8237A SATA
+
 Patch:	4200_fbsplash-0.9.2-r5.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
