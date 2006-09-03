@@ -1698,7 +1698,7 @@ Index: linux-2.6.18/MAINTAINERS
 ===================================================================
 --- linux-2.6.18.orig/MAINTAINERS
 +++ linux-2.6.18/MAINTAINERS
-@@ -2732,6 +2732,13 @@ M:	wli@holomorphy.com
+@@ -2738,6 +2738,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  

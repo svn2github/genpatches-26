@@ -2875,7 +2875,7 @@ Index: linux-2.6.18/include/linux/sched.h
 ===================================================================
 --- linux-2.6.18.orig/include/linux/sched.h
 +++ linux-2.6.18/include/linux/sched.h
-@@ -1282,6 +1282,8 @@ extern void mmput(struct mm_struct *);
+@@ -1281,6 +1281,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -3051,7 +3051,7 @@ Index: linux-2.6.18/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -388,6 +389,40 @@ void mmput(struct mm_struct *mm)
+@@ -389,6 +390,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**

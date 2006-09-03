@@ -2,7 +2,7 @@ Index: linux-2.6.18/drivers/net/Kconfig
 ===================================================================
 --- linux-2.6.18.orig/drivers/net/Kconfig
 +++ linux-2.6.18/drivers/net/Kconfig
-@@ -2083,9 +2083,13 @@ config SKY2
+@@ -2097,9 +2097,13 @@ config SKY2
  	  will be called sky2.  This is recommended.
  
  config SK98LIN
