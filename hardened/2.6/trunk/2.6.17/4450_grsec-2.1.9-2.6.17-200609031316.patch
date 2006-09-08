@@ -1426,44 +1426,18 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  	movl %eax,%ds
  	movl %eax,%es
  
-@@ -378,13 +426,35 @@ rp_sidt:
- 	addl $8,%edi
- 	dec %ecx
- 	jne rp_sidt
-+
-+	lea ignore_int_error_code,%edx
-+	movw %dx,%ax		/* selector = 0x0010 = cs */
-+	movw $0x8E00,%dx	/* interrupt gate - dpl=0, present */
-+
-+	lea idt_table,%edi
-+	movl %eax,8*8(%edi)
-+	movl %edx,8*8+4(%edi)
-+	movl %eax,10*8(%edi)
-+	movl %edx,10*8+4(%edi)
-+	movl %eax,11*8(%edi)
-+	movl %edx,11*8+4(%edi)
-+	movl %eax,12*8(%edi)
-+	movl %edx,12*8+4(%edi)
-+	movl %eax,13*8(%edi)
-+	movl %edx,13*8+4(%edi)
-+	movl %eax,14*8(%edi)
-+	movl %edx,14*8+4(%edi)
-+	movl %eax,17*8(%edi)
-+	movl %edx,17*8+4(%edi)
- 	ret
- 
+@@ -383,63 +431,71 @@ rp_sidt:
  /* This is the default interrupt "handler" :-) */
  	ALIGN
-+ignore_int_error_code:
-+	addl $4,%esp
  ignore_int:
 -	cld
  #ifdef CONFIG_PRINTK
+-	pushl %eax
+-	pushl %ecx
+-	pushl %edx
+-	pushl %es
+-	pushl %ds
 +	cld
- 	pushl %eax
- 	pushl %ecx
- 	pushl %edx
-@@ -393,17 +463,16 @@ ignore_int:
  	movl $(__KERNEL_DS),%eax
  	movl %eax,%ds
  	movl %eax,%es
@@ -1471,9 +1445,10 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
 -	pushl 24(%esp)
 -	pushl 32(%esp)
 -	pushl 40(%esp)
-+	pushl 28(%esp)
-+	pushl 28(%esp)
-+	pushl 28(%esp)
++	pushl 12(%esp)
++	pushl 12(%esp)
++	pushl 12(%esp)
++	pushl 12(%esp)
  	pushl $int_msg
  #ifdef CONFIG_EARLY_PRINTK
  	call early_printk
@@ -1481,13 +1456,15 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  	call printk
  #endif
 -	addl $(5*4),%esp
-+	addl $(4*4),%esp
- 	popl %ds
- 	popl %es
- 	popl %edx
-@@ -412,32 +481,50 @@ ignore_int:
+-	popl %ds
+-	popl %es
+-	popl %edx
+-	popl %ecx
+-	popl %eax
  #endif
- 	iret
+-	iret
++1:	hlt
++	jmp 1b
  
 -/*
 - * Real beginning of normal "text" segment
@@ -1550,9 +1527,12 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
 -ready:	.byte 0
 -
  int_msg:
- 	.asciz "Unknown interrupt or fault at EIP %p %p %p\n"
+-	.asciz "Unknown interrupt or fault at EIP %p %p %p\n"
++	.asciz "Unknown interrupt, stack: %p %p %p %p\n"
  
-@@ -465,10 +552,12 @@ idt_descr:
+ /*
+  * The IDT and GDT 'descriptors' are a strange 48-bit object
+@@ -465,10 +521,12 @@ idt_descr:
  
  # boot GDT descriptor (later on used by CPU#0):
  	.word 0				# 32 bit align gdt_desc.address
@@ -1566,7 +1546,7 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  /*
   * The boot_gdt_table must mirror the equivalent in setup.S and is
   * used only for booting.
-@@ -476,13 +565,13 @@ cpu_gdt_descr:
+@@ -476,13 +534,13 @@ cpu_gdt_descr:
  	.align L1_CACHE_BYTES
  ENTRY(boot_gdt_table)
  	.fill GDT_ENTRY_BOOT_CS,8,0
@@ -1583,7 +1563,7 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  ENTRY(cpu_gdt_table)
  	.quad 0x0000000000000000	/* NULL descriptor */
  	.quad 0x0000000000000000	/* 0x0b reserved */
-@@ -497,10 +586,10 @@ ENTRY(cpu_gdt_table)
+@@ -497,10 +555,10 @@ ENTRY(cpu_gdt_table)
  	.quad 0x0000000000000000	/* 0x53 reserved */
  	.quad 0x0000000000000000	/* 0x5b reserved */
  
@@ -1598,7 +1578,7 @@ Index: linux-2.6.17/arch/i386/kernel/head.S
  
  	.quad 0x0000000000000000	/* 0x80 TSS descriptor */
  	.quad 0x0000000000000000	/* 0x88 LDT descriptor */
-@@ -510,24 +599,30 @@ ENTRY(cpu_gdt_table)
+@@ -510,24 +568,30 @@ ENTRY(cpu_gdt_table)
  	 * They code segments and data segments have fixed 64k limits,
  	 * the transfer segment sizes are set at run time.
  	 */
@@ -2724,11 +2704,11 @@ Index: linux-2.6.17/arch/i386/kernel/traps.c
  	if (ud2 != 0x0b0f)
  		goto no_bug;
 -	if (__get_user(line, (unsigned short __user *)(eip + 2)))
-+	if (__get_user(line, (unsigned short __user *)(eip + 3)))
++	if (__get_user(line, (unsigned short __user *)(eip + 7)))
  		goto bug;
 -	if (__get_user(file, (char * __user *)(eip + 4)) ||
 -		(unsigned long)file < PAGE_OFFSET || __get_user(c, file))
-+	if (__get_user(file, (char * __user *)(eip + 8)) || file < _text + __KERNEL_TEXT_OFFSET)
++	if (__get_user(file, (char * __user *)(eip + 3)) || file < _text + __KERNEL_TEXT_OFFSET)
 +		goto bug;
 +	if (__get_user(c, file))
  		file = "<bad filename>";
@@ -19417,7 +19397,7 @@ Index: linux-2.6.17/include/asm-i386/bug.h
 ===================================================================
 --- linux-2.6.17.orig/include/asm-i386/bug.h
 +++ linux-2.6.17/include/asm-i386/bug.h
-@@ -12,10 +12,10 @@
+@@ -12,10 +12,9 @@
  #ifdef CONFIG_BUG
  #define HAVE_ARCH_BUG
  #ifdef CONFIG_DEBUG_BUGVERBOSE
@@ -19427,8 +19407,7 @@ Index: linux-2.6.17/include/asm-i386/bug.h
 -			"\t.long %c1\n"	\
 +#define BUG()					\
 + __asm__ __volatile__(	"ud2\n\t"		\
-+			"testl %c0, %%eax\n\t"	\
-+			"testl %c1, %%eax\n\t"	\
++			"ljmp %0, %1\n\t"	\
  			 : : "i" (__LINE__), "i" (__FILE__))
  #else
  #define BUG() __asm__ __volatile__("ud2\n")
@@ -19876,7 +19855,7 @@ Index: linux-2.6.17/include/asm-i386/page.h
  #define pmd_val(x)	((x).pmd)
  #define pte_val(x)	((x).pte_low | ((unsigned long long)(x).pte_high << 32))
  #define __pmd(x) ((pmd_t) { (x) } )
-+#define __pte(x) ({ pte_t __pte = {(x), (x) >> 32}; __pte;})
++#define __pte(x) ({ pte_t __pte = {(x), (x) >> 32}; __pte; })
  #define HPAGE_SHIFT	21
  #else
  typedef struct { unsigned long pte_low; } pte_t;
@@ -20493,7 +20472,7 @@ Index: linux-2.6.17/include/asm-mips/page.h
    #ifdef CONFIG_CPU_MIPS32
      typedef struct { unsigned long pte_low, pte_high; } pte_t;
      #define pte_val(x)    ((x).pte_low | ((unsigned long long)(x).pte_high << 32))
-+    #define __pte(x)	({ pte_t __pte = {(x), (x) >> 32}; __pte;})
++    #define __pte(x)	({ pte_t __pte = {(x), (x) >> 32}; __pte; })
    #else
       typedef struct { unsigned long long pte; } pte_t;
       #define pte_val(x)	((x).pte)
@@ -25798,7 +25777,7 @@ Index: linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,116 @@
 +/* Kernel module to add stealth support.
 + *
 + * Copyright (C) 2002,2005 Brad Spengler  <spender@grsecurity.net>
@@ -25830,8 +25809,10 @@ Index: linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 +match(const struct sk_buff *skb,
 +      const struct net_device *in,
 +      const struct net_device *out,
++      const struct xt_match *match,
 +      const void *matchinfo,
 +      int offset,
++      unsigned int protoff,
 +      int *hotdrop)
 +{
 +	struct iphdr *ip = skb->nh.iph;
@@ -25872,11 +25853,13 @@ Index: linux-2.6.17/net/ipv4/netfilter/ipt_stealth.c
 +/* Called when user tries to insert an entry of this type. */
 +static int
 +checkentry(const char *tablename,
-+           const struct ipt_ip *ip,
++           const void *nip,
++	   const struct xt_match *match,
 +           void *matchinfo,
 +           unsigned int matchsize,
 +           unsigned int hook_mask)
 +{
++	const struct ipt_ip *ip = (const struct ipt_ip *)nip;
 +        if (matchsize != IPT_ALIGN(0))
 +                return 0;
 +
