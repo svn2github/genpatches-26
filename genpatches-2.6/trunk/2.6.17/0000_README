@@ -106,6 +106,10 @@ Patch:	1900_nfs-stall.patch
 From:	http://bugs.gentoo.org/144263
 Desc:	Fix NFS stall bug
 
+Patch:	2000_xirc2ps-tx-timeout.patch
+From:	http://bugs.gentoo.org/142085
+Desc:	Fix TX timeout handling in xircps_cs net driver
+
 Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
