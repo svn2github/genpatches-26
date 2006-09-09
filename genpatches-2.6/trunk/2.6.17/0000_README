@@ -198,10 +198,6 @@ Patch:	4135_promise-pdc2037x.patch
 From:	Jeff Garzik's libata-dev-2.6 tree
 Desc:	Adds support for Promise 2037x SATA controllers which have PATA ports
 
-Patch:	4140_vt8237a-ide.patch
-From:	http://bugs.gentoo.org/145690
-Desc:	Add support for VIA VT8237A IDE
-
 Patch:	4145_vt8237a-sata.patch
 From:	http://bugs.gentoo.org/145690
 Desc:	Add support for VIA VT8237A SATA
