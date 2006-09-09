@@ -1,0 +1,23 @@
+From: David S. Miller <davem@sunset.davemloft.net>
+Date: Fri, 28 Jul 2006 00:57:32 +0000 (-0700)
+Subject: [SPARC64]: Fix typo in pgprot_noncached().
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/davem/sparc-2.6.git;a=commitdiff;h=b8cfac4c2f3d12d0f4cbe6f992d945f2fdfc098d
+
+[SPARC64]: Fix typo in pgprot_noncached().
+
+The sun4v code sequence was or'ing in the sun4u pte bits by mistake.
+
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/include/asm-sparc64/pgtable.h
++++ b/include/asm-sparc64/pgtable.h
+@@ -339,7 +339,7 @@ static inline pgprot_t pgprot_noncached(
+ 	"	.section	.sun4v_2insn_patch, \"ax\"\n"
+ 	"	.word		661b\n"
+ 	"	andn		%0, %4, %0\n"
+-	"	or		%0, %3, %0\n"
++	"	or		%0, %5, %0\n"
+ 	"	.previous\n"
+ 	: "=r" (val)
+ 	: "0" (val), "i" (_PAGE_CP_4U | _PAGE_CV_4U), "i" (_PAGE_E_4U),
