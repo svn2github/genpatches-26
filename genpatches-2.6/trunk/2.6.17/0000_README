@@ -126,6 +126,10 @@ Patch:	2500_via-irq-quirk-revert.patch
 From:	dsd@gentoo.org
 Desc:	Revert to old VIA IRQ quirking behaviour
 
+Patch:	2505_mmc-large-media.patch
+From:	http://bugs.gentoo.org/142172
+Desc:	Fix support for large MMC/SD cards
+
 Patch:	2600_logips2pp.patch
 From:	2.6.18 tree
 Desc:	Fix issues with Logitech MX300 (and the fourth button)
