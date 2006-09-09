@@ -1,16 +1,7 @@
-Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
+Index: linux-2.6.17-gentoo-r8/drivers/net/sky2.c
 ===================================================================
---- linux-2.6.17-gentoo-r6.orig/drivers/net/sky2.c
-+++ linux-2.6.17-gentoo-r6/drivers/net/sky2.c
-@@ -51,7 +51,7 @@
- #include "sky2.h"
- 
- #define DRV_NAME		"sky2"
--#define DRV_VERSION		"1.4"
-+#define DRV_VERSION		"1.6"
- #define PFX			DRV_NAME " "
- 
- /*
+--- linux-2.6.17-gentoo-r8.orig/drivers/net/sky2.c
++++ linux-2.6.17-gentoo-r8/drivers/net/sky2.c
 @@ -66,6 +66,7 @@
  #define RX_MAX_PENDING		(RX_LE_SIZE/2 - 2)
  #define RX_DEF_PENDING		RX_MAX_PENDING
@@ -47,7 +38,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  
  		if (hw->chip_id == CHIP_ID_YUKON_XL && hw->chip_rev > 1)
  			sky2_write8(hw, B2_Y2_CLK_GATE, 0);
-@@ -1390,7 +1396,7 @@ static void sky2_tx_complete(struct sky2
+@@ -1406,7 +1412,7 @@ static void sky2_tx_complete(struct sky2
  	}
  
  	sky2->tx_cons = put;
@@ -56,7 +47,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  		netif_wake_queue(dev);
  }
  
-@@ -1889,9 +1895,6 @@ resubmit:
+@@ -1905,9 +1911,6 @@ resubmit:
  	re->skb->ip_summed = CHECKSUM_NONE;
  	sky2_rx_add(sky2, re->mapaddr);
  
@@ -66,7 +57,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  	return skb;
  
  oversize:
-@@ -1929,16 +1932,12 @@ static inline void sky2_tx_done(struct n
+@@ -1945,16 +1948,12 @@ static inline void sky2_tx_done(struct n
  	}
  }
  
@@ -85,7 +76,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  	u16 hwidx = sky2_read16(hw, STAT_PUT_IDX);
  
  	rmb();
-@@ -1946,7 +1945,6 @@ static int sky2_status_intr(struct sky2_
+@@ -1962,7 +1961,6 @@ static int sky2_status_intr(struct sky2_
  	while (hw->st_idx != hwidx) {
  		struct sky2_status_le *le  = hw->st_le + hw->st_idx;
  		struct net_device *dev;
@@ -93,7 +84,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  		struct sk_buff *skb;
  		u32 status;
  		u16 length;
-@@ -1979,6 +1977,14 @@ static int sky2_status_intr(struct sky2_
+@@ -1995,6 +1993,14 @@ static int sky2_status_intr(struct sky2_
  #endif
  				netif_receive_skb(skb);
  
@@ -108,9 +99,9 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  			if (++work_done >= to_do)
  				goto exit_loop;
  			break;
-@@ -2016,7 +2022,20 @@ static int sky2_status_intr(struct sky2_
- 		}
- 	}
+@@ -2035,7 +2041,20 @@ static int sky2_status_intr(struct sky2_
+ 	/* Fully processed status ring so clear irq */
+ 	sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
  
 +	/* Fully processed status ring so clear irq */
 +	sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
@@ -129,15 +120,12 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  	return work_done;
  }
  
-@@ -2215,19 +2234,16 @@ static int sky2_poll(struct net_device *
+@@ -2234,16 +2253,16 @@ static int sky2_poll(struct net_device *
  		sky2_descriptor_error(hw, 1, "transmit", Y2_IS_CHK_TXA2);
  
  	work_done = sky2_status_intr(hw, work_limit);
 -	*budget -= work_done;
 -	dev0->quota -= work_done;
--
--	if (status & Y2_IS_STAT_BMU)
--		sky2_write32(hw, STAT_CTRL, SC_STAT_CLR_IRQ);
 +	if (work_done < work_limit) {
 +		netif_rx_complete(dev0);
  
@@ -157,7 +145,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  }
  
  static irqreturn_t sky2_intr(int irq, void *dev_id, struct pt_regs *regs)
-@@ -2284,7 +2300,7 @@ static inline u32 sky2_clk2us(const stru
+@@ -2300,7 +2319,7 @@ static inline u32 sky2_clk2us(const stru
  }
  
  
@@ -165,8 +153,8 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
 +static int sky2_reset(struct sky2_hw *hw)
  {
  	u16 status;
- 	u8 t8, pmd_type;
-@@ -3435,17 +3451,14 @@ static int sky2_suspend(struct pci_dev *
+ 	u8 t8;
+@@ -3452,17 +3471,14 @@ static int sky2_suspend(struct pci_dev *
  		return -EINVAL;
  
  	del_timer_sync(&hw->idle_timer);
@@ -186,7 +174,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  		}
  	}
  
-@@ -3472,9 +3485,8 @@ static int sky2_resume(struct pci_dev *p
+@@ -3489,9 +3505,8 @@ static int sky2_resume(struct pci_dev *p
  
  	for (i = 0; i < hw->ports; i++) {
  		struct net_device *dev = hw->dev[i];
@@ -197,7 +185,7 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  
  			err = sky2_up(dev);
  			if (err) {
-@@ -3486,6 +3498,7 @@ static int sky2_resume(struct pci_dev *p
+@@ -3503,6 +3518,7 @@ static int sky2_resume(struct pci_dev *p
  		}
  	}
  
@@ -205,11 +193,11 @@ Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.c
  	sky2_idle_start(hw);
  out:
  	return err;
-Index: linux-2.6.17-gentoo-r6/drivers/net/sky2.h
+Index: linux-2.6.17-gentoo-r8/drivers/net/sky2.h
 ===================================================================
---- linux-2.6.17-gentoo-r6.orig/drivers/net/sky2.h
-+++ linux-2.6.17-gentoo-r6/drivers/net/sky2.h
-@@ -1480,7 +1480,7 @@ enum {
+--- linux-2.6.17-gentoo-r8.orig/drivers/net/sky2.h
++++ linux-2.6.17-gentoo-r8/drivers/net/sky2.h
+@@ -1488,7 +1488,7 @@ enum {
  	GM_TXCR_FORCE_JAM	= 1<<15, /* Bit 15:	Force Jam / Flow-Control */
  	GM_TXCR_CRC_DIS		= 1<<14, /* Bit 14:	Disable insertion of CRC */
  	GM_TXCR_PAD_DIS		= 1<<13, /* Bit 13:	Disable padding of packets */
