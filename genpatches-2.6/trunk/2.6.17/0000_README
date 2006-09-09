@@ -106,10 +106,6 @@ Patch:	1715_sparc64-pgtable.patch
 From:	sparc-2.6.git tree (David S. Miller <davem@sunset.davemloft.net>)
 Desc:	Fix runtime issues on ultrasparc T1 (sun4v)
 
-Patch:	1720_sparc64-x-hangs.patch
-From:	http://bugs.gentoo.org/145609
-Desc:	Fix X server hangs on sparc64
-
 Patch:	1900_nfs-stall.patch
 From:	http://bugs.gentoo.org/144263
 Desc:	Fix NFS stall bug
