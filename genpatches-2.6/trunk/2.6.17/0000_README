@@ -126,6 +126,10 @@ Patch:	2505_mmc-large-media.patch
 From:	http://bugs.gentoo.org/142172
 Desc:	Fix support for large MMC/SD cards
 
+Patch:	2510_ahci-slow-detection.patch
+From:	http://bugs.gentoo.org/147304
+Desc:	Fix boot delay for offline AHCI ports
+
 Patch:	2600_logips2pp.patch
 From:	2.6.18 tree
 Desc:	Fix issues with Logitech MX300 (and the fourth button)

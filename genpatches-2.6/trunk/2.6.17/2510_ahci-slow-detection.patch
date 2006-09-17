@@ -1,0 +1,33 @@
+From: Tejun Heo <htejun@gmail.com>
+Date: Sun, 2 Apr 2006 16:58:06 +0000 (+0900)
+Subject: [PATCH] ahci: do not fail softreset if PHY reports no device
+X-Git-Tag: v2.6.17-rc2
+X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=c2a6585296009379e0f4eff39cdcb108b457ebf2
+
+[PATCH] ahci: do not fail softreset if PHY reports no device
+
+All softreset methods are responsible for detecting device presence
+and succeed softreset in such cases.  AHCI didn't use to check for
+device presence before proceeding with softreset and this caused
+unnecessary reset retrials during probing.  This patch adds presence
+detection to AHCI softreset.
+
+Signed-off-by: Tejun Heo <htejun@gmail.com>
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+--- a/drivers/scsi/ahci.c
++++ b/drivers/scsi/ahci.c
+@@ -549,6 +549,12 @@ static int ahci_softreset(struct ata_por
+ 
+ 	DPRINTK("ENTER\n");
+ 
++	if (!sata_dev_present(ap)) {
++		DPRINTK("PHY reports no device\n");
++		*class = ATA_DEV_NONE;
++		return 0;
++	}
++
+ 	/* prepare for SRST (AHCI-1.1 10.4.1) */
+ 	rc = ahci_stop_engine(ap);
+ 	if (rc) {
