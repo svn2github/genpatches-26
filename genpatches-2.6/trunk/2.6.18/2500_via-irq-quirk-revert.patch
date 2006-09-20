@@ -1,7 +1,8 @@
-diff -u a/drivers/pci/quirks.c a/drivers/pci/quirks.c
---- a/drivers/pci/quirks.c
-+++ a/drivers/pci/quirks.c
-@@ -644,9 +644,6 @@
+Index: linux-git/drivers/pci/quirks.c
+===================================================================
+--- linux-git.orig/drivers/pci/quirks.c
++++ linux-git/drivers/pci/quirks.c
+@@ -646,9 +646,6 @@ DECLARE_PCI_FIXUP_HEADER(PCI_VENDOR_ID_V
   * non-x86 architectures (yes Via exists on PPC among other places),
   * we must mask the PCI_INTERRUPT_LINE value versus 0xf to get
   * interrupts delivered properly.
@@ -11,7 +12,7 @@ diff -u a/drivers/pci/quirks.c a/drivers/pci/quirks.c
   */
  static void quirk_via_irq(struct pci_dev *dev)
  {
-@@ -661,13 +658,7 @@
+@@ -663,14 +660,7 @@ static void quirk_via_irq(struct pci_dev
  		pci_write_config_byte(dev, PCI_INTERRUPT_LINE, new_irq);
  	}
  }
@@ -19,6 +20,7 @@ diff -u a/drivers/pci/quirks.c a/drivers/pci/quirks.c
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C586_1, quirk_via_irq);
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C586_2, quirk_via_irq);
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C586_3, quirk_via_irq);
+-DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8235_USB_2, quirk_via_irq);
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686, quirk_via_irq);
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686_4, quirk_via_irq);
 -DECLARE_PCI_FIXUP_ENABLE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686_5, quirk_via_irq);
