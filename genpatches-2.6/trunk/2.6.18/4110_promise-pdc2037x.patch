@@ -18,25 +18,29 @@ reset code for PATA and SATA ports.
 Signed-off-by: Jeff Garzik <jeff@garzik.org>
 ---
 
---- a/drivers/ata/libata-core.c
-+++ b/drivers/ata/libata-core.c
-@@ -5272,7 +5272,7 @@ void ata_port_init(struct ata_port *ap, 
+Index: linux-2.6.18/drivers/scsi/libata-core.c
+===================================================================
+--- linux-2.6.18.orig/drivers/scsi/libata-core.c
++++ linux-2.6.18/drivers/scsi/libata-core.c
+@@ -5261,7 +5261,7 @@ static void ata_host_init(struct ata_por
  	ap->pio_mask = ent->pio_mask;
  	ap->mwdma_mask = ent->mwdma_mask;
  	ap->udma_mask = ent->udma_mask;
--	ap->flags |= ent->port_flags;
-+	ap->flags |= ent->port_flags | ent->_port_flags[port_no];
+-	ap->flags |= ent->host_flags;
++	ap->flags |= ent->host_flags | ent->_port_flags[port_no];
  	ap->ops = ent->port_ops;
  	ap->hw_sata_spd_limit = UINT_MAX;
  	ap->active_tag = ATA_TAG_POISON;
---- a/drivers/ata/sata_promise.c
-+++ b/drivers/ata/sata_promise.c
+Index: linux-2.6.18/drivers/scsi/sata_promise.c
+===================================================================
+--- linux-2.6.18.orig/drivers/scsi/sata_promise.c
++++ linux-2.6.18/drivers/scsi/sata_promise.c
 @@ -175,7 +175,7 @@ static const struct ata_port_info pdc_po
  	/* board_2037x */
  	{
  		.sht		= &pdc_ata_sht,
--		.flags		= PDC_COMMON_FLAGS | ATA_FLAG_SATA,
-+		.flags		= PDC_COMMON_FLAGS /* | ATA_FLAG_SATA */,
+-		.host_flags	= PDC_COMMON_FLAGS | ATA_FLAG_SATA,
++		.host_flags	= PDC_COMMON_FLAGS /* | ATA_FLAG_SATA */,
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
@@ -121,13 +125,15 @@ Signed-off-by: Jeff Garzik <jeff@garzik.org>
  		break;
  	case board_20771:
  		probe_ent->n_ports = 2;
---- a/include/linux/libata.h
-+++ b/include/linux/libata.h
-@@ -359,6 +359,7 @@ struct ata_probe_ent {
+Index: linux-2.6.18/include/linux/libata.h
+===================================================================
+--- linux-2.6.18.orig/include/linux/libata.h
++++ linux-2.6.18/include/linux/libata.h
+@@ -358,6 +358,7 @@ struct ata_probe_ent {
+ 	unsigned long		irq;
  	unsigned int		irq_flags;
- 	unsigned long		port_flags;
- 	unsigned long		_host_flags;
+ 	unsigned long		host_flags;
 +	unsigned long		_port_flags[ATA_MAX_PORTS];
+ 	unsigned long		host_set_flags;
  	void __iomem		*mmio_base;
  	void			*private_data;
- };
