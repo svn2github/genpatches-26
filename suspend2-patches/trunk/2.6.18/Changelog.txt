@@ -1,0 +1,775 @@
+Suspend2 changelog.
+
+2.2.8 - 20 September 2006
+
+- Add Changelog as Documentation/power/Suspend2-Changelog.txt
+- Don't replace swsusp completely when the do-it-by-default option is on.
+
+2.2.7.6 - 15 September 2006
+
+- Let swsusp work. The readding of BUG_ON(non suspend2 io) test
+  wasn't targetted enough.
+- Fix the swsusp replacement code to work with initramfses.
+- Explicitly case the sizeof(struct suspend_header) as int. One case
+  reported where the lack of a cast seems to have caused huge header
+  size values.
+- Make the suspend_file routine parse_signature static.
+- Fix handling of swapwriter code so that the filewriter can still work
+  with the new swsusp replacement functionality.
+
+2.2.7.5 - 5 September 2006
+
+- Documentation updates
+- Add support for beeping at signficant lowlevel suspending points,
+  to help in diagnosing resume failures.
+  suspend_beep=1 on commandline to activate.
+- Add support for beeping while invoking driver suspend and resume
+  routines, to help in diagnosing resume failures.
+  Boot with device_beep=1 to activate.
+- Add a timer_resume fix that I'm hoping to see John Stultz submit
+  upstream.
+- Readd BUG_ON(non suspend2 io during suspend) in response to a
+  recent corruption report.
+- Remove deflate fix. We were the only ones needing it, and I don't
+  recommend the use of glacially slow compression anyway.
+- Remove PPC SOFTWARE_REPLACE_SLEEP configuration option.
+- Better typing of pageflags variables.
+- Use max_pfn rather than -1 to indicate the start/end of a scan.
+- Remove LRU paranoia. No reports of it being hit.
+- Consolidate Suspend2 specific kernel/power/*.h.
+- Unlink LRU pages instead of avoiding vmscanning during suspend.
+- Make Suspend2 a drop-in replacement for swsusp (compile time
+  option). This doesn't stop swsusp from working. Instead it lets you
+  * use resume= instead of resume2= (resume= takes precedence if set)
+  * use noresume instead of noresume2
+  * use echo disk > /sys/power/state to activate suspend2.
+  By default suspend2 is configured to use lzf compression, if available,
+  and no encryption.
+  Overriding swsusp can by disabled via /sys/power/suspend2.
+- Add further printks to help diagnose resume issues.
+- Replace zone->spanned_pages with populated_zone() test.
+- Some initial work on code to prove/ensure LRU pages aren't modified
+  while being written. Relies on DEBUG_PAGEALLOC, so shouldn't interfere
+  with normal use of this release, but it isn't working yet. x86 only.
+- Some further cleanups from sysfs conversion.
+
+2.2.7.4 - 19 July 2006
+
+- Update Documentation to refer to /sys/power/suspend2.
+- Make invocation of pm_console_suspend/resume optional
+  and disabled by default.
+- Add some printks for -EBUSY error messages.
+- Rename proc.c to sysfs.c.
+- Apply Rafael's suggestion of using the zone table info.
+- Change .disabled to .enabled in the module structure.
+- Change all references to proc to be sysfs.
+- Add one second delay between powering down devices and
+  doing the acpi state enter/machine_power_off/machine_halt.
+- Add result code flag for drivers failing to suspend.
+
+2.2.7.3 - 11 July 2006
+
+- Add subdirectories for modules.
+- Fix do_suspend and do_resume.
+
+2.2.7.2 - 11 July 2006
+
+- Console suspend and resume fix.
+- Initial sysfs support. /proc support retained for the interim. Note that the
+  sysfs layout is subject to change. I may make subdirectories for the modules
+  (compressor etc) and put their entries in there.
+- Modifed debugging info for compressor and encryptor so it's clearer when the
+  name of the algorithm to be used hasn't been set.
+- Try kernel_halt() if kernel_power_off() fails.
+
+2.2.7.1 - 6 July 2006
+
+- Remove Linus patches.
+- Remove some debugging code from atomic_copy.c
+- Change quotes and remove leading spaces in Kconfig
+- Shift resetting accounting of module header storage usage.
+- Add a missing reset of suspend2_running.
+- Remove some extra whitespace that was used when splitting the patches.
+- Enable some code in dyn_pageflags.c that was disabled and correct a typo
+  in it.
+
+2.2.7 - 2 July 2006
+
+- Fix test debugging patch to run on powering down devices instead of
+  when suspending them, and re-disable interrupts when we find something
+  to complain about.
+
+2.2.6.3 - 2 July 2006
+
+- Add Bernard's 2.2.6.2 fix patch (thanks, Bernard!)
+- Add test debugging patch to capture drivers that reenable irqs when they
+  ought not.
+
+2.2.6.2 - 1 July 2006
+
+- Fix date on last release :)
+- Fix freeze when eating memory that I forgot about before doing 2.2.6.1
+- Small commenting fix.
+- Quieten pdflush when thawed.
+
+2.2.6.1 - 1 July 2006
+
+- Cleanups: Whitespace/line wrapping, removal of asm-ppc/cpu_context.h,
+  old/unnecessary declarations in dyn_pageflags.h, freezer.h. Atomic_copy
+  prepare_pbe_list.
+- Commenting: dyn_pageflags.h
+- Rename: pageflags_space_needed -> suspend_*
+- Add zones_in_use variable, to save recalculating how many zones are in use
+  all the time (ta Rafael).
+- !(CONFIG_VT && VT_CONSOLE) compile fix from LKML.
+- Fix SYSTEM_BOOTING->RUNNING, from old version of Linus' console patch.
+- Quoting of KConfig options. Addresses warnings that have appeared in
+  post 2.6.17 git.
+- Reverse early pm_ops->prepare and late ->finish invocations.
+- Handle errors if bdev freezing kmalloc fails or suspend2_suspend fails.
+- Correct error handling in suspend_main().
+- Remove block_dump debugging in file_writer.
+- Re-enable populate_block_list printk condition.
+- Disable pm_prepare_console and pm_restore_console calls for now. Still
+  seem to be problematic.
+- Add MAINTAINERS file entry.
+
+2.2.6 - 23 June 2006
+
+- No problems reported so far with 2.2.5.3, so I'm
+  renaming it to 2.2.6.
+
+2.2.5.3 - 22 June 2006
+
+- Update to 2.6.17
+- Bring figuring out which pages to save closer to the
+  algorithm used by swsusp.
+- Move allocation of image header storage last in updating
+  the image contents.
+- Reset the header bytes used by each module when getting
+  the request so S3 powerdown doesn't only work once.
+- Tidy header allocation code.
+- Tidy process refreezing when updating the image metadata.
+- Add debugging code to check that LRU pages are not modified
+  while the freezer is on.
+- Do pm_state->prepare and finish right at the start and
+  end of a cycle.
+- Add Ben Collin's patch for a trace data section for ppc
+  (needed for Linus' debugging patch, added in 2.2.5.2).
+- Rework extra pageset1 pages allowance so that we have a
+  hardcoded minimum and default (now 500) that is more
+  easily modified (prepare_image.h).
+- Take pm_sem when suspending and add PM_SEM failure bit
+  to the result code.
+- Use console suspend/resume code.
+
+2.2.5.2 - 16 June 2006
+
+- Remove x86_64 e820 code.
+- Add #include to Linus' tracing code to fix compilation in
+  Ubuntu backport.
+- Add display of number of extra pageset 1 pages used.
+- Modify the code which tracks our position in storage so that
+  it sits at the start of a page and not the end. Simplifies
+  finding where to start when resuming.
+- Add pdflush post-resume fix from LKML.
+
+2.2.5.1 - 15 June 2006
+
+- Updated to 2.6.17-rc6.
+- Fixed filewriter issue when header is not at the lowest block
+  number in the file.
+- Moved refrigerator closer to the vanilla implementation.
+- Removed per-workqueue freezing.
+- Carefully audited header space usage and added debugging
+  support.
+- Fixed compilation issues with sharing code with swsusp.
+- Removed SUSPEND_TEST_BIO flag.
+- Added paragraph to suspend2.txt. Pavel forked, not us :)
+- Removed arm code. No recent updates.
+- Added (temporary) e820 amd64 code.
+- Fix BITMAP_FOR_EACH_SET to check for -1 instead of max_pfn.
+- Add ifdefs around some highmem code.
+- Fix some line length issues.
+- Rename attempt_to_parse_resume_device to suspend_...
+- Remove DEBUG_PAGEALLOC support.
+- Prepare to power off with POWER_OFF, not SUSPEND_DISK.
+- Max extra pages allowance should be INT_MAX, not 32768.
+
+2.2.5 - 21 April 2006
+
+- Cleanups from ongoing preparation of the git tree.
+- Correction to x86_64 page_is_ram function.
+- New FREEZING_COMPLETE status variable, used in debugging the
+  new shrink_all_memory implementation.
+- Improvements to calculations of header space required. More
+  work to be done.
+- Fix compilation with !CONFIG_NET
+- Some new image calculation paranoia. Shouldn't be needed, but
+  you can't always know everything that changes from one kernel
+  version to the next.
+- Use Con Kolivas and Rafael Wysocki's shrink_all_memory rework,
+  with a couple of bug fixes of my own. In combination with this,
+  simplify the memory freeing in suspend2 to use a single pass.
+- Fix suspend_running not being set at resume time, which caused
+  spontaneous reboots when the temporary pagedir allocator then
+  got unsafe pages.
+- Remove setting swap info struct data during resume.
+- Update hooks in the pagealloc routines that prevented memory
+  freeing while we're writing the image.
+
+2.2.4.1 - 13 April 2006
+
+- Removed use of max_pfn to make life simpler on ARM.
+- Fix line length in atomic_copy.c.
+- Rename suspend_recalculate_stats to suspend_recalculate_image_contents
+- Remove checksumming code.
+- Apply Jens Gustedt's checks for which filesystems are mounted
+  on resume.
+- Fix encryption where PAGE_SIZE % key length != 0.
+- Move swsusp Makefile entries below Suspend2 again - it doesn't play
+  nicely with Suspend2, and so needs to have it's boot time routines
+  run later. noresume2 will also not work with noresume being compiled
+  in first.
+- Rework the allocation of extra pages to use PageNosave instead of
+  PageAllocd and don't completely clear Pageset1Copy on every iteration
+  through count_data_pages. 
+- Remove the ConflictingPages bitmap.
+- Remove a bogus comment that said we remember conflicting pages and
+  free them.
+- Remove DEBUG_PAGEALLOC support.
+- Add extra message for when powering off.
+- Rework and cleanup code which determines which pages to save.
+- Correction to ram_to_suspend function - it should halve the
+  amount calculated and take account of extra pagedir pages that have
+  been allocated.
+- Correct handling of proc entries that use longs. This is particularly
+  relevant to the image_size_limit. It wasn't previously correctly set
+  to -1 or -2. (This would have broken the nocaches functionality).
+- Move suspend_default_console_level to ui.c.
+- Remove unused suspend_bio_task in block_io.c.
+- Use progress granularity that was saved in the image header, even
+  if the userui helper program stored in the image header won't be
+  used because it was overridden by the initrd/ramfs script.
+- Don't update the load average while the freezer is on. This fixes
+  an unintended sideeffect wherein mail services will refuse to
+  operate post-resume because the load average had been pushed up
+  by Suspend's intensive CPU use.
+
+2.2.4 - 2 April 2006
+
+- Fixed what are hopefully the last outstanding issues with
+  the switchover to using the swsusp lowlevel code:
+  * Corrected compilation issues with the difference
+    combinations of swsusp and Suspend2.
+  * Make x86_64 work correctly - get_safe_page() was using
+    the swsusp code instead of Suspend2 code.
+
+2.2.3 - 1 April 2006
+
+- Add better powerdown_methods documentation (thanks
+  Jens Gustedt).
+- Further work addressing issues with using the swsusp
+  lowlevel code.
+- Abort on resume if we fail to initialise the compression
+  transform used when suspending.
+- Switch filewriter to use add_to_extent_chain instead of
+  append_extent_to_extent_chain and remove now the now
+  unused function.
+- Fix compilation errors if swsusp and Suspend2 are both
+  disabled.
+- Fix PPC compilation error with !rtas.
+
+2.2.2.1 - 28 March 2006
+
+- Missed a part of the backport, inadvertently making
+  a requirement that you also select
+  CONFIG_SOFTWARE_SUSPEND. Fix that by making Suspend2
+  select SOFTWARE_SUSPEND automatically.
+
+2.2.2 - 28 March 2006
+
+- Backported to 2.6.16.
+- Added a couple of printks for when we fail to write a
+  block of the image. Saw this in unusual circumstances
+  while testing, and need to seek to reproduce and fix.
+
+2.2.1.3 - 27 March 2006
+Prepared against current git as at 7.30pm AEST
+- Further cleanups as I begin to prepare the git tree
+  in earnest.
+- Highmem fixes I almost forgot for this release!
+
+2.2.1.2 - 23 March 2006
+Prepared against current git as at 11pm AEST.
+
+- Further cleanups from the switch to swsusp lowlevel
+  code. Should not longer require swsusp to be selected.
+
+2.2.1.1 - 23 March 2006
+Prepared against current git as at 4:20pm AEST.
+
+- Switch suspend2 to use the swsusp lowlevel code.
+- Rework freeing of extra pages allocated for the
+  atomic copy.
+- Misc cleanups.
+
+2.2.1 - 17 March 2006
+
+- Remove debug_pagealloc support
+- Documentation update
+- Move device_suspend at resume time prior to setting
+  up temporary page tables (Lamarque Souza).
+
+2.2.0.8 - 15 March 2006
+
+- Convert pageset sizes to longs.
+- Convert [read|write]_header_chunk to
+  rw_header_chunk([READ|WRITE]...) and do similar
+  cleanups with other i/o routines.
+- Remove some unused module structure members.
+- Flatten the module ops.
+- Fix a couple of harmless compile warnings.
+
+2.2.0.7 - 15 March 2006
+
+- Further fixes from 2.2.0.6. Now tested with modifying
+  resume2= in an initrd and checking image_exists prior
+  to do the echo > do_resume.
+
+2.2.0.6 - 13 March 2006
+
+- Split logic for determining whether we can suspend from
+  that for figuring out whether we can resume. This is
+  useful for the filewriter, where resume2= can be valid
+  (allowing us to resume) while filewriter_target isn't
+  set (prohibiting suspending).
+- Update file headers.
+
+2.2.0.5 - 13 March 2006
+
+- Oh dear. I somehow reversed the 2.2.0.3 fix in 2.2.0.4.
+  Let's try and get them both in the same patch, shall we?
+
+2.2.0.4 - 13 March 2006
+
+- Fix missing incrementation of # extents freed in new
+  swap storage code.
+
+2.2.0.3 - 11 March 2006
+
+- Add x86 compilation error fix I missed.
+
+2.2.0.2 - 11 March 2006
+
+- Fix minimum free ram at 2000 pages rather than nr pages >> 7.
+- Remove command line suspend_act, suspend_lvl and suspend_dbg
+  options.
+- Fix issues with swap allocation that made suspend not work
+  properly with multiple swap storage at the same priority or
+  highly fragmented storage.
+- Add Randy Dunlap's libata patches (sata).
+- Removed time patches.
+- Documentation updates
+- Remove un-needed x86_64 fix processor context patch.
+- Remove x86_64 mcheck_init invocation.
+- Separate workqueue freezer, dynamic pageflags and
+  lzf patches.
+- Remove obsolete configuration flags from the enums in suspend2.h.
+- Correct various typos in headers.
+- Various cleanups.
+- Remove command line parameters suspend_act, suspend_dbg and
+  suspend_lvl.
+- Remove HALT_ON debugging macro from pagedir.c.
+- Add tags for my new patch splitting utility.
+
+2.2.0.1 - 15 February 2006
+
+- Update to 2.6.16-rc3.
+- Further cleanups, removing fragments that are no longer needed
+  and applying suggestions from code review.
+- Remove Christoph's todo list code. Not because I don't like it,
+  but because it was originally designed to help SMP cleanness,
+  and cpu hotplug has taken over that need.
+
+2.2 - 24 January 2006 (Happy Birthday, Dad!)
+
+- Fix amd64 page_is_ram typo.
+- Fix unintentional dependence on swsusp (amd64).
+- Make swapwriter select swap support instead of depending
+  on it already being selected.
+- Make a new common function for writing the last (partial)
+  page of a header.
+- Remove temporary enabling of block dump when reading pageset1.
+- Extend have_image to also display some of the details from
+  the header.
+- Cleanup count_data_pages changes.
+- Save and restore the block_dump setting when starting/finishing
+  a cycle.
+- Add support for debugging the image header reading & writing.
+- A few fixes to the filewriter.
+- Cleanups in swapwriter and arch specific code.
+
+2.2-rc16 - 8 January 2006
+
+- Small updates to documentation.
+- Fix amd64 support.
+- Remove no-unneeded modifications to fs/super.c & mtrr code.
+- Cleanup dyn pageflags include files.
+- Clean freezer header.
+- Move swsusp to bottom of Makefile to make interoperability work better.
+- Move pm_ops prepare/finish calls back -moving the calls to pre/post
+  hotplugging doesn't seem to be the right thing to do at the moment.
+- Save zone info that's used during atomic restore in memory that can
+  be safely accessed during that period.
+- Modify swsusp so it can be used with the new freezer without causing
+  a deadlock.
+- Reinstate the ability to cancel a suspend part way through writing a
+  pageset.
+- Fix some duplicated allowance for extra pd1 pages.
+- Further work on new PageNoSave code.
+- Increase max outstanding I/O to 2048.
+- Remove some unnecessary forced inlining.
+
+2.2-rc15 - 26 December 2005
+
+- Call the correct writer init routine (read/write were transposed!)
+- Freeze filesystems in reverse order so loopback doesn't result in
+  a hang.
+- Select HOTPLUG_CPU instead of depending on it (SMP).
+- Further switchovers from assuming pfns start at 0 to using per zone
+  ranges.
+- Lots of architecture specific fixes for PPC, x86_64 and ARM.
+- Work on removing PageNosave dependency and changes outside kernel/power.
+- Support new read-only section patches.
+- Remove b44 patch.
+- Cleanups (as always!). This time, we remove driver_model.[ch], and
+  remove some now unused MTRR modifications and lowlevel x86 code.
+- Small modifications to lowlevel code routine.
+- Reintroduce /proc/suspend2/no_pageset2 for testing.
+- Compile fix for !SUSPEND2.
+- Fixups to powerdown code (yes, again!).
+- Bug fix to rw_init_plugins.
+- Small rework of sanity checking.
+- Make num_pcp_pages() numa compatible.
+- Cleanup filesystem freezing code.
+- More consolidation of swapwriter and filewriter code into bio.c.
+- Attempt to parse resume device when checking if can suspend and
+  suspend is currently disabled.
+- Rename noresume_setup to noresume2_setup so it works with swsusp
+  compiled in.
+- Fix filewriter so it again tries to stat the file if name_to_dev_t
+  fails.
+
+2.2-rc14 - 2 December 2005
+
+- Correct header_locations in documentation to headerlocations.
+- Remove BUG_ON() in ll_rw_blk.c.
+- Correction to nvidia agp suspend/resume support.
+- Complete removal of syncthread code.
+- Consolidate all of the page i/o code from swapwriter and
+  filewriter into one version, moved to block_io.c.
+- Combine the io.c read & write pageset routines and make
+  separate routines of plugin setup/cleanup and the main loop.
+- Fix for AMD64 reading wrong block for header at resume time
+  (and thus reporting 0.0.0 kernel version in the image).
+
+2.2-rc13 - 25 November 2005
+
+- Add ARM support, thanks to Hiroki Kaminaga at Sony.
+- Replace remounting with freezing and thawing filesystems.
+- Remove now unneeded syncthread code (more to be done).
+- Don't sys_sync after freezing filesystems. That way lies deadlocks.
+- Beginnings of cleanups for writers.
+- Make number of extra pagedir 1 pages allowed for tunable via a
+  new proc entry. Set it to 0 for autotuning.
+- Fix an oops in the filewriter.
+- Fix for typo in power off code (thanks, _damjan_).
+
+2.2-rc12 - 22 November 2005
+
+- New test_bio proc debugging entry; don't actually write anything,
+  just say where the data would be put.
+- Further filewriter fixes. It should be perfectly usable now,
+  but I would still recommend care and backups!
+- Don't use smp_processor_id in lowlevel code. With cpuhotplug, we
+  know we're on processor zero.
+- Fix some indentation in the lowlevel code.
+- Touch softlockup watchdog when resuming. Shouldn't be needed and
+  doesn't seem to make any difference, but I'll seek consistency
+  with Pavel at this point.
+- Show what processes enter and leave the fridge and when iff
+  PM Debug is enabled (wRAR).
+- Modify remounting logic introduced in rc11 so that syslog etc
+  continue to work postresume.
+- Remove some extra debugging code in the freezer.
+- Prune the number of calls to attempt_to_parse so that we can
+  properly figure out whether suspending should be enabled.
+- Don't unblank the console from the kernel code. Doesn't play
+  nicely with vesafb-tng. 
+
+2.2-rc11 - 15 November 2005
+
+- Remount filesystems readonly while suspending so as to ensure
+  xfs flushes all pending writes. This also means things should
+  be nice and clean if you fail to resume (for whatever reason).
+- Fix highmem support that I broke with rc10.
+- Fix typo in 2nd+ attempt at resuming message.
+
+2.2-rc10 - 14 November 2005
+
+- Increased allowance for extra pagedir1 pages. This is primarily
+  for the new flgrx driver. If you don't use it, you'll see a
+  bigger drop in the total image size after the atomic copy. This
+  is nothing to be concerned about.
+- Some debugging code has been temporarily modified to always
+  print, to help address some particular users' issues.
+- More helpful debugging for AMD64 preemption problems.
+- Rework of powerdown code. Powerdown method can now also be 0,
+  meaning Suspend won't try to use ACPI to powerdown. 1 & 2 are
+  also accepted values. You might find Standby (1) useful, but 2
+  will probably only make the computer resume again immediately.
+- Big rework of blocksize handling. Suspend2 is now tested with the
+  swap files and ordinary files on ext3, xfs and reiser with each
+  blocksize allowed by the filesystem type. Other filesystems should
+  work without a problem because the algorithm is basically the same
+  as that used for swapfiles.
+- Initial version of discontiguous memory support.
+- Replace /proc/software_suspend with /proc/suspend2.
+- Make Suspend2 explicitly depend upon cpu hotplug for SMP.
+- Leave interrupts enabled when powering down.
+- Make storage manager testing proc entry depend on PM_DEBUG.
+- Remove unnecessary check at the start of save image.
+- Small cleanups in the swapwriter (swapfile management).
+
+2.2-rc9 - 5 November 2005
+
+- Filewriter cleanups and bug fixes.
+- Display stats when unable to allocate enough storage, to help diagnosing
+  this issue.
+- Some cleanups to e820 table support.
+- Various small fixes to PPC support.
+- Modifed BIO submission check to be smarter (use new Suspend2 flag in BIO
+  flags).
+- Add userspace storage manager (usm) support. Requires userspace program.
+  None are available yet. This change included a separation of the netlink
+  code from the userui code into a new file.
+- Replace type * name with type *name everywhere.
+- Made debugging code for driver suspend/resume calls more gentle
+  (delay/print instead of BUG_ON().
+- Don't mark image as resumed before when in KEEP_IMAGE made.
+- Seek to address BUG_ONs being hit in marking a task as pageset1.
+- Address some arch/config specific compilation warnings.
+- Use kernel_power_off_prepare instead of device_shutdown when not entering
+  suspend to ram.
+- Thaw kernel processes before beginning to eat memory.
+- Make freezer quiet by default.
+- Export freezer state for when ext3 (eg) built as a module.
+- Add news_storage_manager to proc entry info so that entries that needs
+  access to storage for reading and/or writing can enable it as required.
+  There is also a new activate_storage entry that can be used in a script to
+  avoid having it repetitively enabled and disabled by a number of instructions.
+	echo 1 >  /proc/suspend2/activate_storage
+  at the start of the sequence and
+	echo 0 > /proc/suspend2/activate_storage
+  and the end.
+- Correct bits in result code so hibernate script gives the correct
+  interpretation again.
+- Cleanup and simplify file management in the file writer. (Debugging printks
+  left in for this release).
+- Poke blanked console when resuming.
+ 
+2.2-rc8 - October 3, 2005.
+
+REQUIRES hibernate script 1.12 or newer. 
+
+- Changed name of proc directory to suspend2.
+- Removed suspend_drivers_init/cleanup
+- Cleaned up debug_info entry
+- Remove atomic_restore conflict check
+- Stop tracking max extents used.
+- put_extent. Just BUG_ON(!extent). Or don't handle.
+- put_extent_chain remove if (!this) return
+- Removed references to chain optimisation info
+- Remove error messages in <load|serialise>_extent_chain (should
+  come from real cause of err)
+- attempt_to_parse_resume_device should return whether successful
+- Merge plugin read/write inits/cleanups into one loop.
+- Merge read & write routines into one generic I/O loop?
+- Sanity check kernel version - macros for digits?
+- Rename free_pagedir_data to free_extra_pagedir_memory. Don't reset pageset
+  sizes there.
+- Removed SetPageConflicting
+- release_conflicting_pages: Delete. Not used.
+- remove version info in proc.c
+- Remove #ifdef CONFIG_SUSPEND2_DEFAULT_RESUME2 in suspend2
+- compress <allocate|free>_bitmaps functions
+- Remove #ifdef DEBUG_PAGE_ALLOC in suspend2.c
+- can_suspend: if(DISABLED && !attempt_to_parse())
+- Remove keep_metadata proc entry
+- Use (DISABLED && !attempt_to_parse() in suspend2_resume, too.
+- Removed unused fields used in io_info struct
+- flush_dcache_page needed?
+- Use put_page to free pages.
+- Some extraneous comments removed.
+- Removed header_data comment
+- /*^N *^N *^N* ^N* ^N */
+- Remove PRINTK in swapwriter
+- Remove swapwriter file management?
+- Cleaned up get_blocks_per_page in swapwriter
+- Integrated get_path_for_swapfile to caller
+- Parse signature - remove old pmdisk version support
+- Removed unneeded extern int signature_check? (swapwriter:478)
+- Cleaned up swapwriter_storage_allocated
+- Remove space_requests = ((long) space_really_requested) << PAGE_SHIFT
+- Remove allocate_header_space comment "was going to be in bytes"
+- Simplified header space allocated calculation.
+- Remove extra escape action in request_abort_suspend (not used and would
+  be a problem anyway).
+- Fix compile error for AMD64 SMP.
+- Fix error in the filewriter.
+
+2.2-rc7 - September 16 2005
+
+- Further fixing of powerdown code. If !pm_ops, just use
+  kernel_power_off.
+- Use return code when freezing failure occurs.
+- Make userui disabling effective.
+
+2.2-rc6 - September 6 2005 (The Hamilton Release)
+
+- Fix for corruption caused when failing to power down.
+- Fix for failing to power down.
+- Separated refrigerator changes from Suspend2 for separate
+  merge.
+- Misc other cleanups.
+
+2.2-rc5 - September 2 2005
+- Add more detailed debugging information regarding which
+  driver re-enables interrupts and recover.
+- Handle wrong userui interface version by resetting userui
+  and continuing without it.
+- Fix for powerdown issues.
+- Ensure resumed before flag isn't unintentionally set when
+  writing header.
+- Seek to address trace given in refrigerator code.
+- Complain if can't find the userui process number given
+  for setting nofreeze.
+- Fixed a bug in the swap allocation routine that would
+  result in swap being allocated but not freed.
+
+2.2-rc4 - August 30 2005
+
+- Fixed bounding error in swapwriter device closing. This
+  had 'interesting' side effects.
+- Moved storing the console log level used to before asking
+  the userui to cleanup, so that after suspending.
+  default_console_loglevel contains the last one used, and
+  not the original value.
+- Fixed a mistake in include/asm-i386/suspend2.h that broke
+  compilation for gcc 4 users.
+- Made the refrigerator ignore Stopped processes again. Mea
+  culpa. As always :|
+
+2.2-rc3 - August 29 2005
+
+- Modified error message for setting the blocksize to give
+  some useful information.
+- Fixed typo in todo_list_active calls in jfs_txnmgr.c
+- Fixed size of blocksize storage in header. Thanks Ola!
+- Merged in initramfs changes to filewriter. Added new state
+  flag for resuming from initramfs and call from do_mounts_rd.c.
+  Yet to test.
+- Implemented communication of the netlink socket number to use
+  to the userui program when invoking it. (Changes to commit to
+  userui tree)
+- Give more information and invalidate the image when we fail to
+  initialise a filter at resume.
+- Clean up console when failing to resume.
+- Make escape and toggling pause and single step take effect
+  immediately.
+- Fixed log everything so that it does again.
+- Expand userui message buffer from 80 to 255 characters.
+- Fixed a silly bug when the header is not stored on the resume
+  block device.
+- Modify freezer implementation to signal all processes once,
+  separate to waiting for them to enter the refrigerator. This
+  will be more robust and quicker if/when the todo list gets used
+  for other things.
+- Modify userui version to 6.
+- Move freeing of freezer notifier entry to post spinlock release.
+- Fix compilation error when !SUSPEND2 & CRYPTO
+- Fix missing ; in macro for !SUSPEND2
+
+2.2-rc2 - August 24 2005
+- Apply LZF 64 bit from Anders Fugmann.
+- Complete transition to todo list and fix up jffs2.
+- Temporary fix for gcc 4, telling it lies that we're
+  not clobbering ebp. Something similar needed for other
+  archs?
+
+2.2-rc1 - August 23 2005
+- Fixed problem with swapwriter buffer offset not being reset
+  when beginning to write the image header.
+- PPC fixes from Johannes Berg.
+- Give a better message when can't initialise a compressor.
+- Remove an unused variable from the pageset_sizes_result struct.
+- Make Suspend still compile ok when networking is disabled.
+  Userui won't work (it uses netlink), but suspending will.
+  This will also be handy for embedded support.
+- Say why we can't do userui when we can't open /dev/console
+  (entirely possible when resuming from an initrd).
+
+2.1.9.14 - August 22 2005
+- Fixes for previous patch - base tree was slightly corrupted.
+- Also fixed agp driver cleanups - humble apologies to ATI and
+  Nvidia users.
+- Small fixes for new bdev management code in swapwriter.
+
+2.1.9.13 - August 20 2005
+- Added support for Christoph Lameter's todo list changes.
+- Reworked device setup at resume time.
+- Began splitting up patches into many more changesets for
+  the (to be made) git tree. I'll now ship the patch as one
+  big patch.
+- Miscellaneous other bug fixes and cleanups.
+
+2.1.9.12 - August 4 2005
+- Bug fixes for the refrigerator code
+- Fixed bug in dyn_pageflags code that would cause an oops if
+  allocating pageflags ever failed.
+- Changed block io code to use kblockd_flush.
+- Reworking of semantics for workqueue calls (merge work).
+
+2.1.9.11 - July 30 2005
+- More cleanups.
+
+2.1.9.10 - July 23 2005
+- Lots more cleanups and little fixes.
+- Changed workqueue freezer implementation from using an extra parameter
+  to using new routines with nofreeze in the name. Greatly reduces the
+  number of files we touch.
+- Remove SYNCTHREAD flag from kernel threads. It really means nothing.
+  (They are frozen anyway, after real syncthreads).
+- In the process of re-adding checksumming as a standalone patch. Not
+  to be submitted.
+- Cleaned up LZF. Removed macros and ifdefs.
+- Started pushing patches.
+- Renamed arch specific functions to include _arch_.
+- Removed all_settings after asking how many people use it.
+- Fixed up copyback thread spawning so as to ensure that the stack used
+  is not in a conflicting page. We spwan new threads until one is ok.
+  Each thread spawned will keep spawning other threads (with a delay)
+  until one has a non conflicting page. This means you can end up with
+  a large number of threads quickly. We guarantee that only one will
+  continue on to the copyback. All others enter the freezer.
+
+2.1.9.9 - July 8 2005
+- Move suspend2_core directory contents up to kernel/power.
+- Further work on x86_64 (more to be done before it can be tested).
+- Lots of cleanups in response to premerge (I hope) comments. As part
+  of this, converted a number of lists of #defined bit indices to
+  enums. This will break saved all_settings files, so I bumped the
+  version.
+- Added debugging info to swapwriter to try and diagnose set block size
+  oops some people are seeing.
