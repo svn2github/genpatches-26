@@ -58,6 +58,10 @@ Patch:	4005_sky2-v1.7.patch
 From:	netdev-2.6 tree
 Desc:	sky2 updates and fixes
 
+Patch:	4010_r8169-8168.patch
+From:	http://bugs.gentoo.org/148090
+Desc:	Add support for RTL8168 ethernet
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
