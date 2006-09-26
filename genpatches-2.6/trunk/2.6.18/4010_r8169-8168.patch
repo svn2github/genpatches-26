@@ -35,6 +35,8 @@ r8169: sync with vendor's driver
 
 Signed-off-by: Francois Romieu <romieu@fr.zoreil.com>
 Rediffed for 2.6.18 by Daniel Drake <dsd@gentoo.org>
+Also includes commits d2eed8cff9a1a5d7e12ec9ddf71432c466b104d0 and
+d81bf551103cc3bc9e4f7ddf337511d6da0d088f
 ---
 
 Index: linux-2.6.18/drivers/net/r8169.c
@@ -114,8 +116,8 @@ Index: linux-2.6.18/drivers/net/r8169.c
 -	{ PCI_DEVICE(0x16ec,			0x0116), },
 -	{ PCI_VENDOR_ID_LINKSYS,		0x1032, PCI_ANY_ID, 0x0024, },
 +	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8129), 0, 0, RTL_CFG_0 },
-+	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8136), 0, 0, RTL_CFG_1 },
-+	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8167), 0, 0, RTL_CFG_1 },
++	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8136), 0, 0, RTL_CFG_2 },
++	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8167), 0, 0, RTL_CFG_0 },
 +	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8168), 0, 0, RTL_CFG_2 },
 +	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK,	0x8169), 0, 0, RTL_CFG_0 },
 +	{ PCI_DEVICE(PCI_VENDOR_ID_DLINK,	0x4300), 0, 0, RTL_CFG_0 },
