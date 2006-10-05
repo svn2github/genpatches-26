@@ -50,10 +50,6 @@ Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
 
-Patch:	4010_r8169-8168.patch
-From:	http://bugs.gentoo.org/148090
-Desc:	Add support for RTL8168 ethernet
-
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
