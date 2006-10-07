@@ -1,8 +1,8 @@
 # Patch generated against a6047eef1c465c38aacfbdab193161b3f0cd144
-Index: linux-2.6.18/Documentation/fb/vesafb.txt
+Index: linux-2.6.19/Documentation/fb/vesafb.txt
 ===================================================================
---- linux-2.6.18.orig/Documentation/fb/vesafb.txt
-+++ linux-2.6.18/Documentation/fb/vesafb.txt
+--- linux-2.6.19.orig/Documentation/fb/vesafb.txt
++++ linux-2.6.19/Documentation/fb/vesafb.txt
 @@ -2,16 +2,18 @@
  What is vesafb?
  ===============
@@ -352,11 +352,11 @@ Index: linux-2.6.18/Documentation/fb/vesafb.txt
 +Extended documentation for vm86, VBE 3.0 and vesafb-tng by
 +Michal Januszewski <spock@gentoo.org>
 +
-Index: linux-2.6.18/arch/i386/boot/video.S
+Index: linux-2.6.19/arch/i386/boot/video.S
 ===================================================================
---- linux-2.6.18.orig/arch/i386/boot/video.S
-+++ linux-2.6.18/arch/i386/boot/video.S
-@@ -165,10 +165,12 @@ basret:	ret
+--- linux-2.6.19.orig/arch/i386/boot/video.S
++++ linux-2.6.19/arch/i386/boot/video.S
+@@ -163,10 +163,12 @@ basret:	ret
  # parameters in the default 80x25 mode -- these are set directly,
  # because some very obscure BIOSes supply insane values.
  mode_params:
@@ -369,7 +369,7 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  	movb	$0x03, %ah			# Read cursor position
  	xorb	%bh, %bh
  	int	$0x10
-@@ -201,6 +203,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES
+@@ -199,6 +201,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES
  	ret
  
  #ifdef CONFIG_VIDEO_SELECT
@@ -377,7 +377,7 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  # Fetching of VESA frame buffer parameters
  mopar_gr:
  	leaw	modelist+1024, %di
-@@ -283,6 +286,7 @@ dac_done:
+@@ -281,6 +284,7 @@ dac_done:
  	movw	%es, %fs:(PARAM_VESAPM_SEG)
  	movw	%di, %fs:(PARAM_VESAPM_OFF)
  no_pm:	ret
@@ -385,7 +385,7 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  
  # The video mode menu
  mode_menu:
-@@ -497,10 +501,12 @@ mode_set:
+@@ -495,10 +499,12 @@ mode_set:
  	
  	cmpb	$VIDEO_FIRST_V7>>8, %ah
  	jz	setv7
@@ -400,7 +400,7 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  	orb	%ah, %ah
  	jz	setmenu
  	
-@@ -572,6 +578,7 @@ setr1:	lodsw
+@@ -570,6 +576,7 @@ setr1:	lodsw
  	movw	-4(%si), %ax			# Fetch mode ID
  	jmp	_m_s
  
@@ -408,7 +408,7 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  check_vesa:
  	leaw	modelist+1024, %di
  	subb	$VIDEO_FIRST_VESA>>8, %bh
-@@ -605,6 +612,7 @@ check_vesa:
+@@ -603,6 +610,7 @@ check_vesa:
  	ret
  
  _setbad:	jmp	setbad          	# Ugly...
@@ -416,11 +416,11 @@ Index: linux-2.6.18/arch/i386/boot/video.S
  
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
-Index: linux-2.6.18/drivers/video/Kconfig
+Index: linux-2.6.19/drivers/video/Kconfig
 ===================================================================
---- linux-2.6.18.orig/drivers/video/Kconfig
-+++ linux-2.6.18/drivers/video/Kconfig
-@@ -541,8 +541,22 @@ config FB_TGA
+--- linux-2.6.19.orig/drivers/video/Kconfig
++++ linux-2.6.19/drivers/video/Kconfig
+@@ -546,8 +546,22 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -445,7 +445,7 @@ Index: linux-2.6.18/drivers/video/Kconfig
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -550,7 +564,43 @@ config FB_VESA
+@@ -555,7 +569,43 @@ config FB_VESA
  	  This is the frame buffer device driver for generic VESA 2.0
  	  compliant graphic cards. The older VESA 1.2 cards are not supported.
  	  You will get a boot time penguin logo at no additional cost. Please
@@ -490,11 +490,11 @@ Index: linux-2.6.18/drivers/video/Kconfig
  
  config FB_IMAC
  	bool "Intel-based Macintosh Framebuffer Support"
-Index: linux-2.6.18/drivers/video/Makefile
+Index: linux-2.6.19/drivers/video/Makefile
 ===================================================================
---- linux-2.6.18.orig/drivers/video/Makefile
-+++ linux-2.6.18/drivers/video/Makefile
-@@ -101,7 +101,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
+--- linux-2.6.19.orig/drivers/video/Makefile
++++ linux-2.6.19/drivers/video/Makefile
+@@ -102,7 +102,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
  obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx4008/
  
  # Platform or fallback drivers go here
@@ -507,11 +507,11 @@ Index: linux-2.6.18/drivers/video/Makefile
  obj-$(CONFIG_FB_IMAC)             += imacfb.o
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
-Index: linux-2.6.18/drivers/video/fbmem.c
+Index: linux-2.6.19/drivers/video/fbmem.c
 ===================================================================
---- linux-2.6.18.orig/drivers/video/fbmem.c
-+++ linux-2.6.18/drivers/video/fbmem.c
-@@ -1407,6 +1407,7 @@ fbmem_init(void)
+--- linux-2.6.19.orig/drivers/video/fbmem.c
++++ linux-2.6.19/drivers/video/fbmem.c
+@@ -1408,6 +1408,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -519,10 +519,10 @@ Index: linux-2.6.18/drivers/video/fbmem.c
  	return 0;
  }
  
-Index: linux-2.6.18/drivers/video/modedb.c
+Index: linux-2.6.19/drivers/video/modedb.c
 ===================================================================
---- linux-2.6.18.orig/drivers/video/modedb.c
-+++ linux-2.6.18/drivers/video/modedb.c
+--- linux-2.6.19.orig/drivers/video/modedb.c
++++ linux-2.6.19/drivers/video/modedb.c
 @@ -674,6 +674,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
@@ -536,10 +536,10 @@ Index: linux-2.6.18/drivers/video/modedb.c
  EXPORT_SYMBOL(fb_videomode_to_modelist);
  EXPORT_SYMBOL(fb_find_mode);
 +EXPORT_SYMBOL(fb_destroy_modelist);
-Index: linux-2.6.18/drivers/video/vesafb-thread.c
+Index: linux-2.6.19/drivers/video/vesafb-thread.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/video/vesafb-thread.c
++++ linux-2.6.19/drivers/video/vesafb-thread.c
 @@ -0,0 +1,727 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
@@ -1268,10 +1268,10 @@ Index: linux-2.6.18/drivers/video/vesafb-thread.c
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Michal Januszewski");
 +
-Index: linux-2.6.18/drivers/video/vesafb-tng.c
+Index: linux-2.6.19/drivers/video/vesafb-tng.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/video/vesafb-tng.c
++++ linux-2.6.19/drivers/video/vesafb-tng.c
 @@ -0,0 +1,1598 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
@@ -2871,11 +2871,11 @@ Index: linux-2.6.18/drivers/video/vesafb-tng.c
 +MODULE_AUTHOR("Michal Januszewski");
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphics boards");
 +
-Index: linux-2.6.18/include/linux/sched.h
+Index: linux-2.6.19/include/linux/sched.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/sched.h
-+++ linux-2.6.18/include/linux/sched.h
-@@ -1281,6 +1281,8 @@ extern void mmput(struct mm_struct *);
+--- linux-2.6.19.orig/include/linux/sched.h
++++ linux-2.6.19/include/linux/sched.h
+@@ -1351,6 +1351,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -2884,10 +2884,10 @@ Index: linux-2.6.18/include/linux/sched.h
  
  extern int  copy_thread(int, unsigned long, unsigned long, unsigned long, struct task_struct *, struct pt_regs *);
  extern void flush_thread(void);
-Index: linux-2.6.18/include/video/vesa.h
+Index: linux-2.6.19/include/video/vesa.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/video/vesa.h
++++ linux-2.6.19/include/video/vesa.h
 @@ -0,0 +1,150 @@
 +#if 0
 +#define DPRINTK(fmt, args...)	printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , \
@@ -3039,11 +3039,11 @@ Index: linux-2.6.18/include/video/vesa.h
 +	struct vesafb_crtc_ib crtc;
 +};
 +
-Index: linux-2.6.18/kernel/fork.c
+Index: linux-2.6.19/kernel/fork.c
 ===================================================================
---- linux-2.6.18.orig/kernel/fork.c
-+++ linux-2.6.18/kernel/fork.c
-@@ -96,6 +96,7 @@ kmem_cache_t *fs_cachep;
+--- linux-2.6.19.orig/kernel/fork.c
++++ linux-2.6.19/kernel/fork.c
+@@ -99,6 +99,7 @@ kmem_cache_t *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
  kmem_cache_t *vm_area_cachep;
@@ -3051,7 +3051,7 @@ Index: linux-2.6.18/kernel/fork.c
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static kmem_cache_t *mm_cachep;
-@@ -389,6 +390,40 @@ void mmput(struct mm_struct *mm)
+@@ -398,6 +399,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
@@ -3092,11 +3092,11 @@ Index: linux-2.6.18/kernel/fork.c
   * get_task_mm - acquire a reference to the task's mm
   *
   * Returns %NULL if the task has no mm.  Checks PF_BORROWED_MM (meaning
-Index: linux-2.6.18/mm/memory.c
+Index: linux-2.6.19/mm/memory.c
 ===================================================================
---- linux-2.6.18.orig/mm/memory.c
-+++ linux-2.6.18/mm/memory.c
-@@ -1175,6 +1175,7 @@ int zeromap_page_range(struct vm_area_st
+--- linux-2.6.19.orig/mm/memory.c
++++ linux-2.6.19/mm/memory.c
+@@ -1183,6 +1183,7 @@ int zeromap_page_range(struct vm_area_st
  	} while (pgd++, addr = next, addr != end);
  	return err;
  }
@@ -3104,11 +3104,11 @@ Index: linux-2.6.18/mm/memory.c
  
  pte_t * fastcall get_locked_pte(struct mm_struct *mm, unsigned long addr, spinlock_t **ptl)
  {
-Index: linux-2.6.18/mm/mmap.c
+Index: linux-2.6.19/mm/mmap.c
 ===================================================================
---- linux-2.6.18.orig/mm/mmap.c
-+++ linux-2.6.18/mm/mmap.c
-@@ -2017,6 +2017,7 @@ int insert_vm_struct(struct mm_struct * 
+--- linux-2.6.19.orig/mm/mmap.c
++++ linux-2.6.19/mm/mmap.c
+@@ -2022,6 +2022,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }

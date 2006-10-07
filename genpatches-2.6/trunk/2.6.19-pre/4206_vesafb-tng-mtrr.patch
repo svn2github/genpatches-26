@@ -1,7 +1,7 @@
-diff --git a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
-index 0105a86..445701a 100644
---- a/drivers/video/vesafb-tng.c
-+++ b/drivers/video/vesafb-tng.c
+Index: linux-2.6.19/drivers/video/vesafb-tng.c
+===================================================================
+--- linux-2.6.19.orig/drivers/video/vesafb-tng.c
++++ linux-2.6.19/drivers/video/vesafb-tng.c
 @@ -1561,8 +1561,8 @@ module_param_named(vgapal, pmi_setpal, i
  MODULE_PARM_DESC(vgapal,"bool: set palette using VGA registers");
  module_param_named(pmipal, pmi_setpal, bool, 0);

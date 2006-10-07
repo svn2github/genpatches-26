@@ -1,8 +1,8 @@
-Index: linux-2.6.18/fs/Kconfig
+Index: linux-2.6.19/fs/Kconfig
 ===================================================================
---- linux-2.6.18.orig/fs/Kconfig
-+++ linux-2.6.18/fs/Kconfig
-@@ -1249,6 +1249,71 @@ config CRAMFS
+--- linux-2.6.19.orig/fs/Kconfig
++++ linux-2.6.19/fs/Kconfig
+@@ -1304,6 +1304,71 @@ config CRAMFS
  
  	  If unsure, say N.
  
@@ -73,12 +73,12 @@ Index: linux-2.6.18/fs/Kconfig
 +
  config VXFS_FS
  	tristate "FreeVxFS file system support (VERITAS VxFS(TM) compatible)"
- 	help
-Index: linux-2.6.18/fs/Makefile
+ 	depends on BLOCK
+Index: linux-2.6.19/fs/Makefile
 ===================================================================
---- linux-2.6.18.orig/fs/Makefile
-+++ linux-2.6.18/fs/Makefile
-@@ -57,6 +57,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
+--- linux-2.6.19.orig/fs/Makefile
++++ linux-2.6.19/fs/Makefile
+@@ -65,6 +65,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
  obj-$(CONFIG_JBD)		+= jbd/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/
@@ -86,10 +86,10 @@ Index: linux-2.6.18/fs/Makefile
  obj-$(CONFIG_RAMFS)		+= ramfs/
  obj-$(CONFIG_HUGETLBFS)		+= hugetlbfs/
  obj-$(CONFIG_CODA_FS)		+= coda/
-Index: linux-2.6.18/fs/squashfs/Makefile
+Index: linux-2.6.19/fs/squashfs/Makefile
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/fs/squashfs/Makefile
++++ linux-2.6.19/fs/squashfs/Makefile
 @@ -0,0 +1,7 @@
 +#
 +# Makefile for the linux squashfs routines.
@@ -98,10 +98,10 @@ Index: linux-2.6.18/fs/squashfs/Makefile
 +obj-$(CONFIG_SQUASHFS) += squashfs.o
 +squashfs-y += inode.o
 +squashfs-y += squashfs2_0.o
-Index: linux-2.6.18/fs/squashfs/inode.c
+Index: linux-2.6.19/fs/squashfs/inode.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/fs/squashfs/inode.c
++++ linux-2.6.19/fs/squashfs/inode.c
 @@ -0,0 +1,2156 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
@@ -2259,10 +2259,10 @@ Index: linux-2.6.18/fs/squashfs/inode.c
 +MODULE_DESCRIPTION("squashfs 3.1, a compressed read-only filesystem");
 +MODULE_AUTHOR("Phillip Lougher <phillip@lougher.org.uk>");
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.18/fs/squashfs/squashfs.h
+Index: linux-2.6.19/fs/squashfs/squashfs.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/fs/squashfs/squashfs.h
++++ linux-2.6.19/fs/squashfs/squashfs.h
 @@ -0,0 +1,86 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
@@ -2350,10 +2350,10 @@ Index: linux-2.6.18/fs/squashfs/squashfs.h
 +	return 0;
 +}
 +#endif
-Index: linux-2.6.18/fs/squashfs/squashfs2_0.c
+Index: linux-2.6.19/fs/squashfs/squashfs2_0.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/fs/squashfs/squashfs2_0.c
++++ linux-2.6.19/fs/squashfs/squashfs2_0.c
 @@ -0,0 +1,779 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
@@ -3134,10 +3134,10 @@ Index: linux-2.6.18/fs/squashfs/squashfs2_0.c
 +
 +	return 1;
 +}
-Index: linux-2.6.18/include/linux/squashfs_fs.h
+Index: linux-2.6.19/include/linux/squashfs_fs.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/linux/squashfs_fs.h
++++ linux-2.6.19/include/linux/squashfs_fs.h
 @@ -0,0 +1,911 @@
 +#ifndef SQUASHFS_FS
 +#define SQUASHFS_FS
@@ -4050,10 +4050,10 @@ Index: linux-2.6.18/include/linux/squashfs_fs.h
 +
 +#endif
 +#endif
-Index: linux-2.6.18/include/linux/squashfs_fs_i.h
+Index: linux-2.6.19/include/linux/squashfs_fs_i.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/linux/squashfs_fs_i.h
++++ linux-2.6.19/include/linux/squashfs_fs_i.h
 @@ -0,0 +1,45 @@
 +#ifndef SQUASHFS_FS_I
 +#define SQUASHFS_FS_I
@@ -4100,10 +4100,10 @@ Index: linux-2.6.18/include/linux/squashfs_fs_i.h
 +	struct inode	vfs_inode;
 +};
 +#endif
-Index: linux-2.6.18/include/linux/squashfs_fs_sb.h
+Index: linux-2.6.19/include/linux/squashfs_fs_sb.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/linux/squashfs_fs_sb.h
++++ linux-2.6.19/include/linux/squashfs_fs_sb.h
 @@ -0,0 +1,75 @@
 +#ifndef SQUASHFS_FS_SB
 +#define SQUASHFS_FS_SB
@@ -4180,10 +4180,10 @@ Index: linux-2.6.18/include/linux/squashfs_fs_sb.h
 +	int			(*read_fragment_index_table)(struct super_block *s);
 +};
 +#endif
-Index: linux-2.6.18/init/do_mounts_rd.c
+Index: linux-2.6.19/init/do_mounts_rd.c
 ===================================================================
---- linux-2.6.18.orig/init/do_mounts_rd.c
-+++ linux-2.6.18/init/do_mounts_rd.c
+--- linux-2.6.19.orig/init/do_mounts_rd.c
++++ linux-2.6.19/init/do_mounts_rd.c
 @@ -5,6 +5,7 @@
  #include <linux/ext2_fs.h>
  #include <linux/romfs_fs.h>
