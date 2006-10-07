@@ -1,8 +1,8 @@
 # Patch generated against a6047eef1c465c38aacfbdab193161b3f0cd144
-Index: linux-2.6.18/Documentation/fb/00-INDEX
+Index: linux-2.6.19/Documentation/fb/00-INDEX
 ===================================================================
---- linux-2.6.18.orig/Documentation/fb/00-INDEX
-+++ linux-2.6.18/Documentation/fb/00-INDEX
+--- linux-2.6.19.orig/Documentation/fb/00-INDEX
++++ linux-2.6.19/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -12,10 +12,10 @@ Index: linux-2.6.18/Documentation/fb/00-INDEX
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-Index: linux-2.6.18/Documentation/fb/splash.txt
+Index: linux-2.6.19/Documentation/fb/splash.txt
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/Documentation/fb/splash.txt
++++ linux-2.6.19/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -224,10 +224,10 @@ Index: linux-2.6.18/Documentation/fb/splash.txt
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 +
-Index: linux-2.6.18/drivers/Makefile
+Index: linux-2.6.19/drivers/Makefile
 ===================================================================
---- linux-2.6.18.orig/drivers/Makefile
-+++ linux-2.6.18/drivers/Makefile
+--- linux-2.6.19.orig/drivers/Makefile
++++ linux-2.6.19/drivers/Makefile
 @@ -8,6 +8,9 @@
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
@@ -249,11 +249,11 @@ Index: linux-2.6.18/drivers/Makefile
  obj-$(CONFIG_CONNECTOR)		+= connector/
  
  # i810fb and intelfb depend on char/agp/
-Index: linux-2.6.18/drivers/video/Kconfig
+Index: linux-2.6.19/drivers/video/Kconfig
 ===================================================================
---- linux-2.6.18.orig/drivers/video/Kconfig
-+++ linux-2.6.18/drivers/video/Kconfig
-@@ -855,7 +855,6 @@ config FB_MATROX
+--- linux-2.6.19.orig/drivers/video/Kconfig
++++ linux-2.6.19/drivers/video/Kconfig
+@@ -881,7 +881,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
@@ -261,7 +261,7 @@ Index: linux-2.6.18/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1616,5 +1615,15 @@ if SYSFS
+@@ -1645,5 +1644,15 @@ if SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -278,10 +278,10 @@ Index: linux-2.6.18/drivers/video/Kconfig
  
 +	  If unsure, say N.
 +endmenu
-Index: linux-2.6.18/drivers/video/Makefile
+Index: linux-2.6.19/drivers/video/Makefile
 ===================================================================
---- linux-2.6.18.orig/drivers/video/Makefile
-+++ linux-2.6.18/drivers/video/Makefile
+--- linux-2.6.19.orig/drivers/video/Makefile
++++ linux-2.6.19/drivers/video/Makefile
 @@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
@@ -290,10 +290,10 @@ Index: linux-2.6.18/drivers/video/Makefile
  
  obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
  obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
-Index: linux-2.6.18/drivers/video/cfbsplash.c
+Index: linux-2.6.19/drivers/video/cfbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/video/cfbsplash.c
++++ linux-2.6.19/drivers/video/cfbsplash.c
 @@ -0,0 +1,472 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
@@ -767,10 +767,10 @@ Index: linux-2.6.18/drivers/video/cfbsplash.c
 +	}
 +}
 +
-Index: linux-2.6.18/drivers/video/console/bitblit.c
+Index: linux-2.6.19/drivers/video/console/bitblit.c
 ===================================================================
---- linux-2.6.18.orig/drivers/video/console/bitblit.c
-+++ linux-2.6.18/drivers/video/console/bitblit.c
+--- linux-2.6.19.orig/drivers/video/console/bitblit.c
++++ linux-2.6.19/drivers/video/console/bitblit.c
 @@ -17,6 +17,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
@@ -813,10 +813,10 @@ Index: linux-2.6.18/drivers/video/console/bitblit.c
  
  	ops->cursor_reset = 0;
  }
-Index: linux-2.6.18/drivers/video/console/fbcon.c
+Index: linux-2.6.19/drivers/video/console/fbcon.c
 ===================================================================
---- linux-2.6.18.orig/drivers/video/console/fbcon.c
-+++ linux-2.6.18/drivers/video/console/fbcon.c
+--- linux-2.6.19.orig/drivers/video/console/fbcon.c
++++ linux-2.6.19/drivers/video/console/fbcon.c
 @@ -91,6 +91,7 @@
  #endif
  
@@ -834,7 +834,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  static signed char con2fb_map_boot[MAX_NR_CONSOLES];
  static int logo_height;
  static int logo_lines;
-@@ -300,7 +301,7 @@ static inline int fbcon_is_inactive(stru
+@@ -301,7 +302,7 @@ static inline int fbcon_is_inactive(stru
  		vc->vc_mode != KD_TEXT || ops->graphics);
  }
  
@@ -1010,19 +1010,19 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  	/*
  	 * FIXME: If we have multiple fbdev's loaded, we need to
  	 * update all info->currcon.  Perhaps, we can place this
-@@ -2166,6 +2217,11 @@ static int fbcon_switch(struct vc_data *
- 			fbcon_del_cursor_timer(old_info);
- 	}
+@@ -2175,6 +2226,11 @@ static int fbcon_switch(struct vc_data *
+ 	set_blitting_type(vc, info);
+ 	ops->cursor_reset = 1;
  
 +	if (fbsplash_active_nores(info, vc) && !fbsplash_active(info, vc)) {
 +		if (fbsplash_call_helper("modechange", vc->vc_num))
 +			fbsplash_disable(vc, 0);
 +	}
 +
- 	fbcon_add_cursor_timer(info);
- 	set_blitting_type(vc, info);
- 	ops->cursor_reset = 1;
-@@ -2268,8 +2324,12 @@ static int fbcon_blank(struct vc_data *v
+ 	if (ops->rotate_font && ops->rotate_font(info, vc)) {
+ 		ops->rotate = FB_ROTATE_UR;
+ 		set_blitting_type(vc, info);
+@@ -2273,8 +2329,12 @@ static int fbcon_blank(struct vc_data *v
  			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  			ops->cursor_flash = (!blank);
  
@@ -1037,7 +1037,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  		}
  
  		if (!blank)
-@@ -2419,13 +2479,22 @@ static int fbcon_do_set_font(struct vc_d
+@@ -2425,13 +2485,22 @@ static int fbcon_do_set_font(struct vc_d
  	}
  
  	if (resize) {
@@ -1060,7 +1060,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  		if (CON_IS_VISIBLE(vc) && softback_buf)
  			fbcon_update_softback(vc);
  	} else if (CON_IS_VISIBLE(vc)
-@@ -2543,7 +2612,7 @@ static int fbcon_set_palette(struct vc_d
+@@ -2549,7 +2618,7 @@ static int fbcon_set_palette(struct vc_d
  	int i, j, k, depth;
  	u8 val;
  
@@ -1069,7 +1069,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2569,7 +2638,49 @@ static int fbcon_set_palette(struct vc_d
+@@ -2575,7 +2644,49 @@ static int fbcon_set_palette(struct vc_d
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1120,7 +1120,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2795,7 +2906,14 @@ static void fbcon_modechanged(struct fb_
+@@ -2801,7 +2912,14 @@ static void fbcon_modechanged(struct fb_
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
@@ -1136,7 +1136,7 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3235,6 +3353,7 @@ static void fbcon_exit(void)
+@@ -3259,6 +3377,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1144,10 +1144,10 @@ Index: linux-2.6.18/drivers/video/console/fbcon.c
  	fbcon_has_exited = 1;
  }
  
-Index: linux-2.6.18/drivers/video/fbcmap.c
+Index: linux-2.6.19/drivers/video/fbcmap.c
 ===================================================================
---- linux-2.6.18.orig/drivers/video/fbcmap.c
-+++ linux-2.6.18/drivers/video/fbcmap.c
+--- linux-2.6.19.orig/drivers/video/fbcmap.c
++++ linux-2.6.19/drivers/video/fbcmap.c
 @@ -15,6 +15,7 @@
  #include <linux/module.h>
  #include <linux/fb.h>
@@ -1171,10 +1171,10 @@ Index: linux-2.6.18/drivers/video/fbcmap.c
  	return rc;
  }
  
-Index: linux-2.6.18/drivers/video/fbsplash.c
+Index: linux-2.6.19/drivers/video/fbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/video/fbsplash.c
++++ linux-2.6.19/drivers/video/fbsplash.c
 @@ -0,0 +1,425 @@
 +/*
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
@@ -1601,10 +1601,10 @@ Index: linux-2.6.18/drivers/video/fbsplash.c
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-Index: linux-2.6.18/drivers/video/fbsplash.h
+Index: linux-2.6.19/drivers/video/fbsplash.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/drivers/video/fbsplash.h
++++ linux-2.6.19/drivers/video/fbsplash.h
 @@ -0,0 +1,78 @@
 +/*
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
@@ -1684,10 +1684,10 @@ Index: linux-2.6.18/drivers/video/fbsplash.h
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-Index: linux-2.6.18/include/linux/console_splash.h
+Index: linux-2.6.19/include/linux/console_splash.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.18/include/linux/console_splash.h
++++ linux-2.6.19/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1702,10 +1702,10 @@ Index: linux-2.6.18/include/linux/console_splash.h
 +};
 +
 +#endif
-Index: linux-2.6.18/include/linux/console_struct.h
+Index: linux-2.6.19/include/linux/console_struct.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/console_struct.h
-+++ linux-2.6.18/include/linux/console_struct.h
+--- linux-2.6.19.orig/include/linux/console_struct.h
++++ linux-2.6.19/include/linux/console_struct.h
 @@ -15,6 +15,7 @@
  struct vt_struct;
  
@@ -1723,11 +1723,11 @@ Index: linux-2.6.18/include/linux/console_struct.h
  	/* additional information is in vt_kern.h */
  };
  
-Index: linux-2.6.18/include/linux/fb.h
+Index: linux-2.6.19/include/linux/fb.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/fb.h
-+++ linux-2.6.18/include/linux/fb.h
-@@ -8,6 +8,13 @@
+--- linux-2.6.19.orig/include/linux/fb.h
++++ linux-2.6.19/include/linux/fb.h
+@@ -9,6 +9,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
  
@@ -1741,7 +1741,7 @@ Index: linux-2.6.18/include/linux/fb.h
  /* ioctls
     0x46 is 'F'								*/
  #define FBIOGET_VSCREENINFO	0x4600
-@@ -35,7 +42,15 @@
+@@ -36,7 +43,15 @@
  #define FBIOGET_HWCINFO         0x4616
  #define FBIOPUT_MODEINFO        0x4617
  #define FBIOGET_DISPINFO        0x4618
@@ -1758,7 +1758,7 @@ Index: linux-2.6.18/include/linux/fb.h
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -785,6 +800,9 @@ struct fb_info {
+@@ -787,6 +802,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -1768,23 +1768,23 @@ Index: linux-2.6.18/include/linux/fb.h
  	/* From here on everything is device dependent */
  	void *par;	
  };
-Index: linux-2.6.18/include/linux/sysctl.h
+Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/sysctl.h
-+++ linux-2.6.18/include/linux/sysctl.h
-@@ -150,6 +150,7 @@ enum
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
- 	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
+--- linux-2.6.19.orig/include/linux/sysctl.h
++++ linux-2.6.19/include/linux/sysctl.h
+@@ -152,6 +152,7 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
-+	KERN_FBSPLASH=75,	/* string: path to fbsplash helper */
+ 	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+ 	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
++	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
  };
  
  
-Index: linux-2.6.18/kernel/sysctl.c
+Index: linux-2.6.19/kernel/sysctl.c
 ===================================================================
---- linux-2.6.18.orig/kernel/sysctl.c
-+++ linux-2.6.18/kernel/sysctl.c
-@@ -90,6 +90,9 @@ static int ngroups_max = NGROUPS_MAX;
+--- linux-2.6.19.orig/kernel/sysctl.c
++++ linux-2.6.19/kernel/sysctl.c
+@@ -87,6 +87,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
  #endif
@@ -1794,7 +1794,7 @@ Index: linux-2.6.18/kernel/sysctl.c
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -407,6 +410,17 @@ static ctl_table kern_table[] = {
+@@ -454,6 +457,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
