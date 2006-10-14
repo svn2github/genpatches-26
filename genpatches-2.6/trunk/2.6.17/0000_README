@@ -122,10 +122,6 @@ Patch:	2510_ahci-slow-detection.patch
 From:	http://bugs.gentoo.org/147304
 Desc:	Fix boot delay for offline AHCI ports
 
-Patch:	2600_logips2pp.patch
-From:	2.6.18 tree
-Desc:	Fix issues with Logitech MX300 (and the fourth button)
-
 Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
