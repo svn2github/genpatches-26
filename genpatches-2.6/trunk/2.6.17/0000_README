@@ -118,10 +118,6 @@ Patch:	2500_via-irq-quirk-revert.patch
 From:	dsd@gentoo.org
 Desc:	Revert to old VIA IRQ quirking behaviour
 
-Patch:	2510_ahci-slow-detection.patch
-From:	http://bugs.gentoo.org/147304
-Desc:	Fix boot delay for offline AHCI ports
-
 Patch:	2700_alsa-hda-lenovo-3000.patch
 From:	http://bugs.gentoo.org/137245
 Desc:	Fix sound on Lenovo 3000 laptops
