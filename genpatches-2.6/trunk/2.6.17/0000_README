@@ -114,6 +114,10 @@ Patch:	2300_usb-insufficient-power.patch
 From:	http://bugs.gentoo.org/
 Desc:	Print a message when a device is rejected due to insufficient power
 
+Patch:	2305_pcmcia-not-detected.patch
+From:	http://bugs.gentoo.org/147386
+Desc:	Fix detection of some cardbus hardware
+
 Patch:	2500_via-irq-quirk-revert.patch
 From:	dsd@gentoo.org
 Desc:	Revert to old VIA IRQ quirking behaviour
