@@ -50,6 +50,14 @@ Patch:	1710_alpha-ev56-kconfig.patch
 From:	Fernando J. Pereda <ferdy@gentoo.org>
 Desc:	Update EV56 Kconfig dependencies
 
+Patch:	1900_nfs4-open-permissions.patch
+From:	http://bugs.gentoo.org/149493
+Desc:	Fix NFSv4 permission behaviour
+
+Patch:	1905_nfs4-owner-override.patch
+From:	http://bugs.gentoo.org/149493
+Desc:	Fix NFSv4 permission behaviour
+
 Patch:	2500_via-irq-quirk-revert.patch
 From:	http://bugs.gentoo.org/138036
 Desc:	Revert recent VIA IRQ quirk change
