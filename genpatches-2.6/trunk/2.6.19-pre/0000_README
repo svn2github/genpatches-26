@@ -42,10 +42,6 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	2500_via-irq-quirk-revert.patch
-From:	http://bugs.gentoo.org/138036
-Desc:	Revert recent VIA IRQ quirk change
-
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
