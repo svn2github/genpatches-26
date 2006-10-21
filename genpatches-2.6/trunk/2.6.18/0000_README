@@ -66,8 +66,8 @@ Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
 
-Patch:	4005_sky2-v1.9.patch
-From:	netdev-2.6 tree
+Patch:	4005_sky2-v1.10.patch
+From:	2.6.19 tree
 Desc:	sky2 updates and fixes
 
 Patch:	4010_r8169-8168.patch

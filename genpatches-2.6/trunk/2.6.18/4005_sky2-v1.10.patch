@@ -1,5 +1,5 @@
-sky2 from 2.6.19-rc2, last included commit:
-6e532cfe49b6e961e1260642a44959b645e9ab54
+sky2 from 2.6.19 tree, last included commit:
+470ea7eba4aaa517533f9b02ac9a104e77264548
 
 Index: linux-2.6.18.1/drivers/net/sky2.c
 ===================================================================
@@ -10,7 +10,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  #define DRV_NAME		"sky2"
 -#define DRV_VERSION		"1.5"
-+#define DRV_VERSION		"1.9"
++#define DRV_VERSION		"1.10"
  #define PFX			DRV_NAME " "
  
  /*
@@ -46,6 +46,18 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  module_param(copybreak, int, 0);
  MODULE_PARM_DESC(copybreak, "Receive copy threshold");
  
+@@ -98,9 +96,9 @@ static int disable_msi = 0;
+ module_param(disable_msi, int, 0);
+ MODULE_PARM_DESC(disable_msi, "Disable Message Signaled Interrupt (MSI)");
+ 
+-static int idle_timeout = 100;
++static int idle_timeout = 0;
+ module_param(idle_timeout, int, 0);
+-MODULE_PARM_DESC(idle_timeout, "Idle timeout workaround for lost interrupts (ms)");
++MODULE_PARM_DESC(idle_timeout, "Watchdog timer for lost interrupts (ms)");
+ 
+ static const struct pci_device_id sky2_id_table[] = {
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, 0x9000) },
 @@ -198,7 +196,6 @@ static u16 gm_phy_read(struct sky2_hw *h
  static void sky2_set_power_state(struct sky2_hw *hw, pci_power_t state)
  {
@@ -102,7 +114,35 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  {
  	u16 reg;
  
-@@ -310,7 +287,7 @@ static void sky2_phy_reset(struct sky2_h
+@@ -307,10 +284,35 @@ static void sky2_phy_reset(struct sky2_h
+ 	gma_write16(hw, port, GM_RX_CTRL, reg);
+ }
+ 
++/* flow control to advertise bits */
++static const u16 copper_fc_adv[] = {
++	[FC_NONE]	= 0,
++	[FC_TX]		= PHY_M_AN_ASP,
++	[FC_RX]		= PHY_M_AN_PC,
++	[FC_BOTH]	= PHY_M_AN_PC | PHY_M_AN_ASP,
++};
++
++/* flow control to advertise bits when using 1000BaseX */
++static const u16 fiber_fc_adv[] = {
++	[FC_BOTH] = PHY_M_P_BOTH_MD_X,
++	[FC_TX]   = PHY_M_P_ASYM_MD_X,
++	[FC_RX]	  = PHY_M_P_SYM_MD_X,
++	[FC_NONE] = PHY_M_P_NO_PAUSE_X,
++};
++
++/* flow control to GMA disable bits */
++static const u16 gm_fc_disable[] = {
++	[FC_NONE] = GM_GPCR_FC_RX_DIS | GM_GPCR_FC_TX_DIS,
++	[FC_TX]	  = GM_GPCR_FC_RX_DIS,
++	[FC_RX]	  = GM_GPCR_FC_TX_DIS,
++	[FC_BOTH] = 0,
++};
++
++
  static void sky2_phy_init(struct sky2_hw *hw, unsigned port)
  {
  	struct sky2_port *sky2 = netdev_priv(hw->dev[port]);
@@ -111,7 +151,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	if (sky2->autoneg == AUTONEG_ENABLE &&
  	    !(hw->chip_id == CHIP_ID_YUKON_XL || hw->chip_id == CHIP_ID_YUKON_EC_U)) {
-@@ -329,7 +306,7 @@ static void sky2_phy_init(struct sky2_hw
+@@ -329,7 +331,7 @@ static void sky2_phy_init(struct sky2_hw
  	}
  
  	ctrl = gm_phy_read(hw, port, PHY_MARV_PHY_CTRL);
@@ -120,7 +160,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		if (hw->chip_id == CHIP_ID_YUKON_FE) {
  			/* enable automatic crossover */
  			ctrl |= PHY_M_PC_MDI_XMODE(PHY_M_PC_ENA_AUTO) >> 1;
-@@ -346,25 +323,37 @@ static void sky2_phy_init(struct sky2_hw
+@@ -346,42 +348,46 @@ static void sky2_phy_init(struct sky2_hw
  				ctrl |= PHY_M_PC_DSC(2) | PHY_M_PC_DOWN_S_ENA;
  			}
  		}
@@ -156,19 +196,27 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 +		if (hw->pmd_type  == 'P') {
  			/* select page 1 to access Fiber registers */
  			gm_phy_write(hw, port, PHY_MARV_EXT_ADR, 1);
-+
+-		}
+-	}
+ 
+-	ctrl = gm_phy_read(hw, port, PHY_MARV_CTRL);
+-	if (sky2->autoneg == AUTONEG_DISABLE)
+-		ctrl &= ~PHY_CT_ANE;
+-	else
+-		ctrl |= PHY_CT_ANE;
 +			/* for SFP-module set SIGDET polarity to low */
 +			ctrl = gm_phy_read(hw, port, PHY_MARV_PHY_CTRL);
 +			ctrl |= PHY_M_FIB_SIGD_POL;
 +			gm_phy_write(hw, port, PHY_MARV_CTRL, ctrl);
- 		}
-+
-+		gm_phy_write(hw, port, PHY_MARV_EXT_ADR, pg);
- 	}
++		}
  
- 	ctrl = gm_phy_read(hw, port, PHY_MARV_CTRL);
-@@ -379,9 +368,10 @@ static void sky2_phy_init(struct sky2_hw
- 	ctrl = 0;
+-	ctrl |= PHY_CT_RESET;
+-	gm_phy_write(hw, port, PHY_MARV_CTRL, ctrl);
++		gm_phy_write(hw, port, PHY_MARV_EXT_ADR, pg);
++	}
+ 
+-	ctrl = 0;
++	ctrl = PHY_CT_RESET;
  	ct1000 = 0;
  	adv = PHY_AN_CSMA;
 +	reg = 0;
@@ -179,22 +227,33 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  			if (sky2->advertising & ADVERTISED_1000baseT_Full)
  				ct1000 |= PHY_M_1000C_AFD;
  			if (sky2->advertising & ADVERTISED_1000baseT_Half)
-@@ -394,8 +384,12 @@ static void sky2_phy_init(struct sky2_hw
+@@ -394,16 +400,16 @@ static void sky2_phy_init(struct sky2_hw
  				adv |= PHY_M_AN_10_FD;
  			if (sky2->advertising & ADVERTISED_10baseT_Half)
  				adv |= PHY_M_AN_10_HD;
 -		} else		/* special defines for FIBER (88E1011S only) */
 -			adv |= PHY_M_AN_1000X_AHD | PHY_M_AN_1000X_AFD;
+ 
+-		/* Set Flow-control capabilities */
+-		if (sky2->tx_pause && sky2->rx_pause)
+-			adv |= PHY_AN_PAUSE_CAP;	/* symmetric */
+-		else if (sky2->rx_pause && !sky2->tx_pause)
+-			adv |= PHY_AN_PAUSE_ASYM | PHY_AN_PAUSE_CAP;
+-		else if (!sky2->rx_pause && sky2->tx_pause)
+-			adv |= PHY_AN_PAUSE_ASYM;	/* local */
++			adv |= copper_fc_adv[sky2->flow_mode];
 +		} else {	/* special defines for FIBER (88E1040S only) */
 +			if (sky2->advertising & ADVERTISED_1000baseT_Full)
 +				adv |= PHY_M_AN_1000X_AFD;
 +			if (sky2->advertising & ADVERTISED_1000baseT_Half)
 +				adv |= PHY_M_AN_1000X_AHD;
++
++			adv |= fiber_fc_adv[sky2->flow_mode];
 +		}
  
- 		/* Set Flow-control capabilities */
- 		if (sky2->tx_pause && sky2->rx_pause)
-@@ -411,21 +405,46 @@ static void sky2_phy_init(struct sky2_hw
+ 		/* Restart Auto-negotiation */
+ 		ctrl |= PHY_CT_ANE | PHY_CT_RE_CFG;
+@@ -411,21 +417,38 @@ static void sky2_phy_init(struct sky2_hw
  		/* forced speed/duplex settings */
  		ct1000 = PHY_M_1000C_MSE;
  
@@ -214,28 +273,21 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  			break;
  		}
  
+-		ctrl |= PHY_CT_RESET;
 +		if (sky2->duplex == DUPLEX_FULL) {
 +			reg |= GM_GPCR_DUP_FULL;
 +			ctrl |= PHY_CT_DUP_MD;
-+		} else if (sky2->speed != SPEED_1000 && hw->chip_id != CHIP_ID_YUKON_EC_U) {
-+			/* Turn off flow control for 10/100mbps */
-+			sky2->rx_pause = 0;
-+			sky2->tx_pause = 0;
-+		}
++		} else if (sky2->speed < SPEED_1000)
++			sky2->flow_mode = FC_NONE;
 +
-+		if (!sky2->rx_pause)
-+			reg |= GM_GPCR_FC_RX_DIS;
 +
-+		if (!sky2->tx_pause)
-+			reg |= GM_GPCR_FC_TX_DIS;
++ 		reg |= gm_fc_disable[sky2->flow_mode];
 +
 +		/* Forward pause packets to GMAC? */
-+		if (sky2->tx_pause || sky2->rx_pause)
++		if (sky2->flow_mode & FC_RX)
 +			sky2_write8(hw, SK_REG(port, GMAC_CTRL), GMC_PAUSE_ON);
 +		else
 +			sky2_write8(hw, SK_REG(port, GMAC_CTRL), GMC_PAUSE_OFF);
-+
- 		ctrl |= PHY_CT_RESET;
  	}
  
 +	gma_write16(hw, port, GM_GP_CTRL, reg);
@@ -243,7 +295,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	if (hw->chip_id != CHIP_ID_YUKON_FE)
  		gm_phy_write(hw, port, PHY_MARV_1000T_CTRL, ct1000);
  
-@@ -529,6 +548,7 @@ static void sky2_phy_init(struct sky2_hw
+@@ -529,6 +552,7 @@ static void sky2_phy_init(struct sky2_hw
  			gm_phy_write(hw, port, PHY_MARV_LED_OVER, ledover);
  
  	}
@@ -251,7 +303,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	/* Enable phy interrupt on auto-negotiation complete (or link up) */
  	if (sky2->autoneg == AUTONEG_ENABLE)
  		gm_phy_write(hw, port, PHY_MARV_INT_MASK, PHY_M_IS_AN_COMPL);
-@@ -536,6 +556,29 @@ static void sky2_phy_init(struct sky2_hw
+@@ -536,6 +560,29 @@ static void sky2_phy_init(struct sky2_hw
  		gm_phy_write(hw, port, PHY_MARV_INT_MASK, PHY_M_DEF_MSK);
  }
  
@@ -281,7 +333,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  /* Force a renegotiation */
  static void sky2_phy_reinit(struct sky2_port *sky2)
  {
-@@ -568,49 +611,11 @@ static void sky2_mac_init(struct sky2_hw
+@@ -568,49 +615,11 @@ static void sky2_mac_init(struct sky2_hw
  			 gm_phy_read(hw, 1, PHY_MARV_INT_MASK) != 0);
  	}
  
@@ -334,7 +386,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	spin_lock_bh(&sky2->phy_lock);
  	sky2_phy_init(hw, port);
  	spin_unlock_bh(&sky2->phy_lock);
-@@ -678,7 +683,7 @@ static void sky2_mac_init(struct sky2_hw
+@@ -678,7 +687,7 @@ static void sky2_mac_init(struct sky2_hw
  	sky2_write16(hw, SK_REG(port, TX_GMF_CTRL_T), GMF_OPER_ON);
  
  	if (hw->chip_id == CHIP_ID_YUKON_EC_U) {
@@ -343,7 +395,36 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		sky2_write8(hw, SK_REG(port, RX_GMF_UP_THR), 1024/8);
  		if (hw->dev[port]->mtu > ETH_DATA_LEN) {
  			/* set Tx GMAC FIFO Almost Empty Threshold */
-@@ -762,15 +767,23 @@ static inline struct sky2_tx_le *get_tx_
+@@ -690,16 +699,10 @@ static void sky2_mac_init(struct sky2_hw
+ 
+ }
+ 
+-/* Assign Ram Buffer allocation.
+- * start and end are in units of 4k bytes
+- * ram registers are in units of 64bit words
+- */
+-static void sky2_ramset(struct sky2_hw *hw, u16 q, u8 startk, u8 endk)
++/* Assign Ram Buffer allocation in units of 64bit (8 bytes) */
++static void sky2_ramset(struct sky2_hw *hw, u16 q, u32 start, u32 end)
+ {
+-	u32 start, end;
+-
+-	start = startk * 4096/8;
+-	end = (endk * 4096/8) - 1;
++	pr_debug(PFX "q %d %#x %#x\n", q, start, end);
+ 
+ 	sky2_write8(hw, RB_ADDR(q, RB_CTRL), RB_RST_CLR);
+ 	sky2_write32(hw, RB_ADDR(q, RB_START), start);
+@@ -708,7 +711,7 @@ static void sky2_ramset(struct sky2_hw *
+ 	sky2_write32(hw, RB_ADDR(q, RB_RP), start);
+ 
+ 	if (q == Q_R1 || q == Q_R2) {
+-		u32 space = (endk - startk) * 4096/8;
++		u32 space = end - start + 1;
+ 		u32 tp = space - space/4;
+ 
+ 		/* On receive queue's set the thresholds
+@@ -762,15 +765,23 @@ static inline struct sky2_tx_le *get_tx_
  	struct sky2_tx_le *le = sky2->tx_le + sky2->tx_prod;
  
  	sky2->tx_prod = RING_NEXT(sky2->tx_prod, TX_RING_SIZE);
@@ -369,7 +450,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  }
  
  
-@@ -778,6 +791,7 @@ static inline struct sky2_rx_le *sky2_ne
+@@ -778,6 +789,7 @@ static inline struct sky2_rx_le *sky2_ne
  {
  	struct sky2_rx_le *le = sky2->rx_le + sky2->rx_put;
  	sky2->rx_put = RING_NEXT(sky2->rx_put, RX_LE_SIZE);
@@ -377,7 +458,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	return le;
  }
  
-@@ -787,17 +801,16 @@ static inline u32 high32(dma_addr_t a)
+@@ -787,17 +799,16 @@ static inline u32 high32(dma_addr_t a)
  	return sizeof(a) > sizeof(u32) ? (a >> 16) >> 16 : 0;
  }
  
@@ -398,15 +479,15 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		le->opcode = OP_ADDR64 | HW_OWNER;
  		sky2->rx_addr64 = high32(map + len);
  	}
-@@ -805,10 +818,52 @@ static void sky2_rx_add(struct sky2_port
+@@ -805,11 +816,53 @@ static void sky2_rx_add(struct sky2_port
  	le = sky2_next_rx(sky2);
  	le->addr = cpu_to_le32((u32) map);
  	le->length = cpu_to_le16(len);
 -	le->ctrl = 0;
 -	le->opcode = OP_PACKET | HW_OWNER;
 +	le->opcode = op | HW_OWNER;
- }
- 
++}
++
 +/* Build description to hardware for one possibly fragmented skb */
 +static void sky2_rx_submit(struct sky2_port *sky2,
 +			   const struct rx_ring_info *re)
@@ -417,9 +498,9 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 +
 +	for (i = 0; i < skb_shinfo(re->skb)->nr_frags; i++)
 +		sky2_rx_add(sky2, OP_BUFFER, re->frag_addr[i], PAGE_SIZE);
-+}
-+
-+
+ }
+ 
+ 
 +static void sky2_rx_map_skb(struct pci_dev *pdev, struct rx_ring_info *re,
 +			    unsigned size)
 +{
@@ -450,10 +531,11 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 +			       skb_shinfo(skb)->frags[i].size,
 +			       PCI_DMA_FROMDEVICE);
 +}
- 
++
  /* Tell chip where to start receive checksum.
   * Actually has two checksums, but set both same to avoid possible byte
-@@ -819,7 +874,7 @@ static void rx_set_checksum(struct sky2_
+  * order problems.
+@@ -819,7 +872,7 @@ static void rx_set_checksum(struct sky2_
  	struct sky2_rx_le *le;
  
  	le = sky2_next_rx(sky2);
@@ -462,7 +544,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	le->ctrl = 0;
  	le->opcode = OP_TCPSTART | HW_OWNER;
  
-@@ -869,12 +924,10 @@ static void sky2_rx_clean(struct sky2_po
+@@ -869,12 +922,10 @@ static void sky2_rx_clean(struct sky2_po
  
  	memset(sky2->rx_le, 0, RX_LE_BYTES);
  	for (i = 0; i < sky2->rx_pending; i++) {
@@ -477,7 +559,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  			kfree_skb(re->skb);
  			re->skb = NULL;
  		}
-@@ -928,13 +981,13 @@ static void sky2_vlan_rx_register(struct
+@@ -928,13 +979,13 @@ static void sky2_vlan_rx_register(struct
  	struct sky2_hw *hw = sky2->hw;
  	u16 port = sky2->port;
  
@@ -493,7 +575,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  }
  
  static void sky2_vlan_rx_kill_vid(struct net_device *dev, unsigned short vid)
-@@ -943,48 +996,69 @@ static void sky2_vlan_rx_kill_vid(struct
+@@ -943,48 +994,69 @@ static void sky2_vlan_rx_kill_vid(struct
  	struct sky2_hw *hw = sky2->hw;
  	u16 port = sky2->port;
  
@@ -577,7 +659,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	sky2->rx_put = sky2->rx_next = 0;
  	sky2_qset(hw, rxq);
-@@ -997,26 +1071,56 @@ static int sky2_rx_start(struct sky2_por
+@@ -997,26 +1069,56 @@ static int sky2_rx_start(struct sky2_por
  	sky2_prefetch_init(hw, rxq, sky2->rx_le_map, RX_LE_SIZE - 1);
  
  	rx_set_checksum(sky2);
@@ -641,7 +723,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	if (thresh > 0x1ff)
  		sky2_write32(hw, SK_REG(sky2->port, RX_GMF_CTRL_T), RX_TRUNC_OFF);
  	else {
-@@ -1024,7 +1128,6 @@ static int sky2_rx_start(struct sky2_por
+@@ -1024,7 +1126,6 @@ static int sky2_rx_start(struct sky2_por
  		sky2_write32(hw, SK_REG(sky2->port, RX_GMF_CTRL_T), RX_TRUNC_ON);
  	}
  
@@ -649,7 +731,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	/* Tell chip about available buffers */
  	sky2_write16(hw, Y2_QADDR(rxq, PREF_UNIT_PUT_IDX), sky2->rx_put);
  	return 0;
-@@ -1083,11 +1186,13 @@ static int sky2_up(struct net_device *de
+@@ -1083,26 +1184,25 @@ static int sky2_up(struct net_device *de
  		goto err_out;
  	memset(sky2->rx_le, 0, RX_LE_BYTES);
  
@@ -663,8 +745,31 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 +
  	sky2_mac_init(hw, port);
  
- 	/* Determine available ram buffer space (in 4K blocks).
-@@ -1111,7 +1216,8 @@ static int sky2_up(struct net_device *de
+-	/* Determine available ram buffer space (in 4K blocks).
+-	 * Note: not sure about the FE setting below yet
+-	 */
+-	if (hw->chip_id == CHIP_ID_YUKON_FE)
+-		ramsize = 4;
+-	else
+-		ramsize = sky2_read8(hw, B2_E_0);
++	/* Determine available ram buffer space in qwords.  */
++	ramsize = sky2_read8(hw, B2_E_0) * 4096/8;
+ 
+-	/* Give transmitter one third (rounded up) */
+-	rxspace = ramsize - (ramsize + 2) / 3;
++	if (ramsize > 6*1024/8)
++		rxspace = ramsize - (ramsize + 2) / 3;
++	else
++		rxspace = ramsize / 2;
+ 
+-	sky2_ramset(hw, rxqaddr[port], 0, rxspace);
+-	sky2_ramset(hw, txqaddr[port], rxspace, ramsize);
++	sky2_ramset(hw, rxqaddr[port], 0, rxspace-1);
++	sky2_ramset(hw, txqaddr[port], rxspace, ramsize-1);
+ 
+ 	/* Make sure SyncQ is disabled */
+ 	sky2_write8(hw, RB_ADDR(port == 0 ? Q_XS1 : Q_XS2, RB_CTRL),
+@@ -1111,7 +1211,8 @@ static int sky2_up(struct net_device *de
  	sky2_qset(hw, txqaddr[port]);
  
  	/* Set almost empty threshold */
@@ -674,7 +779,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		sky2_write16(hw, Q_ADDR(txqaddr[port], Q_AL), 0x1a0);
  
  	sky2_prefetch_init(hw, txqaddr[port], sky2->tx_le_map,
-@@ -1182,8 +1288,6 @@ static unsigned tx_le_req(const struct s
+@@ -1182,8 +1283,6 @@ static unsigned tx_le_req(const struct s
   * A single packet can generate multiple list elements, and
   * the number of ring elements will probably be less than the number
   * of list elements used.
@@ -683,7 +788,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
   */
  static int sky2_xmit_frame(struct sk_buff *skb, struct net_device *dev)
  {
-@@ -1192,33 +1296,13 @@ static int sky2_xmit_frame(struct sk_buf
+@@ -1192,33 +1291,13 @@ static int sky2_xmit_frame(struct sk_buf
  	struct sky2_tx_le *le = NULL;
  	struct tx_ring_info *re;
  	unsigned i, len;
@@ -719,7 +824,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	if (unlikely(netif_msg_tx_queued(sky2)))
  		printk(KERN_DEBUG "%s: tx queued, slot %u, len %d\n",
-@@ -1228,13 +1312,10 @@ static int sky2_xmit_frame(struct sk_buf
+@@ -1228,13 +1307,10 @@ static int sky2_xmit_frame(struct sk_buf
  	mapping = pci_map_single(hw->pdev, skb->data, len, PCI_DMA_TODEVICE);
  	addr64 = high32(mapping);
  
@@ -734,7 +839,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		le->opcode = OP_ADDR64 | HW_OWNER;
  		sky2->tx_addr64 = high32(mapping + len);
  	}
-@@ -1242,25 +1323,16 @@ static int sky2_xmit_frame(struct sk_buf
+@@ -1242,25 +1318,16 @@ static int sky2_xmit_frame(struct sk_buf
  	/* Check for TCP Segmentation Offload */
  	mss = skb_shinfo(skb)->gso_size;
  	if (mss != 0) {
@@ -766,7 +871,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	}
  
  	ctrl = 0;
-@@ -1269,9 +1341,8 @@ static int sky2_xmit_frame(struct sk_buf
+@@ -1269,9 +1336,8 @@ static int sky2_xmit_frame(struct sk_buf
  	if (sky2->vlgrp && vlan_tx_tag_present(skb)) {
  		if (!le) {
  			le = get_tx_le(sky2);
@@ -777,7 +882,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		} else
  			le->opcode |= OP_VLAN;
  		le->length = cpu_to_be16(vlan_tx_tag_get(skb));
-@@ -1281,72 +1352,71 @@ static int sky2_xmit_frame(struct sk_buf
+@@ -1281,72 +1347,71 @@ static int sky2_xmit_frame(struct sk_buf
  
  	/* Handle TCP checksum offload */
  	if (skb->ip_summed == CHECKSUM_HW) {
@@ -876,7 +981,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	dev->trans_start = jiffies;
  	return NETDEV_TX_OK;
  }
-@@ -1355,59 +1425,59 @@ out_unlock:
+@@ -1355,59 +1420,59 @@ out_unlock:
   * Free ring elements from starting at tx_cons until "done"
   *
   * NB: the hardware will tell us about partial completion of multi-part
@@ -935,16 +1040,16 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 +				       pci_unmap_len(re, maplen),
  				       PCI_DMA_TODEVICE);
 +			break;
-+		}
-+
+ 		}
+ 
+-		dev_kfree_skb(skb);
 +		if (le->ctrl & EOP) {
 +			if (unlikely(netif_msg_tx_done(sky2)))
 +				printk(KERN_DEBUG "%s: tx done %u\n",
 +				       dev->name, idx);
 +			dev_kfree_skb(re->skb);
- 		}
- 
--		dev_kfree_skb(skb);
++		}
++
 +		le->opcode = 0;	/* paranoia */
  	}
  
@@ -968,11 +1073,16 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  }
  
  /* Network shutdown */
-@@ -1429,7 +1499,7 @@ static int sky2_down(struct net_device *
+@@ -1429,7 +1494,12 @@ static int sky2_down(struct net_device *
  	/* Stop more packets from being queued */
  	netif_stop_queue(dev);
  
 -	sky2_phy_reset(hw, port);
++	/* Disable port IRQ */
++	imask = sky2_read32(hw, B0_IMSK);
++	imask &= ~portirq_msk[port];
++	sky2_write32(hw, B0_IMSK, imask);
++
 +	sky2_gmac_reset(hw, port);
  
  	/* Stop transmitter */
@@ -991,12 +1101,16 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	ctrl = gma_read16(hw, port, GM_GP_CTRL);
  	ctrl &= ~(GM_GPCR_TX_ENA | GM_GPCR_RX_ENA);
  	gma_write16(hw, port, GM_GP_CTRL, ctrl);
-@@ -1477,12 +1554,14 @@ static int sky2_down(struct net_device *
- 	imask &= ~portirq_msk[port];
- 	sky2_write32(hw, B0_IMSK, imask);
+@@ -1472,17 +1549,14 @@ static int sky2_down(struct net_device *
+ 	sky2_write8(hw, SK_REG(port, RX_GMF_CTRL_T), GMF_RST_SET);
+ 	sky2_write8(hw, SK_REG(port, TX_GMF_CTRL_T), GMF_RST_SET);
  
+-	/* Disable port IRQ */
+-	imask = sky2_read32(hw, B0_IMSK);
+-	imask &= ~portirq_msk[port];
+-	sky2_write32(hw, B0_IMSK, imask);
 +	sky2_phy_power(hw, port, 0);
-+
+ 
  	/* turn off LED's */
  	sky2_write16(hw, B0_Y2LED, LED_STAT_OFF);
  
@@ -1007,7 +1121,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	sky2_rx_clean(sky2);
  
  	pci_free_consistent(hw->pdev, RX_LE_BYTES,
-@@ -1505,7 +1584,7 @@ static int sky2_down(struct net_device *
+@@ -1505,7 +1579,7 @@ static int sky2_down(struct net_device *
  
  static u16 sky2_phy_speed(const struct sky2_hw *hw, u16 aux)
  {
@@ -1016,10 +1130,11 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		return SPEED_1000;
  
  	if (hw->chip_id == CHIP_ID_YUKON_FE)
-@@ -1527,40 +1606,10 @@ static void sky2_link_up(struct sky2_por
+@@ -1526,41 +1600,17 @@ static void sky2_link_up(struct sky2_por
+ 	struct sky2_hw *hw = sky2->hw;
  	unsigned port = sky2->port;
  	u16 reg;
- 
+-
 -	/* Enable Transmit FIFO Underrun */
 -	sky2_write8(hw, SK_REG(port, GMAC_IRQ_MSK), GMAC_DEF_MSK);
 -
@@ -1049,7 +1164,13 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 -
 -	if (sky2->duplex == DUPLEX_FULL || sky2->autoneg == AUTONEG_ENABLE)
 -		reg |= GM_GPCR_DUP_FULL;
--
++	static const char *fc_name[] = {
++		[FC_NONE]	= "none",
++		[FC_TX]		= "tx",
++		[FC_RX]		= "rx",
++		[FC_BOTH]	= "both",
++	};
+ 
  	/* enable Rx/Tx */
 +	reg = gma_read16(hw, port, GM_GP_CTRL);
  	reg |= GM_GPCR_RX_ENA | GM_GPCR_TX_ENA;
@@ -1058,15 +1179,28 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	gm_phy_write(hw, port, PHY_MARV_INT_MASK, PHY_M_DEF_MSK);
  
-@@ -1614,7 +1663,6 @@ static void sky2_link_down(struct sky2_p
+@@ -1599,8 +1649,7 @@ static void sky2_link_up(struct sky2_por
+ 		       "%s: Link is up at %d Mbps, %s duplex, flow control %s\n",
+ 		       sky2->netdev->name, sky2->speed,
+ 		       sky2->duplex == DUPLEX_FULL ? "full" : "half",
+-		       (sky2->tx_pause && sky2->rx_pause) ? "both" :
+-		       sky2->tx_pause ? "tx" : sky2->rx_pause ? "rx" : "none");
++		       fc_name[sky2->flow_status]);
+ }
+ 
+ static void sky2_link_down(struct sky2_port *sky2)
+@@ -1614,9 +1663,8 @@ static void sky2_link_down(struct sky2_p
  	reg = gma_read16(hw, port, GM_GP_CTRL);
  	reg &= ~(GM_GPCR_RX_ENA | GM_GPCR_TX_ENA);
  	gma_write16(hw, port, GM_GP_CTRL, reg);
 -	gma_read16(hw, port, GM_GP_CTRL);	/* PCI post */
  
- 	if (sky2->rx_pause && !sky2->tx_pause) {
+-	if (sky2->rx_pause && !sky2->tx_pause) {
++	if (sky2->flow_status == FC_RX) {
  		/* restore Asymmetric Pause bit */
-@@ -1631,6 +1679,7 @@ static void sky2_link_down(struct sky2_p
+ 		gm_phy_write(hw, port, PHY_MARV_AUNE_ADV,
+ 			     gm_phy_read(hw, port, PHY_MARV_AUNE_ADV)
+@@ -1631,9 +1679,18 @@ static void sky2_link_down(struct sky2_p
  
  	if (netif_msg_link(sky2))
  		printk(KERN_INFO PFX "%s: Link is down.\n", sky2->netdev->name);
@@ -1074,7 +1208,18 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	sky2_phy_init(hw, port);
  }
  
-@@ -1647,22 +1696,33 @@ static int sky2_autoneg_done(struct sky2
++static enum flow_control sky2_flow(int rx, int tx)
++{
++	if (rx)
++		return tx ? FC_BOTH : FC_RX;
++	else
++		return tx ? FC_TX : FC_NONE;
++}
++
+ static int sky2_autoneg_done(struct sky2_port *sky2, u16 aux)
+ {
+ 	struct sky2_hw *hw = sky2->hw;
+@@ -1647,32 +1704,27 @@ static int sky2_autoneg_done(struct sky2
  		return -1;
  	}
  
@@ -1094,44 +1239,42 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
 -	sky2->duplex = (aux & PHY_M_PS_FULL_DUP) ? DUPLEX_FULL : DUPLEX_HALF;
 -
  	sky2->speed = sky2_phy_speed(hw, aux);
-+	if (sky2->speed == SPEED_1000) {
-+		u16 ctl2 = gm_phy_read(hw, port, PHY_MARV_1000T_CTRL);
-+		u16 lpa2 = gm_phy_read(hw, port, PHY_MARV_1000T_STAT);
-+		if (lpa2  & PHY_B_1000S_MSF) {
-+			printk(KERN_ERR PFX "%s: master/slave fault",
-+			       sky2->netdev->name);
-+			return -1;
-+		}
-+
-+		if ((ctl2 & PHY_M_1000C_AFD) && (lpa2 & PHY_B_1000S_LP_FD))
-+			sky2->duplex = DUPLEX_FULL;
-+		else
-+			sky2->duplex = DUPLEX_HALF;
-+	} else {
-+		u16 adv = gm_phy_read(hw, port, PHY_MARV_AUNE_ADV);
-+		if ((aux & adv) & PHY_AN_FULL)
-+			sky2->duplex = DUPLEX_FULL;
-+		else
-+			sky2->duplex = DUPLEX_HALF;
-+	}
++	sky2->duplex = (aux & PHY_M_PS_FULL_DUP) ? DUPLEX_FULL : DUPLEX_HALF;
  
  	/* Pause bits are offset (9..8) */
  	if (hw->chip_id == CHIP_ID_YUKON_XL || hw->chip_id == CHIP_ID_YUKON_EC_U)
-@@ -1671,8 +1731,11 @@ static int sky2_autoneg_done(struct sky2
- 	sky2->rx_pause = (aux & PHY_M_PS_RX_P_EN) != 0;
- 	sky2->tx_pause = (aux & PHY_M_PS_TX_P_EN) != 0;
+ 		aux >>= 6;
+ 
+-	sky2->rx_pause = (aux & PHY_M_PS_RX_P_EN) != 0;
+-	sky2->tx_pause = (aux & PHY_M_PS_TX_P_EN) != 0;
++	sky2->flow_status = sky2_flow(aux & PHY_M_PS_RX_P_EN,
++				      aux & PHY_M_PS_TX_P_EN);
  
 -	if ((sky2->tx_pause || sky2->rx_pause)
 -	    && !(sky2->speed < SPEED_1000 && sky2->duplex == DUPLEX_HALF))
-+	if (sky2->duplex == DUPLEX_HALF && sky2->speed != SPEED_1000
++	if (sky2->duplex == DUPLEX_HALF && sky2->speed < SPEED_1000
 +	    && hw->chip_id != CHIP_ID_YUKON_EC_U)
-+		sky2->rx_pause = sky2->tx_pause = 0;
++		sky2->flow_status = FC_NONE;
 +
-+	if (sky2->rx_pause || sky2->tx_pause)
++	if (aux & PHY_M_PS_RX_P_EN)
  		sky2_write8(hw, SK_REG(port, GMAC_CTRL), GMC_PAUSE_ON);
  	else
  		sky2_write8(hw, SK_REG(port, GMAC_CTRL), GMC_PAUSE_OFF);
-@@ -1698,7 +1761,7 @@ static void sky2_phy_intr(struct sky2_hw
+@@ -1687,18 +1739,18 @@ static void sky2_phy_intr(struct sky2_hw
+ 	struct sky2_port *sky2 = netdev_priv(dev);
+ 	u16 istatus, phystat;
+ 
++	if (!netif_running(dev))
++		return;
++
+ 	spin_lock(&sky2->phy_lock);
+ 	istatus = gm_phy_read(hw, port, PHY_MARV_INT_STAT);
+ 	phystat = gm_phy_read(hw, port, PHY_MARV_PHY_STAT);
+ 
+-	if (!netif_running(dev))
+-		goto out;
+-
+ 	if (netif_msg_intr(sky2))
  		printk(KERN_INFO PFX "%s: phy interrupt status 0x%x 0x%x\n",
  		       sky2->netdev->name, istatus, phystat);
  
@@ -1140,7 +1283,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		if (sky2_autoneg_done(sky2, phystat) == 0)
  			sky2_link_up(sky2);
  		goto out;
-@@ -1750,31 +1813,22 @@ static void sky2_tx_timeout(struct net_d
+@@ -1750,31 +1802,22 @@ static void sky2_tx_timeout(struct net_d
  	} else if (report != sky2->tx_cons) {
  		printk(KERN_INFO PFX "status report lost?\n");
  
@@ -1175,7 +1318,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  static int sky2_change_mtu(struct net_device *dev, int new_mtu)
  {
  	struct sky2_port *sky2 = netdev_priv(dev);
-@@ -1809,7 +1863,7 @@ static int sky2_change_mtu(struct net_de
+@@ -1809,7 +1852,7 @@ static int sky2_change_mtu(struct net_de
  	sky2_rx_clean(sky2);
  
  	dev->mtu = new_mtu;
@@ -1184,7 +1327,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	mode = DATA_BLIND_VAL(DATA_BLIND_DEF) |
  		GM_SMOD_VLAN_ENA | IPG_DATA_VAL(IPG_DATA_DEF);
  
-@@ -1835,20 +1889,105 @@ static int sky2_change_mtu(struct net_de
+@@ -1835,20 +1878,105 @@ static int sky2_change_mtu(struct net_de
  	return err;
  }
  
@@ -1294,7 +1437,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	sky2->rx_next = (sky2->rx_next + 1) % sky2->rx_pending;
  	prefetch(sky2->rx_ring + sky2->rx_next);
-@@ -1859,43 +1998,15 @@ static struct sk_buff *sky2_receive(stru
+@@ -1859,43 +1987,15 @@ static struct sk_buff *sky2_receive(stru
  	if (!(status & GMR_FS_RX_OK))
  		goto resubmit;
  
@@ -1344,7 +1487,14 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	return skb;
  
-@@ -1908,7 +2019,7 @@ error:
+@@ -1905,10 +2005,14 @@ oversize:
+ 
+ error:
+ 	++sky2->net_stats.rx_errors;
++	if (status & GMR_FS_RX_FF_OV) {
++		sky2->net_stats.rx_fifo_errors++;
++		goto resubmit;
++	}
  
  	if (netif_msg_rx_err(sky2) && net_ratelimit())
  		printk(KERN_INFO PFX "%s: rx error, status 0x%x length %d\n",
@@ -1353,7 +1503,16 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	if (status & (GMR_FS_LONG_ERR | GMR_FS_UN_SIZE))
  		sky2->net_stats.rx_length_errors++;
-@@ -1928,18 +2039,12 @@ static inline void sky2_tx_done(struct n
+@@ -1916,8 +2020,6 @@ error:
+ 		sky2->net_stats.rx_frame_errors++;
+ 	if (status & GMR_FS_CRC_ERR)
+ 		sky2->net_stats.rx_crc_errors++;
+-	if (status & GMR_FS_RX_FF_OV)
+-		sky2->net_stats.rx_fifo_errors++;
+ 
+ 	goto resubmit;
+ }
+@@ -1928,18 +2030,12 @@ static inline void sky2_tx_done(struct n
  	struct sky2_port *sky2 = netdev_priv(dev);
  
  	if (netif_running(dev)) {
@@ -1374,7 +1533,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  /* Process status response ring */
  static int sky2_status_intr(struct sky2_hw *hw, int to_do)
  {
-@@ -1963,16 +2068,15 @@ static int sky2_status_intr(struct sky2_
+@@ -1963,16 +2059,15 @@ static int sky2_status_intr(struct sky2_
  		dev = hw->dev[le->link];
  
  		sky2 = netdev_priv(dev);
@@ -1394,7 +1553,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  			skb->protocol = eth_type_trans(skb, dev);
  			dev->last_rx = jiffies;
  
-@@ -2009,7 +2113,7 @@ static int sky2_status_intr(struct sky2_
+@@ -2009,7 +2104,7 @@ static int sky2_status_intr(struct sky2_
  		case OP_RXCHKS:
  			skb = sky2->rx_ring[sky2->rx_next].skb;
  			skb->ip_summed = CHECKSUM_HW;
@@ -1403,7 +1562,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  			break;
  
  		case OP_TXINDEXLE:
-@@ -2030,6 +2134,9 @@ static int sky2_status_intr(struct sky2_
+@@ -2030,6 +2125,9 @@ static int sky2_status_intr(struct sky2_
  		}
  	}
  
@@ -1413,7 +1572,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  exit_loop:
  	if (buf_write[0]) {
  		sky2 = netdev_priv(hw->dev[0]);
-@@ -2105,7 +2212,7 @@ static void sky2_hw_intr(struct sky2_hw 
+@@ -2105,7 +2203,7 @@ static void sky2_hw_intr(struct sky2_hw 
  
  		sky2_write8(hw, B2_TST_CTRL1, TST_CFG_WRITE_ON);
  		sky2_pci_write16(hw, PCI_STATUS,
@@ -1422,7 +1581,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		sky2_write8(hw, B2_TST_CTRL1, TST_CFG_WRITE_OFF);
  	}
  
-@@ -2239,19 +2346,16 @@ static int sky2_poll(struct net_device *
+@@ -2239,19 +2337,16 @@ static int sky2_poll(struct net_device *
  		sky2_descriptor_error(hw, 1, "transmit", Y2_IS_CHK_TXA2);
  
  	work_done = sky2_status_intr(hw, work_limit);
@@ -1450,7 +1609,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  }
  
  static irqreturn_t sky2_intr(int irq, void *dev_id, struct pt_regs *regs)
-@@ -2311,7 +2415,7 @@ static inline u32 sky2_clk2us(const stru
+@@ -2311,7 +2406,7 @@ static inline u32 sky2_clk2us(const stru
  static int sky2_reset(struct sky2_hw *hw)
  {
  	u16 status;
@@ -1459,7 +1618,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	int i;
  
  	sky2_write8(hw, B0_CTST, CS_RST_CLR);
-@@ -2357,9 +2461,7 @@ static int sky2_reset(struct sky2_hw *hw
+@@ -2357,9 +2452,7 @@ static int sky2_reset(struct sky2_hw *hw
  		sky2_pci_write32(hw, PEX_UNC_ERR_STAT, 0xffffffffUL);
  
  
@@ -1470,7 +1629,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	hw->ports = 1;
  	t8 = sky2_read8(hw, B2_Y2_HW_RES);
  	if ((t8 & CFG_DUAL_MAC_MSK) == CFG_DUAL_MAC_MSK) {
-@@ -2417,7 +2519,7 @@ static int sky2_reset(struct sky2_hw *hw
+@@ -2417,7 +2510,7 @@ static int sky2_reset(struct sky2_hw *hw
  	sky2_write32(hw, B0_HWE_IMSK, Y2_HWE_ALL_MASK);
  
  	for (i = 0; i < hw->ports; i++)
@@ -1479,7 +1638,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	memset(hw->st_le, 0, STATUS_LE_BYTES);
  	hw->st_idx = 0;
-@@ -2456,21 +2558,22 @@ static int sky2_reset(struct sky2_hw *hw
+@@ -2456,21 +2549,22 @@ static int sky2_reset(struct sky2_hw *hw
  
  static u32 sky2_supported_modes(const struct sky2_hw *hw)
  {
@@ -1513,7 +1672,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  }
  
  static int sky2_get_settings(struct net_device *dev, struct ethtool_cmd *ecmd)
-@@ -2481,7 +2584,7 @@ static int sky2_get_settings(struct net_
+@@ -2481,7 +2575,7 @@ static int sky2_get_settings(struct net_
  	ecmd->transceiver = XCVR_INTERNAL;
  	ecmd->supported = sky2_supported_modes(hw);
  	ecmd->phy_address = PHY_ADDR_MARV;
@@ -1522,7 +1681,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		ecmd->supported = SUPPORTED_10baseT_Half
  		    | SUPPORTED_10baseT_Full
  		    | SUPPORTED_100baseT_Half
-@@ -2490,12 +2593,14 @@ static int sky2_get_settings(struct net_
+@@ -2490,12 +2584,14 @@ static int sky2_get_settings(struct net_
  		    | SUPPORTED_1000baseT_Full
  		    | SUPPORTED_Autoneg | SUPPORTED_TP;
  		ecmd->port = PORT_TP;
@@ -1539,32 +1698,125 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	ecmd->duplex = sky2->duplex;
  	return 0;
  }
-@@ -2894,7 +2999,6 @@ static int sky2_set_pauseparam(struct ne
+@@ -2643,7 +2739,7 @@ static int sky2_nway_reset(struct net_de
+ {
+ 	struct sky2_port *sky2 = netdev_priv(dev);
+ 
+-	if (sky2->autoneg != AUTONEG_ENABLE)
++	if (!netif_running(dev) || sky2->autoneg != AUTONEG_ENABLE)
+ 		return -EINVAL;
+ 
+ 	sky2_phy_reinit(sky2);
+@@ -2745,6 +2841,14 @@ static int sky2_set_mac_address(struct n
+ 	return 0;
+ }
+ 
++static void inline sky2_add_filter(u8 filter[8], const u8 *addr)
++{
++	u32 bit;
++
++	bit = ether_crc(ETH_ALEN, addr) & 63;
++	filter[bit >> 3] |= 1 << (bit & 7);
++}
++
+ static void sky2_set_multicast(struct net_device *dev)
+ {
+ 	struct sky2_port *sky2 = netdev_priv(dev);
+@@ -2753,7 +2857,10 @@ static void sky2_set_multicast(struct ne
+ 	struct dev_mc_list *list = dev->mc_list;
+ 	u16 reg;
+ 	u8 filter[8];
++	int rx_pause;
++	static const u8 pause_mc_addr[ETH_ALEN] = { 0x1, 0x80, 0xc2, 0x0, 0x0, 0x1 };
+ 
++	rx_pause = (sky2->flow_status == FC_RX || sky2->flow_status == FC_BOTH);
+ 	memset(filter, 0, sizeof(filter));
+ 
+ 	reg = gma_read16(hw, port, GM_RX_CTRL);
+@@ -2761,18 +2868,19 @@ static void sky2_set_multicast(struct ne
+ 
+ 	if (dev->flags & IFF_PROMISC)	/* promiscuous */
+ 		reg &= ~(GM_RXCR_UCF_ENA | GM_RXCR_MCF_ENA);
+-	else if ((dev->flags & IFF_ALLMULTI) || dev->mc_count > 16)	/* all multicast */
++	else if (dev->flags & IFF_ALLMULTI)
+ 		memset(filter, 0xff, sizeof(filter));
+-	else if (dev->mc_count == 0)	/* no multicast */
++	else if (dev->mc_count == 0 && !rx_pause)
+ 		reg &= ~GM_RXCR_MCF_ENA;
+ 	else {
+ 		int i;
+ 		reg |= GM_RXCR_MCF_ENA;
+ 
+-		for (i = 0; list && i < dev->mc_count; i++, list = list->next) {
+-			u32 bit = ether_crc(ETH_ALEN, list->dmi_addr) & 0x3f;
+-			filter[bit / 8] |= 1 << (bit % 8);
+-		}
++		if (rx_pause)
++			sky2_add_filter(filter, pause_mc_addr);
++
++		for (i = 0; list && i < dev->mc_count; i++, list = list->next)
++			sky2_add_filter(filter, list->dmi_addr);
+ 	}
+ 
+ 	gma_write16(hw, port, GM_MC_ADDR_H1,
+@@ -2885,8 +2993,20 @@ static void sky2_get_pauseparam(struct n
+ {
+ 	struct sky2_port *sky2 = netdev_priv(dev);
+ 
+-	ecmd->tx_pause = sky2->tx_pause;
+-	ecmd->rx_pause = sky2->rx_pause;
++	switch (sky2->flow_mode) {
++	case FC_NONE:
++		ecmd->tx_pause = ecmd->rx_pause = 0;
++		break;
++	case FC_TX:
++		ecmd->tx_pause = 1, ecmd->rx_pause = 0;
++		break;
++	case FC_RX:
++		ecmd->tx_pause = 0, ecmd->rx_pause = 1;
++		break;
++	case FC_BOTH:
++		ecmd->tx_pause = ecmd->rx_pause = 1;
++	}
++
+ 	ecmd->autoneg = sky2->autoneg;
+ }
+ 
+@@ -2894,15 +3014,14 @@ static int sky2_set_pauseparam(struct ne
  			       struct ethtool_pauseparam *ecmd)
  {
  	struct sky2_port *sky2 = netdev_priv(dev);
 -	int err = 0;
  
  	sky2->autoneg = ecmd->autoneg;
- 	sky2->tx_pause = ecmd->tx_pause != 0;
-@@ -2902,7 +3006,7 @@ static int sky2_set_pauseparam(struct ne
+-	sky2->tx_pause = ecmd->tx_pause != 0;
+-	sky2->rx_pause = ecmd->rx_pause != 0;
++	sky2->flow_mode = sky2_flow(ecmd->rx_pause, ecmd->tx_pause);
  
- 	sky2_phy_reinit(sky2);
+-	sky2_phy_reinit(sky2);
++	if (netif_running(dev))
++		sky2_phy_reinit(sky2);
  
 -	return err;
 +	return 0;
  }
  
  static int sky2_get_coalesce(struct net_device *dev,
-@@ -3128,7 +3232,6 @@ static __devinit struct net_device *sky2
+@@ -3128,11 +3247,10 @@ static __devinit struct net_device *sky2
  	sky2->hw = hw;
  	sky2->msg_enable = netif_msg_init(debug, default_msg);
  
 -	spin_lock_init(&sky2->tx_lock);
  	/* Auto speed and flow control */
  	sky2->autoneg = AUTONEG_ENABLE;
- 	sky2->tx_pause = 1;
-@@ -3141,13 +3244,11 @@ static __devinit struct net_device *sky2
+-	sky2->tx_pause = 1;
+-	sky2->rx_pause = 1;
++	sky2->flow_mode = FC_BOTH;
++
+ 	sky2->duplex = -1;
+ 	sky2->speed = -1;
+ 	sky2->advertising = sky2_supported_modes(hw);
+@@ -3141,13 +3259,11 @@ static __devinit struct net_device *sky2
  	spin_lock_init(&sky2->phy_lock);
  	sky2->tx_pending = TX_DEF_PENDING;
  	sky2->rx_pending = RX_DEF_PENDING;
@@ -1578,7 +1830,17 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	if (hw->chip_id != CHIP_ID_YUKON_EC_U)
  		dev->features |= NETIF_F_TSO;
  	if (highmem)
-@@ -3208,6 +3309,8 @@ static int __devinit sky2_test_msi(struc
+@@ -3183,8 +3299,7 @@ static void __devinit sky2_show_addr(str
+ }
+ 
+ /* Handle software interrupt used during MSI test */
+-static irqreturn_t __devinit sky2_test_intr(int irq, void *dev_id,
+-					    struct pt_regs *regs)
++static irqreturn_t __devinit sky2_test_intr(int irq, void *dev_id, struct pt_regs *regs)
+ {
+ 	struct sky2_hw *hw = dev_id;
+ 	u32 status = sky2_read32(hw, B0_Y2_SP_ISRC2);
+@@ -3208,6 +3323,8 @@ static int __devinit sky2_test_msi(struc
  	struct pci_dev *pdev = hw->pdev;
  	int err;
  
@@ -1587,7 +1849,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	sky2_write32(hw, B0_IMSK, Y2_IS_IRQ_SW);
  
  	err = request_irq(pdev->irq, sky2_test_intr, IRQF_SHARED, DRV_NAME, hw);
-@@ -3217,10 +3320,8 @@ static int __devinit sky2_test_msi(struc
+@@ -3217,18 +3334,15 @@ static int __devinit sky2_test_msi(struc
  		return err;
  	}
  
@@ -1599,7 +1861,25 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  
  	wait_event_timeout(hw->msi_wait, hw->msi_detected, HZ/10);
  
-@@ -3312,12 +3413,13 @@ static int __devinit sky2_probe(struct p
+ 	if (!hw->msi_detected) {
+ 		/* MSI test failed, go back to INTx mode */
+-		printk(KERN_WARNING PFX "%s: No interrupt was generated using MSI, "
+-		       "switching to INTx mode. Please report this failure to "
+-		       "the PCI maintainer and include system chipset information.\n",
++		printk(KERN_INFO PFX "%s: No interrupt generated using MSI, "
++		       "switching to INTx mode.\n",
+ 		       pci_name(pdev));
+ 
+ 		err = -EOPNOTSUPP;
+@@ -3236,6 +3350,7 @@ static int __devinit sky2_test_msi(struc
+ 	}
+ 
+ 	sky2_write32(hw, B0_IMSK, 0);
++	sky2_read32(hw, B0_IMSK);
+ 
+ 	free_irq(pdev->irq, hw);
+ 
+@@ -3312,12 +3427,13 @@ static int __devinit sky2_probe(struct p
  	hw->pm_cap = pm_cap;
  
  #ifdef __BIG_ENDIAN
@@ -1616,7 +1896,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  		sky2_pci_write32(hw, PCI_DEV_REG2, reg);
  	}
  #endif
-@@ -3341,6 +3443,14 @@ static int __devinit sky2_probe(struct p
+@@ -3341,6 +3457,14 @@ static int __devinit sky2_probe(struct p
  	if (!dev)
  		goto err_out_free_pci;
  
@@ -1631,7 +1911,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	err = register_netdev(dev);
  	if (err) {
  		printk(KERN_ERR PFX "%s: cannot register net device\n",
-@@ -3348,6 +3458,14 @@ static int __devinit sky2_probe(struct p
+@@ -3348,6 +3472,14 @@ static int __devinit sky2_probe(struct p
  		goto err_out_free_netdev;
  	}
  
@@ -1646,7 +1926,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	sky2_show_addr(dev);
  
  	if (hw->ports > 1 && (dev1 = sky2_init_netdev(hw, 1, using_dac))) {
-@@ -3362,23 +3480,6 @@ static int __devinit sky2_probe(struct p
+@@ -3362,23 +3494,6 @@ static int __devinit sky2_probe(struct p
  		}
  	}
  
@@ -1670,7 +1950,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.c
  	setup_timer(&hw->idle_timer, sky2_idle, (unsigned long) hw);
  	sky2_idle_start(hw);
  
-@@ -3388,10 +3489,6 @@ static int __devinit sky2_probe(struct p
+@@ -3388,10 +3503,6 @@ static int __devinit sky2_probe(struct p
  
  err_out_unregister:
  	pci_disable_msi(pdev);
@@ -1709,6 +1989,15 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
  /*****  PHY_MARV_PHY_CTRL (page 2)		16 bit r/w	MAC Specific Ctrl *****/
  enum {
  	PHY_M_MAC_MD_MSK	= 7<<7, /* Bit  9.. 7: Mode Select Mask */
+@@ -1566,7 +1576,7 @@ enum {
+ 
+ 	GMR_FS_ANY_ERR	= GMR_FS_RX_FF_OV | GMR_FS_CRC_ERR |
+ 			  GMR_FS_FRAGMENT | GMR_FS_LONG_ERR |
+-		  	  GMR_FS_MII_ERR | GMR_FS_BAD_FC |
++		  	  GMR_FS_MII_ERR | GMR_FS_GOOD_FC | GMR_FS_BAD_FC |
+ 			  GMR_FS_UN_SIZE | GMR_FS_JABBER,
+ };
+ 
 @@ -1748,7 +1758,6 @@ enum {
  	INIT_SUM= 1<<3,
  	LOCK_SUM= 1<<4,
@@ -1741,7 +2030,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
  	__le16	length;	/* also vlan tag or checksum start */
  	u8	ctrl;
  	u8	opcode;
-@@ -1821,12 +1818,14 @@ struct sky2_status_le {
+@@ -1821,12 +1818,21 @@ struct sky2_status_le {
  struct tx_ring_info {
  	struct sk_buff	*skb;
  	DECLARE_PCI_UNMAP_ADDR(mapaddr);
@@ -1756,10 +2045,17 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
 +	dma_addr_t	data_addr;
 +	DECLARE_PCI_UNMAP_ADDR(data_size);
 +	dma_addr_t	frag_addr[ETH_JUMBO_MTU >> PAGE_SHIFT];
++};
++
++enum flow_control {
++	FC_NONE	= 0,
++	FC_TX	= 1,
++	FC_RX	= 2,
++	FC_BOTH	= 3,
  };
  
  struct sky2_port {
-@@ -1836,7 +1835,6 @@ struct sky2_port {
+@@ -1836,7 +1842,6 @@ struct sky2_port {
  	u32		     msg_enable;
  	spinlock_t	     phy_lock;
  
@@ -1767,7 +2063,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
  	struct tx_ring_info  *tx_ring;
  	struct sky2_tx_le    *tx_le;
  	u16		     tx_cons;		/* next le to check */
-@@ -1844,14 +1842,17 @@ struct sky2_port {
+@@ -1844,14 +1849,17 @@ struct sky2_port {
  	u32		     tx_addr64;
  	u16		     tx_pending;
  	u16		     tx_last_mss;
@@ -1787,7 +2083,24 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
  #ifdef SKY2_VLAN_TAG_USED
  	u16		     rx_tag;
  	struct vlan_group    *vlgrp;
-@@ -1879,7 +1880,7 @@ struct sky2_hw {
+@@ -1859,13 +1867,13 @@ struct sky2_port {
+ 
+ 	dma_addr_t	     rx_le_map;
+ 	dma_addr_t	     tx_le_map;
+-	u32		     advertising;	/* ADVERTISED_ bits */
++	u16		     advertising;	/* ADVERTISED_ bits */
+ 	u16		     speed;	/* SPEED_1000, SPEED_100, ... */
+ 	u8		     autoneg;	/* AUTONEG_ENABLE, AUTONEG_DISABLE */
+ 	u8		     duplex;	/* DUPLEX_HALF, DUPLEX_FULL */
+-	u8		     rx_pause;
+-	u8		     tx_pause;
+ 	u8		     rx_csum;
++ 	enum flow_control    flow_mode;
++ 	enum flow_control    flow_status;
+ 
+ 	struct net_device_stats net_stats;
+ 
+@@ -1879,7 +1887,7 @@ struct sky2_hw {
  	int		     pm_cap;
  	u8	     	     chip_id;
  	u8		     chip_rev;
@@ -1796,7 +2109,7 @@ Index: linux-2.6.18.1/drivers/net/sky2.h
  	u8		     ports;
  
  	struct sky2_status_le *st_le;
-@@ -1891,6 +1892,11 @@ struct sky2_hw {
+@@ -1891,6 +1899,11 @@ struct sky2_hw {
  	wait_queue_head_t    msi_wait;
  };
  
