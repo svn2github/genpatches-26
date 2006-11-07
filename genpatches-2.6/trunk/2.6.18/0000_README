@@ -54,9 +54,17 @@ Patch:	1710_alpha-ev56-kconfig.patch
 From:	Fernando J. Pereda <ferdy@gentoo.org>
 Desc:	Update EV56 Kconfig dependencies
 
+Patch:	2400_bcm43xx-signal-quality.patch
+From:	2.6.19 tree
+Desc:	Fix signal quality measurements on bcm43xx
+
+Patch:	2405-bcm43xx-tx-timeouts.patch
+From:	2.6.19 tree
+Desc:	Fix bcm43xx TX timeouts
+
 Patch:	2000_softmac-shared-key-slab-corruption.patch
 From:	http://bugzilla.kernel.org/show_bug.cgi?id=7245
-Desc:	Fix slab key corruption when connecting to shared key wireless networks
+Desc:	Fix slab corruption when connecting to shared key wireless networks
 
 Patch:	2500_via-irq-quirk-revert.patch
 From:	http://bugs.gentoo.org/138036
