@@ -1,0 +1,16 @@
+This patch removes the warnings introduced by grsec patch 2.6.19 and later
+It removes the -W options added by the patch and restores the original
+warning flags of vanilla kernel versions
+
+diff -urNp linux-2.6.18.2-grsec-gentoo/Makefile linux-2.6.18.2-grsec-gentoo-mutewarnings/Makefile
+--- linux-2.6.18.2-grsec-gentoo/Makefile	2006-11-10 23:10:05.000000000 +0100
++++ linux-2.6.18.2-grsec-gentoo-mutewarnings/Makefile	2006-11-10 23:14:23.000000000 +0100
+@@ -307,7 +307,7 @@ LINUXINCLUDE    := -Iinclude \
+ 
+ CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
+ 
+-CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
++CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs
+                    -fno-strict-aliasing -fno-common
+ AFLAGS          := -D__ASSEMBLY__
+ 

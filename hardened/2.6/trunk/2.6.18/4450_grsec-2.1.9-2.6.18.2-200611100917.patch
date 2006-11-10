@@ -27859,6 +27859,15 @@ diff -urNp linux-2.6.18.2/kernel/unwind.c linux-2.6.18.2/kernel/unwind.c
 diff -urNp linux-2.6.18.2/Makefile linux-2.6.18.2/Makefile
 --- linux-2.6.18.2/Makefile	2006-10-28 15:23:39.000000000 -0400
 +++ linux-2.6.18.2/Makefile	2006-10-28 15:24:01.000000000 -0400
+@@ -307,7 +307,7 @@ LINUXINCLUDE    := -Iinclude \
+ 
+ CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
+ 
+-CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
++CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
+                    -fno-strict-aliasing -fno-common
+ AFLAGS          := -D__ASSEMBLY__
+ 
 @@ -552,7 +552,7 @@ export mod_strip_cmd
  
  
