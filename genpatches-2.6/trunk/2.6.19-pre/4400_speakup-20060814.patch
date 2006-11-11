@@ -1698,7 +1698,7 @@ Index: linux-2.6.19/MAINTAINERS
 ===================================================================
 --- linux-2.6.19.orig/MAINTAINERS
 +++ linux-2.6.19/MAINTAINERS
-@@ -2828,6 +2828,13 @@ M:	wli@holomorphy.com
+@@ -2841,6 +2841,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1728,7 +1728,7 @@ Index: linux-2.6.19/drivers/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/drivers/Kconfig
 +++ linux-2.6.19/drivers/Kconfig
-@@ -60,6 +60,8 @@ source "drivers/media/Kconfig"
+@@ -62,6 +62,8 @@ source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
  

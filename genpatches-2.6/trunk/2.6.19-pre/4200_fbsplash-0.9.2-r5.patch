@@ -253,7 +253,7 @@ Index: linux-2.6.19/drivers/video/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/drivers/video/Kconfig
 +++ linux-2.6.19/drivers/video/Kconfig
-@@ -881,7 +881,6 @@ config FB_MATROX
+@@ -880,7 +880,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
@@ -261,7 +261,7 @@ Index: linux-2.6.19/drivers/video/Kconfig
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1645,5 +1644,15 @@ if SYSFS
+@@ -1644,5 +1643,15 @@ if SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -1772,7 +1772,7 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -152,6 +152,7 @@ enum
+@@ -160,6 +160,7 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
@@ -1794,7 +1794,7 @@ Index: linux-2.6.19/kernel/sysctl.c
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -454,6 +457,17 @@ static ctl_table kern_table[] = {
+@@ -456,6 +459,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
