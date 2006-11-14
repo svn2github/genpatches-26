@@ -62,6 +62,10 @@ Patch:	2405-bcm43xx-tx-timeouts.patch
 From:	2.6.19 tree
 Desc:	Fix bcm43xx TX timeouts
 
+Patch:	2410_e1000-suspend.patch
+From:	http://bugs.gentoo.org/146005
+Desc:	Fix e1000 suspend/resume regression
+
 Patch:	2000_softmac-shared-key-slab-corruption.patch
 From:	http://bugzilla.kernel.org/show_bug.cgi?id=7245
 Desc:	Fix slab corruption when connecting to shared key wireless networks
