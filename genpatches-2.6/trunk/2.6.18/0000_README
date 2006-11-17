@@ -46,6 +46,10 @@ Patch:	1001_linux-2.6.18.2.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1700_x86-microcode-size.patch
+From:	http://bugs.gentoo.org/154634
+Desc:	Fix microcode update fail with microcode-ctl-1.15
+
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
