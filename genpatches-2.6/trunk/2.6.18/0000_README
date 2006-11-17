@@ -58,6 +58,10 @@ Patch:	1710_alpha-ev56-kconfig.patch
 From:	Fernando J. Pereda <ferdy@gentoo.org>
 Desc:	Update EV56 Kconfig dependencies
 
+Patch:	2300_ieee1394-ppc-reload.patch
+From:	http://bugs.gentoo.org/154851
+Desc:	Fix ieee1394 module reload oops on PPC
+
 Patch:	2400_bcm43xx-signal-quality.patch
 From:	2.6.19 tree
 Desc:	Fix signal quality measurements on bcm43xx
