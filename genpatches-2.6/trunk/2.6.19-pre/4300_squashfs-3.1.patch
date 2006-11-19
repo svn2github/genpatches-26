@@ -2,7 +2,7 @@ Index: linux-2.6.19/fs/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/fs/Kconfig
 +++ linux-2.6.19/fs/Kconfig
-@@ -1304,6 +1304,71 @@ config CRAMFS
+@@ -1407,6 +1407,71 @@ config CRAMFS
  
  	  If unsure, say N.
  
@@ -78,8 +78,8 @@ Index: linux-2.6.19/fs/Makefile
 ===================================================================
 --- linux-2.6.19.orig/fs/Makefile
 +++ linux-2.6.19/fs/Makefile
-@@ -65,6 +65,7 @@ obj-$(CONFIG_EXT3_FS)		+= ext3/ # Before
- obj-$(CONFIG_JBD)		+= jbd/
+@@ -67,6 +67,7 @@ obj-$(CONFIG_JBD)		+= jbd/
+ obj-$(CONFIG_JBD2)		+= jbd2/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/
 +obj-$(CONFIG_SQUASHFS)		+= squashfs/
@@ -102,7 +102,7 @@ Index: linux-2.6.19/fs/squashfs/inode.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/fs/squashfs/inode.c
-@@ -0,0 +1,2156 @@
+@@ -0,0 +1,2152 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -709,7 +709,6 @@ Index: linux-2.6.19/fs/squashfs/inode.c
 +			i->i_fop = &generic_ro_fops;
 +			i->i_mode |= S_IFREG;
 +			i->i_blocks = ((i->i_size - 1) >> 9) + 1;
-+			i->i_blksize = PAGE_CACHE_SIZE;
 +			SQUASHFS_I(i)->u.s1.fragment_start_block = frag_blk;
 +			SQUASHFS_I(i)->u.s1.fragment_size = frag_size;
 +			SQUASHFS_I(i)->u.s1.fragment_offset = inodep->offset;
@@ -762,7 +761,6 @@ Index: linux-2.6.19/fs/squashfs/inode.c
 +			i->i_fop = &generic_ro_fops;
 +			i->i_mode |= S_IFREG;
 +			i->i_blocks = ((i->i_size - 1) >> 9) + 1;
-+			i->i_blksize = PAGE_CACHE_SIZE;
 +			SQUASHFS_I(i)->u.s1.fragment_start_block = frag_blk;
 +			SQUASHFS_I(i)->u.s1.fragment_size = frag_size;
 +			SQUASHFS_I(i)->u.s1.fragment_offset = inodep->offset;
@@ -2248,9 +2246,7 @@ Index: linux-2.6.19/fs/squashfs/inode.c
 +
 +static void destroy_inodecache(void)
 +{
-+	if (kmem_cache_destroy(squashfs_inode_cachep))
-+		printk(KERN_INFO "squashfs_inode_cache: not all structures "
-+			"were freed\n");
++	kmem_cache_destroy(squashfs_inode_cachep);
 +}
 +
 +
@@ -2354,7 +2350,7 @@ Index: linux-2.6.19/fs/squashfs/squashfs2_0.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/fs/squashfs/squashfs2_0.c
-@@ -0,0 +1,779 @@
+@@ -0,0 +1,778 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -2586,7 +2582,6 @@ Index: linux-2.6.19/fs/squashfs/squashfs2_0.c
 +			i->i_atime.tv_sec = inodep->mtime;
 +			i->i_ctime.tv_sec = inodep->mtime;
 +			i->i_blocks = ((i->i_size - 1) >> 9) + 1;
-+			i->i_blksize = PAGE_CACHE_SIZE;
 +			SQUASHFS_I(i)->u.s1.fragment_start_block = frag_blk;
 +			SQUASHFS_I(i)->u.s1.fragment_size = frag_size;
 +			SQUASHFS_I(i)->u.s1.fragment_offset = inodep->offset;
