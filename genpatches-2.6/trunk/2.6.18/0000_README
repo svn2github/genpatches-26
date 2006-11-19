@@ -46,6 +46,10 @@ Patch:	1001_linux-2.6.18.2.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1002_linux-2.6.18.3.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_x86-microcode-size.patch
 From:	http://bugs.gentoo.org/154634
 Desc:	Fix microcode update fail with microcode-ctl-1.15
@@ -69,10 +73,6 @@ Desc:	Fix signal quality measurements on bcm43xx
 Patch:	2405-bcm43xx-tx-timeouts.patch
 From:	2.6.19 tree
 Desc:	Fix bcm43xx TX timeouts
-
-Patch:	2410_e1000-suspend.patch
-From:	http://bugs.gentoo.org/146005
-Desc:	Fix e1000 suspend/resume regression
 
 Patch:	2000_softmac-shared-key-slab-corruption.patch
 From:	http://bugzilla.kernel.org/show_bug.cgi?id=7245
