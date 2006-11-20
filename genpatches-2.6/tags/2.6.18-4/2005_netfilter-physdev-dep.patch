@@ -1,0 +1,27 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Mon, 2 Oct 2006 23:10:47 +0000 (-0700)
+Subject: [NETFILTER]: Kconfig: fix xt_physdev dependencies
+X-Git-Tag: v2.6.19-rc1
+X-Git-Url: http://www2.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=f1da70632fa0875f80fc60991a010c31f40983ff
+
+[NETFILTER]: Kconfig: fix xt_physdev dependencies
+
+xt_physdev depends on bridge netfilter, which is a boolean, but can still
+be built modular because of special handling in the bridge makefile. Add
+a dependency on BRIDGE to prevent XT_MATCH_PHYSDEV=y, BRIDGE=m.
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+--- a/net/netfilter/Kconfig
++++ b/net/netfilter/Kconfig
+@@ -365,7 +365,7 @@ config NETFILTER_XT_MATCH_MULTIPORT
+ 
+ config NETFILTER_XT_MATCH_PHYSDEV
+ 	tristate '"physdev" match support'
+-	depends on NETFILTER_XTABLES && BRIDGE_NETFILTER
++	depends on NETFILTER_XTABLES && BRIDGE && BRIDGE_NETFILTER
+ 	help
+ 	  Physdev packet matching matches against the physical bridge ports
+ 	  the IP packet arrived on or will leave by.
