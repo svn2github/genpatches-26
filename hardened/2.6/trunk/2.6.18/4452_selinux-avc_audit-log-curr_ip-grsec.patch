@@ -9,10 +9,10 @@ Signed-off-by: Lorenzo Hernandez Garcia-Hierro <lorenzo@gnu.org>
  linux-2.6.11-lorenzo/security/selinux/avc.c |    6 ++++++
  1 files changed, 6 insertions(+)
 
-Index: linux-2.6.17/security/selinux/avc.c
+Index: linux-2.6.18/security/selinux/avc.c
 ===================================================================
---- linux-2.6.17.orig/security/selinux/avc.c
-+++ linux-2.6.17/security/selinux/avc.c
+--- linux-2.6.18.orig/security/selinux/avc.c
++++ linux-2.6.18/security/selinux/avc.c
 @@ -203,6 +203,12 @@ static void avc_dump_query(struct audit_
  	char *scontext;
  	u32 scontext_len;

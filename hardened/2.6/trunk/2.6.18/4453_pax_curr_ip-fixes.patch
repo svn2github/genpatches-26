@@ -1,6 +1,7 @@
-diff -urNp orig/arch/i386/mm/fault.c shadow/arch/i386/mm/fault.c
---- orig/arch/i386/mm/fault.c	2006-11-10 22:18:36.000000000 +0100
-+++ shadow/arch/i386/mm/fault.c	2006-11-10 22:19:43.000000000 +0100
+Index: linux-2.6.18/arch/i386/mm/fault.c
+===================================================================
+--- linux-2.6.18.orig/arch/i386/mm/fault.c
++++ linux-2.6.18/arch/i386/mm/fault.c
 @@ -724,10 +724,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code)
@@ -14,9 +15,10 @@ diff -urNp orig/arch/i386/mm/fault.c shadow/arch/i386/mm/fault.c
  				printk(KERN_ERR "PAX: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
  						 tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  #endif
-diff -urNp orig/fs/exec.c shadow/fs/exec.c
---- orig/fs/exec.c	2006-11-10 22:21:47.000000000 +0100
-+++ shadow/fs/exec.c	2006-11-10 22:24:22.000000000 +0100
+Index: linux-2.6.18/fs/exec.c
+===================================================================
+--- linux-2.6.18.orig/fs/exec.c
++++ linux-2.6.18/fs/exec.c
 @@ -1599,9 +1599,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
@@ -29,9 +31,10 @@ diff -urNp orig/fs/exec.c shadow/fs/exec.c
  		printk(KERN_ERR "PAX: execution attempt in: %s, %08lx-%08lx %08lx\n", path_fault, start, end, offset);
  	printk(KERN_ERR "PAX: terminating task: %s(%s):%d, uid/euid: %u/%u, "
  			"PC: %p, SP: %p\n", path_exec, tsk->comm, tsk->pid,
-diff -urNp orig/security/Kconfig shadow/security/Kconfig
---- orig/security/Kconfig	2006-11-10 22:22:33.000000000 +0100
-+++ shadow/security/Kconfig	2006-11-10 22:23:28.000000000 +0100
+Index: linux-2.6.18/security/Kconfig
+===================================================================
+--- linux-2.6.18.orig/security/Kconfig
++++ linux-2.6.18/security/Kconfig
 @@ -8,7 +8,7 @@ menu "PaX"
  
  config PAX
