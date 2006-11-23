@@ -1,6 +1,10 @@
-This patch removes the warnings introduced by grsec patch 2.6.19 and later
+From: Alexander Gabert <gaberta@fh-trier.de>
+
+This patch removes the warnings introduced by grsec patch 2.1.9 and later.
 It removes the -W options added by the patch and restores the original
-warning flags of vanilla kernel versions
+warning flags of vanilla kernel versions.
+
+Acked-by: Christian Heim <phreak@gentoo.org>
 
 Index: linux-2.6.18/Makefile
 ===================================================================
