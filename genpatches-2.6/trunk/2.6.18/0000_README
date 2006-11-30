@@ -50,6 +50,10 @@ Patch:	1002_linux-2.6.18.3.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1003_linux-2.6.18.4.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1700_x86-microcode-size.patch
 From:	http://bugs.gentoo.org/154634
 Desc:	Fix microcode update fail with microcode-ctl-1.15
