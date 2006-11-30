@@ -1,0 +1,18 @@
+Index: linux-2.6.19/scripts/Kbuild.include
+===================================================================
+--- linux-2.6.19.orig/scripts/Kbuild.include
++++ linux-2.6.19/scripts/Kbuild.include
+@@ -66,9 +66,11 @@ as-option = $(shell if $(CC) $(CFLAGS) $
+ # as-instr
+ # Usage: cflags-y += $(call as-instr, instr, option1, option2)
+ 
+-as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o astest$$$$.out ; \
++as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o \
++		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out ; \
+ 		   then echo "$(2)"; else echo "$(3)"; fi; \
+-	           rm -f astest$$$$.out)
++	           rm -f \
++		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out)
+ 
+ # cc-option
+ # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
