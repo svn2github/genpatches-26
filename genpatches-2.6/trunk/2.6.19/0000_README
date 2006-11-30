@@ -42,6 +42,10 @@ Patch:	2300_ieee1394-ppc-reload.patch
 From:	http://bugs.gentoo.org/154851
 Desc:	Fix ieee1394 module reload oops on PPC
 
+Patch:	2900_astest-sandbox.patch
+From:	dsd@gentoo.org
+Desc:	Fix astest sandbox violations
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
