@@ -1,8 +1,14 @@
-From: Daniel Drake <dsd@gentoo.org>
+From: Shaohua Li <shaohua.li@intel.com>
 
-Backport of Shaohua Li's commit bd8e39f9e4c0960541c8c69e1f7cb321574d7c90
+IA32 manual says if micorcode update's size is 0, then the size is
+default size (2048 bytes). But this doesn't suggest all microcode
+update's size should be above 2048 bytes to me. We actually had a
+microcode update whose size is 1024 bytes. The patch just removed the
+check.
 
-microcode-ctl-1.15 includes a microcode with a different size
+Backported to 2.6.18 by Daniel Drake.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
 
 Index: linux-2.6.18-gentoo-r2/arch/i386/kernel/microcode.c
 ===================================================================
