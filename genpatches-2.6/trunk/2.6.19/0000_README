@@ -62,10 +62,6 @@ Patch:	4205_vesafb-tng-1.0-rc2.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
 
-Patch:	4206_vesafb-tng-mtrr.patch
-From:	spock@gentoo.org
-Desc:	Fix mtrr module parameter
-
 Patch:	4300_squashfs-3.1.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
