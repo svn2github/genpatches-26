@@ -54,25 +54,13 @@ Patch:	1003_linux-2.6.18.4.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
-Patch:	1700_x86-microcode-size.patch
-From:	http://bugs.gentoo.org/154634
-Desc:	Fix microcode update fail with microcode-ctl-1.15
+Patch:	1004_linux-2.6.18.5.patch
+From:	www.kernel.org
+Desc:	Misc fixes
 
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
-
-Patch:	1710_alpha-ev56-kconfig.patch
-From:	Fernando J. Pereda <ferdy@gentoo.org>
-Desc:	Update EV56 Kconfig dependencies
-
-Patch:	2000_softmac-shared-key-slab-corruption.patch
-From:	http://bugzilla.kernel.org/show_bug.cgi?id=7245
-Desc:	Fix slab corruption when connecting to shared key wireless networks
-
-Patch:	2005_netfilter-physdev-dep.patch
-From:	http://bugs.gentoo.org/153524
-Desc:	Fix xt_physdev compile error
 
 Patch:	2300_ieee1394-ppc-reload.patch
 From:	http://bugs.gentoo.org/154851
