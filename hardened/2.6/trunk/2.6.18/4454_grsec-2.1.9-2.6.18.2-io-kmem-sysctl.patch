@@ -3,7 +3,7 @@ From: Alexander Gabert <gaberta@fh-trier.de>
 This patch reworks the logic behind GRKERNSEC_IO and GRKERNSEC_KMEM, making it less
 intrusive and adding support for sysctl.
 
-The original patch is based on the work of Peter Mazinger (ps dot m at gmx dot net)
+The original patch is based on the work of Peter S. Mazinger (ps dot m at gmx dot net)
 and Nedd Ludd <solar@gentoo.org>.
 
 Acked-by: Christian Heim <phreak@gentoo.org>
