@@ -62,6 +62,10 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	2100_libata-status.patch
+From:	http://bugs.gentoo.org/157326
+Desc:	Fix libata status handling
+
 Patch:	2300_ieee1394-ppc-reload.patch
 From:	http://bugs.gentoo.org/154851
 Desc:	Fix ieee1394 module reload oops on PPC

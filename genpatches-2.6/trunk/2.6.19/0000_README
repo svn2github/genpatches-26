@@ -42,6 +42,10 @@ Patch:	2000_ipv6-packet-length.patch
 From:	http://bugs.gentoo.org/156952
 Desc:	Fix ipv6 crasher
 
+Patch:	2100_libata-status.patch
+From:	http://bugs.gentoo.org/157326
+Desc:	Fix libata status handling
+
 Patch:	2300_ieee1394-ppc-reload.patch
 From:	http://bugs.gentoo.org/154851
 Desc:	Fix ieee1394 module reload oops on PPC
