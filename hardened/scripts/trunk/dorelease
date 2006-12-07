@@ -230,7 +230,7 @@ This is an automated email to say that ${branch_prefix}-${target_release}
 has just been released.
 
 You can find a shortlog, broken out patches and release tarballs at:
-http://dev.gentoo.org/~${webuser}/${tmppath}
+http://dev.gentoo.org/~${webuser}/${webpath}
 
 Changes since ${target}-${lasttag} are as follows:
 EOF
