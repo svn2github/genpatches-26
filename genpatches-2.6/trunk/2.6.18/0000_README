@@ -58,6 +58,10 @@ Patch:	1004_linux-2.6.18.5.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1500_remote-memory-corruptor.patch
+From:	Al Viro <viro@hera.kernel.org>
+Desc:	Fix remote memory corruptor in drivers/net/tokenring/ibmtr.c
+
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
