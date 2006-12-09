@@ -1,0 +1,58 @@
+README
+--------------------------------------------------------------------------
+This readme has been taken from genpatches-2.6/tags/2.6.19-2/0000_README
+on the following date: Fri Dec  8 23:33:39 UTC 2006
+
+This patchset is to be the 2.4 series of hardened-sources
+
+It contains grsecurity and a number of additional fixes + security patches
+
+contact: Alexander Gabert <pappy@gentoo.org>
+
+The Gentoo Hardened project
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+4500-4600 grsecurity+pax
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:  4501_grsecurity-2.1.9-2.4.33.3-200609031224.patch
+From: http://www.grsecurity.net/download.php
+Desc: grsecurity patch for 2.4.33.3
+
+Patch:  4502_grsecurity-2.1.9-2.4.33.4-200611282125.patch
+From: http://www.grsecurity.net/~spender/
+Desc: PaX GNU/Linux patch for 2.4.33.4
+
+Patch:  4503_pax-linux-2.4.33.4-test17.patch
+From: http://www.grsecurity.net/~paxguy1/
+Desc: PaX GNU/Linux patch for 2.4.33.4
+
+
