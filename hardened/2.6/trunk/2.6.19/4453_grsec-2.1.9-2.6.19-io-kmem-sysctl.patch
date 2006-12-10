@@ -16,7 +16,15 @@ Index: linux-2.6.19/arch/i386/kernel/ioport.c
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/kernel/ioport.c
 +++ linux-2.6.19/arch/i386/kernel/ioport.c
-@@ -65,18 +65,21 @@ asmlinkage long sys_ioperm(unsigned long
+@@ -17,6 +17,7 @@
+ #include <linux/slab.h>
+ #include <linux/thread_info.h>
+ #include <linux/grsecurity.h>
++#include <linux/grinternal.h>
+ 
+ /* Set EXTENT bits starting at BASE in BITMAP to value TURN_ON. */
+ static void set_bitmap(unsigned long *bitmap, unsigned int base, unsigned int extent, int new_value)
+@@ -65,18 +66,21 @@ asmlinkage long sys_ioperm(unsigned long
  
  	if ((from + num <= from) || (from + num > IO_BITMAP_BITS))
  		return -EINVAL;
@@ -46,7 +54,7 @@ Index: linux-2.6.19/arch/i386/kernel/ioport.c
  	 * IO bitmap up. ioperm() is much less timing critical than clone(),
  	 * this is why we delay this operation until now:
  	 */
-@@ -152,13 +155,17 @@ asmlinkage long sys_iopl(unsigned long u
+@@ -152,13 +156,17 @@ asmlinkage long sys_iopl(unsigned long u
  	/* Trying to gain more privileges? */
  	if (level > old) {
  #ifdef CONFIG_GRKERNSEC_IO
@@ -72,7 +80,15 @@ Index: linux-2.6.19/drivers/char/mem.c
 ===================================================================
 --- linux-2.6.19.orig/drivers/char/mem.c
 +++ linux-2.6.19/drivers/char/mem.c
-@@ -180,9 +180,13 @@ static ssize_t write_mem(struct file * f
+@@ -28,6 +28,7 @@
+ #include <linux/pipe_fs_i.h>
+ #include <linux/pfn.h>
+ #include <linux/grsecurity.h>
++#include <linux/grinternal.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/io.h>
+@@ -180,9 +181,13 @@ static ssize_t write_mem(struct file * f
  		return -EFAULT;
  
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -88,7 +104,7 @@ Index: linux-2.6.19/drivers/char/mem.c
  
  	written = 0;
  
-@@ -286,9 +290,13 @@ static int mmap_mem(struct file * file, 
+@@ -286,9 +291,13 @@ static int mmap_mem(struct file * file, 
  		return -ENOSYS;
  
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -104,7 +120,7 @@ Index: linux-2.6.19/drivers/char/mem.c
  
  	vma->vm_page_prot = phys_mem_access_prot(file, vma->vm_pgoff,
  						 size,
-@@ -522,9 +530,13 @@ static ssize_t write_kmem(struct file * 
+@@ -522,9 +531,13 @@ static ssize_t write_kmem(struct file * 
  	char * kbuf; /* k-addr because vwrite() takes vmlist_lock rwlock */
  
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -120,7 +136,7 @@ Index: linux-2.6.19/drivers/char/mem.c
  
  	if (p < (unsigned long) high_memory) {
  
-@@ -832,9 +844,13 @@ static loff_t memory_lseek(struct file *
+@@ -832,9 +845,13 @@ static loff_t memory_lseek(struct file *
  static int open_port(struct inode * inode, struct file * filp)
  {
  #ifdef CONFIG_GRKERNSEC_KMEM
