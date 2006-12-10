@@ -12,10 +12,10 @@ intrusive and adding support for sysctl.
 The original patch is based on the work of Peter S. Mazinger (ps dot m at gmx dot net)
 and Nedd Ludd <solar@gentoo.org>.
 
-Index: linux-2.6.18/arch/i386/kernel/ioport.c
+Index: linux-2.6.19/arch/i386/kernel/ioport.c
 ===================================================================
---- linux-2.6.18.orig/arch/i386/kernel/ioport.c
-+++ linux-2.6.18/arch/i386/kernel/ioport.c
+--- linux-2.6.19.orig/arch/i386/kernel/ioport.c
++++ linux-2.6.19/arch/i386/kernel/ioport.c
 @@ -65,18 +65,21 @@ asmlinkage long sys_ioperm(unsigned long
  
  	if ((from + num <= from) || (from + num > IO_BITMAP_BITS))
@@ -68,11 +68,11 @@ Index: linux-2.6.18/arch/i386/kernel/ioport.c
  	t->iopl = level << 12;
  	regs->eflags = (regs->eflags & ~X86_EFLAGS_IOPL) | t->iopl;
  	set_iopl_mask(t->iopl);
-Index: linux-2.6.18/drivers/char/mem.c
+Index: linux-2.6.19/drivers/char/mem.c
 ===================================================================
---- linux-2.6.18.orig/drivers/char/mem.c
-+++ linux-2.6.18/drivers/char/mem.c
-@@ -179,9 +179,13 @@ static ssize_t write_mem(struct file * f
+--- linux-2.6.19.orig/drivers/char/mem.c
++++ linux-2.6.19/drivers/char/mem.c
+@@ -180,9 +180,13 @@ static ssize_t write_mem(struct file * f
  		return -EFAULT;
  
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -88,8 +88,8 @@ Index: linux-2.6.18/drivers/char/mem.c
  
  	written = 0;
  
-@@ -260,9 +264,13 @@ static int mmap_mem(struct file * file, 
- 						 vma->vm_page_prot);
+@@ -286,9 +290,13 @@ static int mmap_mem(struct file * file, 
+ 		return -ENOSYS;
  
  #ifdef CONFIG_GRKERNSEC_KMEM
 -	if (gr_handle_mem_mmap(vma->vm_pgoff << PAGE_SHIFT, vma))
@@ -102,9 +102,9 @@ Index: linux-2.6.18/drivers/char/mem.c
 +			return -EPERM;
 +	}
  
- 	/* Remap-pfn-range will mark the range VM_IO and VM_RESERVED */
- 	if (remap_pfn_range(vma,
-@@ -492,9 +500,13 @@ static ssize_t write_kmem(struct file * 
+ 	vma->vm_page_prot = phys_mem_access_prot(file, vma->vm_pgoff,
+ 						 size,
+@@ -522,9 +530,13 @@ static ssize_t write_kmem(struct file * 
  	char * kbuf; /* k-addr because vwrite() takes vmlist_lock rwlock */
  
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -120,7 +120,7 @@ Index: linux-2.6.18/drivers/char/mem.c
  
  	if (p < (unsigned long) high_memory) {
  
-@@ -802,9 +814,13 @@ static loff_t memory_lseek(struct file *
+@@ -832,9 +844,13 @@ static loff_t memory_lseek(struct file *
  static int open_port(struct inode * inode, struct file * filp)
  {
  #ifdef CONFIG_GRKERNSEC_KMEM
@@ -136,10 +136,10 @@ Index: linux-2.6.18/drivers/char/mem.c
  
  	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
  }
-Index: linux-2.6.18/grsecurity/grsec_init.c
+Index: linux-2.6.19/grsecurity/grsec_init.c
 ===================================================================
---- linux-2.6.18.orig/grsecurity/grsec_init.c
-+++ linux-2.6.18/grsecurity/grsec_init.c
+--- linux-2.6.19.orig/grsecurity/grsec_init.c
++++ linux-2.6.19/grsecurity/grsec_init.c
 @@ -46,6 +46,8 @@ int grsec_enable_socket_client;
  int grsec_socket_client_gid;
  int grsec_enable_socket_server;
@@ -162,13 +162,13 @@ Index: linux-2.6.18/grsecurity/grsec_init.c
  #endif
  
  	return;
-Index: linux-2.6.18/grsecurity/grsec_sysctl.c
+Index: linux-2.6.19/grsecurity/grsec_sysctl.c
 ===================================================================
---- linux-2.6.18.orig/grsecurity/grsec_sysctl.c
-+++ linux-2.6.18/grsecurity/grsec_sysctl.c
+--- linux-2.6.19.orig/grsecurity/grsec_sysctl.c
++++ linux-2.6.19/grsecurity/grsec_sysctl.c
 @@ -36,7 +36,7 @@ GS_CHROOT_SYSCTL, GS_TPE, GS_TPE_GID, GS
  GS_RANDPID, GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
- GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID,
+ GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID, 
  GS_GROUP, GS_GID, GS_ACHDIR, GS_AMOUNT, GS_AIPC, GS_DMSG,
 -GS_TEXTREL, GS_FINDTASK, GS_SHM, GS_LOCK, GS_MODSTOP, GS_RESLOG};
 +GS_TEXTREL, GS_FINDTASK, GS_SHM, GS_IO, GS_KMEM, GS_LOCK, GS_MODSTOP, GS_RESLOG};
@@ -202,10 +202,10 @@ Index: linux-2.6.18/grsecurity/grsec_sysctl.c
  	{
  		.ctl_name	= GS_LOCK,
  		.procname	= "grsec_lock",
-Index: linux-2.6.18/include/linux/grsecurity.h
+Index: linux-2.6.19/include/linux/grsecurity.h
 ===================================================================
---- linux-2.6.18.orig/include/linux/grsecurity.h
-+++ linux-2.6.18/include/linux/grsecurity.h
+--- linux-2.6.19.orig/include/linux/grsecurity.h
++++ linux-2.6.19/include/linux/grsecurity.h
 @@ -188,6 +188,8 @@ extern int gr_handle_mem_mmap(const unsi
  extern unsigned long pax_get_random_long(void);
  #define get_random_long() pax_get_random_long()
