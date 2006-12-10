@@ -1,15 +1,9 @@
-This patch is broken, see http://bugs.gentoo.org/show_bug.cgi?id=157409
-
-In the meantime: please do not use it until further notice, thanks
-
-Alex <pappy@gentoo.org>
-
-First initial import by Christian Heim <phreak@gentoo.org>
+From: Alexander Gabert <pappy@gentoo.org>
 
 This patch reworks the logic behind GRKERNSEC_IO and GRKERNSEC_KMEM, making it less
 intrusive and adding support for sysctl.
 
-The original patch is based on the work of Peter S. Mazinger (ps dot m at gmx dot net)
+This patch is based on the work of Peter S. Mazinger (ps dot m at gmx dot net)
 and Nedd Ludd <solar@gentoo.org>.
 
 Index: linux-2.6.18/arch/i386/kernel/ioport.c
