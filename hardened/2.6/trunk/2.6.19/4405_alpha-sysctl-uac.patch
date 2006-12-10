@@ -127,17 +127,17 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -161,6 +161,9 @@ enum
+@@ -160,6 +160,9 @@ enum
+ 	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
- 	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
  
-@@ -249,6 +252,17 @@ enum
+@@ -248,6 +251,17 @@ enum
  	PTY_NR=2
  };
  
@@ -159,7 +159,7 @@ Index: linux-2.6.19/kernel/sysctl.c
 ===================================================================
 --- linux-2.6.19.orig/kernel/sysctl.c
 +++ linux-2.6.19/kernel/sysctl.c
-@@ -164,6 +164,9 @@ extern ctl_table inotify_table[];
+@@ -161,6 +161,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -169,7 +169,7 @@ Index: linux-2.6.19/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -226,7 +229,14 @@ static ctl_table root_table[] = {
+@@ -223,7 +226,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
