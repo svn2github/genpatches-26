@@ -1,23 +1,57 @@
-Index: linux/drivers/ieee1394/ohci1394.c
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Date: Fri, 10 Nov 2006 23:22:35 +0000 (+0100)
+Subject: ieee1394: ohci1394: add PPC_PMAC platform code to driver probe
+X-Git-Url: http://www2.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=48cfae44b4d6c7ca843d611a93ed2f94b59bcb38
+
+ieee1394: ohci1394: add PPC_PMAC platform code to driver probe
+
+Fixes http://bugzilla.kernel.org/show_bug.cgi?id=7431
+iBook G3 threw a machine check exception and put the display backlight
+to full brightness after ohci1394 was unloaded and reloaded.
+
+[dsd@gentoo.org: also added missing if condition, commit
+ 63cca59e89892497e95e1e9c7156d3345fb7e2e8]
+
+Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+---
+
+Index: linux-2.6.19/drivers/ieee1394/ohci1394.c
 ===================================================================
---- linux.orig/drivers/ieee1394/ohci1394.c	2006-11-02 22:35:16.000000000 +0100
-+++ linux/drivers/ieee1394/ohci1394.c	2006-11-05 12:19:52.000000000 +0100
-@@ -3215,6 +3215,18 @@ static int __devinit ohci1394_pci_probe(
+--- linux-2.6.19.orig/drivers/ieee1394/ohci1394.c
++++ linux-2.6.19/drivers/ieee1394/ohci1394.c
+@@ -3217,6 +3217,19 @@ static int __devinit ohci1394_pci_probe(
  	struct ti_ohci *ohci;	/* shortcut to currently handled device */
  	resource_size_t ohci_base;
  
 +#ifdef CONFIG_PPC_PMAC
-+	/* Necessary if ohci1394 was loaded and unloaded before */
++	/* Necessary on some machines if ohci1394 was loaded/ unloaded before */
 +	if (machine_is(powermac)) {
 +		struct device_node *of_node = pci_device_to_OF_node(dev);
 +
-+		if (of_node)
++		if (of_node) {
 +			pmac_call_feature(PMAC_FTR_1394_CABLE_POWER, of_node,
 +					  0, 1);
 +			pmac_call_feature(PMAC_FTR_1394_ENABLE, of_node, 0, 1);
++		}
 +	}
 +#endif /* CONFIG_PPC_PMAC */
 +
          if (pci_enable_device(dev))
  		FAIL(-ENXIO, "Failed to enable OHCI hardware");
          pci_set_master(dev);
+@@ -3505,11 +3518,9 @@ static void ohci1394_pci_remove(struct p
+ #endif
+ 
+ #ifdef CONFIG_PPC_PMAC
+-	/* On UniNorth, power down the cable and turn off the chip
+-	 * clock when the module is removed to save power on
+-	 * laptops. Turning it back ON is done by the arch code when
+-	 * pci_enable_device() is called */
+-	{
++	/* On UniNorth, power down the cable and turn off the chip clock
++	 * to save power on laptops */
++	if (machine_is(powermac)) {
+ 		struct device_node* of_node;
+ 
+ 		of_node = pci_device_to_OF_node(ohci->dev);
