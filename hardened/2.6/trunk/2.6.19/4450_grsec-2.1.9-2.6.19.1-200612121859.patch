@@ -1226,15 +1226,6 @@ Index: linux-2.6.19/arch/i386/kernel/entry.S
  	RESTORE_REGS
  	lss 12+4(%esp), %esp		# back to 16bit stack
  1:	INTERRUPT_RETURN
-@@ -928,7 +1014,7 @@ ENTRY(machine_check)
- 	RING0_INT_FRAME
- 	pushl $0
- 	CFI_ADJUST_CFA_OFFSET 4
--	pushl machine_check_vector
-+	pushl %ss:machine_check_vector
- 	CFI_ADJUST_CFA_OFFSET 4
- 	jmp error_code
- 	CFI_ENDPROC
 @@ -957,8 +1043,8 @@ ENTRY(arch_unwind_init_running)
  	movl	%edi, EDI(%edx)
  	movl	%ebp, EBP(%edx)
@@ -2761,6 +2752,15 @@ Index: linux-2.6.19/arch/i386/kernel/time.c
  #ifdef CONFIG_FRAME_POINTER
  		return *(unsigned long *)(regs->ebp + 4);
  #else
+@@ -345,7 +345,7 @@ static struct sys_device device_timer = 
+ 	.cls	= &timer_sysclass,
+ };
+ 
+-static int time_init_device(void)
++static int __init time_init_device(void)
+ {
+ 	int error = sysdev_class_register(&timer_sysclass);
+ 	if (!error)
 Index: linux-2.6.19/arch/i386/kernel/traps.c
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/kernel/traps.c
@@ -8786,6 +8786,41 @@ Index: linux-2.6.19/arch/x86_64/ia32/syscall32.c
  	vma->vm_flags |= mm->def_flags;
  	vma->vm_page_prot = protection_map[vma->vm_flags & 7];
  	vma->vm_ops = &syscall32_vm_ops;
+Index: linux-2.6.19/arch/x86_64/kernel/ioport.c
+===================================================================
+--- linux-2.6.19.orig/arch/x86_64/kernel/ioport.c
++++ linux-2.6.19/arch/x86_64/kernel/ioport.c
+@@ -41,8 +41,16 @@ asmlinkage long sys_ioperm(unsigned long
+ 
+ 	if ((from + num <= from) || (from + num > IO_BITMAP_BITS))
+ 		return -EINVAL;
++
++#ifdef CONFIG_GRKERNSEC_IO
++	if (turn_on) {
++		gr_handle_ioperm();
++		return -EPERM;
++	}
++#else
+ 	if (turn_on && !capable(CAP_SYS_RAWIO))
+ 		return -EPERM;
++#endif
+ 
+ 	/*
+ 	 * If it's the first ioperm() call in this thread's lifetime, set the
+@@ -111,8 +119,13 @@ asmlinkage long sys_iopl(unsigned int le
+ 		return -EINVAL;
+ 	/* Trying to gain more privileges? */
+ 	if (level > old) {
++#ifdef CONFIG_GRKERNSEC_IO
++		gr_handle_iopl();
++		return -EPERM;
++#else
+ 		if (!capable(CAP_SYS_RAWIO))
+ 			return -EPERM;
++#endif
+ 	}
+ 	regs->eflags = (regs->eflags &~ 0x3000UL) | (level << 12);
+ 	return 0;
 Index: linux-2.6.19/arch/x86_64/kernel/process.c
 ===================================================================
 --- linux-2.6.19.orig/arch/x86_64/kernel/process.c
@@ -9391,6 +9426,19 @@ Index: linux-2.6.19/drivers/ieee1394/ohci1394.c
  
  static void dma_trm_tasklet(unsigned long data);
  static void dma_trm_reset(struct dma_trm_ctx *d);
+Index: linux-2.6.19/drivers/ieee1394/sbp2.c
+===================================================================
+--- linux-2.6.19.orig/drivers/ieee1394/sbp2.c
++++ linux-2.6.19/drivers/ieee1394/sbp2.c
+@@ -2664,7 +2664,7 @@ static struct scsi_host_template scsi_dr
+ 	.sdev_attrs =			sbp2_sysfs_sdev_attrs,
+ };
+ 
+-static int sbp2_module_init(void)
++static int __init sbp2_module_init(void)
+ {
+ 	int ret;
+ 
 Index: linux-2.6.19/drivers/ieee1394/video1394.c
 ===================================================================
 --- linux-2.6.19.orig/drivers/ieee1394/video1394.c
@@ -18952,10 +19000,9 @@ Index: linux-2.6.19/grsecurity/grsec_disabled.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/grsec_disabled.c
-@@ -0,0 +1,418 @@
+@@ -0,0 +1,417 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
-+#include <linux/config.h>
 +#include <linux/sched.h>
 +#include <linux/file.h>
 +#include <linux/fs.h>
@@ -26258,6 +26305,19 @@ Index: linux-2.6.19/kernel/posix-cpu-timers.c
  		if (psecs >= sig->rlim[RLIMIT_CPU].rlim_cur) {
  			/*
  			 * At the soft limit, send a SIGXCPU every second.
+Index: linux-2.6.19/kernel/power/poweroff.c
+===================================================================
+--- linux-2.6.19.orig/kernel/power/poweroff.c
++++ linux-2.6.19/kernel/power/poweroff.c
+@@ -35,7 +35,7 @@ static struct sysrq_key_op	sysrq_powerof
+  	.enable_mask	= SYSRQ_ENABLE_BOOT,
+ };
+ 
+-static int pm_sysrq_init(void)
++static int __init pm_sysrq_init(void)
+ {
+ 	register_sysrq_key('o', &sysrq_poweroff_op);
+ 	return 0;
 Index: linux-2.6.19/kernel/printk.c
 ===================================================================
 --- linux-2.6.19.orig/kernel/printk.c
@@ -29019,6 +29079,24 @@ Index: linux-2.6.19/net/xfrm/xfrm_user.c
  {
  	int l = 0;
  	if (x->aalg)
+Index: linux-2.6.19/scripts/Kbuild.include
+===================================================================
+--- linux-2.6.19.orig/scripts/Kbuild.include
++++ linux-2.6.19/scripts/Kbuild.include
+@@ -66,11 +66,8 @@ as-option = $(shell if $(CC) $(CFLAGS) $
+ # as-instr
+ # Usage: cflags-y += $(call as-instr, instr, option1, option2)
+ 
+-as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o \
+-		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out ; \
+-		   then echo "$(2)"; else echo "$(3)"; fi; \
+-	           rm -f \
+-		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out)
++as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o /dev/null ; \
++		   then echo "$(2)"; else echo "$(3)"; fi; )
+ 
+ # cc-option
+ # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
 Index: linux-2.6.19/security/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/security/Kconfig
