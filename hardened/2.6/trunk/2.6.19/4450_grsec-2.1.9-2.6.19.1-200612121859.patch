@@ -24912,7 +24912,7 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -163,6 +163,21 @@ enum
+@@ -163,7 +163,20 @@ enum
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
@@ -24923,15 +24923,14 @@ Index: linux-2.6.19/include/linux/sysctl.h
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
-+
 +};
 +
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
-+};
-+#endif
  };
++#endif
+ 
  
  
 Index: linux-2.6.19/include/linux/uaccess.h
