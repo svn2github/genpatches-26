@@ -1,0 +1,70 @@
+--- orig/Makefile	2005-01-17 20:25:57.000000000 -0700
++++ linux-2.4.28/Makefile	2005-01-17 20:25:58.000000000 -0700
+@@ -91,13 +91,19 @@
+ 
+ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+ 
+-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
++CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs \
+ 	  -fno-strict-aliasing -fno-common
+ ifndef CONFIG_FRAME_POINTER
+ CFLAGS += -fomit-frame-pointer
+ endif
+ AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
+ 
++ifdef CONFIG_OPTIMIZE_FOR_SIZE
++CFLAGS += -Os -falign-functions=2 -falign-jumps=2 -falign-labels=2 -falign-loops=2
++else
++CFLAGS += -O2
++endif
++
+ #
+ # ROOT_DEV specifies the default root-device when making the image.
+ # This can be either FLOPPY, CURRENT, /dev/xxxx or empty, in which case
+--- orig/arch/arm/Makefile	2005-01-17 20:25:57.000000000 -0700
++++ linux-2.4.28/arch/arm/Makefile	2005-01-17 20:25:58.000000000 -0700
+@@ -16,8 +16,6 @@
+ CFLAGS		:=$(CFLAGS:-fomit-frame-pointer=-mapcs -mno-sched-prolog)
+ endif
+ 
+-CFLAGS		:=$(CFLAGS:-O2=-Os)
+-
+ ifeq ($(CONFIG_DEBUG_INFO),y)
+ CFLAGS		+=-g
+ endif
+@@ -28,7 +26,7 @@
+ # Note!  For APCS-26 YOU MUST HAVE AN APCS-26 LIBGCC.A
+ #
+ apcs-y				:=-mapcs-32
+-apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3 -Os
++apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3
+ 
+ # This selects which instruction set is used.
+ # Note that GCC is lame - it doesn't numerically define an
+--- orig/Documentation/Configure.help	2005-01-17 20:25:57.000000000 -0700
++++ linux-2.4.28/Documentation/Configure.help	2005-01-17 20:25:58.000000000 -0700
+@@ -26135,6 +26135,14 @@
+   don't debug the kernel, you can say N, but we may not be able to
+   solve problems without frame pointers.
+ 
++Compile kernel with size optimization
++CONFIG_OPTIMIZE_FOR_SIZE
++  If you say Y here, the kernel will be compiled with "-Os" rather
++  than the "-O2" gcc option.  This will cause the kernel to be 
++  optimized for small size, rather than fastest speed.
++
++  If unsure, say N.
++
+ Verbose user fault messages
+ CONFIG_DEBUG_USER
+   When a user program crashes due to an exception, the kernel can
+--- orig/lib/Config.in	2005-01-17 20:25:57.000000000 -0700
++++ linux-2.4.28/lib/Config.in	2005-01-17 20:25:58.000000000 -0700
+@@ -4,6 +4,7 @@
+ mainmenu_option next_comment
+ comment 'Library routines'
+ 
++bool 'Optimize for size' CONFIG_OPTIMIZE_FOR_SIZE
+ tristate 'CRC32 functions' CONFIG_CRC32
+ 
+ #
