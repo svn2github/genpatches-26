@@ -40,6 +40,13 @@ FEATURES
 4400-4500	other
 4500-4600 grsecurity+pax
 
+5000-6000 Gentoo patches for bugfixes
+
+If you find errors in this numbering scheme, fix it then.
+
+Patches 1000-5000 have been taken from previous 2.4.x hardened kernels.
+Thanks to phreak@g.o. for forward porting and helping to quilt it up.
+
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
@@ -55,4 +62,59 @@ Patch:  4503_pax-linux-2.4.33.4-test17.patch
 From: http://www.grsecurity.net/~paxguy1/
 Desc: PaX GNU/Linux patch for 2.4.33.4
 
+Patch: 1001_device-mapper.patch
+from: ftp://sources.redhat.com/pub/dm/
+desc: Device Mapper 1.00.21
+
+Patch: 1002_evms.patch
+from: http://evms.sourceforge.net/
+desc: EVMS 2.5.0
+
+Patch: 1004_kconfig-alt.patch
+from: -
+desc: /proc/config
+
+Patch: 1005_cryptoloop.patch
+from: http://www.kernel.org/pub/linux/kernel/crypto/
+desc: Cryptoloop Jari, forward ported from 2.4.22
+
+Patch: 1006_squashfs2.1.patch
+from: http://squashfs.sourceforge.net/
+desc: Squashfs is a compressed read-only filesystem.
+
+Patch: 1007_wdt-fix.patch
+from: http://lists.forko.com/pipermail/soekris-tech/2004-February/005228.html
+desc: Fix for the Watchdog Timer (WDT)
+
+Patch: 1008_ebtables.patch
+from: http://ebtables.sourceforge.net/
+desc: Filtering tool for a bridging firewall.
+
+Patch: 1009_natsemi_holdoff.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Natsemi fixes.
+
+Patch: 1009_natsemi_vlan.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Natsemi fixes.
+
+Patch: 1010_pci_and_cputype.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Fixed up version of the pci_and_cpu patch from centerclick
+
+Patch: 1012_optimize-for-size.patch
+from: uclibc/buildroot
+desc: Allows the kernel to be compiled with -Os vs -O2
+
+Patch: 1013_optimize-for-size-gcc34-memcpy.patch
+from: psm
+desc: gcc fastcall update for the kernel to handle 1012
+
+Patch: 1014_owl-binfmt.patch
+from: The owl kernel patch broken out by psm
+desc: Disable a.out behaviors by default.
+
+Patch: 5000_linux-2.4.30-gcc4-inline.patch
+from: -
+desc: Fixes compilation with gcc4.
 
