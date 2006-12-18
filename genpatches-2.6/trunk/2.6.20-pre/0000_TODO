@@ -11,6 +11,8 @@
  make[1]: *** [drivers/md/dm-bbr.o] Error 1
  make: *** [drivers/md/] Error 2
 
+ Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=1b1cec4bbc59feac89670d5d6d222a02545bac94;hp=e18b890bb0881bbab6f4f1a6cd20d9c60d66b003
+
 4205_vesafb-tng-1.0-rc2.patch:
 
   CC      drivers/video/vesafb-thread.o
@@ -36,6 +38,8 @@
  make[1]: *** [drivers/video/vesafb-thread.o] Error 1
  make: *** [drivers/video/] Error 2
 
+ Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=e94b1766097d53e6f3ccfb36c8baa562ffeda3fc;hp=54e6ecb23951b195d02433a741c7f7cb0b796c78
+
 4300_squashfs-3.1.patch:
 
    CC      fs/squashfs/inode.o
@@ -48,6 +52,9 @@
  fs/squashfs/inode.c:2120: warning: 'kmem_cache_t' is deprecated
  make[1]: *** [fs/squashfs/inode.o] Error 1
  make: *** [fs/squashfs/] Error 2
+
+ Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=1b1cec4bbc59feac89670d5d6d222a02545bac94;hp=e18b890bb0881bbab6f4f1a6cd20d9c60d66b003
+ Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=e94b1766097d53e6f3ccfb36c8baa562ffeda3fc;hp=54e6ecb23951b195d02433a741c7f7cb0b796c78
 
 4400_speakup-20061129.patch:
 
