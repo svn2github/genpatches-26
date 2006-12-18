@@ -1,8 +1,8 @@
-Index: linux-2.6.19/drivers/md/Kconfig
+Index: linux-2.6.20/drivers/md/Kconfig
 ===================================================================
---- linux-2.6.19.orig/drivers/md/Kconfig
-+++ linux-2.6.19/drivers/md/Kconfig
-@@ -261,6 +261,17 @@ config DM_MULTIPATH_EMC
+--- linux-2.6.20.orig/drivers/md/Kconfig
++++ linux-2.6.20/drivers/md/Kconfig
+@@ -262,6 +262,17 @@ config DM_MULTIPATH_EMC
  	---help---
  	  Multipath support for EMC CX/AX series hardware.
  
@@ -20,10 +20,10 @@ Index: linux-2.6.19/drivers/md/Kconfig
  endmenu
  
  endif
-Index: linux-2.6.19/drivers/md/Makefile
+Index: linux-2.6.20/drivers/md/Makefile
 ===================================================================
---- linux-2.6.19.orig/drivers/md/Makefile
-+++ linux-2.6.19/drivers/md/Makefile
+--- linux-2.6.20.orig/drivers/md/Makefile
++++ linux-2.6.20/drivers/md/Makefile
 @@ -36,6 +36,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
@@ -32,10 +32,10 @@ Index: linux-2.6.19/drivers/md/Makefile
  
  quiet_cmd_unroll = UNROLL  $@
        cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
-Index: linux-2.6.19/drivers/md/dm-bbr.c
+Index: linux-2.6.20/drivers/md/dm-bbr.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.19/drivers/md/dm-bbr.c
++++ linux-2.6.20/drivers/md/dm-bbr.c
 @@ -0,0 +1,1004 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1041,10 +1041,10 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.19/drivers/md/dm-bbr.h
+Index: linux-2.6.20/drivers/md/dm-bbr.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.19/drivers/md/dm-bbr.h
++++ linux-2.6.20/drivers/md/dm-bbr.h
 @@ -0,0 +1,125 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004

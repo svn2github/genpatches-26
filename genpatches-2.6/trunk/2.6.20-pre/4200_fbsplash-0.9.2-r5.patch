@@ -1,7 +1,7 @@
-diff --git a/Documentation/fb/00-INDEX b/Documentation/fb/00-INDEX
-index 92e89ae..a6cfacc 100644
---- a/Documentation/fb/00-INDEX
-+++ b/Documentation/fb/00-INDEX
+Index: linux-2.6.20/Documentation/fb/00-INDEX
+===================================================================
+--- linux-2.6.20.orig/Documentation/fb/00-INDEX
++++ linux-2.6.20/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -11,11 +11,10 @@ index 92e89ae..a6cfacc 100644
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-diff --git a/Documentation/fb/splash.txt b/Documentation/fb/splash.txt
-new file mode 100644
-index 0000000..6b281c9
+Index: linux-2.6.20/Documentation/fb/splash.txt
+===================================================================
 --- /dev/null
-+++ b/Documentation/fb/splash.txt
++++ linux-2.6.20/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -224,11 +223,11 @@ index 0000000..6b281c9
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 +
-diff --git a/drivers/Makefile b/drivers/Makefile
-index 4ac14da..84eb896 100644
---- a/drivers/Makefile
-+++ b/drivers/Makefile
-@@ -8,6 +8,9 @@ #
+Index: linux-2.6.20/drivers/Makefile
+===================================================================
+--- linux-2.6.20.orig/drivers/Makefile
++++ linux-2.6.20/drivers/Makefile
+@@ -8,6 +8,9 @@
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
  obj-$(CONFIG_RAPIDIO)		+= rapidio/
@@ -238,7 +237,7 @@ index 4ac14da..84eb896 100644
  obj-y				+= video/
  obj-$(CONFIG_ACPI)		+= acpi/
  # PnP must come after ACPI since it will eventually need to check if acpi
-@@ -15,10 +18,6 @@ # was used and do nothing if so
+@@ -15,10 +18,6 @@ obj-$(CONFIG_ACPI)		+= acpi/
  obj-$(CONFIG_PNP)		+= pnp/
  obj-$(CONFIG_ARM_AMBA)		+= amba/
  
@@ -249,11 +248,11 @@ index 4ac14da..84eb896 100644
  obj-$(CONFIG_CONNECTOR)		+= connector/
  
  # i810fb and intelfb depend on char/agp/
-diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
-index 7a43020..8e93ff3 100644
---- a/drivers/video/Kconfig
-+++ b/drivers/video/Kconfig
-@@ -1644,5 +1644,15 @@ if SYSFS
+Index: linux-2.6.20/drivers/video/Kconfig
+===================================================================
+--- linux-2.6.20.orig/drivers/video/Kconfig
++++ linux-2.6.20/drivers/video/Kconfig
+@@ -1658,5 +1658,15 @@ if SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -270,10 +269,10 @@ index 7a43020..8e93ff3 100644
  
 +	  If unsure, say N.
 +endmenu
-diff --git a/drivers/video/Makefile b/drivers/video/Makefile
-index a6980e9..c8509fe 100644
---- a/drivers/video/Makefile
-+++ b/drivers/video/Makefile
+Index: linux-2.6.20/drivers/video/Makefile
+===================================================================
+--- linux-2.6.20.orig/drivers/video/Makefile
++++ linux-2.6.20/drivers/video/Makefile
 @@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
@@ -282,11 +281,10 @@ index a6980e9..c8509fe 100644
  
  obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
  obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
-diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
-new file mode 100644
-index 0000000..303cd6a
+Index: linux-2.6.20/drivers/video/cfbsplash.c
+===================================================================
 --- /dev/null
-+++ b/drivers/video/cfbsplash.c
++++ linux-2.6.20/drivers/video/cfbsplash.c
 @@ -0,0 +1,471 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
@@ -759,11 +757,11 @@ index 0000000..303cd6a
 +	}
 +}
 +
-diff --git a/drivers/video/console/bitblit.c b/drivers/video/console/bitblit.c
-index 308850d..36a885c 100644
---- a/drivers/video/console/bitblit.c
-+++ b/drivers/video/console/bitblit.c
-@@ -17,6 +17,7 @@ #include <linux/vt_kern.h>
+Index: linux-2.6.20/drivers/video/console/bitblit.c
+===================================================================
+--- linux-2.6.20.orig/drivers/video/console/bitblit.c
++++ linux-2.6.20/drivers/video/console/bitblit.c
+@@ -17,6 +17,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
  #include "fbcon.h"
@@ -805,11 +803,11 @@ index 308850d..36a885c 100644
  
  	ops->cursor_reset = 0;
  }
-diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 302174b..41fa9fc 100644
---- a/drivers/video/console/fbcon.c
-+++ b/drivers/video/console/fbcon.c
-@@ -91,6 +91,7 @@ #include <asm/setup.h>
+Index: linux-2.6.20/drivers/video/console/fbcon.c
+===================================================================
+--- linux-2.6.20.orig/drivers/video/console/fbcon.c
++++ linux-2.6.20/drivers/video/console/fbcon.c
+@@ -91,6 +91,7 @@
  #endif
  
  #include "fbcon.h"
@@ -835,7 +833,7 @@ index 302174b..41fa9fc 100644
  	      u16 c, int is_fg)
  {
  	int depth = fb_get_color_depth(&info->var, &info->fix);
-@@ -409,6 +410,7 @@ static void fb_flashcursor(void *private
+@@ -409,6 +410,7 @@ static void fb_flashcursor(struct work_s
  		CM_ERASE : CM_DRAW;
  	ops->cursor(vc, info, mode, softback_lines, get_color(vc, info, c, 1),
  		    get_color(vc, info, c, 0));
@@ -1128,7 +1126,7 @@ index 302174b..41fa9fc 100644
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3259,6 +3377,7 @@ #endif
+@@ -3259,6 +3377,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1136,11 +1134,11 @@ index 302174b..41fa9fc 100644
  	fbcon_has_exited = 1;
  }
  
-diff --git a/drivers/video/fbcmap.c b/drivers/video/fbcmap.c
-index e8b135f..8622d74 100644
---- a/drivers/video/fbcmap.c
-+++ b/drivers/video/fbcmap.c
-@@ -15,6 +15,7 @@ #include <linux/string.h>
+Index: linux-2.6.20/drivers/video/fbcmap.c
+===================================================================
+--- linux-2.6.20.orig/drivers/video/fbcmap.c
++++ linux-2.6.20/drivers/video/fbcmap.c
+@@ -15,6 +15,7 @@
  #include <linux/module.h>
  #include <linux/fb.h>
  #include <linux/slab.h>
@@ -1148,7 +1146,7 @@ index e8b135f..8622d74 100644
  
  #include <asm/uaccess.h>
  
-@@ -234,14 +235,17 @@ int fb_set_cmap(struct fb_cmap *cmap, st
+@@ -235,14 +236,17 @@ int fb_set_cmap(struct fb_cmap *cmap, st
  			if (transp)
  				htransp = *transp++;
  			if (info->fbops->fb_setcolreg(start++,
@@ -1169,7 +1167,7 @@ index e8b135f..8622d74 100644
  	return rc;
  }
  
-@@ -249,7 +253,7 @@ int fb_set_user_cmap(struct fb_cmap_user
+@@ -250,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user
  {
  	int rc, size = cmap->len * sizeof(u16);
  	struct fb_cmap umap;
@@ -1178,11 +1176,10 @@ index e8b135f..8622d74 100644
  	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
  			        !info->fbops->fb_setcmap))
  		return -EINVAL;
-diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
-new file mode 100644
-index 0000000..75d8db8
+Index: linux-2.6.20/drivers/video/fbsplash.c
+===================================================================
 --- /dev/null
-+++ b/drivers/video/fbsplash.c
++++ linux-2.6.20/drivers/video/fbsplash.c
 @@ -0,0 +1,424 @@
 +/* 
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
@@ -1608,11 +1605,10 @@ index 0000000..75d8db8
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-diff --git a/drivers/video/fbsplash.h b/drivers/video/fbsplash.h
-new file mode 100644
-index 0000000..cb9398f
+Index: linux-2.6.20/drivers/video/fbsplash.h
+===================================================================
 --- /dev/null
-+++ b/drivers/video/fbsplash.h
++++ linux-2.6.20/drivers/video/fbsplash.h
 @@ -0,0 +1,78 @@
 +/* 
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
@@ -1692,11 +1688,10 @@ index 0000000..cb9398f
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-diff --git a/include/linux/console_splash.h b/include/linux/console_splash.h
-new file mode 100644
-index 0000000..c448dd2
+Index: linux-2.6.20/include/linux/console_splash.h
+===================================================================
 --- /dev/null
-+++ b/include/linux/console_splash.h
++++ linux-2.6.20/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1711,11 +1706,11 @@ index 0000000..c448dd2
 +};
 +
 +#endif
-diff --git a/include/linux/console_struct.h b/include/linux/console_struct.h
-index ed6c0fe..b0cbdfe 100644
---- a/include/linux/console_struct.h
-+++ b/include/linux/console_struct.h
-@@ -15,6 +15,7 @@ #include <linux/vt.h>
+Index: linux-2.6.20/include/linux/console_struct.h
+===================================================================
+--- linux-2.6.20.orig/include/linux/console_struct.h
++++ linux-2.6.20/include/linux/console_struct.h
+@@ -15,6 +15,7 @@
  struct vt_struct;
  
  #define NPAR 16
@@ -1732,11 +1727,11 @@ index ed6c0fe..b0cbdfe 100644
  	/* additional information is in vt_kern.h */
  };
  
-diff --git a/include/linux/fb.h b/include/linux/fb.h
-index 3e69241..8178427 100644
---- a/include/linux/fb.h
-+++ b/include/linux/fb.h
-@@ -9,6 +9,13 @@ #include <linux/i2c.h>
+Index: linux-2.6.20/include/linux/fb.h
+===================================================================
+--- linux-2.6.20.orig/include/linux/fb.h
++++ linux-2.6.20/include/linux/fb.h
+@@ -9,6 +9,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
  
@@ -1750,23 +1745,24 @@ index 3e69241..8178427 100644
  /* ioctls
     0x46 is 'F'								*/
  #define FBIOGET_VSCREENINFO	0x4600
-@@ -36,7 +43,15 @@ #define FBIOGET_GLYPH           0x4615
+@@ -36,7 +43,15 @@
  #define FBIOGET_HWCINFO         0x4616
  #define FBIOPUT_MODEINFO        0x4617
  #define FBIOGET_DISPINFO        0x4618
+-
 +#define FBIOSPLASH_SETCFG	_IOWR('F', 0x19, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_GETCFG	_IOR('F', 0x1A, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_SETSTATE	_IOWR('F', 0x1B, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_GETSTATE	_IOR('F', 0x1C, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_SETPIC 	_IOWR('F', 0x1D, struct fb_splash_iowrapper)
- 
++
 +#define FB_SPLASH_THEME_LEN		128	/* Maximum lenght of a theme name */
 +#define FB_SPLASH_IO_ORIG_KERNEL	0	/* Kernel ioctl origin */
 +#define FB_SPLASH_IO_ORIG_USER		1 	/* User ioctl origin */
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -787,6 +802,9 @@ #define FBINFO_STATE_RUNNING	0
+@@ -787,6 +802,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -1776,11 +1772,11 @@ index 3e69241..8178427 100644
  	/* From here on everything is device dependent */
  	void *par;	
  };
-diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-index 1b24bd4..558a8c6 100644
---- a/include/linux/sysctl.h
-+++ b/include/linux/sysctl.h
-@@ -152,6 +152,7 @@ enum
+Index: linux-2.6.20/include/linux/sysctl.h
+===================================================================
+--- linux-2.6.20.orig/include/linux/sysctl.h
++++ linux-2.6.20/include/linux/sysctl.h
+@@ -160,6 +160,7 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
@@ -1788,10 +1784,10 @@ index 1b24bd4..558a8c6 100644
  };
  
  
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 8bff2c1..d3a986a 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
+Index: linux-2.6.20/kernel/sysctl.c
+===================================================================
+--- linux-2.6.20.orig/kernel/sysctl.c
++++ linux-2.6.20/kernel/sysctl.c
 @@ -87,6 +87,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
@@ -1802,7 +1798,7 @@ index 8bff2c1..d3a986a 100644
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -456,6 +459,17 @@ #if defined(CONFIG_HOTPLUG) && defined(C
+@@ -453,6 +456,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
