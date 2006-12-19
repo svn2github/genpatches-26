@@ -63,8 +63,8 @@ From:	www.kernel.org
 Desc:	Misc fixes
 
 Patch:	1500_remote-memory-corruptor.patch
-From:	Al Viro <viro@hera.kernel.org>
-Desc:	Fix remote memory corruptor in drivers/net/tokenring/ibmtr.c
+From:	http://bugs.gentoo.org/157186
+Desc:	Fix token ring networking remote memory corruptor bug
 
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
