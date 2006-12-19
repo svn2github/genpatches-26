@@ -1,0 +1,123 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+it is designed for cross-compatibility, fixes and stability, with performance and additional
+features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_linux-2.6.18.1.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1001_linux-2.6.18.2.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1002_linux-2.6.18.3.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1003_linux-2.6.18.4.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1004_linux-2.6.18.5.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1005_linux-2.6.18.6.patch
+From:	www.kernel.org
+Desc:	Misc fixes
+
+Patch:	1500_remote-memory-corruptor.patch
+From:	http://bugs.gentoo.org/157186
+Desc:	Fix token ring networking remote memory corruptor bug
+
+Patch:	1705_sparc-U1-hme-lockup.patch
+From:	sparc patch tarball
+Desc:	Fix hme related lockup on u1s
+
+Patch:	2100_libata-status.patch
+From:	http://bugs.gentoo.org/157326
+Desc:	Fix libata status handling
+
+Patch:	2400_bcm43xx-signal-quality.patch
+From:	2.6.19 tree
+Desc:	Fix signal quality measurements on bcm43xx
+
+Patch:	2405-bcm43xx-tx-timeouts.patch
+From:	2.6.19 tree
+Desc:	Fix bcm43xx TX timeouts
+
+Patch:	2500_via-irq-quirk-revert.patch
+From:	http://bugs.gentoo.org/138036
+Desc:	Revert recent VIA IRQ quirk change
+
+Patch:	4000_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4010_r8169-8168.patch
+From:	http://bugs.gentoo.org/148090
+Desc:	Add support for RTL8168 ethernet
+
+Patch:	4105_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4200_fbsplash-0.9.2-r5.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4205_vesafb-tng-1.0-rc2.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4206_vesafb-tng-mtrr.patch
+From:	spock@gentoo.org
+Desc:	Fix mtrr module parameter
+
+Patch:	4300_squashfs-3.1.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4400_speakup-20060814.patch
+From:	dsd@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4405_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
