@@ -70,6 +70,10 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
+Patch:	1900_ext3-dir-corruption.patch
+From:	http://bugs.gentoo.org/158784
+Desc:	Handle ext3 directory corruption better
+
 Patch:	2100_libata-status.patch
 From:	http://bugs.gentoo.org/157326
 Desc:	Fix libata status handling
