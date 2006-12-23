@@ -62,10 +62,6 @@ Patch:	1005_linux-2.6.18.6.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
-Patch:	1500_remote-memory-corruptor.patch
-From:	http://bugs.gentoo.org/157186
-Desc:	Fix token ring networking remote memory corruptor bug
-
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
