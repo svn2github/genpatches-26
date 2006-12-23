@@ -46,6 +46,10 @@ Patch:	1900_ext3-dir-corruption.patch
 From:	http://bugs.gentoo.org/158784
 Desc:	Handle ext3 directory corruption better
 
+Patch:	1905_cramfs-block-corruption.patch
+From:	http://bugs.gentoo.org/158783
+Desc:	Fix handling of corrupt cramfs blocks
+
 Patch:	2100_libata-status.patch
 From:	http://bugs.gentoo.org/157326
 Desc:	Fix libata status handling
