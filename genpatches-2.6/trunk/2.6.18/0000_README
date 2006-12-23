@@ -74,6 +74,10 @@ Patch:	1905_fs-buffers-infinite-loop.patch
 From:	http://bugs.gentoo.org/158782
 Desc:	Fix a possible infinite loop in isofs
 
+Patch:	1910_cramfs-block-corruption.patch
+From:	http://bugs.gentoo.org/158783
+Desc:	Fix handling of corrupt cramfs blocks
+
 Patch:	2100_libata-status.patch
 From:	http://bugs.gentoo.org/157326
 Desc:	Fix libata status handling
