@@ -70,6 +70,14 @@ Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
 
+Patch:	4100_sata-promise-ide.patch
+From:	libata-dev.git#promise-sata-pata
+Desc:	Enable IDE ports on Promise 2037x controllers
+
+Patch:	4101_sata-promise-ide-fix.patch
+From:	libata-dev.git#promise-sata-pata
+Desc:	Fix crash with patch 4100
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
