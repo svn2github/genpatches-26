@@ -50,6 +50,10 @@ Patch:	1905_cramfs-block-corruption.patch
 From:	http://bugs.gentoo.org/158783
 Desc:	Fix handling of corrupt cramfs blocks
 
+Patch:	1920_ext2-corrupt-dir-size.patch
+From:	http://bugs.gentoo.org/158785
+Desc:	Fix handling of corrupt ext2 directory size field
+
 Patch:	2100_libata-status.patch
 From:	http://bugs.gentoo.org/157326
 Desc:	Fix libata status handling
