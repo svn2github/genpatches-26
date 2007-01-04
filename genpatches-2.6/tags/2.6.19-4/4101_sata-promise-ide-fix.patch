@@ -1,0 +1,33 @@
+From: Mikael Pettersson <mikpe@it.uu.se>
+Date: Wed, 6 Dec 2006 18:12:00 +0000 (+0100)
+Subject: [PATCH] make sata_promise PATA ports work
+X-Git-Tag: v2.6.12-rc2
+X-Git-Url: http://www2.kernel.org/git/?p=linux/kernel/git/jgarzik/libata-dev.git;a=commitdiff;h=a8f1ae21507042a0a737f3a609af5c63ed80284d
+
+[PATCH] make sata_promise PATA ports work
+
+The patch in #promise-sata-pata should work for 2037x chips.
+It doesn't work on 2057x chips because it doesn't remove
+ATA_FLAG_SATA from board_2057x. That omission causes libata
+to consider all ports on it as SATA, including the PATA port,
+and that's why sata_scr_read() etc get invoked.
+
+Applying the patch below on top of #promise-sata-pata fixes
+this, and is all I had to do to get working PATA on my 20575.
+
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+Index: linux-2.6.19-gentoo-r2/drivers/ata/sata_promise.c
+===================================================================
+--- linux-2.6.19-gentoo-r2.orig/drivers/ata/sata_promise.c
++++ linux-2.6.19-gentoo-r2/drivers/ata/sata_promise.c
+@@ -215,7 +215,7 @@ static const struct ata_port_info pdc_po
+ 	/* board_2057x */
+ 	{
+ 		.sht		= &pdc_ata_sht,
+-		.flags		= PDC_COMMON_FLAGS | ATA_FLAG_SATA,
++		.flags		= PDC_COMMON_FLAGS /* | ATA_FLAG_SATA*/,
+ 		.pio_mask	= 0x1f, /* pio0-4 */
+ 		.mwdma_mask	= 0x07, /* mwdma0-2 */
+ 		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
