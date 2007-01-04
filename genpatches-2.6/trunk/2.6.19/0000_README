@@ -42,6 +42,10 @@ Patch:	1000_linux-2.6.19.1.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1800_mmap-writeback-race.patch
+From:	2.6.20 tree
+Desc:	Fix nasty and subtle race in shared mmap'ed page writeback
+
 Patch:	1900_ext3-dir-corruption.patch
 From:	http://bugs.gentoo.org/158784
 Desc:	Handle ext3 directory corruption better
