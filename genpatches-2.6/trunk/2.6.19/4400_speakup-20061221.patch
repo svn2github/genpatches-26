@@ -11477,30 +11477,6 @@ diff --exclude='*.orig' --exclude='*.patch' -urNp linux-2.6.19/drivers/Kconfig l
  source "sound/Kconfig"
  
  source "drivers/usb/Kconfig"
-diff --exclude='*.orig' --exclude='*.patch' -urNp linux-2.6.19/drivers/Makefile linux-2.6.19-spk/drivers/Makefile
---- linux-2.6.19/drivers/Makefile	2006-11-29 16:57:37.000000000 -0500
-+++ linux-2.6.19-spk/drivers/Makefile	2006-12-21 22:47:23.000000000 -0500
-@@ -28,6 +28,10 @@ obj-$(CONFIG_FB_INTEL)          += video
- obj-y				+= serial/
- obj-$(CONFIG_PARPORT)		+= parport/
- obj-y				+= base/ block/ misc/ mfd/ net/ media/
-+obj-$(CONFIG_SERIO)		+= input/serio/
-+obj-$(CONFIG_GAMEPORT)		+= input/gameport/
-+# load keyboard early so speakup can be quieted
-+obj-$(CONFIG_INPUT)		+= input/
- obj-$(CONFIG_NUBUS)		+= nubus/
- obj-$(CONFIG_ATM)		+= atm/
- obj-$(CONFIG_PPC_PMAC)		+= macintosh/
-@@ -51,9 +55,6 @@ obj-$(CONFIG_TC)		+= tc/
- obj-$(CONFIG_USB)		+= usb/
- obj-$(CONFIG_PCI)		+= usb/
- obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
--obj-$(CONFIG_SERIO)		+= input/serio/
--obj-$(CONFIG_GAMEPORT)		+= input/gameport/
--obj-$(CONFIG_INPUT)		+= input/
- obj-$(CONFIG_I2O)		+= message/
- obj-$(CONFIG_RTC_LIB)		+= rtc/
- obj-$(CONFIG_I2C)		+= i2c/
 diff --exclude='*.orig' --exclude='*.patch' -urNp linux-2.6.19/include/linux/keyboard.h linux-2.6.19-spk/include/linux/keyboard.h
 --- linux-2.6.19/include/linux/keyboard.h	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19-spk/include/linux/keyboard.h	2006-12-21 22:47:23.000000000 -0500
