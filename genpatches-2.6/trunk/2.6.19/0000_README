@@ -62,6 +62,10 @@ Patch:	1920_ext2-corrupt-dir-size.patch
 From:	http://bugs.gentoo.org/158785
 Desc:	Fix handling of corrupt ext2 directory size field
 
+Patch:	1925_cifs-page-corruption.patch
+From:	2.6.20 tree
+Desc:	Fix CIFS VM corruption
+
 Patch:	2100_libata-status.patch
 From:	http://bugs.gentoo.org/157326
 Desc:	Fix libata status handling

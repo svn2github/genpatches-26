@@ -1,0 +1,77 @@
+From: Linus Torvalds <torvalds@woody.osdl.org>
+Date: Sun, 24 Dec 2006 00:19:07 +0000 (-0800)
+Subject: Fix up CIFS for "test_clear_page_dirty()" removal
+X-Git-Tag: v2.6.20-rc2^0~1
+X-Git-Url: http://master.kernel.org/git/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=cb876f451455b6187a7d69de2c112c45ec4b7f99
+
+Fix up CIFS for "test_clear_page_dirty()" removal
+
+This also adds he required page "writeback" flag handling, that cifs
+hasn't been doing and that the page dirty flag changes made obvious.
+
+Acked-by: Steve French <smfltc@us.ibm.com>
+Acked-by: Dave Kleikamp <shaggy@linux.vnet.ibm.com>
+Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+---
+
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index 0f05cab..8a49b2e 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -1245,14 +1245,21 @@ retry:
+ 				wait_on_page_writeback(page);
+ 
+ 			if (PageWriteback(page) ||
+-					!test_clear_page_dirty(page)) {
++					!clear_page_dirty_for_io(page)) {
+ 				unlock_page(page);
+ 				break;
+ 			}
+ 
++			/*
++			 * This actually clears the dirty bit in the radix tree.
++			 * See cifs_writepage() for more commentary.
++			 */
++			set_page_writeback(page);
++
+ 			if (page_offset(page) >= mapping->host->i_size) {
+ 				done = 1;
+ 				unlock_page(page);
++				end_page_writeback(page);
+ 				break;
+ 			}
+ 
+@@ -1316,6 +1323,7 @@ retry:
+ 					SetPageError(page);
+ 				kunmap(page);
+ 				unlock_page(page);
++				end_page_writeback(page);
+ 				page_cache_release(page);
+ 			}
+ 			if ((wbc->nr_to_write -= n_iov) <= 0)
+@@ -1352,11 +1360,23 @@ static int cifs_writepage(struct page* page, struct writeback_control *wbc)
+         if (!PageUptodate(page)) {
+ 		cFYI(1, ("ppw - page not up to date"));
+ 	}
+-	
++
++	/*
++	 * Set the "writeback" flag, and clear "dirty" in the radix tree.
++	 *
++	 * A writepage() implementation always needs to do either this,
++	 * or re-dirty the page with "redirty_page_for_writepage()" in
++	 * the case of a failure.
++	 *
++	 * Just unlocking the page will cause the radix tree tag-bits
++	 * to fail to update with the state of the page correctly.
++	 */
++	set_page_writeback(page);		
+ 	rc = cifs_partialpagewrite(page, 0, PAGE_CACHE_SIZE);
+ 	SetPageUptodate(page); /* BB add check for error and Clearuptodate? */
+ 	unlock_page(page);
+-	page_cache_release(page);	
++	end_page_writeback(page);
++	page_cache_release(page);
+ 	FreeXid(xid);
+ 	return rc;
+ }
