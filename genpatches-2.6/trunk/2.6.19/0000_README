@@ -46,6 +46,10 @@ Patch:	1800_mmap-writeback-race.patch
 From:	2.6.20 tree
 Desc:	Fix nasty and subtle race in shared mmap'ed page writeback
 
+Patch:	1805_detect-early-irq-enable.patch
+From:	http://bugs.gentoo.org/157693
+Desc:	Handle the situation when interrupts are enabled too early
+
 Patch:	1900_ext3-dir-corruption.patch
 From:	http://bugs.gentoo.org/158784
 Desc:	Handle ext3 directory corruption better
@@ -65,6 +69,10 @@ Desc:	Fix libata status handling
 Patch:	2300_ieee1394-ppc-reload.patch
 From:	http://bugs.gentoo.org/154851
 Desc:	Fix ieee1394 module reload oops on PPC
+
+Patch:	2305_pci-early-find-subsys.patch
+From:	http://bugs.gentoo.org/157693
+Desc:	Handle super-early calls into the PCI subsystem
 
 Patch:	2900_astest-sandbox.patch
 From:	dsd@gentoo.org
