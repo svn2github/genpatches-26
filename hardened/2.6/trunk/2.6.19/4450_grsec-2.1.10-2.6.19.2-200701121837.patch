@@ -9181,7 +9181,7 @@ Index: linux-2.6.19/drivers/char/mem.c
 + 
  		zap_page_range(vma, addr, count, NULL);
 -        	zeromap_page_range(vma, addr, count, PAGE_COPY);
-+        	zeromap_page_range(vma, addr, count, vma->vm_page_prot)
++        	zeromap_page_range(vma, addr, count, vma->vm_page_prot);
  
  		size -= count;
  		buf += count;
