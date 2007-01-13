@@ -130,7 +130,7 @@ Index: linux-2.6.19/drivers/char/mem.c
  
  	if (p < (unsigned long) high_memory) {
  
-@@ -832,9 +845,13 @@ static loff_t memory_lseek(struct file *
+@@ -836,9 +849,13 @@ static loff_t memory_lseek(struct file *
  static int open_port(struct inode * inode, struct file * filp)
  {
  #ifdef CONFIG_GRKERNSEC_KMEM
