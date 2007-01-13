@@ -11943,7 +11943,7 @@ Index: linux-2.6.19/fs/proc/base.c
 +#endif
 +	    ) &&
 +#endif
-+	    !gr_check_hidden_task(task)) {
++ 	    !gr_pid_is_chrooted(task) && !gr_check_hidden_task(task)) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
@@ -12615,7 +12615,7 @@ Index: linux-2.6.19/grsecurity/Kconfig
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/Kconfig
-@@ -0,0 +1,888 @@
+@@ -0,0 +1,872 @@
 +#
 +# grecurity configuration
 +#
@@ -12642,7 +12642,6 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +	bool "Low"
 +	select GRKERNSEC_LINK
 +	select GRKERNSEC_FIFO
-+	select GRKERNSEC_RANDPID
 +	select GRKERNSEC_EXECVE
 +	select GRKERNSEC_RANDNET
 +	select GRKERNSEC_DMESG
@@ -12660,7 +12659,6 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +
 +	  - Linking restrictions
 +	  - FIFO restrictions
-+	  - Randomized PIDs
 +	  - Enforcing RLIMIT_NPROC on execve
 +	  - Restricted dmesg
 +	  - Enforced chdir("/") on chroot
@@ -12676,7 +12674,6 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +	select GRKERNSEC_CHROOT_SYSCTL
 +	select GRKERNSEC_LINK
 +	select GRKERNSEC_FIFO
-+	select GRKERNSEC_RANDPID
 +	select GRKERNSEC_EXECVE
 +	select GRKERNSEC_DMESG
 +	select GRKERNSEC_RANDNET
@@ -12725,7 +12722,6 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +	bool "High"
 +	select GRKERNSEC_LINK
 +	select GRKERNSEC_FIFO
-+	select GRKERNSEC_RANDPID
 +	select GRKERNSEC_EXECVE
 +	select GRKERNSEC_DMESG
 +	select GRKERNSEC_FORKFAIL
@@ -13116,8 +13112,8 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +	depends on GRKERNSEC_CHROOT
 +	help
 +	  If you say Y here, processes inside a chroot will not be able to
-+	  kill, send signals with fcntl, ptrace, capget, setpgid, getpgid,
-+	  getsid, or view any process outside of the chroot.  If the sysctl
++	  kill, send signals with fcntl, ptrace, capget, getpgid, getsid,
++	  or view any process outside of the chroot.  If the sysctl
 +	  option is enabled, a sysctl option with name "chroot_findtask" is
 +	  created.
 +
@@ -13302,18 +13298,6 @@ Index: linux-2.6.19/grsecurity/Kconfig
 +	  to view up to the last 4kb of messages in the kernel's log buffer.
 +	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
 +	  created.
-+
-+config GRKERNSEC_RANDPID
-+	bool "Randomized PIDs"
-+	help
-+	  If you say Y here, all PIDs created on the system will be
-+	  pseudo-randomly generated.  This is extremely effective along
-+	  with the /proc restrictions to disallow an attacker from guessing
-+	  pids of daemons, etc.  PIDs are also used in some cases as part
-+	  of a naming system for temporary files, so this option would keep
-+	  those filenames from being predicted as well.  We also use code
-+	  to make sure that PID numbers aren't reused too soon.  If the sysctl
-+	  option is enabled, a sysctl option with name "rand_pids" is created.
 +
 +config GRKERNSEC_TPE
 +	bool "Trusted Path Execution (TPE)"
@@ -13517,7 +13501,7 @@ Index: linux-2.6.19/grsecurity/Makefile
 +# are copyright Brad Spengler, and released under the GPL v2 or higher
 +
 +obj-y = grsec_chdir.o grsec_chroot.o grsec_exec.o grsec_fifo.o grsec_fork.o \
-+	grsec_mount.o grsec_rand.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
++	grsec_mount.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
 +	grsec_time.o grsec_tpe.o grsec_ipc.o grsec_link.o grsec_textrel.o
 +
 +obj-$(CONFIG_GRKERNSEC) += grsec_init.o grsum.o gracl.o gracl_ip.o gracl_segv.o \
@@ -18745,7 +18729,7 @@ Index: linux-2.6.19/grsecurity/grsec_chroot.c
 +gr_pid_is_chrooted(struct task_struct *p)
 +{
 +#ifdef CONFIG_GRKERNSEC_CHROOT_FINDTASK
-+	if (!grsec_enable_chroot_findtask || !proc_is_chrooted(current) || !p)
++	if (!grsec_enable_chroot_findtask || !proc_is_chrooted(current) || p == NULL)
 +		return 0;
 +
 +	task_lock(p);
@@ -19562,7 +19546,7 @@ Index: linux-2.6.19/grsecurity/grsec_init.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/grsec_init.c
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,232 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/mm.h>
@@ -19604,7 +19588,6 @@ Index: linux-2.6.19/grsecurity/grsec_init.c
 +int grsec_enable_tpe;
 +int grsec_tpe_gid;
 +int grsec_enable_tpe_all;
-+int grsec_enable_randpid;
 +int grsec_enable_socket_all;
 +int grsec_socket_all_gid;
 +int grsec_enable_socket_client;
@@ -19779,9 +19762,6 @@ Index: linux-2.6.19/grsecurity/grsec_init.c
 +#ifdef CONFIG_GRKERNSEC_TPE_ALL
 +	grsec_enable_tpe_all = 1;
 +#endif
-+#endif
-+#ifdef CONFIG_GRKERNSEC_RANDPID
-+	grsec_enable_randpid = 1;
 +#endif
 +#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
 +	grsec_enable_socket_all = 1;
@@ -20314,37 +20294,6 @@ Index: linux-2.6.19/grsecurity/grsec_mount.c
 +#endif
 +	return;
 +}
-Index: linux-2.6.19/grsecurity/grsec_rand.c
-===================================================================
---- /dev/null
-+++ linux-2.6.19/grsecurity/grsec_rand.c
-@@ -0,0 +1,26 @@
-+#include <linux/kernel.h>
-+#include <linux/sched.h>
-+#include <linux/smp_lock.h>
-+#include <linux/grsecurity.h>
-+#include <linux/grinternal.h>
-+
-+extern int pid_max;
-+
-+int
-+gr_random_pid(void)
-+{
-+#ifdef CONFIG_GRKERNSEC_RANDPID
-+	int pid;
-+
-+	if (grsec_enable_randpid && current->fs->root) {
-+		/* return a pid in the range 1 ... pid_max - 1
-+		   optimize this so we don't have to do a real division
-+		*/
-+		pid = 1 + (get_random_long() % pid_max);
-+		if (pid == pid_max)
-+			pid = pid_max - 1;
-+		return pid;
-+	}
-+#endif
-+	return 0;
-+}
 Index: linux-2.6.19/grsecurity/grsec_sig.c
 ===================================================================
 --- /dev/null
@@ -20681,7 +20630,7 @@ Index: linux-2.6.19/grsecurity/grsec_sysctl.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/grsec_sysctl.c
-@@ -0,0 +1,466 @@
+@@ -0,0 +1,456 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/sysctl.h>
@@ -20717,7 +20666,7 @@ Index: linux-2.6.19/grsecurity/grsec_sysctl.c
 +GS_CHROOT_FCHDIR, GS_CHROOT_DBL, GS_CHROOT_PVT, GS_CHROOT_CD, GS_CHROOT_CM,
 +GS_CHROOT_MK, GS_CHROOT_NI, GS_CHROOT_EXECLOG, GS_CHROOT_CAPS,
 +GS_CHROOT_SYSCTL, GS_TPE, GS_TPE_GID, GS_TPE_ALL, GS_SIDCAPS,
-+GS_RANDPID, GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
++GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
 +GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID, 
 +GS_GROUP, GS_GID, GS_ACHDIR, GS_AMOUNT, GS_AIPC, GS_DMSG,
 +GS_TEXTREL, GS_FINDTASK, GS_SHM, GS_LOCK, GS_MODSTOP, GS_RESLOG};
@@ -20948,16 +20897,6 @@ Index: linux-2.6.19/grsecurity/grsec_sysctl.c
 +		.ctl_name	= GS_TPE_ALL,
 +		.procname	= "tpe_restrict_all",
 +		.data		= &grsec_enable_tpe_all,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0600,
-+		.proc_handler	= &proc_dointvec,
-+	},
-+#endif
-+#ifdef CONFIG_GRKERNSEC_RANDPID
-+	{
-+		.ctl_name	= GS_RANDPID,
-+		.procname	= "rand_pids",
-+		.data		= &grsec_enable_randpid,
 +		.maxlen		= sizeof(int),
 +		.mode		= 0600,
 +		.proc_handler	= &proc_dointvec,
@@ -23592,8 +23531,8 @@ Index: linux-2.6.19/include/linux/gracl.h
 +
 +/* Major status information */
 +
-+#define GR_VERSION  "grsecurity 2.1.9"
-+#define GRSECURITY_VERSION 0x219
++#define GR_VERSION  "grsecurity 2.1.10"
++#define GRSECURITY_VERSION 0x2110
 +
 +enum {
 +
@@ -24011,11 +23950,11 @@ Index: linux-2.6.19/include/linux/grdefs.h
 +	GR_PAX_ENABLE_MPROTECT	= 0x0004,
 +	GR_PAX_ENABLE_RANDMMAP	= 0x0008,
 +	GR_PAX_ENABLE_EMUTRAMP	= 0x0010,
-+	GR_PAX_DISABLE_SEGMEXEC	= 0x8001,
-+	GR_PAX_DISABLE_PAGEEXEC	= 0x8002,
-+	GR_PAX_DISABLE_MPROTECT	= 0x8004,
-+	GR_PAX_DISABLE_RANDMMAP	= 0x8008,
-+	GR_PAX_DISABLE_EMUTRAMP	= 0x8010,
++	GR_PAX_DISABLE_SEGMEXEC	= 0x0100,
++	GR_PAX_DISABLE_PAGEEXEC	= 0x0200,
++	GR_PAX_DISABLE_MPROTECT	= 0x0400,
++	GR_PAX_DISABLE_RANDMMAP	= 0x0800,
++	GR_PAX_DISABLE_EMUTRAMP	= 0x1000,
 +};
 +
 +enum {
@@ -24051,7 +23990,7 @@ Index: linux-2.6.19/include/linux/grinternal.h
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/include/linux/grinternal.h
-@@ -0,0 +1,211 @@
+@@ -0,0 +1,210 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -24111,7 +24050,6 @@ Index: linux-2.6.19/include/linux/grinternal.h
 +extern int grsec_tpe_gid;
 +extern int grsec_enable_tpe_all;
 +extern int grsec_enable_sidcaps;
-+extern int grsec_enable_randpid;
 +extern int grsec_enable_socket_all;
 +extern int grsec_socket_all_gid;
 +extern int grsec_enable_socket_client;
@@ -24912,27 +24850,29 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -163,7 +163,20 @@ enum
+@@ -163,8 +163,21 @@ enum
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
+-};
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
-+
+ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
++  
 +};
-+
++  
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
- };
++};
 +#endif
  
  
- 
+ /* CTL_VM names: */
 Index: linux-2.6.19/include/linux/uaccess.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/uaccess.h
@@ -26239,27 +26179,7 @@ Index: linux-2.6.19/kernel/pid.c
  
  #define pid_hashfn(nr) hash_long((unsigned long)nr, pidhash_shift)
  static struct hlist_head *pid_hash;
-@@ -35,7 +36,7 @@ static kmem_cache_t *pid_cachep;
- 
- int pid_max = PID_MAX_DEFAULT;
- 
--#define RESERVED_PIDS		300
-+#define RESERVED_PIDS		500
- 
- int pid_max_min = RESERVED_PIDS + 1;
- int pid_max_max = PID_MAX_LIMIT;
-@@ -94,7 +95,9 @@ static int alloc_pidmap(struct pspace *p
- 	int i, offset, max_scan, pid, last = pspace->last_pid;
- 	struct pidmap *map;
- 
--	pid = last + 1;
-+	pid = gr_random_pid();
-+	if (!pid)
-+		pid = pspace->last_pid + 1;
- 	if (pid >= pid_max)
- 		pid = RESERVED_PIDS;
- 	offset = pid & BITS_PER_PAGE_MASK;
-@@ -299,7 +302,14 @@ struct task_struct * fastcall pid_task(s
+@@ -299,7 +300,14 @@ struct task_struct * fastcall pid_task(s
   */
  struct task_struct *find_task_by_pid_type(int type, int nr)
  {
@@ -26275,15 +26195,6 @@ Index: linux-2.6.19/kernel/pid.c
  }
  
  EXPORT_SYMBOL(find_task_by_pid_type);
-@@ -318,6 +328,8 @@ struct task_struct *fastcall get_pid_tas
- 	struct task_struct *result;
- 	rcu_read_lock();
- 	result = pid_task(pid, type);
-+	if (gr_pid_is_chrooted(result))
-+		result = NULL;
- 	if (result)
- 		get_task_struct(result);
- 	rcu_read_unlock();
 Index: linux-2.6.19/kernel/posix-cpu-timers.c
 ===================================================================
 --- linux-2.6.19.orig/kernel/posix-cpu-timers.c
@@ -26565,7 +26476,19 @@ Index: linux-2.6.19/kernel/sys.c
  	if (sgid != (gid_t) -1)
  		current->sgid = sgid;
  
-@@ -2086,7 +2107,7 @@ asmlinkage long sys_prctl(int option, un
+@@ -1371,7 +1392,10 @@ asmlinkage long sys_setpgid(pid_t pid, p
+ 	write_lock_irq(&tasklist_lock);
+ 
+ 	err = -ESRCH;
+-	p = find_task_by_pid(pid);
++	/* grsec: replaced find_task_by_pid with equivalent call
++	   which lacks the chroot restriction
++	*/
++	p = pid_task(find_pid(pid), PIDTYPE_PID);
+ 	if (!p)
+ 		goto out;
+ 
+@@ -2086,7 +2110,7 @@ asmlinkage long sys_prctl(int option, un
  			error = current->mm->dumpable;
  			break;
  		case PR_SET_DUMPABLE:
@@ -29078,24 +29001,6 @@ Index: linux-2.6.19/net/xfrm/xfrm_user.c
  {
  	int l = 0;
  	if (x->aalg)
-Index: linux-2.6.19/scripts/Kbuild.include
-===================================================================
---- linux-2.6.19.orig/scripts/Kbuild.include
-+++ linux-2.6.19/scripts/Kbuild.include
-@@ -66,11 +66,8 @@ as-option = $(shell if $(CC) $(CFLAGS) $
- # as-instr
- # Usage: cflags-y += $(call as-instr, instr, option1, option2)
- 
--as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o \
--		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out ; \
--		   then echo "$(2)"; else echo "$(3)"; fi; \
--	           rm -f \
--		   $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/)astest$$$$.out)
-+as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o /dev/null ; \
-+		   then echo "$(2)"; else echo "$(3)"; fi; )
- 
- # cc-option
- # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
 Index: linux-2.6.19/security/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/security/Kconfig

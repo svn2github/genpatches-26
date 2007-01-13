@@ -150,7 +150,7 @@ Index: linux-2.6.19/grsecurity/grsec_init.c
 ===================================================================
 --- linux-2.6.19.orig/grsecurity/grsec_init.c
 +++ linux-2.6.19/grsecurity/grsec_init.c
-@@ -46,6 +46,8 @@ int grsec_enable_socket_client;
+@@ -45,6 +45,8 @@ int grsec_enable_socket_client;
  int grsec_socket_client_gid;
  int grsec_enable_socket_server;
  int grsec_socket_server_gid;
@@ -159,7 +159,7 @@ Index: linux-2.6.19/grsecurity/grsec_init.c
  int grsec_resource_logging;
  int grsec_lock;
  
-@@ -230,6 +232,12 @@ grsecurity_init(void)
+@@ -226,6 +228,12 @@ grsecurity_init(void)
  	grsec_enable_socket_server = 1;
  	grsec_socket_server_gid = CONFIG_GRKERNSEC_SOCKET_SERVER_GID;
  #endif
@@ -177,7 +177,7 @@ Index: linux-2.6.19/grsecurity/grsec_sysctl.c
 --- linux-2.6.19.orig/grsecurity/grsec_sysctl.c
 +++ linux-2.6.19/grsecurity/grsec_sysctl.c
 @@ -36,7 +36,7 @@ GS_CHROOT_SYSCTL, GS_TPE, GS_TPE_GID, GS
- GS_RANDPID, GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
+ GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
  GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID, 
  GS_GROUP, GS_GID, GS_ACHDIR, GS_AMOUNT, GS_AIPC, GS_DMSG,
 -GS_TEXTREL, GS_FINDTASK, GS_SHM, GS_LOCK, GS_MODSTOP, GS_RESLOG};
@@ -185,7 +185,7 @@ Index: linux-2.6.19/grsecurity/grsec_sysctl.c
  
  
  ctl_table grsecurity_table[] = {
-@@ -431,6 +431,26 @@ ctl_table grsecurity_table[] = {
+@@ -421,6 +421,26 @@ ctl_table grsecurity_table[] = {
  		.proc_handler	= &proc_dointvec,
  	},
  #endif
