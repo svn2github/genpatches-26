@@ -13,49 +13,6 @@
 
  Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=1b1cec4bbc59feac89670d5d6d222a02545bac94;hp=e18b890bb0881bbab6f4f1a6cd20d9c60d66b003
 
-4205_vesafb-tng-1.0-rc2.patch:
-
-  CC      drivers/video/vesafb-thread.o
- drivers/video/vesafb-thread.c:40: error: expected declaration specifiers or '...' before 'ioperm'
- drivers/video/vesafb-thread.c:40: error: expected declaration specifiers or '...' before 'a'
- drivers/video/vesafb-thread.c:40: error: expected declaration specifiers or '...' before 'b'
- drivers/video/vesafb-thread.c:40: error: expected declaration specifiers or '...' before 'c'
- drivers/video/vesafb-thread.c:40: warning: data definition has no type or storage class
- drivers/video/vesafb-thread.c:40: warning: type defaults to 'int' in declaration of '_syscall3'
- drivers/video/vesafb-thread.c:41: error: expected declaration specifiers or '...' before 'vm86old'
- drivers/video/vesafb-thread.c:41: error: expected declaration specifiers or '...' before 'v86'
- drivers/video/vesafb-thread.c:41: warning: data definition has no type or storage class
- drivers/video/vesafb-thread.c:41: warning: type defaults to 'int' in declaration of '_syscall1'
- drivers/video/vesafb-thread.c: In function 'vesafb_do_vm86':
- drivers/video/vesafb-thread.c:393: warning: implicit declaration of function 'vm86old'
- drivers/video/vesafb-thread.c: In function 'vesafb_remap_pfn_range':
- drivers/video/vesafb-thread.c:436: error: 'SLAB_KERNEL' undeclared (first use in this function)
- drivers/video/vesafb-thread.c:436: error: (Each undeclared identifier is reported only once
- drivers/video/vesafb-thread.c:436: error: for each function it appears in.)
- drivers/video/vesafb-thread.c: In function 'vesafb_thread':
- drivers/video/vesafb-thread.c:647: warning: implicit declaration of function 'ioperm'
- drivers/video/vesafb-thread.c:657: warning: implicit declaration of function 'try_to_freeze'
- make[1]: *** [drivers/video/vesafb-thread.o] Error 1
- make: *** [drivers/video/] Error 2
-
- Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=e94b1766097d53e6f3ccfb36c8baa562ffeda3fc;hp=54e6ecb23951b195d02433a741c7f7cb0b796c78
-
-4300_squashfs-3.1.patch:
-
-   CC      fs/squashfs/inode.o
- fs/squashfs/inode.c:2101: warning: 'kmem_cache_t' is deprecated
- fs/squashfs/inode.c: In function 'squashfs_alloc_inode':
- fs/squashfs/inode.c:2107: error: 'SLAB_KERNEL' undeclared (first use in this function)
- fs/squashfs/inode.c:2107: error: (Each undeclared identifier is reported only once
- fs/squashfs/inode.c:2107: error: for each function it appears in.)
- fs/squashfs/inode.c: At top level:
- fs/squashfs/inode.c:2120: warning: 'kmem_cache_t' is deprecated
- make[1]: *** [fs/squashfs/inode.o] Error 1
- make: *** [fs/squashfs/] Error 2
-
- Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=1b1cec4bbc59feac89670d5d6d222a02545bac94;hp=e18b890bb0881bbab6f4f1a6cd20d9c60d66b003
- Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=e94b1766097d53e6f3ccfb36c8baa562ffeda3fc;hp=54e6ecb23951b195d02433a741c7f7cb0b796c78
-
 4400_speakup-20061129.patch:
 
   CC      drivers/char/speakup/speakup.o
