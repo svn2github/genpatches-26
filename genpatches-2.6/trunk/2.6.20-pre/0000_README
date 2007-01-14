@@ -54,7 +54,7 @@ Patch:	4205_vesafb-tng-1.0-rc2.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
 
-Patch:	4300_squashfs-3.1.patch
+Patch:	4300_squashfs-3.2.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
