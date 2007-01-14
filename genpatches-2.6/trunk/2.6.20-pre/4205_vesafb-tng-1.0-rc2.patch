@@ -552,7 +552,7 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.20/drivers/video/vesafb-thread.c
-@@ -0,0 +1,724 @@
+@@ -0,0 +1,751 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
 + * Kernel thread and vm86 routines.
@@ -561,7 +561,6 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 + *
 + */
 +
-+#include <linux/slab.h>
 +#include <linux/workqueue.h>
 +#include <linux/completion.h>
 +#include <linux/module.h>
@@ -570,6 +569,7 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 +#include <linux/mm.h>
 +#include <linux/delay.h>
 +#include <linux/signal.h>
++#include <linux/freezer.h>
 +#include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <video/vesa.h>
@@ -591,9 +591,6 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 +
 +static struct vm86_struct vm86;
 +static int vesafb_pid = 0;
-+
-+_syscall3(int,ioperm,unsigned long, a, unsigned long, b, unsigned long, c);
-+_syscall1(int,vm86old,struct vm86_struct __user*, v86);
 +
 +#define DEFAULT_VM86_FLAGS (IF_MASK | IOPL_MASK)
 +#define VM86_PUSHW(x)					\
@@ -626,6 +623,36 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 +#define BUF_ADDR	(RET_CODE_ADDR + RET_CODE_SIZE)
 +
 +#define FLAG_D 		(1 << 10)
++
++/* Syscalls used by the vesafb thread */
++static int vm86old(struct vm86_struct __user* v86)
++{
++	long res;
++	__asm__ volatile ("push %%ebx; movl %2, %%ebx ; int $0x80 ; pop %%ebx"
++			: "=a" (res)
++			: "0" (__NR_vm86old), "ri" ((long)(v86)) : "memory");
++
++	if ((unsigned long)(res) >= (unsigned long)(-MAX_ERRNO)) {
++		errno = -res;
++		res = -1;
++	}
++	return (int)res;
++}
++
++static int ioperm(unsigned long a, unsigned long b, unsigned long c)
++{
++	long res;
++	__asm__ volatile ("push %%ebx; movl %2, %%ebx ; int $0x80 ; pop %%ebx"
++			: "=a" (res)
++			: "0" (__NR_ioperm), "ri" ((long)(a)), "c" ((long)(b)),
++			  "d" ((long)(c)) : "memory");
++
++	if ((unsigned long)(res) >= (unsigned long)(-MAX_ERRNO)) {
++		errno = -res;
++		res = -1;
++	}
++	return (int)res;
++}
 +
 +/* Segment prefix opcodes */
 +enum {
@@ -988,7 +1015,7 @@ Index: linux-2.6.20/drivers/video/vesafb-thread.c
 +	struct mm_struct *mm = current->mm;
 +	int ret = 0;
 +
-+	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
++	vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
 +	if (!vma)
 +		return -ENOMEM;
 +	memset(vma, 0, sizeof(*vma));
@@ -1281,7 +1308,7 @@ Index: linux-2.6.20/drivers/video/vesafb-tng.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.20/drivers/video/vesafb-tng.c
-@@ -0,0 +1,1598 @@
+@@ -0,0 +1,1586 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
 + *
@@ -2055,16 +2082,10 @@ Index: linux-2.6.20/drivers/video/vesafb-tng.c
 +	int clen = 0, i;
 +
 +	for (i = 0; i < vbe_modes_cnt; i++) {
-+		clen += sprintf(buf + clen, "%dx%d-%d\n", vbe_modes[i].x_res,
-+				vbe_modes[i].y_res, vbe_modes[i].depth);
++		clen += min(snprintf(buf + clen, len - clen, "%dx%d-%d\n", vbe_modes[i].x_res,
++				vbe_modes[i].y_res, vbe_modes[i].depth), len - clen);
 +	}
-+	*start = buf + offset;
-+
-+	if (clen > offset) {
-+		clen -= offset;
-+	} else {
-+		clen = 0;
-+	}
++	*eof = 1;
 +	return clen;
 +}
 +
@@ -2073,25 +2094,19 @@ Index: linux-2.6.20/drivers/video/vesafb-tng.c
 +{
 +	int clen = 0;
 +
-+	clen += sprintf(buf + clen, "Version:    %d.%d\n",
++	clen += min(snprintf(buf + clen, len, "Version:    %d.%d\n",
 +			((vbe_ib.vbe_version & 0xff00) >> 8),
-+			vbe_ib.vbe_version & 0xff);
-+	clen += sprintf(buf + clen, "Vendor:     %s\n",
-+			(char*)vbe_ib.oem_vendor_name_ptr);
-+	clen += sprintf(buf + clen, "Product:    %s\n",
-+			(char*)vbe_ib.oem_product_name_ptr);
-+	clen += sprintf(buf + clen, "OEM rev:    %s\n",
-+			(char*)vbe_ib.oem_product_rev_ptr);
-+	clen += sprintf(buf + clen, "OEM string: %s\n",
-+			(char*)vbe_ib.oem_string_ptr);
++			vbe_ib.vbe_version & 0xff), len);
++	clen += min(snprintf(buf + clen, len - clen, "Vendor:     %s\n",
++			(char*)vbe_ib.oem_vendor_name_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "Product:    %s\n",
++			(char*)vbe_ib.oem_product_name_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "OEM rev:    %s\n",
++			(char*)vbe_ib.oem_product_rev_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "OEM string: %s\n",
++			(char*)vbe_ib.oem_string_ptr), len - clen);
 +
-+	*start = buf + offset;
-+
-+	if (clen > offset) {
-+		clen -= offset;
-+	} else {
-+		clen = 0;
-+	}
++	*eof = 1;
 +	return clen;
 +}
 +
