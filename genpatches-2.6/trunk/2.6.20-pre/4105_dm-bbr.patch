@@ -36,7 +36,7 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.20/drivers/md/dm-bbr.c
-@@ -0,0 +1,1004 @@
+@@ -0,0 +1,1005 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
 + *
@@ -79,14 +79,15 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 +#include "dm-bbr.h"
 +#include "dm-io.h"
 +
-+#define DM_MSG_PREFIX "bbr"
 +#define SECTOR_SIZE (1 << SECTOR_SHIFT)
 +
 +static struct workqueue_struct *dm_bbr_wq = NULL;
-+static void bbr_remap_handler(void *data);
-+static kmem_cache_t *bbr_remap_cache;
-+static kmem_cache_t *bbr_io_cache;
++static void bbr_remap_handler(struct work_struct *work);
++static struct kmem_cache *bbr_remap_cache;
++static struct kmem_cache *bbr_io_cache;
 +static mempool_t *bbr_io_pool;
++
++#define DM_MSG_PREFIX "bbr"
 +
 +/**
 + * bbr_binary_tree_destroy
@@ -137,7 +138,7 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 +	bbr_id = kmalloc(sizeof(*bbr_id), GFP_KERNEL);
 +	if (bbr_id) {
 +		memset(bbr_id, 0, sizeof(*bbr_id));
-+		INIT_WORK(&bbr_id->remap_work, bbr_remap_handler, bbr_id);
++		INIT_WORK(&bbr_id->remap_work, bbr_remap_handler);
 +		bbr_id->remap_root_lock = SPIN_LOCK_UNLOCKED;
 +		bbr_id->remap_ios_lock = SPIN_LOCK_UNLOCKED;
 +		bbr_id->in_use_replacement_blks = (atomic_t)ATOMIC_INIT(0);
@@ -690,7 +691,7 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 +				}
 +				offset += (lsn << SECTOR_SHIFT);
 +			}
-+
++	
 +			/* Process the remapped sector. */
 +			job.sector = remapped_lsn;
 +			job.count = 1;
@@ -773,9 +774,9 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 + * thread that doesn't need special processing will cause severe
 + * performance degredation.
 + **/
-+static void bbr_remap_handler(void *data)
++static void bbr_remap_handler(struct work_struct *work)
 +{
-+	struct bbr_private *bbr_id = data;
++	struct bbr_private *bbr_id = container_of(work, struct bbr_private, remap_work);
 +	struct bio *bio;
 +	unsigned long flags;
 +
@@ -1041,6 +1042,7 @@ Index: linux-2.6.20/drivers/md/dm-bbr.c
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
+\ No newline at end of file
 Index: linux-2.6.20/drivers/md/dm-bbr.h
 ===================================================================
 --- /dev/null
