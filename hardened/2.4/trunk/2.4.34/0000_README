@@ -1,0 +1,111 @@
+README
+--------------------------------------------------------------------------
+This readme has been taken from sys-kernel/hardened-sources-2.4.33.4 trunk
+on the following date: Wed Jan 24 01:29:25 UTC 2007
+
+This patchset is to be the 2.4 series of hardened-sources
+
+It contains grsecurity and a number of additional fixes + security patches
+
+contact: Alexander Gabert <pappy@gentoo.org>
+
+fallback contact: Christian Heim <phreak@gentoo.org>
+
+emergency contact: http://hardened.gentoo.org The Gentoo Hardened project
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+4500-4600 grsecurity+pax
+
+5000-6000 Gentoo patches for bugfixes
+
+If you find errors in this numbering scheme, fix it then.
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch: 4504_grsecurity-2.1.10-2.4.34-200701222213.patch
+From: http://www.grsecurity.net/~spender/
+Desc: grsecurity patch for 2.4.34 - critical security update!
+
+Patch: 1001_device-mapper.patch
+from: ftp://sources.redhat.com/pub/dm/
+desc: Device Mapper 1.00.21
+
+Patch: 1002_evms.patch
+from: http://evms.sourceforge.net/
+desc: EVMS 2.5.0
+
+Patch: 1004_kconfig-alt.patch
+from: -
+desc: /proc/config
+
+Patch: 1005_cryptoloop.patch
+from: http://www.kernel.org/pub/linux/kernel/crypto/
+desc: Cryptoloop Jari, forward ported from 2.4.22
+
+Patch: 1006_squashfs2.1.patch
+from: http://squashfs.sourceforge.net/
+desc: Squashfs is a compressed read-only filesystem.
+
+Patch: 1007_wdt-fix.patch
+from: http://lists.forko.com/pipermail/soekris-tech/2004-February/005228.html
+desc: Fix for the Watchdog Timer (WDT)
+
+Patch: 1008_ebtables.patch
+from: http://ebtables.sourceforge.net/
+desc: Filtering tool for a bridging firewall.
+
+Patch: 1009_natsemi_holdoff.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Natsemi fixes.
+
+Patch: 1009_natsemi_vlan.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Natsemi fixes.
+
+Patch: 1010_pci_and_cputype.patch
+from: http://centerclick.org/net4801/2.4.27/
+desc: Fixed up version of the pci_and_cpu patch from centerclick
+
+Patch: 1012_optimize-for-size.patch
+from: uclibc/buildroot
+desc: Allows the kernel to be compiled with -Os vs -O2
+
+Patch: 1013_optimize-for-size-gcc34-memcpy.patch
+from: psm
+desc: gcc fastcall update for the kernel to handle 1012
+
+Patch: 1014_owl-binfmt.patch
+from: The owl kernel patch broken out by psm
+desc: Disable a.out behaviors by default.
+
+Patch: 5000_linux-2.4.30-gcc4-inline.patch
+from: -
+desc: Fixes compilation with gcc4.
+

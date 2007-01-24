@@ -1,0 +1,128 @@
+--- linux-2.4.25/drivers/char/sc520_wdt.c	2002-11-28 15:53:12.000000000 -0800
++++ /home/users/m/mike/sc520_wdt.c	2004-02-21 16:49:25.000000000 -0800
+@@ -24,6 +24,10 @@
+  *	-	Used ioremap/writew/readw
+  *	-	Added NOWAYOUT support
+  *
++ *  Mike Ireton <mike@willitsonline.com>  
++ *  02/21/04 - Port sc520 wdt fix concerning gp echo mode from freebsd
++ *	       Correct so that timeout is actually set correctly.
++ *
+  *  Theory of operation:
+  *  A Watchdog Timer (WDT) is a hardware circuit that can 
+  *  reset the computer system in case of a software fault.
+@@ -95,6 +99,8 @@
+ /* #define MMCR_BASE_DEFAULT 0xfffef000 */
+ #define MMCR_BASE_DEFAULT ((__u16 *)0xffffe)
+ #define OFFS_WDTMRCTL ((unsigned int)0xcb0)
++#define OFFS_GPECHO   ((unsigned int)0xc00)
++
+ #define WDT_ENB 0x8000		/* [15] Watchdog Timer Enable */
+ #define WDT_WRST_ENB 0x4000	/* [14] Watchdog Timer Reset Enable */
+ 
+@@ -103,6 +109,7 @@
+ #define WRT_DOG(data) *wdtmrctl=data
+ 
+ static __u16 *wdtmrctl;
++static __u8 *gpecho;
+ 
+ static void wdt_timer_ping(unsigned long);
+ static struct timer_list timer;
+@@ -126,17 +133,28 @@
+ 
+ static void wdt_timer_ping(unsigned long data)
+ {
++
++	int	echomode;
++
+ 	/* If we got a heartbeat pulse within the WDT_US_INTERVAL
+ 	 * we agree to ping the WDT 
+ 	 */
+ 	if(time_before(jiffies, next_heartbeat)) 
+ 	{
++
++		/* Clear the gp echo mode flag */
++		echomode = readb(gpecho);
++		writeb(0,gpecho);
++
+ 		/* Ping the WDT */
+ 		spin_lock(&wdt_spinlock);
+ 		writew(0xAAAA, wdtmrctl);
+ 		writew(0x5555, wdtmrctl);
+ 		spin_unlock(&wdt_spinlock);
+ 
++		/* Now restore it */
++		writeb(echomode,gpecho);
++
+ 		/* Re-set the timer interval */
+ 		timer.expires = jiffies + WDT_INTERVAL;
+ 		add_timer(&timer);
+@@ -151,11 +169,15 @@
+ 
+ static void wdt_config(int writeval)
+ {
+-	__u16 dummy;
++	__u16 dummy,echomode;
+ 	unsigned long flags;
+ 
+ 	/* buy some time (ping) */
+ 	spin_lock_irqsave(&wdt_spinlock, flags);
++
++	echomode=readb(gpecho);
++	writeb(0,gpecho);
++
+ 	dummy=readw(wdtmrctl);  /* ensure write synchronization */
+ 	writew(0xAAAA, wdtmrctl);
+ 	writew(0x5555, wdtmrctl);
+@@ -164,6 +186,7 @@
+ 	writew(0xCCCC, wdtmrctl);
+ 	/* write WDT configuration register */
+ 	writew(writeval, wdtmrctl);
++	writeb(echomode,gpecho);
+ 	spin_unlock_irqrestore(&wdt_spinlock, flags);
+ }
+ 
+@@ -175,7 +198,11 @@
+ 	timer.expires = jiffies + WDT_INTERVAL;	
+ 	add_timer(&timer);
+ 
++	/* This must be set before WDT_ENB */
++	wdt_config(TIMEOUT_EXPONENT);
++	/* I don't know why but I must also set it here */
+ 	wdt_config(WDT_ENB | WDT_WRST_ENB | TIMEOUT_EXPONENT);
++
+ 	printk(OUR_NAME ": Watchdog timer is now enabled.\n");  
+ }
+ 
+@@ -332,6 +359,7 @@
+ 	/* Deregister */
+ 	misc_deregister(&wdt_miscdev);
+ 	iounmap(wdtmrctl);
++	iounmap(gpecho);
+ 	unregister_reboot_notifier(&wdt_notifier);
+ }
+ 
+@@ -361,6 +389,7 @@
+ 	if (cbar & 0x80000000) {
+ 		printk(OUR_NAME ": MMCR Aliasing enabled.\n");
+ 		wdtmrctl = (__u16 *)(cbar & 0x3fffffff);
++		
+ 	} else {
+ 		printk(OUR_NAME "!!! WARNING !!!\n"
+ 		  "\t MMCR Aliasing found NOT enabled!\n"
+@@ -373,9 +402,15 @@
+ 	  wdtmrctl = MMCR_BASE_DEFAULT;
+ 	}
+ 
++	gpecho = wdtmrctl;
++	gpecho  = (__u8 *)((char *)gpecho + OFFS_GPECHO);
++	gpecho = ioremap((unsigned long)gpecho, 1);
++
+ 	wdtmrctl = (__u16 *)((char *)wdtmrctl + OFFS_WDTMRCTL);
+ 	wdtmrctl = ioremap((unsigned long)wdtmrctl, 2);
+-	printk(KERN_INFO OUR_NAME ": WDT driver for SC520 initialised.\n");
++
++	
++	printk(KERN_INFO OUR_NAME ": WDT driver for SC520 initialised\n");
+ 
+ 	return 0;
