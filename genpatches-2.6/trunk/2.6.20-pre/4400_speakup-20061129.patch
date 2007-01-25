@@ -6229,7 +6229,7 @@ Index: linux-2.6.20/drivers/char/speakup/speakup.c
 +}
 +
 +static void
-+load_help ( void *dummy )
++load_help ( struct work_struct *dummy )
 +{
 +	request_module( "speakup_keyhelp" );
 +	if ( help_handler ) {
@@ -6237,7 +6237,7 @@ Index: linux-2.6.20/drivers/char/speakup/speakup.c
 +	} else synth_write_string( "help module not found" );
 +}
 +
-+static DECLARE_WORK(ld_help, load_help, NULL);
++static DECLARE_WORK(ld_help, load_help);
 +#define schedule_help schedule_work
 +
 +static void
@@ -6246,7 +6246,7 @@ Index: linux-2.6.20/drivers/char/speakup/speakup.c
 +	if ( help_handler == NULL ) {
 +/* we can't call request_module from this context so schedule it*/
 +/* **** note kernel hangs and my wrath will be on you */
-+		schedule_help (&ld_help);
++		schedule_help (&load_help);
 +		return;
 +	}
 +	(*help_handler)(vc, KT_SPKUP, SPEAKUP_HELP, 0 );
