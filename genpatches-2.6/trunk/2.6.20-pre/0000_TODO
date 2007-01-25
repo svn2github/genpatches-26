@@ -1,18 +1,3 @@
-4105_dm-bbr.patch:
-
-  CC      drivers/md/dm-bbr.o
- drivers/md/dm-bbr.c:48: warning: 'kmem_cache_t' is deprecated
- drivers/md/dm-bbr.c:49: warning: 'kmem_cache_t' is deprecated
- drivers/md/dm-bbr.c:101:59: error: macro "INIT_WORK" passed 3 arguments, but takes just 2
- drivers/md/dm-bbr.c: In function 'bbr_alloc_private':
- drivers/md/dm-bbr.c:101: error: 'INIT_WORK' undeclared (first use in this function)
- drivers/md/dm-bbr.c:101: error: (Each undeclared identifier is reported only once
- drivers/md/dm-bbr.c:101: error: for each function it appears in.)
- make[1]: *** [drivers/md/dm-bbr.o] Error 1
- make: *** [drivers/md/] Error 2
-
- Affected by http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff_plain;h=1b1cec4bbc59feac89670d5d6d222a02545bac94;hp=e18b890bb0881bbab6f4f1a6cd20d9c60d66b003
-
 4400_speakup-20061129.patch:
 
   CC      drivers/char/speakup/speakup.o
