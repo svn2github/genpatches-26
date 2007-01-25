@@ -54,6 +54,10 @@ Patch:	1925_cifs-page-corruption.patch
 From:	2.6.20 tree
 Desc:	Fix CIFS VM corruption
 
+Patch:	2000_ipv6-all-node-mcast-group.patch
+From:	http://bugs.gentoo.org/161907
+Desc:	Fix IPv6 address obtain bug
+
 Patch:	2305_pci-early-find-subsys.patch
 From:	http://bugs.gentoo.org/157693
 Desc:	Handle super-early calls into the PCI subsystem
