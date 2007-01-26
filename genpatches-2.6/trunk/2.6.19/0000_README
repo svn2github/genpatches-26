@@ -46,6 +46,10 @@ Patch:	1001_linux-2.6.19.2.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1500_x86-64-bitops-gcc34.patch
+From:	http://bugs.gentoo.org/156843
+Desc:	Fix x86_64 NFS compilation with GCC 3.4
+
 Patch:	1805_detect-early-irq-enable.patch
 From:	http://bugs.gentoo.org/157693
 Desc:	Handle the situation when interrupts are enabled too early
