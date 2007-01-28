@@ -66,6 +66,10 @@ Patch:	2305_pci-early-find-subsys.patch
 From:	http://bugs.gentoo.org/157693
 Desc:	Handle super-early calls into the PCI subsystem
 
+Patch:	2900_usblp-kyocera-820-workaround.patch
+From:	http://bugs.gentoo.org/157608
+Desc:	Work around problem with Kyocera FS-820 initialization
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
