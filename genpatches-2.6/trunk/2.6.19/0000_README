@@ -54,6 +54,10 @@ Patch:	1805_detect-early-irq-enable.patch
 From:	http://bugs.gentoo.org/157693
 Desc:	Handle the situation when interrupts are enabled too early
 
+Patch:	1900_nfsd-unaligned-crash.patch
+From:	http://bugs.gentoo.org/161576
+Desc:	Fix knfsd crash on sparc
+
 Patch:	1925_cifs-page-corruption.patch
 From:	2.6.20 tree
 Desc:	Fix CIFS VM corruption
