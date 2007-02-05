@@ -54,10 +54,6 @@ Patch:	1500_x86-64-bitops-gcc34.patch
 From:	http://bugs.gentoo.org/156843
 Desc:	Fix x86_64 NFS compilation with GCC 3.4
 
-Patch:	2500_ahci-ich8-extra-ports.patch
-From:	http://bugs.gentoo.org/165291
-Desc:	Add support for extra SATA ports on ICH8 hardware
-
 Patch:	2900_usblp-kyocera-820-workaround.patch
 From:	http://bugs.gentoo.org/157608
 Desc:	Work around problem with Kyocera FS-820 initialization
@@ -77,6 +73,10 @@ Desc:	Fix crash with patch 4100
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4110_ahci-ich8-extra-ports.patch
+From:	http://bugs.gentoo.org/165291
+Desc:	Add support for extra SATA ports on ICH8 hardware
 
 Patch:	4200_fbsplash-0.9.2-r5.patch
 From:	http://dev.gentoo.org/~spock
