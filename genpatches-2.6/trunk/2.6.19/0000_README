@@ -70,6 +70,10 @@ Patch:	2305_pci-early-find-subsys.patch
 From:	http://bugs.gentoo.org/157693
 Desc:	Handle super-early calls into the PCI subsystem
 
+Patch:	2500_ahci-ich8-extra-ports.patch
+From:	http://bugs.gentoo.org/165291
+Desc:	Add support for extra SATA ports on ICH8 hardware
+
 Patch:	2900_usblp-kyocera-820-workaround.patch
 From:	http://bugs.gentoo.org/157608
 Desc:	Work around problem with Kyocera FS-820 initialization
