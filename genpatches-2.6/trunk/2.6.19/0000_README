@@ -46,29 +46,13 @@ Patch:	1001_linux-2.6.19.2.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1002_linux-2.6.19.3.patch
+From:	http://www.kernel.org
+Desc:	Misc fixes
+
 Patch:	1500_x86-64-bitops-gcc34.patch
 From:	http://bugs.gentoo.org/156843
 Desc:	Fix x86_64 NFS compilation with GCC 3.4
-
-Patch:	1805_detect-early-irq-enable.patch
-From:	http://bugs.gentoo.org/157693
-Desc:	Handle the situation when interrupts are enabled too early
-
-Patch:	1900_nfsd-unaligned-crash.patch
-From:	http://bugs.gentoo.org/161576
-Desc:	Fix knfsd crash on sparc
-
-Patch:	1925_cifs-page-corruption.patch
-From:	2.6.20 tree
-Desc:	Fix CIFS VM corruption
-
-Patch:	2000_ipv6-all-node-mcast-group.patch
-From:	http://bugs.gentoo.org/161907
-Desc:	Fix IPv6 address obtain bug
-
-Patch:	2305_pci-early-find-subsys.patch
-From:	http://bugs.gentoo.org/157693
-Desc:	Handle super-early calls into the PCI subsystem
 
 Patch:	2500_ahci-ich8-extra-ports.patch
 From:	http://bugs.gentoo.org/165291
@@ -77,10 +61,6 @@ Desc:	Add support for extra SATA ports on ICH8 hardware
 Patch:	2900_usblp-kyocera-820-workaround.patch
 From:	http://bugs.gentoo.org/157608
 Desc:	Work around problem with Kyocera FS-820 initialization
-
-Patch:	2905_hwrng-init-later.patch
-From:	http://bugs.gentoo.org/162034
-Desc:	Initialize HWRNG drivers later in boot, when PCI is ready
 
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
