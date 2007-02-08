@@ -1,44 +1,3 @@
-Index: linux-2.6.19/Documentation/dontdiff
-===================================================================
---- linux-2.6.19.orig/Documentation/dontdiff
-+++ linux-2.6.19/Documentation/dontdiff
-@@ -55,7 +55,7 @@ aic7*seq.h*
- aicasm
- aicdb.h*
- asm
--asm-offsets.*
-+asm-offsets.h
- asm_offsets.*
- autoconf.h*
- bbootsect
-@@ -143,4 +143,5 @@ vmlinux.lds
- vsyscall.lds
- wanxlfw.inc
- uImage
-+utsrelease.h
- zImage
-Index: linux-2.6.19/Makefile
-===================================================================
---- linux-2.6.19.orig/Makefile
-+++ linux-2.6.19/Makefile
-@@ -313,7 +313,7 @@ LINUXINCLUDE    := -Iinclude \
- 
- CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
- 
--CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-+CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
-                    -fno-strict-aliasing -fno-common
- AFLAGS          := -D__ASSEMBLY__
- 
-@@ -559,7 +559,7 @@ export mod_strip_cmd
- 
- 
- ifeq ($(KBUILD_EXTMOD),)
--core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- 
- vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
- 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
 Index: linux-2.6.19/arch/alpha/kernel/module.c
 ===================================================================
 --- linux-2.6.19.orig/arch/alpha/kernel/module.c
@@ -303,6 +262,24 @@ Index: linux-2.6.19/arch/arm/mm/mmap.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
+Index: linux-2.6.19/arch/i386/boot/compressed/head.S
+===================================================================
+--- linux-2.6.19.orig/arch/i386/boot/compressed/head.S
++++ linux-2.6.19/arch/i386/boot/compressed/head.S
+@@ -39,11 +39,13 @@ startup_32:
+ 	movl %eax,%gs
+ 
+ 	lss stack_start,%esp
++	movl 0x000000,%ecx
+ 	xorl %eax,%eax
+ 1:	incl %eax		# check that A20 really IS enabled
+ 	movl %eax,0x000000	# loop forever if it isn't
+ 	cmpl %eax,0x100000
+ 	je 1b
++	movl %ecx,0x000000
+ 
+ /*
+  * Initialize eflags.  Some BIOS's leave bits like NT set.  This would
 Index: linux-2.6.19/arch/i386/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/Kconfig
@@ -369,24 +346,6 @@ Index: linux-2.6.19/arch/i386/Kconfig.debug
  	help
  	  Mark the kernel read-only data as write-protected in the pagetables,
  	  in order to catch accidental (and incorrect) writes to such const
-Index: linux-2.6.19/arch/i386/boot/compressed/head.S
-===================================================================
---- linux-2.6.19.orig/arch/i386/boot/compressed/head.S
-+++ linux-2.6.19/arch/i386/boot/compressed/head.S
-@@ -39,11 +39,13 @@ startup_32:
- 	movl %eax,%gs
- 
- 	lss stack_start,%esp
-+	movl 0x000000,%ecx
- 	xorl %eax,%eax
- 1:	incl %eax		# check that A20 really IS enabled
- 	movl %eax,0x000000	# loop forever if it isn't
- 	cmpl %eax,0x100000
- 	je 1b
-+	movl %ecx,0x000000
- 
- /*
-  * Initialize eflags.  Some BIOS's leave bits like NT set.  This would
 Index: linux-2.6.19/arch/i386/kernel/alternative.c
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/kernel/alternative.c
@@ -2399,6 +2358,142 @@ Index: linux-2.6.19/arch/i386/kernel/smpboot.c
  
  	info.complete = &done;
  	info.apicid = apicid;
+Index: linux-2.6.19/arch/i386/kernel/syscall_table.S
+===================================================================
+--- linux-2.6.19.orig/arch/i386/kernel/syscall_table.S
++++ linux-2.6.19/arch/i386/kernel/syscall_table.S
+@@ -1,3 +1,4 @@
++.section .rodata,"a",@progbits
+ ENTRY(sys_call_table)
+ 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
+ 	.long sys_exit
+Index: linux-2.6.19/arch/i386/kernel/sysenter.c
+===================================================================
+--- linux-2.6.19.orig/arch/i386/kernel/sysenter.c
++++ linux-2.6.19/arch/i386/kernel/sysenter.c
+@@ -45,7 +45,7 @@ extern asmlinkage void sysenter_entry(vo
+ void enable_sep_cpu(void)
+ {
+ 	int cpu = get_cpu();
+-	struct tss_struct *tss = &per_cpu(init_tss, cpu);
++	struct tss_struct *tss = init_tss + cpu;
+ 
+ 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
+ 		put_cpu();
+@@ -125,16 +125,36 @@ int arch_setup_additional_pages(struct l
+ 	unsigned long addr;
+ 	int ret;
+ 
++#ifdef CONFIG_PAX_SEGMEXEC
++	struct vm_area_struct *vma_m = NULL;
++#endif
++
++	vma = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
++	if (!vma)
++		return -ENOMEM;
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (mm->pax_flags & MF_PAX_SEGMEXEC) {
++		vma_m = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
++		if (!vma_m) {
++			kmem_cache_free(vm_area_cachep, vma);
++			return -ENOMEM;
++		}
++	}
++#endif
++
+ 	down_write(&mm->mmap_sem);
+-	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
++	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
+ 	if (IS_ERR_VALUE(addr)) {
+ 		ret = addr;
+-		goto up_fail;
+-	}
+ 
+-	vma = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
+-	if (!vma) {
+-		ret = -ENOMEM;
++		kmem_cache_free(vm_area_cachep, vma);
++
++#ifdef CONFIG_PAX_SEGMEXEC
++		if (vma_m)
++			kmem_cache_free(vm_area_cachep, vma_m);
++#endif
++
+ 		goto up_fail;
+ 	}
+ 
+@@ -142,18 +162,49 @@ int arch_setup_additional_pages(struct l
+ 	vma->vm_end = addr + PAGE_SIZE;
+ 	/* MAYWRITE to allow gdb to COW and set breakpoints */
+ 	vma->vm_flags = VM_READ|VM_EXEC|VM_MAYREAD|VM_MAYEXEC|VM_MAYWRITE;
++
++#ifdef CONFIG_PAX_MPROTECT
++	if (mm->pax_flags & MF_PAX_MPROTECT)
++		vma->vm_flags &= ~VM_MAYWRITE;
++#endif
++
+ 	vma->vm_flags |= mm->def_flags;
+-	vma->vm_page_prot = protection_map[vma->vm_flags & 7];
++	vma->vm_page_prot = protection_map[vma->vm_flags & (VM_READ|VM_WRITE|VM_EXEC)];
+ 	vma->vm_ops = &syscall_vm_ops;
+ 	vma->vm_mm = mm;
+ 
+ 	ret = insert_vm_struct(mm, vma);
+ 	if (unlikely(ret)) {
+ 		kmem_cache_free(vm_area_cachep, vma);
++
++#ifdef CONFIG_PAX_SEGMEXEC
++		if (vma_m)
++			kmem_cache_free(vm_area_cachep, vma_m);
++#endif
++
+ 		goto up_fail;
+ 	}
+ 
+-	current->mm->context.vdso = (void *)addr;
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (vma_m) {
++		*vma_m = *vma;
++		vma_m->vm_start += SEGMEXEC_TASK_SIZE;
++		vma_m->vm_end += SEGMEXEC_TASK_SIZE;
++		ret = insert_vm_struct(mm, vma_m);
++		if (unlikely(ret)) {
++			kmem_cache_free(vm_area_cachep, vma_m);
++			goto up_fail;
++		}
++		vma_m->vm_flags |= VM_MIRROR;
++		vma->vm_flags |= VM_MIRROR;
++		vma_m->vm_mirror = vma->vm_start - vma_m->vm_start;
++		vma->vm_mirror = vma_m->vm_start - vma->vm_start;
++		vma_m->vm_pgoff = vma->vm_pgoff;
++		mm->total_vm++;
++	}
++#endif
++
++	current->mm->context.vdso = addr;
+ 	current_thread_info()->sysenter_return =
+ 				    (void *)VDSO_SYM(&SYSENTER_RETURN);
+ 	mm->total_vm++;
+@@ -164,8 +215,17 @@ up_fail:
+ 
+ const char *arch_vma_name(struct vm_area_struct *vma)
+ {
+-	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
++	if (vma->vm_start == vma->vm_mm->context.vdso)
+ 		return "[vdso]";
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (!(vma->vm_mm->pax_flags & MF_PAX_SEGMEXEC) || !(vma->vm_flags & VM_MIRROR))
++		return NULL;
++
++	if (vma->vm_start + vma->vm_mirror == vma->vm_mm->context.vdso)
++		return "[vdso]";
++#endif
++
+ 	return NULL;
+ }
+ 
 Index: linux-2.6.19/arch/i386/kernel/sys_i386.c
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/kernel/sys_i386.c
@@ -2595,142 +2690,6 @@ Index: linux-2.6.19/arch/i386/kernel/sys_i386.c
  
  struct sel_arg_struct {
  	unsigned long n;
-Index: linux-2.6.19/arch/i386/kernel/syscall_table.S
-===================================================================
---- linux-2.6.19.orig/arch/i386/kernel/syscall_table.S
-+++ linux-2.6.19/arch/i386/kernel/syscall_table.S
-@@ -1,3 +1,4 @@
-+.section .rodata,"a",@progbits
- ENTRY(sys_call_table)
- 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
- 	.long sys_exit
-Index: linux-2.6.19/arch/i386/kernel/sysenter.c
-===================================================================
---- linux-2.6.19.orig/arch/i386/kernel/sysenter.c
-+++ linux-2.6.19/arch/i386/kernel/sysenter.c
-@@ -45,7 +45,7 @@ extern asmlinkage void sysenter_entry(vo
- void enable_sep_cpu(void)
- {
- 	int cpu = get_cpu();
--	struct tss_struct *tss = &per_cpu(init_tss, cpu);
-+	struct tss_struct *tss = init_tss + cpu;
- 
- 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
- 		put_cpu();
-@@ -125,16 +125,36 @@ int arch_setup_additional_pages(struct l
- 	unsigned long addr;
- 	int ret;
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	struct vm_area_struct *vma_m = NULL;
-+#endif
-+
-+	vma = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
-+	if (!vma)
-+		return -ENOMEM;
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (mm->pax_flags & MF_PAX_SEGMEXEC) {
-+		vma_m = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
-+		if (!vma_m) {
-+			kmem_cache_free(vm_area_cachep, vma);
-+			return -ENOMEM;
-+		}
-+	}
-+#endif
-+
- 	down_write(&mm->mmap_sem);
--	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
-+	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
- 	if (IS_ERR_VALUE(addr)) {
- 		ret = addr;
--		goto up_fail;
--	}
- 
--	vma = kmem_cache_zalloc(vm_area_cachep, SLAB_KERNEL);
--	if (!vma) {
--		ret = -ENOMEM;
-+		kmem_cache_free(vm_area_cachep, vma);
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+		if (vma_m)
-+			kmem_cache_free(vm_area_cachep, vma_m);
-+#endif
-+
- 		goto up_fail;
- 	}
- 
-@@ -142,18 +162,49 @@ int arch_setup_additional_pages(struct l
- 	vma->vm_end = addr + PAGE_SIZE;
- 	/* MAYWRITE to allow gdb to COW and set breakpoints */
- 	vma->vm_flags = VM_READ|VM_EXEC|VM_MAYREAD|VM_MAYEXEC|VM_MAYWRITE;
-+
-+#ifdef CONFIG_PAX_MPROTECT
-+	if (mm->pax_flags & MF_PAX_MPROTECT)
-+		vma->vm_flags &= ~VM_MAYWRITE;
-+#endif
-+
- 	vma->vm_flags |= mm->def_flags;
--	vma->vm_page_prot = protection_map[vma->vm_flags & 7];
-+	vma->vm_page_prot = protection_map[vma->vm_flags & (VM_READ|VM_WRITE|VM_EXEC)];
- 	vma->vm_ops = &syscall_vm_ops;
- 	vma->vm_mm = mm;
- 
- 	ret = insert_vm_struct(mm, vma);
- 	if (unlikely(ret)) {
- 		kmem_cache_free(vm_area_cachep, vma);
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+		if (vma_m)
-+			kmem_cache_free(vm_area_cachep, vma_m);
-+#endif
-+
- 		goto up_fail;
- 	}
- 
--	current->mm->context.vdso = (void *)addr;
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (vma_m) {
-+		*vma_m = *vma;
-+		vma_m->vm_start += SEGMEXEC_TASK_SIZE;
-+		vma_m->vm_end += SEGMEXEC_TASK_SIZE;
-+		ret = insert_vm_struct(mm, vma_m);
-+		if (unlikely(ret)) {
-+			kmem_cache_free(vm_area_cachep, vma_m);
-+			goto up_fail;
-+		}
-+		vma_m->vm_flags |= VM_MIRROR;
-+		vma->vm_flags |= VM_MIRROR;
-+		vma_m->vm_mirror = vma->vm_start - vma_m->vm_start;
-+		vma->vm_mirror = vma_m->vm_start - vma->vm_start;
-+		vma_m->vm_pgoff = vma->vm_pgoff;
-+		mm->total_vm++;
-+	}
-+#endif
-+
-+	current->mm->context.vdso = addr;
- 	current_thread_info()->sysenter_return =
- 				    (void *)VDSO_SYM(&SYSENTER_RETURN);
- 	mm->total_vm++;
-@@ -164,8 +215,17 @@ up_fail:
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
- {
--	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
-+	if (vma->vm_start == vma->vm_mm->context.vdso)
- 		return "[vdso]";
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (!(vma->vm_mm->pax_flags & MF_PAX_SEGMEXEC) || !(vma->vm_flags & VM_MIRROR))
-+		return NULL;
-+
-+	if (vma->vm_start + vma->vm_mirror == vma->vm_mm->context.vdso)
-+		return "[vdso]";
-+#endif
-+
- 	return NULL;
- }
- 
 Index: linux-2.6.19/arch/i386/kernel/time.c
 ===================================================================
 --- linux-2.6.19.orig/arch/i386/kernel/time.c
@@ -3029,7 +2988,7 @@ Index: linux-2.6.19/arch/i386/kernel/vmlinux.lds.S
  
  OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
  OUTPUT_ARCH(i386)
-@@ -16,31 +23,133 @@ jiffies = jiffies_64;
+@@ -17,31 +24,133 @@ _proxy_pda = 0;
  
  PHDRS {
  	text PT_LOAD FLAGS(5);	/* R_E */
@@ -3168,7 +3127,7 @@ Index: linux-2.6.19/arch/i386/kernel/vmlinux.lds.S
    RODATA
  
    . = ALIGN(4);
-@@ -50,9 +159,25 @@ SECTIONS
+@@ -51,9 +160,25 @@ SECTIONS
    }
    __tracedata_end = .;
  
@@ -3194,7 +3153,7 @@ Index: linux-2.6.19/arch/i386/kernel/vmlinux.lds.S
  	*(.data)
  	CONSTRUCTORS
  	} :data
-@@ -63,11 +188,6 @@ SECTIONS
+@@ -64,11 +189,6 @@ SECTIONS
    . = ALIGN(4096);
    __nosave_end = .;
  
@@ -3206,7 +3165,7 @@ Index: linux-2.6.19/arch/i386/kernel/vmlinux.lds.S
    . = ALIGN(32);
    .data.cacheline_aligned : AT(ADDR(.data.cacheline_aligned) - LOAD_OFFSET) {
  	*(.data.cacheline_aligned)
-@@ -76,7 +196,6 @@ SECTIONS
+@@ -77,7 +197,6 @@ SECTIONS
    /* rarely changed data like cpu maps */
    . = ALIGN(32);
    .data.read_mostly : AT(ADDR(.data.read_mostly) - LOAD_OFFSET) { *(.data.read_mostly) }
@@ -3214,7 +3173,7 @@ Index: linux-2.6.19/arch/i386/kernel/vmlinux.lds.S
  
  #ifdef CONFIG_STACK_UNWIND
    . = ALIGN(4);
-@@ -92,75 +211,9 @@ SECTIONS
+@@ -93,75 +212,9 @@ SECTIONS
  	*(.data.init_task)
    }
  
@@ -7777,19 +7736,6 @@ Index: linux-2.6.19/arch/s390/kernel/module.c
  			rela->r_addend - loc;
  		if (r_type == R_390_GOTPC)
  			*(unsigned int *) loc = val;
-Index: linux-2.6.19/arch/sparc/Makefile
-===================================================================
---- linux-2.6.19.orig/arch/sparc/Makefile
-+++ linux-2.6.19/arch/sparc/Makefile
-@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
- # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
- INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
- CORE_Y		:= $(core-y)
--CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
- DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
- NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
 Index: linux-2.6.19/arch/sparc/kernel/ptrace.c
 ===================================================================
 --- linux-2.6.19.orig/arch/sparc/kernel/ptrace.c
@@ -7827,6 +7773,19 @@ Index: linux-2.6.19/arch/sparc/kernel/sys_sparc.c
  
  	if (flags & MAP_SHARED)
  		addr = COLOUR_ALIGN(addr);
+Index: linux-2.6.19/arch/sparc/Makefile
+===================================================================
+--- linux-2.6.19.orig/arch/sparc/Makefile
++++ linux-2.6.19/arch/sparc/Makefile
+@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
+ # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
+ INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
+ CORE_Y		:= $(core-y)
+-CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
+ DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
+ NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
 Index: linux-2.6.19/arch/sparc/mm/fault.c
 ===================================================================
 --- linux-2.6.19.orig/arch/sparc/mm/fault.c
@@ -9036,6 +8995,25 @@ Index: linux-2.6.19/arch/x86_64/mm/mmap.c
  	mm->get_unmapped_area = arch_get_unmapped_area;
  	mm->unmap_area = arch_unmap_area;
  }
+Index: linux-2.6.19/Documentation/dontdiff
+===================================================================
+--- linux-2.6.19.orig/Documentation/dontdiff
++++ linux-2.6.19/Documentation/dontdiff
+@@ -55,7 +55,7 @@ aic7*seq.h*
+ aicasm
+ aicdb.h*
+ asm
+-asm-offsets.*
++asm-offsets.h
+ asm_offsets.*
+ autoconf.h*
+ bbootsect
+@@ -143,4 +143,5 @@ vmlinux.lds
+ vsyscall.lds
+ wanxlfw.inc
+ uImage
++utsrelease.h
+ zImage
 Index: linux-2.6.19/drivers/acpi/glue.c
 ===================================================================
 --- linux-2.6.19.orig/drivers/acpi/glue.c
@@ -9436,7 +9414,7 @@ Index: linux-2.6.19/drivers/ieee1394/sbp2.c
 ===================================================================
 --- linux-2.6.19.orig/drivers/ieee1394/sbp2.c
 +++ linux-2.6.19/drivers/ieee1394/sbp2.c
-@@ -2664,7 +2664,7 @@ static struct scsi_host_template scsi_dr
+@@ -2666,7 +2666,7 @@ static struct scsi_host_template scsi_dr
  	.sdev_attrs =			sbp2_sysfs_sdev_attrs,
  };
  
@@ -9741,19 +9719,6 @@ Index: linux-2.6.19/drivers/video/vesafb.c
  	screen_info.vesapm_seg = 0;
  #endif
  
-Index: linux-2.6.19/fs/Kconfig
-===================================================================
---- linux-2.6.19.orig/fs/Kconfig
-+++ linux-2.6.19/fs/Kconfig
-@@ -929,7 +929,7 @@ config PROC_FS
- 
- config PROC_KCORE
- 	bool "/proc/kcore support" if !ARM
--	depends on PROC_FS && MMU
-+	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
- 
- config PROC_VMCORE
-         bool "/proc/vmcore support (EXPERIMENTAL)"
 Index: linux-2.6.19/fs/binfmt_aout.c
 ===================================================================
 --- linux-2.6.19.orig/fs/binfmt_aout.c
@@ -11193,6 +11158,19 @@ Index: linux-2.6.19/fs/fcntl.c
  }
  
  static void send_sigio_to_task(struct task_struct *p,
+Index: linux-2.6.19/fs/Kconfig
+===================================================================
+--- linux-2.6.19.orig/fs/Kconfig
++++ linux-2.6.19/fs/Kconfig
+@@ -929,7 +929,7 @@ config PROC_FS
+ 
+ config PROC_KCORE
+ 	bool "/proc/kcore support" if !ARM
+-	depends on PROC_FS && MMU
++	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
+ 
+ config PROC_VMCORE
+         bool "/proc/vmcore support (EXPERIMENTAL)"
 Index: linux-2.6.19/fs/namei.c
 ===================================================================
 --- linux-2.6.19.orig/fs/namei.c
@@ -11926,7 +11904,7 @@ Index: linux-2.6.19/fs/proc/base.c
  	}
  	security_task_to_inode(task, inode);
  
-@@ -985,17 +992,38 @@ static int pid_getattr(struct vfsmount *
+@@ -985,17 +992,45 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
@@ -11941,15 +11919,22 @@ Index: linux-2.6.19/fs/proc/base.c
  	stat->gid = 0;
  	task = pid_task(proc_pid(inode), PIDTYPE_PID);
 -	if (task) {
-+	if (task &&
++
++	if (task && (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))) {
++		rcu_read_unlock();
++		return -ENOENT;
++	}
++
++
++	if (task
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	    (!tmp->uid || (tmp->uid == task->uid)
++	    && (!tmp->uid || (tmp->uid == task->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
-+	    ) &&
++	    )
 +#endif
-+ 	    !gr_pid_is_chrooted(task) && !gr_check_hidden_task(task)) {
++	) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
@@ -11966,8 +11951,16 @@ Index: linux-2.6.19/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1025,9 +1053,18 @@ static int pid_revalidate(struct dentry 
+@@ -1023,11 +1058,26 @@ static int pid_revalidate(struct dentry 
+ {
+ 	struct inode *inode = dentry->d_inode;
  	struct task_struct *task = get_proc_task(inode);
++
++	if (task && (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))) {
++		put_task_struct(task);
++		goto out;
++	}
++
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
@@ -11985,7 +11978,15 @@ Index: linux-2.6.19/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1273,6 +1310,9 @@ static struct dentry *proc_lookupfd(stru
+@@ -1037,6 +1087,7 @@ static int pid_revalidate(struct dentry 
+ 		put_task_struct(task);
+ 		return 1;
+ 	}
++out:
+ 	d_drop(dentry);
+ 	return 0;
+ }
+@@ -1273,6 +1324,9 @@ static struct dentry *proc_lookupfd(stru
  	if (fd == ~0U)
  		goto out;
  
@@ -11995,7 +11996,7 @@ Index: linux-2.6.19/fs/proc/base.c
  	result = proc_fd_instantiate(dir, dentry, task, &fd);
  out:
  	put_task_struct(task);
-@@ -1317,6 +1357,8 @@ static int proc_readfd(struct file * fil
+@@ -1317,6 +1371,8 @@ static int proc_readfd(struct file * fil
  				goto out;
  			filp->f_pos++;
  		default:
@@ -12004,7 +12005,37 @@ Index: linux-2.6.19/fs/proc/base.c
  			files = get_files_struct(p);
  			if (!files)
  				goto out;
-@@ -1791,6 +1833,9 @@ static struct pid_entry tgid_base_stuff[
+@@ -1404,6 +1460,9 @@ static struct dentry *proc_pident_lookup
+ 	if (!task)
+ 		goto out_no_task;
+ 
++	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
++		goto out;
++
+ 	/*
+ 	 * Yes, it does not scale. And it should not. Don't add
+ 	 * new entries into /proc/<tgid>/ without very good reasons.
+@@ -1449,6 +1508,9 @@ static int proc_pident_readdir(struct fi
+ 	if (!task)
+ 		goto out_no_task;
+ 
++	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
++		goto out;
++
+ 	ret = 0;
+ 	pid = task->pid;
+ 	i = filp->f_pos;
+@@ -1728,6 +1790,9 @@ static struct dentry *proc_base_lookup(s
+ 	if (p > last)
+ 		goto out;
+ 
++	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
++		goto out;
++
+ 	error = proc_base_instantiate(dir, dentry, task, p);
+ 
+ out:
+@@ -1791,6 +1856,9 @@ static struct pid_entry tgid_base_stuff[
  #ifdef CONFIG_AUDITSYSCALL
  	REG("loginuid",   S_IWUSR|S_IRUGO, loginuid),
  #endif
@@ -12014,7 +12045,7 @@ Index: linux-2.6.19/fs/proc/base.c
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -1893,7 +1938,14 @@ struct dentry *proc_pid_instantiate(stru
+@@ -1893,7 +1961,14 @@ struct dentry *proc_pid_instantiate(stru
  	if (!inode)
  		goto out;
  
@@ -12029,7 +12060,7 @@ Index: linux-2.6.19/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -1934,7 +1986,11 @@ struct dentry *proc_pid_lookup(struct in
+@@ -1934,7 +2009,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -12041,7 +12072,7 @@ Index: linux-2.6.19/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
-@@ -1992,6 +2048,9 @@ int proc_pid_readdir(struct file * filp,
+@@ -1992,6 +2071,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
  	struct task_struct *reaper = get_proc_task(filp->f_dentry->d_inode);
@@ -12051,7 +12082,7 @@ Index: linux-2.6.19/fs/proc/base.c
  	struct task_struct *task;
  	int tgid;
  
-@@ -2009,6 +2068,18 @@ int proc_pid_readdir(struct file * filp,
+@@ -2009,6 +2091,18 @@ int proc_pid_readdir(struct file * filp,
  	     task;
  	     put_task_struct(task), task = next_tgid(tgid + 1)) {
  		tgid = task->pid;
@@ -12617,908 +12648,102 @@ Index: linux-2.6.19/fs/xfs/xfs_bmap.c
  #endif /* DEBUG */
  
  #if defined(XFS_RW_TRACE)
-Index: linux-2.6.19/grsecurity/Kconfig
+Index: linux-2.6.19/grsecurity/gracl_alloc.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.19/grsecurity/Kconfig
-@@ -0,0 +1,872 @@
-+#
-+# grecurity configuration
-+#
-+
-+menu "Grsecurity"
-+
-+config GRKERNSEC
-+	bool "Grsecurity"
-+	select CRYPTO
-+	select CRYPTO_SHA256
-+	help
-+	  If you say Y here, you will be able to configure many features
-+	  that will enhance the security of your system.  It is highly
-+	  recommended that you say Y here and read through the help
-+	  for each option so that you fully understand the features and
-+	  can evaluate their usefulness for your machine.
-+
-+choice
-+	prompt "Security Level"
-+	depends GRKERNSEC
-+	default GRKERNSEC_CUSTOM
-+
-+config GRKERNSEC_LOW
-+	bool "Low"
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+
-+	help
-+	  If you choose this option, several of the grsecurity options will
-+	  be enabled that will give you greater protection against a number
-+	  of attacks, while assuring that none of your software will have any
-+	  conflicts with the additional security measures.  If you run a lot
-+	  of unusual software, or you are having problems with the higher
-+	  security levels, you should say Y here.  With this option, the
-+	  following features are enabled:
-+
-+	  - Linking restrictions
-+	  - FIFO restrictions
-+	  - Enforcing RLIMIT_NPROC on execve
-+	  - Restricted dmesg
-+	  - Enforced chdir("/") on chroot
-+	  - Runtime module disabling
-+
-+config GRKERNSEC_MEDIUM
-+	bool "Medium"
-+	select PAX
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
-+	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
-+	select GRKERNSEC_CHROOT_SYSCTL
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_FORKFAIL
-+	select GRKERNSEC_TIME
-+	select GRKERNSEC_SIGNAL
-+	select GRKERNSEC_CHROOT
-+	select GRKERNSEC_CHROOT_UNIX
-+	select GRKERNSEC_CHROOT_MOUNT
-+	select GRKERNSEC_CHROOT_PIVOT
-+	select GRKERNSEC_CHROOT_DOUBLE
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_CHROOT_MKNOD
-+	select GRKERNSEC_PROC
-+	select GRKERNSEC_PROC_USERGROUP
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
-+
-+	help
-+	  If you say Y here, several features in addition to those included
-+	  in the low additional security level will be enabled.  These
-+	  features provide even more security to your system, though in rare
-+	  cases they may be incompatible with very old or poorly written
-+	  software.  If you enable this option, make sure that your auth
-+	  service (identd) is running as gid 1001.  With this option, 
-+	  the following features (in addition to those provided in the 
-+	  low additional security level) will be enabled:
-+
-+	  - Randomized TCP source ports
-+	  - Failed fork logging
-+	  - Time change logging
-+	  - Signal logging
-+	  - Deny mounts in chroot
-+	  - Deny double chrooting
-+	  - Deny sysctl writes in chroot
-+	  - Deny mknod in chroot
-+	  - Deny access to abstract AF_UNIX sockets out of chroot
-+	  - Deny pivot_root in chroot
-+	  - Denied writes of /dev/kmem, /dev/mem, and /dev/port
-+	  - /proc restrictions with special GID set to 10 (usually wheel)
-+	  - Address Space Layout Randomization (ASLR)
-+
-+config GRKERNSEC_HIGH
-+	bool "High"
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_FORKFAIL
-+	select GRKERNSEC_TIME
-+	select GRKERNSEC_SIGNAL
-+	select GRKERNSEC_CHROOT_SHMAT
-+	select GRKERNSEC_CHROOT_UNIX
-+	select GRKERNSEC_CHROOT_MOUNT
-+	select GRKERNSEC_CHROOT_FCHDIR
-+	select GRKERNSEC_CHROOT_PIVOT
-+	select GRKERNSEC_CHROOT_DOUBLE
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_CHROOT_MKNOD
-+	select GRKERNSEC_CHROOT_CAPS
-+	select GRKERNSEC_CHROOT_SYSCTL
-+	select GRKERNSEC_CHROOT_FINDTASK
-+	select GRKERNSEC_PROC
-+	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
-+	select GRKERNSEC_HIDESYM
-+	select GRKERNSEC_BRUTE
-+	select GRKERNSEC_SHM if (SYSVIPC)
-+	select GRKERNSEC_PROC_USERGROUP
-+	select GRKERNSEC_KMEM
-+	select GRKERNSEC_RESLOG
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_PROC_ADD
-+	select GRKERNSEC_CHROOT_CHMOD
-+	select GRKERNSEC_CHROOT_NICE
-+	select GRKERNSEC_AUDIT_MOUNT
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+	select PAX
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
-+	select PAX_NOEXEC
-+	select PAX_MPROTECT
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
-+	select PAX_KERNEXEC if (!X86_64 && !MODULES && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS)
-+	select PAX_RANDKSTACK if (X86_TSC && !X86_64)
-+	select PAX_SEGMEXEC if (X86 && !X86_64)
-+	select PAX_PAGEEXEC if (!X86)
-+	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
-+	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
-+	select PAX_SYSCALL if (PPC32)
-+	select PAX_EMUTRAMP if (PARISC)
-+	select PAX_EMUSIGRT if (PARISC)
-+	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
-+	help
-+	  If you say Y here, many of the features of grsecurity will be
-+	  enabled, which will protect you against many kinds of attacks
-+	  against your system.  The heightened security comes at a cost
-+	  of an increased chance of incompatibilities with rare software
-+	  on your machine.  Since this security level enables PaX, you should
-+	  view <http://pax.grsecurity.net> and read about the PaX
-+	  project.  While you are there, download chpax and run it on
-+	  binaries that cause problems with PaX.  Also remember that
-+	  since the /proc restrictions are enabled, you must run your
-+	  identd as gid 1001.  This security level enables the following 
-+	  features in addition to those listed in the low and medium 
-+	  security levels:
-+
-+	  - Additional /proc restrictions
-+	  - Chmod restrictions in chroot
-+	  - No signals, ptrace, or viewing of processes outside of chroot
-+	  - Capability restrictions in chroot
-+	  - Deny fchdir out of chroot
-+	  - Priority restrictions in chroot
-+	  - Segmentation-based implementation of PaX
-+	  - Mprotect restrictions
-+	  - Removal of addresses from /proc/<pid>/[smaps|maps|stat]
-+	  - Kernel stack randomization
-+	  - Mount/unmount/remount logging
-+	  - Kernel symbol hiding
-+	  - Destroy unused shared memory	
-+	  - Prevention of memory exhaustion-based exploits
-+config GRKERNSEC_CUSTOM
-+	bool "Custom"
-+	help
-+	  If you say Y here, you will be able to configure every grsecurity
-+	  option, which allows you to enable many more features that aren't
-+	  covered in the basic security levels.  These additional features
-+	  include TPE, socket restrictions, and the sysctl system for
-+	  grsecurity.  It is advised that you read through the help for
-+	  each option to determine its usefulness in your situation.
-+
-+endchoice
-+
-+menu "Address Space Protection"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_KMEM
-+	bool "Deny writing to /dev/kmem, /dev/mem, and /dev/port"
-+	help
-+	  If you say Y here, /dev/kmem and /dev/mem won't be allowed to
-+	  be written to via mmap or otherwise to modify the running kernel.
-+	  /dev/port will also not be allowed to be opened. If you have module
-+	  support disabled, enabling this will close up four ways that are
-+	  currently used  to insert malicious code into the running kernel.
-+	  Even with all these features enabled, we still highly recommend that
-+	  you use the RBAC system, as it is still possible for an attacker to
-+	  modify the running kernel through privileged I/O granted by ioperm/iopl.
-+	  If you are not using XFree86, you may be able to stop this additional
-+	  case by enabling the 'Disable privileged I/O' option. Though nothing
-+	  legitimately writes to /dev/kmem, XFree86 does need to write to /dev/mem,
-+	  but only to video memory, which is the only writing we allow in this
-+	  case.  If /dev/kmem or /dev/mem are mmaped without PROT_WRITE, they will
-+	  not be allowed to mprotect it with PROT_WRITE later.
-+	  It is highly recommended that you say Y here if you meet all the
-+	  conditions above.
-+
-+config GRKERNSEC_IO
-+	bool "Disable privileged I/O"
-+	depends on X86
-+	select RTC
-+	help
-+	  If you say Y here, all ioperm and iopl calls will return an error.
-+	  Ioperm and iopl can be used to modify the running kernel.
-+	  Unfortunately, some programs need this access to operate properly,
-+	  the most notable of which are XFree86 and hwclock.  hwclock can be
-+	  remedied by having RTC support in the kernel, so CONFIG_RTC is
-+	  enabled if this option is enabled, to ensure that hwclock operates
-+	  correctly.  XFree86 still will not operate correctly with this option
-+	  enabled, so DO NOT CHOOSE Y IF YOU USE XFree86.  If you use XFree86
-+	  and you still want to protect your kernel against modification,
-+	  use the RBAC system.
-+
-+config GRKERNSEC_PROC_MEMMAP
-+	bool "Remove addresses from /proc/<pid>/[smaps|maps|stat]"
-+	depends on PAX_NOEXEC || PAX_ASLR
-+	help
-+	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files will
-+	  give no information about the addresses of its mappings if
-+	  PaX features that rely on random addresses are enabled on the task.
-+	  If you use PaX it is greatly recommended that you say Y here as it
-+	  closes up a hole that makes the full ASLR useless for suid
-+	  binaries.
-+
-+config GRKERNSEC_BRUTE
-+	bool "Deter exploit bruteforcing"
-+	help
-+	  If you say Y here, attempts to bruteforce exploits against forking
-+	  daemons such as apache or sshd will be deterred.  When a child of a
-+	  forking daemon is killed by PaX or crashes due to an illegal
-+	  instruction, the parent process will be delayed 30 seconds upon every
-+	  subsequent fork until the administrator is able to assess the
-+	  situation and restart the daemon.  It is recommended that you also
-+	  enable signal logging in the auditing section so that logs are
-+	  generated when a process performs an illegal instruction.
-+
-+config GRKERNSEC_MODSTOP
-+	bool "Runtime module disabling"
-+	depends on MODULES
-+	help
-+	  If you say Y here, you will be able to disable the ability to (un)load
-+	  modules at runtime.  This feature is useful if you need the ability
-+	  to load kernel modules at boot time, but do not want to allow an
-+	  attacker to load a rootkit kernel module into the system, or to remove
-+	  a loaded kernel module important to system functioning.  You should
-+	  enable the /dev/mem protection feature as well, since rootkits can be
-+	  inserted into the kernel via other methods than kernel modules.  Since
-+	  an untrusted module could still be loaded by modifying init scripts and
-+	  rebooting the system, it is also recommended that you enable the RBAC
-+	  system.  If you enable this option, a sysctl option with name
-+	  "disable_modules" will be created.  Setting this option to "1" disables
-+	  module loading.  After this option is set, no further writes to it are
-+	  allowed until the system is rebooted.
-+
-+config GRKERNSEC_HIDESYM
-+	bool "Hide kernel symbols"
-+	help
-+	  If you say Y here, getting information on loaded modules, and
-+	  displaying all kernel symbols through a syscall will be restricted
-+	  to users with CAP_SYS_MODULE.  This option is only effective
-+	  provided the following conditions are met:
-+	  1) The kernel using grsecurity is not precompiled by some distribution
-+	  2) You are using the RBAC system and hiding other files such as your
-+	     kernel image and System.map
-+	  3) You have the additional /proc restrictions enabled, which removes
-+	     /proc/kcore
-+	  If the above conditions are met, this option will aid to provide a
-+	  useful protection against local and remote kernel exploitation of
-+	  overflows and arbitrary read/write vulnerabilities.
-+
-+endmenu
-+menu "Role Based Access Control Options"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_ACL_HIDEKERN
-+	bool "Hide kernel processes"
-+	help
-+	  If you say Y here, all kernel threads will be hidden to all
-+	  processes but those whose subject has the "view hidden processes"
-+	  flag.
-+
-+config GRKERNSEC_ACL_MAXTRIES
-+	int "Maximum tries before password lockout"
-+	default 3
-+	help
-+	  This option enforces the maximum number of times a user can attempt
-+	  to authorize themselves with the grsecurity RBAC system before being
-+	  denied the ability to attempt authorization again for a specified time.
-+	  The lower the number, the harder it will be to brute-force a password.
-+
-+config GRKERNSEC_ACL_TIMEOUT
-+	int "Time to wait after max password tries, in seconds"
-+	default 30
-+	help
-+	  This option specifies the time the user must wait after attempting to
-+	  authorize to the RBAC system with the maximum number of invalid
-+	  passwords.  The higher the number, the harder it will be to brute-force
-+	  a password.
-+
-+endmenu
-+menu "Filesystem Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_PROC
-+	bool "Proc restrictions"
-+	help
-+	  If you say Y here, the permissions of the /proc filesystem
-+	  will be altered to enhance system security and privacy.  You MUST
-+  	  choose either a user only restriction or a user and group restriction.
-+	  Depending upon the option you choose, you can either restrict users to
-+	  see only the processes they themselves run, or choose a group that can
-+	  view all processes and files normally restricted to root if you choose
-+	  the "restrict to user only" option.  NOTE: If you're running identd as
-+	  a non-root user, you will have to run it as the group you specify here.
-+
-+config GRKERNSEC_PROC_USER
-+	bool "Restrict /proc to user only"
-+	depends on GRKERNSEC_PROC
-+	help
-+	  If you say Y here, non-root users will only be able to view their own
-+	  processes, and restricts them from viewing network-related information,
-+	  and viewing kernel symbol and module information.
-+
-+config GRKERNSEC_PROC_USERGROUP
-+	bool "Allow special group"
-+	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
-+	help
-+	  If you say Y here, you will be able to select a group that will be
-+	  able to view all processes, network-related information, and
-+	  kernel and symbol information.  This option is useful if you want
-+	  to run identd as a non-root user.
-+
-+config GRKERNSEC_PROC_GID
-+	int "GID for special group"
-+	depends on GRKERNSEC_PROC_USERGROUP
-+	default 1001
-+
-+config GRKERNSEC_PROC_ADD
-+	bool "Additional restrictions"
-+	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
-+	help
-+	  If you say Y here, additional restrictions will be placed on
-+	  /proc that keep normal users from viewing device information and 
-+	  slabinfo information that could be useful for exploits.
-+
-+config GRKERNSEC_LINK
-+	bool "Linking restrictions"
-+	help
-+	  If you say Y here, /tmp race exploits will be prevented, since users
-+	  will no longer be able to follow symlinks owned by other users in
-+	  world-writable +t directories (i.e. /tmp), unless the owner of the
-+	  symlink is the owner of the directory. users will also not be
-+	  able to hardlink to files they do not own.  If the sysctl option is
-+	  enabled, a sysctl option with name "linking_restrictions" is created.
-+
-+config GRKERNSEC_FIFO
-+	bool "FIFO restrictions"
-+	help
-+	  If you say Y here, users will not be able to write to FIFOs they don't
-+	  own in world-writable +t directories (i.e. /tmp), unless the owner of
-+	  the FIFO is the same owner of the directory it's held in.  If the sysctl
-+	  option is enabled, a sysctl option with name "fifo_restrictions" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT
-+	bool "Chroot jail restrictions"
-+	help
-+	  If you say Y here, you will be able to choose several options that will
-+	  make breaking out of a chrooted jail much more difficult.  If you
-+	  encounter no software incompatibilities with the following options, it
-+	  is recommended that you enable each one.
-+
-+config GRKERNSEC_CHROOT_MOUNT
-+	bool "Deny mounts"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  mount or remount filesystems.  If the sysctl option is enabled, a
-+	  sysctl option with name "chroot_deny_mount" is created.
-+
-+config GRKERNSEC_CHROOT_DOUBLE
-+	bool "Deny double-chroots"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to chroot
-+	  again outside the chroot.  This is a widely used method of breaking
-+	  out of a chroot jail and should not be allowed.  If the sysctl 
-+	  option is enabled, a sysctl option with name 
-+	  "chroot_deny_chroot" is created.
-+
-+config GRKERNSEC_CHROOT_PIVOT
-+	bool "Deny pivot_root in chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to use
-+	  a function called pivot_root() that was introduced in Linux 2.3.41.  It
-+	  works similar to chroot in that it changes the root filesystem.  This
-+	  function could be misused in a chrooted process to attempt to break out
-+	  of the chroot, and therefore should not be allowed.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_deny_pivot" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_CHDIR
-+	bool "Enforce chdir(\"/\") on all chroots"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, the current working directory of all newly-chrooted
-+	  applications will be set to the the root directory of the chroot.
-+	  The man page on chroot(2) states:
-+	  Note that this call does not change  the  current  working
-+	  directory,  so  that `.' can be outside the tree rooted at
-+	  `/'.  In particular, the  super-user  can  escape  from  a
-+	  `chroot jail' by doing `mkdir foo; chroot foo; cd ..'.
-+
-+	  It is recommended that you say Y here, since it's not known to break
-+	  any software.  If the sysctl option is enabled, a sysctl option with
-+	  name "chroot_enforce_chdir" is created.
-+
-+config GRKERNSEC_CHROOT_CHMOD
-+	bool "Deny (f)chmod +s"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to chmod
-+	  or fchmod files to make them have suid or sgid bits.  This protects
-+	  against another published method of breaking a chroot.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_deny_chmod" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_FCHDIR
-+	bool "Deny fchdir out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, a well-known method of breaking chroots by fchdir'ing
-+	  to a file descriptor of the chrooting process that points to a directory
-+	  outside the filesystem will be stopped.  If the sysctl option
-+	  is enabled, a sysctl option with name "chroot_deny_fchdir" is created.
-+
-+config GRKERNSEC_CHROOT_MKNOD
-+	bool "Deny mknod"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be allowed to
-+	  mknod.  The problem with using mknod inside a chroot is that it
-+	  would allow an attacker to create a device entry that is the same
-+	  as one on the physical root of your system, which could range from
-+	  anything from the console device to a device for your harddrive (which
-+	  they could then use to wipe the drive or steal data).  It is recommended
-+	  that you say Y here, unless you run into software incompatibilities.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "chroot_deny_mknod" is created.
-+
-+config GRKERNSEC_CHROOT_SHMAT
-+	bool "Deny shmat() out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to attach
-+	  to shared memory segments that were created outside of the chroot jail.
-+	  It is recommended that you say Y here.  If the sysctl option is enabled,
-+	  a sysctl option with name "chroot_deny_shmat" is created.
-+
-+config GRKERNSEC_CHROOT_UNIX
-+	bool "Deny access to abstract AF_UNIX sockets out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  connect to abstract (meaning not belonging to a filesystem) Unix
-+	  domain sockets that were bound outside of a chroot.  It is recommended
-+	  that you say Y here.  If the sysctl option is enabled, a sysctl option
-+	  with name "chroot_deny_unix" is created.
-+
-+config GRKERNSEC_CHROOT_FINDTASK
-+	bool "Protect outside processes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  kill, send signals with fcntl, ptrace, capget, getpgid, getsid,
-+	  or view any process outside of the chroot.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_findtask" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_NICE
-+	bool "Restrict priority changes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to raise
-+	  the priority of processes in the chroot, or alter the priority of
-+	  processes outside the chroot.  This provides more security than simply
-+	  removing CAP_SYS_NICE from the process' capability set.  If the
-+	  sysctl option is enabled, a sysctl option with name "chroot_restrict_nice"
-+	  is created.
-+
-+config GRKERNSEC_CHROOT_SYSCTL
-+	bool "Deny sysctl writes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, an attacker in a chroot will not be able to
-+	  write to sysctl entries, either by sysctl(2) or through a /proc
-+	  interface.  It is strongly recommended that you say Y here. If the
-+	  sysctl option is enabled, a sysctl option with name
-+	  "chroot_deny_sysctl" is created.
-+
-+config GRKERNSEC_CHROOT_CAPS
-+	bool "Capability restrictions"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, the capabilities on all root processes within a
-+	  chroot jail will be lowered to stop module insertion, raw i/o,
-+	  system and net admin tasks, rebooting the system, modifying immutable
-+	  files, modifying IPC owned by another, and changing the system time.
-+	  This is left an option because it can break some apps.  Disable this
-+	  if your chrooted apps are having problems performing those kinds of
-+	  tasks.  If the sysctl option is enabled, a sysctl option with
-+	  name "chroot_caps" is created.
-+
-+endmenu
-+menu "Kernel Auditing"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_AUDIT_GROUP
-+	bool "Single group for auditing"
-+	help
-+	  If you say Y here, the exec, chdir, (un)mount, and ipc logging features
-+	  will only operate on a group you specify.  This option is recommended
-+	  if you only want to watch certain users instead of having a large
-+	  amount of logs from the entire system.  If the sysctl option is enabled,
-+	  a sysctl option with name "audit_group" is created.
-+
-+config GRKERNSEC_AUDIT_GID
-+	int "GID for auditing"
-+	depends on GRKERNSEC_AUDIT_GROUP
-+	default 1007
-+
-+config GRKERNSEC_EXECLOG
-+	bool "Exec logging"
-+	help
-+	  If you say Y here, all execve() calls will be logged (since the
-+	  other exec*() calls are frontends to execve(), all execution
-+	  will be logged).  Useful for shell-servers that like to keep track
-+	  of their users.  If the sysctl option is enabled, a sysctl option with
-+	  name "exec_logging" is created.
-+	  WARNING: This option when enabled will produce a LOT of logs, especially
-+	  on an active system.
-+
-+config GRKERNSEC_RESLOG
-+	bool "Resource logging"
-+	help
-+	  If you say Y here, all attempts to overstep resource limits will
-+	  be logged with the resource name, the requested size, and the current
-+	  limit.  It is highly recommended that you say Y here.  If the sysctl
-+	  option is enabled, a sysctl option with name "resource_logging" is
-+	  created.  If the RBAC system is enabled, the sysctl value is ignored.
-+
-+config GRKERNSEC_CHROOT_EXECLOG
-+	bool "Log execs within chroot"
-+	help
-+	  If you say Y here, all executions inside a chroot jail will be logged
-+	  to syslog.  This can cause a large amount of logs if certain
-+	  applications (eg. djb's daemontools) are installed on the system, and
-+	  is therefore left as an option.  If the sysctl option is enabled, a
-+	  sysctl option with name "chroot_execlog" is created.
-+
-+config GRKERNSEC_AUDIT_CHDIR
-+	bool "Chdir logging"
-+	help
-+	  If you say Y here, all chdir() calls will be logged.  If the sysctl
-+ 	  option is enabled, a sysctl option with name "audit_chdir" is created.
-+
-+config GRKERNSEC_AUDIT_MOUNT
-+	bool "(Un)Mount logging"
-+	help
-+	  If you say Y here, all mounts and unmounts will be logged.  If the
-+	  sysctl option is enabled, a sysctl option with name "audit_mount" is
-+	  created.
-+
-+config GRKERNSEC_AUDIT_IPC
-+	bool "IPC logging"
-+	help
-+	  If you say Y here, creation and removal of message queues, semaphores,
-+	  and shared memory will be logged.  If the sysctl option is enabled, a
-+	  sysctl option with name "audit_ipc" is created.
-+
-+config GRKERNSEC_SIGNAL
-+	bool "Signal logging"
-+	help
-+	  If you say Y here, certain important signals will be logged, such as
-+	  SIGSEGV, which will as a result inform you of when a error in a program
-+	  occurred, which in some cases could mean a possible exploit attempt.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "signal_logging" is created.
-+
-+config GRKERNSEC_FORKFAIL
-+	bool "Fork failure logging"
-+	help
-+	  If you say Y here, all failed fork() attempts will be logged.
-+	  This could suggest a fork bomb, or someone attempting to overstep
-+	  their process limit.  If the sysctl option is enabled, a sysctl option
-+	  with name "forkfail_logging" is created.
-+
-+config GRKERNSEC_TIME
-+	bool "Time change logging"
-+	help
-+	  If you say Y here, any changes of the system clock will be logged.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "timechange_logging" is created.
-+
-+config GRKERNSEC_PROC_IPADDR
-+	bool "/proc/<pid>/ipaddr support"
-+	help
-+	  If you say Y here, a new entry will be added to each /proc/<pid>
-+	  directory that contains the IP address of the person using the task.
-+	  The IP is carried across local TCP and AF_UNIX stream sockets.
-+	  This information can be useful for IDS/IPSes to perform remote response
-+	  to a local attack.  The entry is readable by only the owner of the
-+	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
-+	  the RBAC system), and thus does not create privacy concerns.
-+
-+config GRKERNSEC_AUDIT_TEXTREL
-+	bool 'ELF text relocations logging (READ HELP)'
-+	depends on PAX_MPROTECT
-+	help
-+	  If you say Y here, text relocations will be logged with the filename
-+	  of the offending library or binary.  The purpose of the feature is
-+	  to help Linux distribution developers get rid of libraries and
-+	  binaries that need text relocations which hinder the future progress
-+	  of PaX.  Only Linux distribution developers should say Y here, and
-+	  never on a production machine, as this option creates an information
-+	  leak that could aid an attacker in defeating the randomization of
-+	  a single memory region.  If the sysctl option is enabled, a sysctl
-+	  option with name "audit_textrel" is created.
-+
-+endmenu
-+
-+menu "Executable Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_EXECVE
-+	bool "Enforce RLIMIT_NPROC on execs"
-+	help
-+	  If you say Y here, users with a resource limit on processes will
-+	  have the value checked during execve() calls.  The current system
-+	  only checks the system limit during fork() calls.  If the sysctl option
-+	  is enabled, a sysctl option with name "execve_limiting" is created.
-+
-+config GRKERNSEC_SHM
-+	bool "Destroy unused shared memory"
-+	depends on SYSVIPC
-+	help
-+	  If you say Y here, shared memory will be destroyed when no one is
-+	  attached to it.  Otherwise, resources involved with the shared
-+	  memory can be used up and not be associated with any process (as the
-+	  shared memory still exists, and the creating process has exited).  If
-+	  the sysctl option is enabled, a sysctl option with name
-+	  "destroy_unused_shm" is created.
-+
-+config GRKERNSEC_DMESG
-+	bool "Dmesg(8) restriction"
-+	help
-+	  If you say Y here, non-root users will not be able to use dmesg(8)
-+	  to view up to the last 4kb of messages in the kernel's log buffer.
-+	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
-+	  created.
-+
-+config GRKERNSEC_TPE
-+	bool "Trusted Path Execution (TPE)"
-+	help
-+	  If you say Y here, you will be able to choose a gid to add to the
-+	  supplementary groups of users you want to mark as "untrusted."
-+	  These users will not be able to execute any files that are not in
-+	  root-owned directories writable only by root.  If the sysctl option
-+	  is enabled, a sysctl option with name "tpe" is created.
-+
-+config GRKERNSEC_TPE_ALL
-+	bool "Partially restrict non-root users"
-+	depends on GRKERNSEC_TPE
-+	help
-+	  If you say Y here, All non-root users other than the ones in the
-+	  group specified in the main TPE option will only be allowed to
-+	  execute files in directories they own that are not group or
-+	  world-writable, or in directories owned by root and writable only by
-+	  root.  If the sysctl option is enabled, a sysctl option with name
-+	  "tpe_restrict_all" is created.
-+
-+config GRKERNSEC_TPE_INVERT
-+	bool "Invert GID option"
-+	depends on GRKERNSEC_TPE
-+	help
-+	  If you say Y here, the group you specify in the TPE configuration will
-+	  decide what group TPE restrictions will be *disabled* for.  This
-+	  option is useful if you want TPE restrictions to be applied to most
-+	  users on the system.
-+
-+config GRKERNSEC_TPE_GID
-+	int "GID for untrusted users"
-+	depends on GRKERNSEC_TPE && !GRKERNSEC_TPE_INVERT
-+	default 1005
-+	help
-+	  If you have selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *disabled* for.
-+	  If you have not selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *enabled* for.
-+	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
-+	  is created.
-+
-+config GRKERNSEC_TPE_GID
-+	int "GID for trusted users"
-+	depends on GRKERNSEC_TPE && GRKERNSEC_TPE_INVERT
-+	default 1005
-+	help
-+	  If you have selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *disabled* for.
-+	  If you have not selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *enabled* for.
-+	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
-+	  is created.
-+
-+endmenu
-+menu "Network Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_RANDNET
-+	bool "Larger entropy pools"
-+	help
-+	  If you say Y here, the entropy pools used for many features of Linux
-+	  and grsecurity will be doubled in size.  Since several grsecurity
-+	  features use additional randomness, it is recommended that you say Y
-+	  here.  Saying Y here has a similar effect as modifying
-+	  /proc/sys/kernel/random/poolsize.
-+
-+config GRKERNSEC_SOCKET
-+	bool "Socket restrictions"
-+	help
-+	  If you say Y here, you will be able to choose from several options.
-+	  If you assign a GID on your system and add it to the supplementary
-+	  groups of users you want to restrict socket access to, this patch
-+	  will perform up to three things, based on the option(s) you choose.
-+
-+config GRKERNSEC_SOCKET_ALL
-+	bool "Deny any sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to connect to other hosts from your machine or run server
-+	  applications from your machine.  If the sysctl option is enabled, a
-+	  sysctl option with name "socket_all" is created.
-+
-+config GRKERNSEC_SOCKET_ALL_GID
-+	int "GID to deny all sockets for"
-+	depends on GRKERNSEC_SOCKET_ALL
-+	default 1004
-+	help
-+	  Here you can choose the GID to disable socket access for. Remember to
-+	  add the users you want socket access disabled for to the GID
-+	  specified here.  If the sysctl option is enabled, a sysctl option
-+	  with name "socket_all_gid" is created.
-+
-+config GRKERNSEC_SOCKET_CLIENT
-+	bool "Deny client sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to connect to other hosts from your machine, but will be
-+	  able to run servers.  If this option is enabled, all users in the group
-+	  you specify will have to use passive mode when initiating ftp transfers
-+	  from the shell on your machine.  If the sysctl option is enabled, a
-+	  sysctl option with name "socket_client" is created.
-+
-+config GRKERNSEC_SOCKET_CLIENT_GID
-+	int "GID to deny client sockets for"
-+	depends on GRKERNSEC_SOCKET_CLIENT
-+	default 1003
-+	help
-+	  Here you can choose the GID to disable client socket access for.
-+	  Remember to add the users you want client socket access disabled for to
-+	  the GID specified here.  If the sysctl option is enabled, a sysctl
-+	  option with name "socket_client_gid" is created.
-+
-+config GRKERNSEC_SOCKET_SERVER
-+	bool "Deny server sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to run server applications from your machine.  If the sysctl
-+	  option is enabled, a sysctl option with name "socket_server" is created.
-+
-+config GRKERNSEC_SOCKET_SERVER_GID
-+	int "GID to deny server sockets for"
-+	depends on GRKERNSEC_SOCKET_SERVER
-+	default 1002
-+	help
-+	  Here you can choose the GID to disable server socket access for.
-+	  Remember to add the users you want server socket access disabled for to
-+	  the GID specified here.  If the sysctl option is enabled, a sysctl
-+	  option with name "socket_server_gid" is created.
-+
-+endmenu
-+menu "Sysctl support"
-+depends on GRKERNSEC && SYSCTL
-+
-+config GRKERNSEC_SYSCTL
-+	bool "Sysctl support"
-+	help
-+	  If you say Y here, you will be able to change the options that
-+	  grsecurity runs with at bootup, without having to recompile your
-+	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
-+	  to enable (1) or disable (0) various features.  All the sysctl entries
-+	  are mutable until the "grsec_lock" entry is set to a non-zero value.
-+	  All features enabled in the kernel configuration are disabled at boot
-+	  if you do not say Y to the "Turn on features by default" option.
-+	  All options should be set at startup, and the grsec_lock entry should
-+	  be set to a non-zero value after all the options are set.
-+	  *THIS IS EXTREMELY IMPORTANT*
-+
-+config GRKERNSEC_SYSCTL_ON
-+	bool "Turn on features by default"
-+	depends on GRKERNSEC_SYSCTL
-+	help
-+	  If you say Y here, instead of having all features enabled in the
-+	  kernel configuration disabled at boot time, the features will be
-+	  enabled at boot time.  It is recommended you say Y here unless
-+	  there is some reason you would want all sysctl-tunable features to
-+	  be disabled by default.  As mentioned elsewhere, it is important
-+	  to enable the grsec_lock entry once you have finished modifying
-+	  the sysctl entries.
-+
-+endmenu
-+menu "Logging Options"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_FLOODTIME
-+	int "Seconds in between log messages (minimum)"
-+	default 10
-+	help
-+	  This option allows you to enforce the number of seconds between
-+	  grsecurity log messages.  The default should be suitable for most
-+	  people, however, if you choose to change it, choose a value small enough
-+	  to allow informative logs to be produced, but large enough to
-+	  prevent flooding.
-+
-+config GRKERNSEC_FLOODBURST
-+	int "Number of messages in a burst (maximum)"
-+	default 4
-+	help
-+	  This option allows you to choose the maximum number of messages allowed
-+	  within the flood time interval you chose in a separate option.  The
-+	  default should be suitable for most people, however if you find that
-+	  many of your logs are being interpreted as flooding, you may want to
-+	  raise this value.
-+
-+endmenu
-+
-+endmenu
-Index: linux-2.6.19/grsecurity/Makefile
-===================================================================
---- /dev/null
-+++ linux-2.6.19/grsecurity/Makefile
-@@ -0,0 +1,20 @@
-+# grsecurity's ACL system was originally written in 2001 by Michael Dalton
-+# during 2001-2005 it has been completely redesigned by Brad Spengler
-+# into an RBAC system
-+#
-+# All code in this directory and various hooks inserted throughout the kernel
-+# are copyright Brad Spengler, and released under the GPL v2 or higher
-+
-+obj-y = grsec_chdir.o grsec_chroot.o grsec_exec.o grsec_fifo.o grsec_fork.o \
-+	grsec_mount.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
-+	grsec_time.o grsec_tpe.o grsec_ipc.o grsec_link.o grsec_textrel.o
-+
-+obj-$(CONFIG_GRKERNSEC) += grsec_init.o grsum.o gracl.o gracl_ip.o gracl_segv.o \
-+	gracl_cap.o gracl_alloc.o gracl_shm.o grsec_mem.o gracl_fs.o \
-+	gracl_learn.o grsec_log.o
-+obj-$(CONFIG_GRKERNSEC_RESLOG) += gracl_res.o
-+
-+ifndef CONFIG_GRKERNSEC
-+obj-y += grsec_disabled.o
-+endif
-+
++++ linux-2.6.19/grsecurity/gracl_alloc.c
+@@ -0,0 +1,91 @@
++#include <linux/kernel.h>
++#include <linux/mm.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
++#include <linux/gracl.h>
++#include <linux/grsecurity.h>
++
++static unsigned long alloc_stack_next = 1;
++static unsigned long alloc_stack_size = 1;
++static void **alloc_stack;
++
++static __inline__ int
++alloc_pop(void)
++{
++	if (alloc_stack_next == 1)
++		return 0;
++
++	kfree(alloc_stack[alloc_stack_next - 2]);
++
++	alloc_stack_next--;
++
++	return 1;
++}
++
++static __inline__ void
++alloc_push(void *buf)
++{
++	if (alloc_stack_next >= alloc_stack_size)
++		BUG();
++
++	alloc_stack[alloc_stack_next - 1] = buf;
++
++	alloc_stack_next++;
++
++	return;
++}
++
++void *
++acl_alloc(unsigned long len)
++{
++	void *ret;
++
++	if (len > PAGE_SIZE)
++		BUG();
++
++	ret = kmalloc(len, GFP_KERNEL);
++
++	if (ret)
++		alloc_push(ret);
++
++	return ret;
++}
++
++void
++acl_free_all(void)
++{
++	if (gr_acl_is_enabled() || !alloc_stack)
++		return;
++
++	while (alloc_pop()) ;
++
++	if (alloc_stack) {
++		if ((alloc_stack_size * sizeof (void *)) <= PAGE_SIZE)
++			kfree(alloc_stack);
++		else
++			vfree(alloc_stack);
++	}
++
++	alloc_stack = NULL;
++	alloc_stack_size = 1;
++	alloc_stack_next = 1;
++
++	return;
++}
++
++int
++acl_alloc_stack_init(unsigned long size)
++{
++	if ((size * sizeof (void *)) <= PAGE_SIZE)
++		alloc_stack =
++		    (void **) kmalloc(size * sizeof (void *), GFP_KERNEL);
++	else
++		alloc_stack = (void **) vmalloc(size * sizeof (void *));
++
++	alloc_stack_size = size;
++
++	if (!alloc_stack)
++		return 0;
++	else
++		return 1;
++}
 Index: linux-2.6.19/grsecurity/gracl.c
 ===================================================================
 --- /dev/null
@@ -17071,102 +16296,6 @@ Index: linux-2.6.19/grsecurity/gracl.c
 +EXPORT_SYMBOL(gr_check_group_change);
 +#endif
 +
-Index: linux-2.6.19/grsecurity/gracl_alloc.c
-===================================================================
---- /dev/null
-+++ linux-2.6.19/grsecurity/gracl_alloc.c
-@@ -0,0 +1,91 @@
-+#include <linux/kernel.h>
-+#include <linux/mm.h>
-+#include <linux/slab.h>
-+#include <linux/vmalloc.h>
-+#include <linux/gracl.h>
-+#include <linux/grsecurity.h>
-+
-+static unsigned long alloc_stack_next = 1;
-+static unsigned long alloc_stack_size = 1;
-+static void **alloc_stack;
-+
-+static __inline__ int
-+alloc_pop(void)
-+{
-+	if (alloc_stack_next == 1)
-+		return 0;
-+
-+	kfree(alloc_stack[alloc_stack_next - 2]);
-+
-+	alloc_stack_next--;
-+
-+	return 1;
-+}
-+
-+static __inline__ void
-+alloc_push(void *buf)
-+{
-+	if (alloc_stack_next >= alloc_stack_size)
-+		BUG();
-+
-+	alloc_stack[alloc_stack_next - 1] = buf;
-+
-+	alloc_stack_next++;
-+
-+	return;
-+}
-+
-+void *
-+acl_alloc(unsigned long len)
-+{
-+	void *ret;
-+
-+	if (len > PAGE_SIZE)
-+		BUG();
-+
-+	ret = kmalloc(len, GFP_KERNEL);
-+
-+	if (ret)
-+		alloc_push(ret);
-+
-+	return ret;
-+}
-+
-+void
-+acl_free_all(void)
-+{
-+	if (gr_acl_is_enabled() || !alloc_stack)
-+		return;
-+
-+	while (alloc_pop()) ;
-+
-+	if (alloc_stack) {
-+		if ((alloc_stack_size * sizeof (void *)) <= PAGE_SIZE)
-+			kfree(alloc_stack);
-+		else
-+			vfree(alloc_stack);
-+	}
-+
-+	alloc_stack = NULL;
-+	alloc_stack_size = 1;
-+	alloc_stack_next = 1;
-+
-+	return;
-+}
-+
-+int
-+acl_alloc_stack_init(unsigned long size)
-+{
-+	if ((size * sizeof (void *)) <= PAGE_SIZE)
-+		alloc_stack =
-+		    (void **) kmalloc(size * sizeof (void *), GFP_KERNEL);
-+	else
-+		alloc_stack = (void **) vmalloc(size * sizeof (void *));
-+
-+	alloc_stack_size = size;
-+
-+	if (!alloc_stack)
-+		return 0;
-+	else
-+		return 1;
-+}
 Index: linux-2.6.19/grsecurity/gracl_cap.c
 ===================================================================
 --- /dev/null
@@ -21238,6 +20367,908 @@ Index: linux-2.6.19/grsecurity/grsum.c
 +
 +	return retval;
 +}
+Index: linux-2.6.19/grsecurity/Kconfig
+===================================================================
+--- /dev/null
++++ linux-2.6.19/grsecurity/Kconfig
+@@ -0,0 +1,872 @@
++#
++# grecurity configuration
++#
++
++menu "Grsecurity"
++
++config GRKERNSEC
++	bool "Grsecurity"
++	select CRYPTO
++	select CRYPTO_SHA256
++	help
++	  If you say Y here, you will be able to configure many features
++	  that will enhance the security of your system.  It is highly
++	  recommended that you say Y here and read through the help
++	  for each option so that you fully understand the features and
++	  can evaluate their usefulness for your machine.
++
++choice
++	prompt "Security Level"
++	depends GRKERNSEC
++	default GRKERNSEC_CUSTOM
++
++config GRKERNSEC_LOW
++	bool "Low"
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_MODSTOP if (MODULES)
++
++	help
++	  If you choose this option, several of the grsecurity options will
++	  be enabled that will give you greater protection against a number
++	  of attacks, while assuring that none of your software will have any
++	  conflicts with the additional security measures.  If you run a lot
++	  of unusual software, or you are having problems with the higher
++	  security levels, you should say Y here.  With this option, the
++	  following features are enabled:
++
++	  - Linking restrictions
++	  - FIFO restrictions
++	  - Enforcing RLIMIT_NPROC on execve
++	  - Restricted dmesg
++	  - Enforced chdir("/") on chroot
++	  - Runtime module disabling
++
++config GRKERNSEC_MEDIUM
++	bool "Medium"
++	select PAX
++	select PAX_EI_PAX
++	select PAX_PT_PAX_FLAGS
++	select PAX_HAVE_ACL_FLAGS
++	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_TIME
++	select GRKERNSEC_SIGNAL
++	select GRKERNSEC_CHROOT
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select PAX_RANDUSTACK
++	select PAX_ASLR
++	select PAX_RANDMMAP
++
++	help
++	  If you say Y here, several features in addition to those included
++	  in the low additional security level will be enabled.  These
++	  features provide even more security to your system, though in rare
++	  cases they may be incompatible with very old or poorly written
++	  software.  If you enable this option, make sure that your auth
++	  service (identd) is running as gid 1001.  With this option, 
++	  the following features (in addition to those provided in the 
++	  low additional security level) will be enabled:
++
++	  - Randomized TCP source ports
++	  - Failed fork logging
++	  - Time change logging
++	  - Signal logging
++	  - Deny mounts in chroot
++	  - Deny double chrooting
++	  - Deny sysctl writes in chroot
++	  - Deny mknod in chroot
++	  - Deny access to abstract AF_UNIX sockets out of chroot
++	  - Deny pivot_root in chroot
++	  - Denied writes of /dev/kmem, /dev/mem, and /dev/port
++	  - /proc restrictions with special GID set to 10 (usually wheel)
++	  - Address Space Layout Randomization (ASLR)
++
++config GRKERNSEC_HIGH
++	bool "High"
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_TIME
++	select GRKERNSEC_SIGNAL
++	select GRKERNSEC_CHROOT_SHMAT
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_FCHDIR
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_CHROOT_CAPS
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_CHROOT_FINDTASK
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
++	select GRKERNSEC_HIDESYM
++	select GRKERNSEC_BRUTE
++	select GRKERNSEC_SHM if (SYSVIPC)
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_KMEM
++	select GRKERNSEC_RESLOG
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_PROC_ADD
++	select GRKERNSEC_CHROOT_CHMOD
++	select GRKERNSEC_CHROOT_NICE
++	select GRKERNSEC_AUDIT_MOUNT
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select PAX
++	select PAX_RANDUSTACK
++	select PAX_ASLR
++	select PAX_RANDMMAP
++	select PAX_NOEXEC
++	select PAX_MPROTECT
++	select PAX_EI_PAX
++	select PAX_PT_PAX_FLAGS
++	select PAX_HAVE_ACL_FLAGS
++	select PAX_KERNEXEC if (!X86_64 && !MODULES && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS)
++	select PAX_RANDKSTACK if (X86_TSC && !X86_64)
++	select PAX_SEGMEXEC if (X86 && !X86_64)
++	select PAX_PAGEEXEC if (!X86)
++	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
++	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
++	select PAX_SYSCALL if (PPC32)
++	select PAX_EMUTRAMP if (PARISC)
++	select PAX_EMUSIGRT if (PARISC)
++	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
++	help
++	  If you say Y here, many of the features of grsecurity will be
++	  enabled, which will protect you against many kinds of attacks
++	  against your system.  The heightened security comes at a cost
++	  of an increased chance of incompatibilities with rare software
++	  on your machine.  Since this security level enables PaX, you should
++	  view <http://pax.grsecurity.net> and read about the PaX
++	  project.  While you are there, download chpax and run it on
++	  binaries that cause problems with PaX.  Also remember that
++	  since the /proc restrictions are enabled, you must run your
++	  identd as gid 1001.  This security level enables the following 
++	  features in addition to those listed in the low and medium 
++	  security levels:
++
++	  - Additional /proc restrictions
++	  - Chmod restrictions in chroot
++	  - No signals, ptrace, or viewing of processes outside of chroot
++	  - Capability restrictions in chroot
++	  - Deny fchdir out of chroot
++	  - Priority restrictions in chroot
++	  - Segmentation-based implementation of PaX
++	  - Mprotect restrictions
++	  - Removal of addresses from /proc/<pid>/[smaps|maps|stat]
++	  - Kernel stack randomization
++	  - Mount/unmount/remount logging
++	  - Kernel symbol hiding
++	  - Destroy unused shared memory	
++	  - Prevention of memory exhaustion-based exploits
++config GRKERNSEC_CUSTOM
++	bool "Custom"
++	help
++	  If you say Y here, you will be able to configure every grsecurity
++	  option, which allows you to enable many more features that aren't
++	  covered in the basic security levels.  These additional features
++	  include TPE, socket restrictions, and the sysctl system for
++	  grsecurity.  It is advised that you read through the help for
++	  each option to determine its usefulness in your situation.
++
++endchoice
++
++menu "Address Space Protection"
++depends on GRKERNSEC
++
++config GRKERNSEC_KMEM
++	bool "Deny writing to /dev/kmem, /dev/mem, and /dev/port"
++	help
++	  If you say Y here, /dev/kmem and /dev/mem won't be allowed to
++	  be written to via mmap or otherwise to modify the running kernel.
++	  /dev/port will also not be allowed to be opened. If you have module
++	  support disabled, enabling this will close up four ways that are
++	  currently used  to insert malicious code into the running kernel.
++	  Even with all these features enabled, we still highly recommend that
++	  you use the RBAC system, as it is still possible for an attacker to
++	  modify the running kernel through privileged I/O granted by ioperm/iopl.
++	  If you are not using XFree86, you may be able to stop this additional
++	  case by enabling the 'Disable privileged I/O' option. Though nothing
++	  legitimately writes to /dev/kmem, XFree86 does need to write to /dev/mem,
++	  but only to video memory, which is the only writing we allow in this
++	  case.  If /dev/kmem or /dev/mem are mmaped without PROT_WRITE, they will
++	  not be allowed to mprotect it with PROT_WRITE later.
++	  It is highly recommended that you say Y here if you meet all the
++	  conditions above.
++
++config GRKERNSEC_IO
++	bool "Disable privileged I/O"
++	depends on X86
++	select RTC
++	help
++	  If you say Y here, all ioperm and iopl calls will return an error.
++	  Ioperm and iopl can be used to modify the running kernel.
++	  Unfortunately, some programs need this access to operate properly,
++	  the most notable of which are XFree86 and hwclock.  hwclock can be
++	  remedied by having RTC support in the kernel, so CONFIG_RTC is
++	  enabled if this option is enabled, to ensure that hwclock operates
++	  correctly.  XFree86 still will not operate correctly with this option
++	  enabled, so DO NOT CHOOSE Y IF YOU USE XFree86.  If you use XFree86
++	  and you still want to protect your kernel against modification,
++	  use the RBAC system.
++
++config GRKERNSEC_PROC_MEMMAP
++	bool "Remove addresses from /proc/<pid>/[smaps|maps|stat]"
++	depends on PAX_NOEXEC || PAX_ASLR
++	help
++	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files will
++	  give no information about the addresses of its mappings if
++	  PaX features that rely on random addresses are enabled on the task.
++	  If you use PaX it is greatly recommended that you say Y here as it
++	  closes up a hole that makes the full ASLR useless for suid
++	  binaries.
++
++config GRKERNSEC_BRUTE
++	bool "Deter exploit bruteforcing"
++	help
++	  If you say Y here, attempts to bruteforce exploits against forking
++	  daemons such as apache or sshd will be deterred.  When a child of a
++	  forking daemon is killed by PaX or crashes due to an illegal
++	  instruction, the parent process will be delayed 30 seconds upon every
++	  subsequent fork until the administrator is able to assess the
++	  situation and restart the daemon.  It is recommended that you also
++	  enable signal logging in the auditing section so that logs are
++	  generated when a process performs an illegal instruction.
++
++config GRKERNSEC_MODSTOP
++	bool "Runtime module disabling"
++	depends on MODULES
++	help
++	  If you say Y here, you will be able to disable the ability to (un)load
++	  modules at runtime.  This feature is useful if you need the ability
++	  to load kernel modules at boot time, but do not want to allow an
++	  attacker to load a rootkit kernel module into the system, or to remove
++	  a loaded kernel module important to system functioning.  You should
++	  enable the /dev/mem protection feature as well, since rootkits can be
++	  inserted into the kernel via other methods than kernel modules.  Since
++	  an untrusted module could still be loaded by modifying init scripts and
++	  rebooting the system, it is also recommended that you enable the RBAC
++	  system.  If you enable this option, a sysctl option with name
++	  "disable_modules" will be created.  Setting this option to "1" disables
++	  module loading.  After this option is set, no further writes to it are
++	  allowed until the system is rebooted.
++
++config GRKERNSEC_HIDESYM
++	bool "Hide kernel symbols"
++	help
++	  If you say Y here, getting information on loaded modules, and
++	  displaying all kernel symbols through a syscall will be restricted
++	  to users with CAP_SYS_MODULE.  This option is only effective
++	  provided the following conditions are met:
++	  1) The kernel using grsecurity is not precompiled by some distribution
++	  2) You are using the RBAC system and hiding other files such as your
++	     kernel image and System.map
++	  3) You have the additional /proc restrictions enabled, which removes
++	     /proc/kcore
++	  If the above conditions are met, this option will aid to provide a
++	  useful protection against local and remote kernel exploitation of
++	  overflows and arbitrary read/write vulnerabilities.
++
++endmenu
++menu "Role Based Access Control Options"
++depends on GRKERNSEC
++
++config GRKERNSEC_ACL_HIDEKERN
++	bool "Hide kernel processes"
++	help
++	  If you say Y here, all kernel threads will be hidden to all
++	  processes but those whose subject has the "view hidden processes"
++	  flag.
++
++config GRKERNSEC_ACL_MAXTRIES
++	int "Maximum tries before password lockout"
++	default 3
++	help
++	  This option enforces the maximum number of times a user can attempt
++	  to authorize themselves with the grsecurity RBAC system before being
++	  denied the ability to attempt authorization again for a specified time.
++	  The lower the number, the harder it will be to brute-force a password.
++
++config GRKERNSEC_ACL_TIMEOUT
++	int "Time to wait after max password tries, in seconds"
++	default 30
++	help
++	  This option specifies the time the user must wait after attempting to
++	  authorize to the RBAC system with the maximum number of invalid
++	  passwords.  The higher the number, the harder it will be to brute-force
++	  a password.
++
++endmenu
++menu "Filesystem Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_PROC
++	bool "Proc restrictions"
++	help
++	  If you say Y here, the permissions of the /proc filesystem
++	  will be altered to enhance system security and privacy.  You MUST
++  	  choose either a user only restriction or a user and group restriction.
++	  Depending upon the option you choose, you can either restrict users to
++	  see only the processes they themselves run, or choose a group that can
++	  view all processes and files normally restricted to root if you choose
++	  the "restrict to user only" option.  NOTE: If you're running identd as
++	  a non-root user, you will have to run it as the group you specify here.
++
++config GRKERNSEC_PROC_USER
++	bool "Restrict /proc to user only"
++	depends on GRKERNSEC_PROC
++	help
++	  If you say Y here, non-root users will only be able to view their own
++	  processes, and restricts them from viewing network-related information,
++	  and viewing kernel symbol and module information.
++
++config GRKERNSEC_PROC_USERGROUP
++	bool "Allow special group"
++	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
++	help
++	  If you say Y here, you will be able to select a group that will be
++	  able to view all processes, network-related information, and
++	  kernel and symbol information.  This option is useful if you want
++	  to run identd as a non-root user.
++
++config GRKERNSEC_PROC_GID
++	int "GID for special group"
++	depends on GRKERNSEC_PROC_USERGROUP
++	default 1001
++
++config GRKERNSEC_PROC_ADD
++	bool "Additional restrictions"
++	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
++	help
++	  If you say Y here, additional restrictions will be placed on
++	  /proc that keep normal users from viewing device information and 
++	  slabinfo information that could be useful for exploits.
++
++config GRKERNSEC_LINK
++	bool "Linking restrictions"
++	help
++	  If you say Y here, /tmp race exploits will be prevented, since users
++	  will no longer be able to follow symlinks owned by other users in
++	  world-writable +t directories (i.e. /tmp), unless the owner of the
++	  symlink is the owner of the directory. users will also not be
++	  able to hardlink to files they do not own.  If the sysctl option is
++	  enabled, a sysctl option with name "linking_restrictions" is created.
++
++config GRKERNSEC_FIFO
++	bool "FIFO restrictions"
++	help
++	  If you say Y here, users will not be able to write to FIFOs they don't
++	  own in world-writable +t directories (i.e. /tmp), unless the owner of
++	  the FIFO is the same owner of the directory it's held in.  If the sysctl
++	  option is enabled, a sysctl option with name "fifo_restrictions" is
++	  created.
++
++config GRKERNSEC_CHROOT
++	bool "Chroot jail restrictions"
++	help
++	  If you say Y here, you will be able to choose several options that will
++	  make breaking out of a chrooted jail much more difficult.  If you
++	  encounter no software incompatibilities with the following options, it
++	  is recommended that you enable each one.
++
++config GRKERNSEC_CHROOT_MOUNT
++	bool "Deny mounts"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  mount or remount filesystems.  If the sysctl option is enabled, a
++	  sysctl option with name "chroot_deny_mount" is created.
++
++config GRKERNSEC_CHROOT_DOUBLE
++	bool "Deny double-chroots"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to chroot
++	  again outside the chroot.  This is a widely used method of breaking
++	  out of a chroot jail and should not be allowed.  If the sysctl 
++	  option is enabled, a sysctl option with name 
++	  "chroot_deny_chroot" is created.
++
++config GRKERNSEC_CHROOT_PIVOT
++	bool "Deny pivot_root in chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to use
++	  a function called pivot_root() that was introduced in Linux 2.3.41.  It
++	  works similar to chroot in that it changes the root filesystem.  This
++	  function could be misused in a chrooted process to attempt to break out
++	  of the chroot, and therefore should not be allowed.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_deny_pivot" is
++	  created.
++
++config GRKERNSEC_CHROOT_CHDIR
++	bool "Enforce chdir(\"/\") on all chroots"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, the current working directory of all newly-chrooted
++	  applications will be set to the the root directory of the chroot.
++	  The man page on chroot(2) states:
++	  Note that this call does not change  the  current  working
++	  directory,  so  that `.' can be outside the tree rooted at
++	  `/'.  In particular, the  super-user  can  escape  from  a
++	  `chroot jail' by doing `mkdir foo; chroot foo; cd ..'.
++
++	  It is recommended that you say Y here, since it's not known to break
++	  any software.  If the sysctl option is enabled, a sysctl option with
++	  name "chroot_enforce_chdir" is created.
++
++config GRKERNSEC_CHROOT_CHMOD
++	bool "Deny (f)chmod +s"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to chmod
++	  or fchmod files to make them have suid or sgid bits.  This protects
++	  against another published method of breaking a chroot.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_deny_chmod" is
++	  created.
++
++config GRKERNSEC_CHROOT_FCHDIR
++	bool "Deny fchdir out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, a well-known method of breaking chroots by fchdir'ing
++	  to a file descriptor of the chrooting process that points to a directory
++	  outside the filesystem will be stopped.  If the sysctl option
++	  is enabled, a sysctl option with name "chroot_deny_fchdir" is created.
++
++config GRKERNSEC_CHROOT_MKNOD
++	bool "Deny mknod"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be allowed to
++	  mknod.  The problem with using mknod inside a chroot is that it
++	  would allow an attacker to create a device entry that is the same
++	  as one on the physical root of your system, which could range from
++	  anything from the console device to a device for your harddrive (which
++	  they could then use to wipe the drive or steal data).  It is recommended
++	  that you say Y here, unless you run into software incompatibilities.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "chroot_deny_mknod" is created.
++
++config GRKERNSEC_CHROOT_SHMAT
++	bool "Deny shmat() out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to attach
++	  to shared memory segments that were created outside of the chroot jail.
++	  It is recommended that you say Y here.  If the sysctl option is enabled,
++	  a sysctl option with name "chroot_deny_shmat" is created.
++
++config GRKERNSEC_CHROOT_UNIX
++	bool "Deny access to abstract AF_UNIX sockets out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  connect to abstract (meaning not belonging to a filesystem) Unix
++	  domain sockets that were bound outside of a chroot.  It is recommended
++	  that you say Y here.  If the sysctl option is enabled, a sysctl option
++	  with name "chroot_deny_unix" is created.
++
++config GRKERNSEC_CHROOT_FINDTASK
++	bool "Protect outside processes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  kill, send signals with fcntl, ptrace, capget, getpgid, getsid,
++	  or view any process outside of the chroot.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_findtask" is
++	  created.
++
++config GRKERNSEC_CHROOT_NICE
++	bool "Restrict priority changes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to raise
++	  the priority of processes in the chroot, or alter the priority of
++	  processes outside the chroot.  This provides more security than simply
++	  removing CAP_SYS_NICE from the process' capability set.  If the
++	  sysctl option is enabled, a sysctl option with name "chroot_restrict_nice"
++	  is created.
++
++config GRKERNSEC_CHROOT_SYSCTL
++	bool "Deny sysctl writes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, an attacker in a chroot will not be able to
++	  write to sysctl entries, either by sysctl(2) or through a /proc
++	  interface.  It is strongly recommended that you say Y here. If the
++	  sysctl option is enabled, a sysctl option with name
++	  "chroot_deny_sysctl" is created.
++
++config GRKERNSEC_CHROOT_CAPS
++	bool "Capability restrictions"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, the capabilities on all root processes within a
++	  chroot jail will be lowered to stop module insertion, raw i/o,
++	  system and net admin tasks, rebooting the system, modifying immutable
++	  files, modifying IPC owned by another, and changing the system time.
++	  This is left an option because it can break some apps.  Disable this
++	  if your chrooted apps are having problems performing those kinds of
++	  tasks.  If the sysctl option is enabled, a sysctl option with
++	  name "chroot_caps" is created.
++
++endmenu
++menu "Kernel Auditing"
++depends on GRKERNSEC
++
++config GRKERNSEC_AUDIT_GROUP
++	bool "Single group for auditing"
++	help
++	  If you say Y here, the exec, chdir, (un)mount, and ipc logging features
++	  will only operate on a group you specify.  This option is recommended
++	  if you only want to watch certain users instead of having a large
++	  amount of logs from the entire system.  If the sysctl option is enabled,
++	  a sysctl option with name "audit_group" is created.
++
++config GRKERNSEC_AUDIT_GID
++	int "GID for auditing"
++	depends on GRKERNSEC_AUDIT_GROUP
++	default 1007
++
++config GRKERNSEC_EXECLOG
++	bool "Exec logging"
++	help
++	  If you say Y here, all execve() calls will be logged (since the
++	  other exec*() calls are frontends to execve(), all execution
++	  will be logged).  Useful for shell-servers that like to keep track
++	  of their users.  If the sysctl option is enabled, a sysctl option with
++	  name "exec_logging" is created.
++	  WARNING: This option when enabled will produce a LOT of logs, especially
++	  on an active system.
++
++config GRKERNSEC_RESLOG
++	bool "Resource logging"
++	help
++	  If you say Y here, all attempts to overstep resource limits will
++	  be logged with the resource name, the requested size, and the current
++	  limit.  It is highly recommended that you say Y here.  If the sysctl
++	  option is enabled, a sysctl option with name "resource_logging" is
++	  created.  If the RBAC system is enabled, the sysctl value is ignored.
++
++config GRKERNSEC_CHROOT_EXECLOG
++	bool "Log execs within chroot"
++	help
++	  If you say Y here, all executions inside a chroot jail will be logged
++	  to syslog.  This can cause a large amount of logs if certain
++	  applications (eg. djb's daemontools) are installed on the system, and
++	  is therefore left as an option.  If the sysctl option is enabled, a
++	  sysctl option with name "chroot_execlog" is created.
++
++config GRKERNSEC_AUDIT_CHDIR
++	bool "Chdir logging"
++	help
++	  If you say Y here, all chdir() calls will be logged.  If the sysctl
++ 	  option is enabled, a sysctl option with name "audit_chdir" is created.
++
++config GRKERNSEC_AUDIT_MOUNT
++	bool "(Un)Mount logging"
++	help
++	  If you say Y here, all mounts and unmounts will be logged.  If the
++	  sysctl option is enabled, a sysctl option with name "audit_mount" is
++	  created.
++
++config GRKERNSEC_AUDIT_IPC
++	bool "IPC logging"
++	help
++	  If you say Y here, creation and removal of message queues, semaphores,
++	  and shared memory will be logged.  If the sysctl option is enabled, a
++	  sysctl option with name "audit_ipc" is created.
++
++config GRKERNSEC_SIGNAL
++	bool "Signal logging"
++	help
++	  If you say Y here, certain important signals will be logged, such as
++	  SIGSEGV, which will as a result inform you of when a error in a program
++	  occurred, which in some cases could mean a possible exploit attempt.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "signal_logging" is created.
++
++config GRKERNSEC_FORKFAIL
++	bool "Fork failure logging"
++	help
++	  If you say Y here, all failed fork() attempts will be logged.
++	  This could suggest a fork bomb, or someone attempting to overstep
++	  their process limit.  If the sysctl option is enabled, a sysctl option
++	  with name "forkfail_logging" is created.
++
++config GRKERNSEC_TIME
++	bool "Time change logging"
++	help
++	  If you say Y here, any changes of the system clock will be logged.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "timechange_logging" is created.
++
++config GRKERNSEC_PROC_IPADDR
++	bool "/proc/<pid>/ipaddr support"
++	help
++	  If you say Y here, a new entry will be added to each /proc/<pid>
++	  directory that contains the IP address of the person using the task.
++	  The IP is carried across local TCP and AF_UNIX stream sockets.
++	  This information can be useful for IDS/IPSes to perform remote response
++	  to a local attack.  The entry is readable by only the owner of the
++	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
++	  the RBAC system), and thus does not create privacy concerns.
++
++config GRKERNSEC_AUDIT_TEXTREL
++	bool 'ELF text relocations logging (READ HELP)'
++	depends on PAX_MPROTECT
++	help
++	  If you say Y here, text relocations will be logged with the filename
++	  of the offending library or binary.  The purpose of the feature is
++	  to help Linux distribution developers get rid of libraries and
++	  binaries that need text relocations which hinder the future progress
++	  of PaX.  Only Linux distribution developers should say Y here, and
++	  never on a production machine, as this option creates an information
++	  leak that could aid an attacker in defeating the randomization of
++	  a single memory region.  If the sysctl option is enabled, a sysctl
++	  option with name "audit_textrel" is created.
++
++endmenu
++
++menu "Executable Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_EXECVE
++	bool "Enforce RLIMIT_NPROC on execs"
++	help
++	  If you say Y here, users with a resource limit on processes will
++	  have the value checked during execve() calls.  The current system
++	  only checks the system limit during fork() calls.  If the sysctl option
++	  is enabled, a sysctl option with name "execve_limiting" is created.
++
++config GRKERNSEC_SHM
++	bool "Destroy unused shared memory"
++	depends on SYSVIPC
++	help
++	  If you say Y here, shared memory will be destroyed when no one is
++	  attached to it.  Otherwise, resources involved with the shared
++	  memory can be used up and not be associated with any process (as the
++	  shared memory still exists, and the creating process has exited).  If
++	  the sysctl option is enabled, a sysctl option with name
++	  "destroy_unused_shm" is created.
++
++config GRKERNSEC_DMESG
++	bool "Dmesg(8) restriction"
++	help
++	  If you say Y here, non-root users will not be able to use dmesg(8)
++	  to view up to the last 4kb of messages in the kernel's log buffer.
++	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
++	  created.
++
++config GRKERNSEC_TPE
++	bool "Trusted Path Execution (TPE)"
++	help
++	  If you say Y here, you will be able to choose a gid to add to the
++	  supplementary groups of users you want to mark as "untrusted."
++	  These users will not be able to execute any files that are not in
++	  root-owned directories writable only by root.  If the sysctl option
++	  is enabled, a sysctl option with name "tpe" is created.
++
++config GRKERNSEC_TPE_ALL
++	bool "Partially restrict non-root users"
++	depends on GRKERNSEC_TPE
++	help
++	  If you say Y here, All non-root users other than the ones in the
++	  group specified in the main TPE option will only be allowed to
++	  execute files in directories they own that are not group or
++	  world-writable, or in directories owned by root and writable only by
++	  root.  If the sysctl option is enabled, a sysctl option with name
++	  "tpe_restrict_all" is created.
++
++config GRKERNSEC_TPE_INVERT
++	bool "Invert GID option"
++	depends on GRKERNSEC_TPE
++	help
++	  If you say Y here, the group you specify in the TPE configuration will
++	  decide what group TPE restrictions will be *disabled* for.  This
++	  option is useful if you want TPE restrictions to be applied to most
++	  users on the system.
++
++config GRKERNSEC_TPE_GID
++	int "GID for untrusted users"
++	depends on GRKERNSEC_TPE && !GRKERNSEC_TPE_INVERT
++	default 1005
++	help
++	  If you have selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *disabled* for.
++	  If you have not selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *enabled* for.
++	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
++	  is created.
++
++config GRKERNSEC_TPE_GID
++	int "GID for trusted users"
++	depends on GRKERNSEC_TPE && GRKERNSEC_TPE_INVERT
++	default 1005
++	help
++	  If you have selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *disabled* for.
++	  If you have not selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *enabled* for.
++	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
++	  is created.
++
++endmenu
++menu "Network Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_RANDNET
++	bool "Larger entropy pools"
++	help
++	  If you say Y here, the entropy pools used for many features of Linux
++	  and grsecurity will be doubled in size.  Since several grsecurity
++	  features use additional randomness, it is recommended that you say Y
++	  here.  Saying Y here has a similar effect as modifying
++	  /proc/sys/kernel/random/poolsize.
++
++config GRKERNSEC_SOCKET
++	bool "Socket restrictions"
++	help
++	  If you say Y here, you will be able to choose from several options.
++	  If you assign a GID on your system and add it to the supplementary
++	  groups of users you want to restrict socket access to, this patch
++	  will perform up to three things, based on the option(s) you choose.
++
++config GRKERNSEC_SOCKET_ALL
++	bool "Deny any sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to connect to other hosts from your machine or run server
++	  applications from your machine.  If the sysctl option is enabled, a
++	  sysctl option with name "socket_all" is created.
++
++config GRKERNSEC_SOCKET_ALL_GID
++	int "GID to deny all sockets for"
++	depends on GRKERNSEC_SOCKET_ALL
++	default 1004
++	help
++	  Here you can choose the GID to disable socket access for. Remember to
++	  add the users you want socket access disabled for to the GID
++	  specified here.  If the sysctl option is enabled, a sysctl option
++	  with name "socket_all_gid" is created.
++
++config GRKERNSEC_SOCKET_CLIENT
++	bool "Deny client sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to connect to other hosts from your machine, but will be
++	  able to run servers.  If this option is enabled, all users in the group
++	  you specify will have to use passive mode when initiating ftp transfers
++	  from the shell on your machine.  If the sysctl option is enabled, a
++	  sysctl option with name "socket_client" is created.
++
++config GRKERNSEC_SOCKET_CLIENT_GID
++	int "GID to deny client sockets for"
++	depends on GRKERNSEC_SOCKET_CLIENT
++	default 1003
++	help
++	  Here you can choose the GID to disable client socket access for.
++	  Remember to add the users you want client socket access disabled for to
++	  the GID specified here.  If the sysctl option is enabled, a sysctl
++	  option with name "socket_client_gid" is created.
++
++config GRKERNSEC_SOCKET_SERVER
++	bool "Deny server sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to run server applications from your machine.  If the sysctl
++	  option is enabled, a sysctl option with name "socket_server" is created.
++
++config GRKERNSEC_SOCKET_SERVER_GID
++	int "GID to deny server sockets for"
++	depends on GRKERNSEC_SOCKET_SERVER
++	default 1002
++	help
++	  Here you can choose the GID to disable server socket access for.
++	  Remember to add the users you want server socket access disabled for to
++	  the GID specified here.  If the sysctl option is enabled, a sysctl
++	  option with name "socket_server_gid" is created.
++
++endmenu
++menu "Sysctl support"
++depends on GRKERNSEC && SYSCTL
++
++config GRKERNSEC_SYSCTL
++	bool "Sysctl support"
++	help
++	  If you say Y here, you will be able to change the options that
++	  grsecurity runs with at bootup, without having to recompile your
++	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
++	  to enable (1) or disable (0) various features.  All the sysctl entries
++	  are mutable until the "grsec_lock" entry is set to a non-zero value.
++	  All features enabled in the kernel configuration are disabled at boot
++	  if you do not say Y to the "Turn on features by default" option.
++	  All options should be set at startup, and the grsec_lock entry should
++	  be set to a non-zero value after all the options are set.
++	  *THIS IS EXTREMELY IMPORTANT*
++
++config GRKERNSEC_SYSCTL_ON
++	bool "Turn on features by default"
++	depends on GRKERNSEC_SYSCTL
++	help
++	  If you say Y here, instead of having all features enabled in the
++	  kernel configuration disabled at boot time, the features will be
++	  enabled at boot time.  It is recommended you say Y here unless
++	  there is some reason you would want all sysctl-tunable features to
++	  be disabled by default.  As mentioned elsewhere, it is important
++	  to enable the grsec_lock entry once you have finished modifying
++	  the sysctl entries.
++
++endmenu
++menu "Logging Options"
++depends on GRKERNSEC
++
++config GRKERNSEC_FLOODTIME
++	int "Seconds in between log messages (minimum)"
++	default 10
++	help
++	  This option allows you to enforce the number of seconds between
++	  grsecurity log messages.  The default should be suitable for most
++	  people, however, if you choose to change it, choose a value small enough
++	  to allow informative logs to be produced, but large enough to
++	  prevent flooding.
++
++config GRKERNSEC_FLOODBURST
++	int "Number of messages in a burst (maximum)"
++	default 4
++	help
++	  This option allows you to choose the maximum number of messages allowed
++	  within the flood time interval you chose in a separate option.  The
++	  default should be suitable for most people, however if you find that
++	  many of your logs are being interpreted as flooding, you may want to
++	  raise this value.
++
++endmenu
++
++endmenu
+Index: linux-2.6.19/grsecurity/Makefile
+===================================================================
+--- /dev/null
++++ linux-2.6.19/grsecurity/Makefile
+@@ -0,0 +1,20 @@
++# grsecurity's ACL system was originally written in 2001 by Michael Dalton
++# during 2001-2005 it has been completely redesigned by Brad Spengler
++# into an RBAC system
++#
++# All code in this directory and various hooks inserted throughout the kernel
++# are copyright Brad Spengler, and released under the GPL v2 or higher
++
++obj-y = grsec_chdir.o grsec_chroot.o grsec_exec.o grsec_fifo.o grsec_fork.o \
++	grsec_mount.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
++	grsec_time.o grsec_tpe.o grsec_ipc.o grsec_link.o grsec_textrel.o
++
++obj-$(CONFIG_GRKERNSEC) += grsec_init.o grsum.o gracl.o gracl_ip.o gracl_segv.o \
++	gracl_cap.o gracl_alloc.o gracl_shm.o grsec_mem.o gracl_fs.o \
++	gracl_learn.o grsec_log.o
++obj-$(CONFIG_GRKERNSEC_RESLOG) += gracl_res.o
++
++ifndef CONFIG_GRKERNSEC
++obj-y += grsec_disabled.o
++endif
++
 Index: linux-2.6.19/include/acpi/acmacros.h
 ===================================================================
 --- linux-2.6.19.orig/include/acpi/acmacros.h
@@ -21439,23 +21470,6 @@ Index: linux-2.6.19/include/asm-h8300/kmap_types.h
  	KM_TYPE_NR
  };
  
-Index: linux-2.6.19/include/asm-i386/a.out.h
-===================================================================
---- linux-2.6.19.orig/include/asm-i386/a.out.h
-+++ linux-2.6.19/include/asm-i386/a.out.h
-@@ -19,7 +19,11 @@ struct exec
- 
- #ifdef __KERNEL__
- 
--#define STACK_TOP	TASK_SIZE
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
-+#else
-+#define __STACK_TOP TASK_SIZE
-+#endif
- 
- #endif
- 
 Index: linux-2.6.19/include/asm-i386/alternative.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-i386/alternative.h
@@ -21477,6 +21491,23 @@ Index: linux-2.6.19/include/asm-i386/alternative.h
 +		      ".section .altinstr_replacement,\"a\"\n"		\
  		      "663:\n\t" newinstr "\n664:\n"   /* replacement */\
  		      ".previous" :: "i" (feature), ##input)
+ 
+Index: linux-2.6.19/include/asm-i386/a.out.h
+===================================================================
+--- linux-2.6.19.orig/include/asm-i386/a.out.h
++++ linux-2.6.19/include/asm-i386/a.out.h
+@@ -19,7 +19,11 @@ struct exec
+ 
+ #ifdef __KERNEL__
+ 
+-#define STACK_TOP	TASK_SIZE
++#ifdef CONFIG_PAX_SEGMEXEC
++#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
++#else
++#define __STACK_TOP TASK_SIZE
++#endif
+ 
+ #endif
  
 Index: linux-2.6.19/include/asm-i386/apic.h
 ===================================================================
@@ -21814,32 +21845,6 @@ Index: linux-2.6.19/include/asm-i386/mman.h
  #define MCL_CURRENT	1		/* lock all current mappings */
  #define MCL_FUTURE	2		/* lock all future mappings */
  
-Index: linux-2.6.19/include/asm-i386/mmu.h
-===================================================================
---- linux-2.6.19.orig/include/asm-i386/mmu.h
-+++ linux-2.6.19/include/asm-i386/mmu.h
-@@ -11,8 +11,19 @@
- typedef struct { 
- 	int size;
- 	struct semaphore sem;
--	void *ldt;
--	void *vdso;
-+	struct desc_struct *ldt;
-+	unsigned long vdso;
-+
-+#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
-+	unsigned long user_cs_base;
-+	unsigned long user_cs_limit;
-+
-+#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
-+	cpumask_t cpu_user_cs_mask;
-+#endif
-+
-+#endif
-+
- } mm_context_t;
- 
- #endif
 Index: linux-2.6.19/include/asm-i386/mmu_context.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-i386/mmu_context.h
@@ -21874,6 +21879,32 @@ Index: linux-2.6.19/include/asm-i386/mmu_context.h
 +			set_user_cs(next, cpu);
  		}
  	}
+ #endif
+Index: linux-2.6.19/include/asm-i386/mmu.h
+===================================================================
+--- linux-2.6.19.orig/include/asm-i386/mmu.h
++++ linux-2.6.19/include/asm-i386/mmu.h
+@@ -11,8 +11,19 @@
+ typedef struct { 
+ 	int size;
+ 	struct semaphore sem;
+-	void *ldt;
+-	void *vdso;
++	struct desc_struct *ldt;
++	unsigned long vdso;
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++	unsigned long user_cs_base;
++	unsigned long user_cs_limit;
++
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
++	cpumask_t cpu_user_cs_mask;
++#endif
++
++#endif
++
+ } mm_context_t;
+ 
  #endif
 Index: linux-2.6.19/include/asm-i386/module.h
 ===================================================================
@@ -21926,7 +21957,7 @@ Index: linux-2.6.19/include/asm-i386/page.h
  #define __KERNEL_START		(__PAGE_OFFSET + __PHYSICAL_START)
  
 +#ifdef CONFIG_PAX_KERNEXEC
-+#define __KERNEL_TEXT_OFFSET	(__PAGE_OFFSET + ((__PHYSICAL_START + ~(4*1024*1024)) & (4*1024*1024)))
++#define __KERNEL_TEXT_OFFSET	(__PAGE_OFFSET + ((__PHYSICAL_START + (4*1024*1024 - 1)) & ~(4*1024*1024 - 1)))
 +#ifndef __ASSEMBLY__
 +extern unsigned char MODULES_VADDR[];
 +extern unsigned char MODULES_END[];
@@ -22750,6 +22781,31 @@ Index: linux-2.6.19/include/asm-powerpc/kmap_types.h
  	KM_TYPE_NR
  };
  
+Index: linux-2.6.19/include/asm-powerpc/page_64.h
+===================================================================
+--- linux-2.6.19.orig/include/asm-powerpc/page_64.h
++++ linux-2.6.19/include/asm-powerpc/page_64.h
+@@ -160,15 +160,18 @@ extern unsigned int HPAGE_SHIFT;
+  * stack by default, so in the absense of a PT_GNU_STACK program header
+  * we turn execute permission off.
+  */
+-#define VM_STACK_DEFAULT_FLAGS32	(VM_READ | VM_WRITE | VM_EXEC | \
+-					 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
++#define VM_STACK_DEFAULT_FLAGS32 \
++	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
++	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
+ 
+ #define VM_STACK_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
+ 					 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
+ 
++#ifndef CONFIG_PAX_PAGEEXEC
+ #define VM_STACK_DEFAULT_FLAGS \
+ 	(test_thread_flag(TIF_32BIT) ? \
+ 	 VM_STACK_DEFAULT_FLAGS32 : VM_STACK_DEFAULT_FLAGS64)
++#endif
+ 
+ #include <asm-generic/page.h>
+ 
 Index: linux-2.6.19/include/asm-powerpc/page.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-powerpc/page.h
@@ -22782,31 +22838,6 @@ Index: linux-2.6.19/include/asm-powerpc/page.h
  /* align addr on a size boundary - adjust address up/down if needed */
  #define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
  #define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
-Index: linux-2.6.19/include/asm-powerpc/page_64.h
-===================================================================
---- linux-2.6.19.orig/include/asm-powerpc/page_64.h
-+++ linux-2.6.19/include/asm-powerpc/page_64.h
-@@ -160,15 +160,18 @@ extern unsigned int HPAGE_SHIFT;
-  * stack by default, so in the absense of a PT_GNU_STACK program header
-  * we turn execute permission off.
-  */
--#define VM_STACK_DEFAULT_FLAGS32	(VM_READ | VM_WRITE | VM_EXEC | \
--					 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
-+#define VM_STACK_DEFAULT_FLAGS32 \
-+	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
-+	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
- #define VM_STACK_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
- 					 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifndef CONFIG_PAX_PAGEEXEC
- #define VM_STACK_DEFAULT_FLAGS \
- 	(test_thread_flag(TIF_32BIT) ? \
- 	 VM_STACK_DEFAULT_FLAGS32 : VM_STACK_DEFAULT_FLAGS64)
-+#endif
- 
- #include <asm-generic/page.h>
- 
 Index: linux-2.6.19/include/asm-ppc/mmu_context.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-ppc/mmu_context.h
@@ -24525,31 +24556,20 @@ Index: linux-2.6.19/include/linux/highmem.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/highmem.h
 +++ linux-2.6.19/include/linux/highmem.h
-@@ -74,9 +74,9 @@ alloc_zeroed_user_highpage(struct vm_are
- 
- static inline void clear_highpage(struct page *page)
- {
--	void *kaddr = kmap_atomic(page, KM_USER0);
-+	void *kaddr = kmap_atomic(page, KM_CLEARPAGE);
- 	clear_page(kaddr);
--	kunmap_atomic(kaddr, KM_USER0);
-+	kunmap_atomic(kaddr, KM_CLEARPAGE);
+@@ -79,6 +79,13 @@ static inline void clear_highpage(struct
+ 	kunmap_atomic(kaddr, KM_USER0);
  }
  
++static inline void sanitize_highpage(struct page *page)
++{
++	void *kaddr = kmap_atomic(page, KM_CLEARPAGE);
++	clear_page(kaddr);
++	kunmap_atomic(kaddr, KM_CLEARPAGE);
++}
++
  /*
-Index: linux-2.6.19/include/linux/jbd.h
-===================================================================
---- linux-2.6.19.orig/include/linux/jbd.h
-+++ linux-2.6.19/include/linux/jbd.h
-@@ -68,7 +68,7 @@ extern int journal_enable_debug;
- 		}							\
- 	} while (0)
- #else
--#define jbd_debug(f, a...)	/**/
-+#define jbd_debug(f, a...)	do {} while (0)
- #endif
- 
- extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+  * Same but also flushes aliased cache contents to RAM.
+  */
 Index: linux-2.6.19/include/linux/jbd2.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/jbd2.h
@@ -24563,6 +24583,35 @@ Index: linux-2.6.19/include/linux/jbd2.h
  #endif
  
  extern void * __jbd2_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+Index: linux-2.6.19/include/linux/jbd.h
+===================================================================
+--- linux-2.6.19.orig/include/linux/jbd.h
++++ linux-2.6.19/include/linux/jbd.h
+@@ -68,7 +68,7 @@ extern int journal_enable_debug;
+ 		}							\
+ 	} while (0)
+ #else
+-#define jbd_debug(f, a...)	/**/
++#define jbd_debug(f, a...)	do {} while (0)
+ #endif
+ 
+ extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+Index: linux-2.6.19/include/linux/mman.h
+===================================================================
+--- linux-2.6.19.orig/include/linux/mman.h
++++ linux-2.6.19/include/linux/mman.h
+@@ -61,6 +61,11 @@ static inline unsigned long
+ calc_vm_flag_bits(unsigned long flags)
+ {
+ 	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	       _calc_vm_trans(flags, MAP_MIRROR, VM_MIRROR) |
++#endif
++
+ 	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
+ 	       _calc_vm_trans(flags, MAP_EXECUTABLE, VM_EXECUTABLE) |
+ 	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
 Index: linux-2.6.19/include/linux/mm.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/mm.h
@@ -24658,22 +24707,6 @@ Index: linux-2.6.19/include/linux/mm.h
 +
  #endif /* __KERNEL__ */
  #endif /* _LINUX_MM_H */
-Index: linux-2.6.19/include/linux/mman.h
-===================================================================
---- linux-2.6.19.orig/include/linux/mman.h
-+++ linux-2.6.19/include/linux/mman.h
-@@ -61,6 +61,11 @@ static inline unsigned long
- calc_vm_flag_bits(unsigned long flags)
- {
- 	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	       _calc_vm_trans(flags, MAP_MIRROR, VM_MIRROR) |
-+#endif
-+
- 	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
- 	       _calc_vm_trans(flags, MAP_EXECUTABLE, VM_EXECUTABLE) |
- 	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
 Index: linux-2.6.19/include/linux/module.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/module.h
@@ -24864,7 +24897,7 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -163,9 +163,21 @@ enum
+@@ -163,9 +163,20 @@ enum
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
@@ -24876,7 +24909,6 @@ Index: linux-2.6.19/include/linux/sysctl.h
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
-+  
 +};
  
 +#ifdef CONFIG_PAX_SOFTMODE
@@ -24948,18 +24980,6 @@ Index: linux-2.6.19/include/sound/core.h
  
  #endif /* CONFIG_SND_DEBUG */
  
-Index: linux-2.6.19/init/Kconfig
-===================================================================
---- linux-2.6.19.orig/init/Kconfig
-+++ linux-2.6.19/init/Kconfig
-@@ -321,6 +321,7 @@ config SYSCTL_SYSCALL
- config KALLSYMS
- 	 bool "Load all symbols for debugging/kksymoops" if EMBEDDED
- 	 default y
-+	 depends on !GRKERNSEC_HIDESYM
- 	 help
- 	   Say Y here to let the kernel print out symbolic crash information and
- 	   symbolic stack backtraces. This increases the size of the kernel
 Index: linux-2.6.19/init/do_mounts.c
 ===================================================================
 --- linux-2.6.19.orig/init/do_mounts.c
@@ -25207,6 +25227,18 @@ Index: linux-2.6.19/init/initramfs.c
  	state = SkipIt;
  	next_state = Reset;
  	return 0;
+Index: linux-2.6.19/init/Kconfig
+===================================================================
+--- linux-2.6.19.orig/init/Kconfig
++++ linux-2.6.19/init/Kconfig
+@@ -321,6 +321,7 @@ config SYSCTL_SYSCALL
+ config KALLSYMS
+ 	 bool "Load all symbols for debugging/kksymoops" if EMBEDDED
+ 	 default y
++	 depends on !GRKERNSEC_HIDESYM
+ 	 help
+ 	   Say Y here to let the kernel print out symbolic crash information and
+ 	   symbolic stack backtraces. This increases the size of the kernel
 Index: linux-2.6.19/init/main.c
 ===================================================================
 --- linux-2.6.19.orig/init/main.c
@@ -25577,7 +25609,7 @@ Index: linux-2.6.19/kernel/exit.c
  	/*
  	 * If we were started as result of loading a module, close all of the
  	 * user space pages.  We don't need them, and if we didn't close them
-@@ -914,11 +942,15 @@ fastcall NORET_TYPE void do_exit(long co
+@@ -921,11 +949,15 @@ fastcall NORET_TYPE void do_exit(long co
  	taskstats_exit_send(tsk, tidstats, group_dead, mycpu);
  	taskstats_exit_free(tidstats);
  
@@ -26358,7 +26390,7 @@ Index: linux-2.6.19/kernel/sched.c
  #include <asm/tlb.h>
  
  #include <asm/unistd.h>
-@@ -4012,7 +4013,8 @@ asmlinkage long sys_nice(int increment)
+@@ -4018,7 +4019,8 @@ asmlinkage long sys_nice(int increment)
  	if (nice > 19)
  		nice = 19;
  
@@ -26655,6 +26687,28 @@ Index: linux-2.6.19/kernel/unwind.c
  	                  table_start, table_size,
  	                  NULL, 0);
  
+Index: linux-2.6.19/Makefile
+===================================================================
+--- linux-2.6.19.orig/Makefile
++++ linux-2.6.19/Makefile
+@@ -313,7 +313,7 @@ LINUXINCLUDE    := -Iinclude \
+ 
+ CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
+ 
+-CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
++CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
+                    -fno-strict-aliasing -fno-common
+ AFLAGS          := -D__ASSEMBLY__
+ 
+@@ -559,7 +559,7 @@ export mod_strip_cmd
+ 
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
 Index: linux-2.6.19/mm/filemap.c
 ===================================================================
 --- linux-2.6.19.orig/mm/filemap.c
@@ -27593,7 +27647,7 @@ Index: linux-2.6.19/mm/mmap.c
  }
  
  unsigned long
-@@ -1483,6 +1620,7 @@ static int acct_stack_growth(struct vm_a
+@@ -1484,6 +1621,7 @@ static int acct_stack_growth(struct vm_a
  		return -ENOMEM;
  
  	/* Stack limit test */
@@ -27601,7 +27655,7 @@ Index: linux-2.6.19/mm/mmap.c
  	if (size > rlim[RLIMIT_STACK].rlim_cur)
  		return -ENOMEM;
  
-@@ -1492,6 +1630,7 @@ static int acct_stack_growth(struct vm_a
+@@ -1493,6 +1631,7 @@ static int acct_stack_growth(struct vm_a
  		unsigned long limit;
  		locked = mm->locked_vm + grow;
  		limit = rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
@@ -27609,7 +27663,7 @@ Index: linux-2.6.19/mm/mmap.c
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1564,23 +1703,6 @@ int expand_stack(struct vm_area_struct *
+@@ -1571,23 +1710,6 @@ int expand_stack(struct vm_area_struct *
  {
  	return expand_upwards(vma, address);
  }
@@ -27633,7 +27687,7 @@ Index: linux-2.6.19/mm/mmap.c
  #else
  /*
   * vma is the first one with address < vma->vm_start.  Have to extend vma.
-@@ -1609,41 +1731,54 @@ int expand_stack(struct vm_area_struct *
+@@ -1616,41 +1738,54 @@ int expand_stack(struct vm_area_struct *
  	if (address < vma->vm_start) {
  		unsigned long size, grow;
  
@@ -27711,7 +27765,7 @@ Index: linux-2.6.19/mm/mmap.c
  #endif
  
  /*
-@@ -1777,8 +1912,25 @@ int split_vma(struct mm_struct * mm, str
+@@ -1784,8 +1919,25 @@ int split_vma(struct mm_struct * mm, str
   * work.  This now handles partial unmappings.
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
@@ -27737,7 +27791,7 @@ Index: linux-2.6.19/mm/mmap.c
  	unsigned long end;
  	struct vm_area_struct *vma, *prev, *last;
  
-@@ -1831,6 +1983,8 @@ int do_munmap(struct mm_struct *mm, unsi
+@@ -1838,6 +1990,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
  
@@ -27746,7 +27800,7 @@ Index: linux-2.6.19/mm/mmap.c
  	return 0;
  }
  
-@@ -1843,6 +1997,12 @@ asmlinkage long sys_munmap(unsigned long
+@@ -1850,6 +2004,12 @@ asmlinkage long sys_munmap(unsigned long
  
  	profile_munmap(addr);
  
@@ -27759,7 +27813,7 @@ Index: linux-2.6.19/mm/mmap.c
  	down_write(&mm->mmap_sem);
  	ret = do_munmap(mm, addr, len);
  	up_write(&mm->mmap_sem);
-@@ -1864,11 +2024,35 @@ static inline void verify_mm_writelocked
+@@ -1871,11 +2031,35 @@ static inline void verify_mm_writelocked
   *  anonymous maps.  eventually we may be able to do some
   *  brk-specific accounting here.
   */
@@ -27796,7 +27850,7 @@ Index: linux-2.6.19/mm/mmap.c
  	struct rb_node ** rb_link, * rb_parent;
  	pgoff_t pgoff = addr >> PAGE_SHIFT;
  	int error;
-@@ -1877,7 +2061,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -1884,7 +2068,12 @@ unsigned long do_brk(unsigned long addr,
  	if (!len)
  		return addr;
  
@@ -27810,7 +27864,7 @@ Index: linux-2.6.19/mm/mmap.c
  		return -EINVAL;
  
  	if (is_hugepage_only_range(mm, addr, len))
-@@ -1885,6 +2074,18 @@ unsigned long do_brk(unsigned long addr,
+@@ -1892,6 +2081,18 @@ unsigned long do_brk(unsigned long addr,
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -27829,7 +27883,7 @@ Index: linux-2.6.19/mm/mmap.c
  	error = arch_mmap_check(addr, len, flags);
  	if (error)
  		return error;
-@@ -1898,6 +2099,7 @@ unsigned long do_brk(unsigned long addr,
+@@ -1905,6 +2106,7 @@ unsigned long do_brk(unsigned long addr,
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
@@ -27837,7 +27891,7 @@ Index: linux-2.6.19/mm/mmap.c
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -1911,12 +2113,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -1918,12 +2120,12 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -27852,7 +27906,7 @@ Index: linux-2.6.19/mm/mmap.c
  	}
  
  	/* Check against address space limits *after* clearing old maps... */
-@@ -1948,6 +2150,13 @@ unsigned long do_brk(unsigned long addr,
+@@ -1955,6 +2157,13 @@ unsigned long do_brk(unsigned long addr,
  	vma->vm_end = addr + len;
  	vma->vm_pgoff = pgoff;
  	vma->vm_flags = flags;
@@ -27866,7 +27920,7 @@ Index: linux-2.6.19/mm/mmap.c
  	vma->vm_page_prot = protection_map[flags &
  				(VM_READ|VM_WRITE|VM_EXEC|VM_SHARED)];
  	vma_link(mm, vma, prev, rb_link, rb_parent);
-@@ -1957,6 +2166,7 @@ out:
+@@ -1964,6 +2173,7 @@ out:
  		mm->locked_vm += len >> PAGE_SHIFT;
  		make_pages_present(addr, addr + len);
  	}
@@ -27874,7 +27928,7 @@ Index: linux-2.6.19/mm/mmap.c
  	return addr;
  }
  
-@@ -2089,7 +2299,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2096,7 +2306,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -28331,7 +28385,7 @@ Index: linux-2.6.19/mm/page_alloc.c
  
 +#ifdef CONFIG_PAX_MEMORY_SANITIZE
 +	for (index = order_size; index; --index)
-+		clear_highpage(page + index - 1);
++		sanitize_highpage(page + index - 1);
 +#endif
 +
  	zone->free_pages += order_size;
@@ -28515,57 +28569,14 @@ Index: linux-2.6.19/net/ipv4/inet_hashtables.c
   		if (tw) {
   			inet_twsk_deschedule(tw, death_row);
   			inet_twsk_put(tw);
-Index: linux-2.6.19/net/ipv4/netfilter/Kconfig
-===================================================================
---- linux-2.6.19.orig/net/ipv4/netfilter/Kconfig
-+++ linux-2.6.19/net/ipv4/netfilter/Kconfig
-@@ -329,6 +329,21 @@ config IP_NF_MATCH_HASHLIMIT
- 	  destination IP' or `500pps from any given source IP'  with a single
- 	  IPtables rule.
- 
-+config IP_NF_MATCH_STEALTH
-+	tristate "stealth match support"
-+	depends on IP_NF_IPTABLES
-+	help
-+	  Enabling this option will drop all syn packets coming to unserved tcp
-+	  ports as well as all packets coming to unserved udp ports.  If you
-+	  are using your system to route any type of packets (ie. via NAT)
-+	  you should put this module at the end of your ruleset, since it will
-+	  drop packets that aren't going to ports that are listening on your
-+	  machine itself, it doesn't take into account that the packet might be
-+	  destined for someone on your internal network if you're using NAT for
-+	  instance.
-+
-+	  To compile it as a module, choose M here.  If unsure, say N.
-+
- # `filter', generic and specific targets
- config IP_NF_FILTER
- 	tristate "Packet filtering"
-@@ -624,4 +639,3 @@ config IP_NF_ARP_MANGLE
- 	  hardware and network addresses.
- 
- endmenu
--
-Index: linux-2.6.19/net/ipv4/netfilter/Makefile
-===================================================================
---- linux-2.6.19.orig/net/ipv4/netfilter/Makefile
-+++ linux-2.6.19/net/ipv4/netfilter/Makefile
-@@ -62,6 +62,7 @@ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn
- obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
- obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
- obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ipt_addrtype.o
-+obj-$(CONFIG_IP_NF_MATCH_STEALTH) += ipt_stealth.o
- 
- # targets
- obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
 Index: linux-2.6.19/net/ipv4/netfilter/ipt_stealth.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_stealth.c
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,113 @@
 +/* Kernel module to add stealth support.
 + *
-+ * Copyright (C) 2002,2005 Brad Spengler  <spender@grsecurity.net>
++ * Copyright (C) 2002-2006 Brad Spengler  <spender@grsecurity.net>
 + *
 + */
 +
@@ -28641,12 +28652,9 @@ Index: linux-2.6.19/net/ipv4/netfilter/ipt_stealth.c
 +           const void *nip,
 +	   const struct xt_match *match,
 +           void *matchinfo,
-+           unsigned int matchsize,
 +           unsigned int hook_mask)
 +{
 +	const struct ipt_ip *ip = (const struct ipt_ip *)nip;
-+        if (matchsize != IPT_ALIGN(0))
-+                return 0;
 +
 +	if(((ip->proto == IPPROTO_TCP && !(ip->invflags & IPT_INV_PROTO)) ||
 +		((ip->proto == IPPROTO_UDP) && !(ip->invflags & IPT_INV_PROTO)))
@@ -28679,6 +28687,49 @@ Index: linux-2.6.19/net/ipv4/netfilter/ipt_stealth.c
 +
 +module_init(init);
 +module_exit(fini);
+Index: linux-2.6.19/net/ipv4/netfilter/Kconfig
+===================================================================
+--- linux-2.6.19.orig/net/ipv4/netfilter/Kconfig
++++ linux-2.6.19/net/ipv4/netfilter/Kconfig
+@@ -329,6 +329,21 @@ config IP_NF_MATCH_HASHLIMIT
+ 	  destination IP' or `500pps from any given source IP'  with a single
+ 	  IPtables rule.
+ 
++config IP_NF_MATCH_STEALTH
++	tristate "stealth match support"
++	depends on IP_NF_IPTABLES
++	help
++	  Enabling this option will drop all syn packets coming to unserved tcp
++	  ports as well as all packets coming to unserved udp ports.  If you
++	  are using your system to route any type of packets (ie. via NAT)
++	  you should put this module at the end of your ruleset, since it will
++	  drop packets that aren't going to ports that are listening on your
++	  machine itself, it doesn't take into account that the packet might be
++	  destined for someone on your internal network if you're using NAT for
++	  instance.
++
++	  To compile it as a module, choose M here.  If unsure, say N.
++
+ # `filter', generic and specific targets
+ config IP_NF_FILTER
+ 	tristate "Packet filtering"
+@@ -624,4 +639,3 @@ config IP_NF_ARP_MANGLE
+ 	  hardware and network addresses.
+ 
+ endmenu
+-
+Index: linux-2.6.19/net/ipv4/netfilter/Makefile
+===================================================================
+--- linux-2.6.19.orig/net/ipv4/netfilter/Makefile
++++ linux-2.6.19/net/ipv4/netfilter/Makefile
+@@ -62,6 +62,7 @@ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn
+ obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
+ obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
+ obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ipt_addrtype.o
++obj-$(CONFIG_IP_NF_MATCH_STEALTH) += ipt_stealth.o
+ 
+ # targets
+ obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
 Index: linux-2.6.19/net/ipv4/tcp_ipv4.c
 ===================================================================
 --- linux-2.6.19.orig/net/ipv4/tcp_ipv4.c
@@ -28760,7 +28811,7 @@ Index: linux-2.6.19/net/ipv6/addrconf.c
 ===================================================================
 --- linux-2.6.19.orig/net/ipv6/addrconf.c
 +++ linux-2.6.19/net/ipv6/addrconf.c
-@@ -869,7 +869,7 @@ struct ipv6_saddr_score {
+@@ -875,7 +875,7 @@ struct ipv6_saddr_score {
  #define IPV6_SADDR_SCORE_LABEL		0x0020
  #define IPV6_SADDR_SCORE_PRIVACY	0x0040
  
@@ -28769,7 +28820,7 @@ Index: linux-2.6.19/net/ipv6/addrconf.c
  {
  	if (type & (IPV6_ADDR_MAPPED|IPV6_ADDR_COMPATv4|
  		    IPV6_ADDR_LOOPBACK|IPV6_ADDR_RESERVED))
-@@ -878,7 +878,7 @@ static int inline ipv6_saddr_preferred(i
+@@ -884,7 +884,7 @@ static int inline ipv6_saddr_preferred(i
  }
  
  /* static matching label */
@@ -28778,7 +28829,7 @@ Index: linux-2.6.19/net/ipv6/addrconf.c
  {
   /*
    * 	prefix (longest match)	label
-@@ -3362,7 +3362,7 @@ errout:
+@@ -3368,7 +3368,7 @@ errout:
  		rtnl_set_sk_err(RTNLGRP_IPV6_IFADDR, err);
  }
  
@@ -29106,6 +29157,104 @@ Index: linux-2.6.19/net/xfrm/xfrm_user.c
  {
  	int l = 0;
  	if (x->aalg)
+Index: linux-2.6.19/security/commoncap.c
+===================================================================
+--- linux-2.6.19.orig/security/commoncap.c
++++ linux-2.6.19/security/commoncap.c
+@@ -23,10 +23,11 @@
+ #include <linux/ptrace.h>
+ #include <linux/xattr.h>
+ #include <linux/hugetlb.h>
++#include <linux/grsecurity.h>
+ 
+ int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
+ {
+-	NETLINK_CB(skb).eff_cap = current->cap_effective;
++	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
+ 	return 0;
+ }
+ 
+@@ -44,7 +45,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
+ int cap_capable (struct task_struct *tsk, int cap)
+ {
+ 	/* Derived from include/linux/sched.h:capable. */
+-	if (cap_raised(tsk->cap_effective, cap))
++	if (cap_raised (tsk->cap_effective, cap) && gr_task_is_capable(tsk, cap))
++		return 0;
++	return -EPERM;
++}
++
++int cap_capable_nolog (struct task_struct *tsk, int cap)
++{
++	/* Derived from include/linux/sched.h:capable. */
++	if (cap_raised (tsk->cap_effective, cap))
+ 		return 0;
+ 	return -EPERM;
+ }
+@@ -163,8 +172,11 @@ void cap_bprm_apply_creds (struct linux_
+ 		}
+ 	}
+ 
+-	current->suid = current->euid = current->fsuid = bprm->e_uid;
+-	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
++		current->suid = current->euid = current->fsuid = bprm->e_uid;
++
++	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
++		current->sgid = current->egid = current->fsgid = bprm->e_gid;
+ 
+ 	/* For init, we want to retain the capabilities set
+ 	 * in the init_task struct. Thus we skip the usual
+@@ -175,6 +187,8 @@ void cap_bprm_apply_creds (struct linux_
+ 		    cap_intersect (new_permitted, bprm->cap_effective);
+ 	}
+ 
++	gr_handle_chroot_caps(current);
++
+ 	/* AUD: Audit candidate if current->cap_effective is set */
+ 
+ 	current->keep_capabilities = 0;
+@@ -320,12 +334,13 @@ int cap_vm_enough_memory(long pages)
+ {
+ 	int cap_sys_admin = 0;
+ 
+-	if (cap_capable(current, CAP_SYS_ADMIN) == 0)
++	if (cap_capable_nolog(current, CAP_SYS_ADMIN) == 0)
+ 		cap_sys_admin = 1;
+ 	return __vm_enough_memory(pages, cap_sys_admin);
+ }
+ 
+ EXPORT_SYMBOL(cap_capable);
++EXPORT_SYMBOL(cap_capable_nolog);
+ EXPORT_SYMBOL(cap_settime);
+ EXPORT_SYMBOL(cap_ptrace);
+ EXPORT_SYMBOL(cap_capget);
+Index: linux-2.6.19/security/dummy.c
+===================================================================
+--- linux-2.6.19.orig/security/dummy.c
++++ linux-2.6.19/security/dummy.c
+@@ -28,6 +28,7 @@
+ #include <linux/hugetlb.h>
+ #include <linux/ptrace.h>
+ #include <linux/file.h>
++#include <linux/grsecurity.h>
+ 
+ static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
+ {
+@@ -138,8 +139,11 @@ static void dummy_bprm_apply_creds (stru
+ 		}
+ 	}
+ 
+-	current->suid = current->euid = current->fsuid = bprm->e_uid;
+-	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
++		current->suid = current->euid = current->fsuid = bprm->e_uid;
++
++	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
++		current->sgid = current->egid = current->fsgid = bprm->e_gid;
+ 
+ 	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ }
 Index: linux-2.6.19/security/Kconfig
 ===================================================================
 --- linux-2.6.19.orig/security/Kconfig
@@ -29543,104 +29692,6 @@ Index: linux-2.6.19/security/Kconfig
  config KEYS
  	bool "Enable access key retention support"
  	help
-Index: linux-2.6.19/security/commoncap.c
-===================================================================
---- linux-2.6.19.orig/security/commoncap.c
-+++ linux-2.6.19/security/commoncap.c
-@@ -23,10 +23,11 @@
- #include <linux/ptrace.h>
- #include <linux/xattr.h>
- #include <linux/hugetlb.h>
-+#include <linux/grsecurity.h>
- 
- int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
- {
--	NETLINK_CB(skb).eff_cap = current->cap_effective;
-+	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
- 	return 0;
- }
- 
-@@ -44,7 +45,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
- int cap_capable (struct task_struct *tsk, int cap)
- {
- 	/* Derived from include/linux/sched.h:capable. */
--	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap) && gr_task_is_capable(tsk, cap))
-+		return 0;
-+	return -EPERM;
-+}
-+
-+int cap_capable_nolog (struct task_struct *tsk, int cap)
-+{
-+	/* Derived from include/linux/sched.h:capable. */
-+	if (cap_raised (tsk->cap_effective, cap))
- 		return 0;
- 	return -EPERM;
- }
-@@ -163,8 +172,11 @@ void cap_bprm_apply_creds (struct linux_
- 		}
- 	}
- 
--	current->suid = current->euid = current->fsuid = bprm->e_uid;
--	current->sgid = current->egid = current->fsgid = bprm->e_gid;
-+	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
-+		current->suid = current->euid = current->fsuid = bprm->e_uid;
-+
-+	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
-+		current->sgid = current->egid = current->fsgid = bprm->e_gid;
- 
- 	/* For init, we want to retain the capabilities set
- 	 * in the init_task struct. Thus we skip the usual
-@@ -175,6 +187,8 @@ void cap_bprm_apply_creds (struct linux_
- 		    cap_intersect (new_permitted, bprm->cap_effective);
- 	}
- 
-+	gr_handle_chroot_caps(current);
-+
- 	/* AUD: Audit candidate if current->cap_effective is set */
- 
- 	current->keep_capabilities = 0;
-@@ -320,12 +334,13 @@ int cap_vm_enough_memory(long pages)
- {
- 	int cap_sys_admin = 0;
- 
--	if (cap_capable(current, CAP_SYS_ADMIN) == 0)
-+	if (cap_capable_nolog(current, CAP_SYS_ADMIN) == 0)
- 		cap_sys_admin = 1;
- 	return __vm_enough_memory(pages, cap_sys_admin);
- }
- 
- EXPORT_SYMBOL(cap_capable);
-+EXPORT_SYMBOL(cap_capable_nolog);
- EXPORT_SYMBOL(cap_settime);
- EXPORT_SYMBOL(cap_ptrace);
- EXPORT_SYMBOL(cap_capget);
-Index: linux-2.6.19/security/dummy.c
-===================================================================
---- linux-2.6.19.orig/security/dummy.c
-+++ linux-2.6.19/security/dummy.c
-@@ -28,6 +28,7 @@
- #include <linux/hugetlb.h>
- #include <linux/ptrace.h>
- #include <linux/file.h>
-+#include <linux/grsecurity.h>
- 
- static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
- {
-@@ -138,8 +139,11 @@ static void dummy_bprm_apply_creds (stru
- 		}
- 	}
- 
--	current->suid = current->euid = current->fsuid = bprm->e_uid;
--	current->sgid = current->egid = current->fsgid = bprm->e_gid;
-+	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
-+		current->suid = current->euid = current->fsuid = bprm->e_uid;
-+
-+	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
-+		current->sgid = current->egid = current->fsgid = bprm->e_gid;
- 
- 	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
- }
 Index: linux-2.6.19/sound/core/oss/pcm_oss.c
 ===================================================================
 --- linux-2.6.19.orig/sound/core/oss/pcm_oss.c
