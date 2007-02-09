@@ -1,8 +1,10 @@
-Index: linux-2.6.19/drivers/md/Kconfig
+BBR Target.
+
+Index: linux-2.6.20-rc6/drivers/md/Kconfig
 ===================================================================
---- linux-2.6.19.orig/drivers/md/Kconfig
-+++ linux-2.6.19/drivers/md/Kconfig
-@@ -261,6 +261,17 @@ config DM_MULTIPATH_EMC
+--- linux-2.6.20-rc6.orig/drivers/md/Kconfig
++++ linux-2.6.20-rc6/drivers/md/Kconfig
+@@ -262,6 +262,17 @@ config DM_MULTIPATH_EMC
  	---help---
  	  Multipath support for EMC CX/AX series hardware.
  
@@ -20,10 +22,10 @@ Index: linux-2.6.19/drivers/md/Kconfig
  endmenu
  
  endif
-Index: linux-2.6.19/drivers/md/Makefile
+Index: linux-2.6.20-rc6/drivers/md/Makefile
 ===================================================================
---- linux-2.6.19.orig/drivers/md/Makefile
-+++ linux-2.6.19/drivers/md/Makefile
+--- linux-2.6.20-rc6.orig/drivers/md/Makefile
++++ linux-2.6.20-rc6/drivers/md/Makefile
 @@ -36,6 +36,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
@@ -32,11 +34,11 @@ Index: linux-2.6.19/drivers/md/Makefile
  
  quiet_cmd_unroll = UNROLL  $@
        cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
-Index: linux-2.6.19/drivers/md/dm-bbr.c
+Index: linux-2.6.20-rc6/drivers/md/dm-bbr.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6.19/drivers/md/dm-bbr.c
-@@ -0,0 +1,1004 @@
++++ linux-2.6.20-rc6/drivers/md/dm-bbr.c
+@@ -0,0 +1,982 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
 + *
@@ -83,9 +85,9 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +#define SECTOR_SIZE (1 << SECTOR_SHIFT)
 +
 +static struct workqueue_struct *dm_bbr_wq = NULL;
-+static void bbr_remap_handler(void *data);
-+static kmem_cache_t *bbr_remap_cache;
-+static kmem_cache_t *bbr_io_cache;
++static void bbr_remap_handler(struct work_struct *work);
++static struct kmem_cache *bbr_remap_cache;
++static struct kmem_cache *bbr_io_cache;
 +static mempool_t *bbr_io_pool;
 +
 +/**
@@ -100,12 +102,12 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +
 +	while (node) {
 +		if (node->left) {
-+			link = &(node->left);
++			link = &node->left;
 +			node = node->left;
 +			continue;
 +		}
 +		if (node->right) {
-+			link = &(node->right);
++			link = &node->right;
 +			node = node->right;
 +			continue;
 +		}
@@ -134,23 +136,21 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +{
 +	struct bbr_private *bbr_id;
 +
-+	bbr_id = kmalloc(sizeof(*bbr_id), GFP_KERNEL);
-+	if (bbr_id) {
-+		memset(bbr_id, 0, sizeof(*bbr_id));
-+		INIT_WORK(&bbr_id->remap_work, bbr_remap_handler, bbr_id);
-+		bbr_id->remap_root_lock = SPIN_LOCK_UNLOCKED;
-+		bbr_id->remap_ios_lock = SPIN_LOCK_UNLOCKED;
-+		bbr_id->in_use_replacement_blks = (atomic_t)ATOMIC_INIT(0);
-+	}
++	bbr_id = kzalloc(sizeof(*bbr_id), GFP_KERNEL);
++	if (bbr_id == NULL)
++		return NULL;
++
++	INIT_WORK(&bbr_id->remap_work, bbr_remap_handler);
++	spin_lock_init(&bbr_id->remap_root_lock);
++	spin_lock_init(&bbr_id->remap_ios_lock);
++	bbr_id->in_use_replacement_blks = (atomic_t) ATOMIC_INIT(0);
 +
 +	return bbr_id;
 +}
 +
 +static void bbr_free_private(struct bbr_private *bbr_id)
 +{
-+	if (bbr_id->bbr_table) {
-+		vfree(bbr_id->bbr_table);
-+	}
++	vfree(bbr_id->bbr_table);
 +	bbr_free_remap(bbr_id);
 +	kfree(bbr_id);
 +}
@@ -245,39 +245,34 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 + **/
 +static int validate_bbr_table_sector(struct bbr_table *p)
 +{
-+	int rc = 0;
 +	int org_crc, final_crc;
 +
 +	if (le32_to_cpup(&p->signature) != BBR_TABLE_SIGNATURE) {
-+		DMERR("dm-bbr: BBR table signature doesn't match!");
-+		DMERR("dm-bbr: Found 0x%x. Expecting 0x%x",
++		DMERR("BBR table signature doesn't match!");
++		DMERR("Found 0x%x. Expecting 0x%x",
 +		      le32_to_cpup(&p->signature), BBR_TABLE_SIGNATURE);
-+		rc = -EINVAL;
-+		goto out;
++		return -EINVAL;
 +	}
 +
 +	if (!p->crc) {
-+		DMERR("dm-bbr: BBR table sector has no CRC!");
-+		rc = -EINVAL;
-+		goto out;
++		DMERR("BBR table sector has no CRC!");
++		return -EINVAL;
 +	}
 +
 +	org_crc = le32_to_cpup(&p->crc);
 +	p->crc = 0;
 +	final_crc = calculate_crc(INITIAL_CRC, (void *)p, sizeof(*p));
 +	if (final_crc != org_crc) {
-+		DMERR("dm-bbr: CRC failed!");
-+		DMERR("dm-bbr: Found 0x%x. Expecting 0x%x",
++		DMERR("CRC failed!");
++		DMERR("Found 0x%x. Expecting 0x%x",
 +		      org_crc, final_crc);
-+		rc = -EINVAL;
-+		goto out;
++		return -EINVAL;
 +	}
 +
 +	p->crc = cpu_to_le32p(&org_crc);
 +	le_bbr_table_sector_to_cpu(p);
 +
-+out:
-+	return rc;
++	return 0;
 +}
 +
 +/**
@@ -290,11 +285,8 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +{
 +	struct bbr_runtime_remap **node = root;
 +	while (node && *node) {
-+		if (newnode->remap.bad_sect > (*node)->remap.bad_sect) {
-+			node = &((*node)->right);
-+		} else {
-+			node = &((*node)->left);
-+		}
++		node = (newnode->remap.bad_sect > (*node)->remap.bad_sect) ?
++			&(*node)->right : &(*node)->left;
 +	}
 +
 +	newnode->left = newnode->right = NULL;
@@ -312,14 +304,10 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +{
 +	struct bbr_runtime_remap *node = root;
 +	while (node) {
-+		if (node->remap.bad_sect == lsn) {
++		if (node->remap.bad_sect == lsn)
 +			break;
-+		}
-+		if (lsn > node->remap.bad_sect) {
-+			node = node->right;
-+		} else {
-+			node = node->left;
-+		}
++
++		node = (lsn > node->remap.bad_sect) ? node->right : node->left;
 +	}
 +	return node;
 +}
@@ -336,10 +324,10 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +
 +	newnode = kmem_cache_alloc(bbr_remap_cache, GFP_NOIO);
 +	if (!newnode) {
-+		DMERR("dm-bbr: Could not allocate from remap cache!");
++		DMERR("Could not allocate from remap cache!");
 +		return -ENOMEM;
 +	}
-+	newnode->remap.bad_sect  = new_bbr_entry->bad_sect;
++	newnode->remap.bad_sect = new_bbr_entry->bad_sect;
 +	newnode->remap.replacement_sect = new_bbr_entry->replacement_sect;
 +	spin_lock_irq(&bbr_id->remap_root_lock);
 +	bbr_binary_tree_insert(&bbr_id->remap_root, newnode);
@@ -365,17 +353,16 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +	for (i = 0, p = bbr_id->bbr_table;
 +	     i < bbr_id->nr_sects_bbr_table;
 +	     i++, p++) {
-+		if (!p->in_use_cnt) {
++		if (!p->in_use_cnt)
 +			break;
-+		}
++
 +		in_use_blks += p->in_use_cnt;
-+		for (j = 0; j < p->in_use_cnt; j++) {
++		for (j = 0; j < p->in_use_cnt; j++)
 +			bbr_insert_remap_entry(bbr_id, &p->entries[j]);
-+		}
 +	}
 +	if (in_use_blks) {
 +		char b[32];
-+		DMWARN("dm-bbr: There are %u BBR entries for device %s",
++		DMWARN("There are %u BBR entries for device %s",
 +		       in_use_blks, format_dev_t(b, bbr_id->dev->bdev->bd_dev));
 +	}
 +
@@ -397,11 +384,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +	spin_lock_irq(&bbr_id->remap_root_lock);
 +	p = bbr_binary_search(bbr_id->remap_root, lsn);
 +	spin_unlock_irq(&bbr_id->remap_root_lock);
-+	if (p) {
-+		return (&p->remap);
-+	} else {
-+		return NULL;
-+	}
++	return (p) ? &p->remap : NULL;
 +}
 +
 +/**
@@ -410,7 +393,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 + * If *lsn is in the remap table, return TRUE and modify *lsn,
 + * else, return FALSE.
 + **/
-+static inline int bbr_remap(struct bbr_private *bbr_id,
++static int bbr_remap(struct bbr_private *bbr_id,
 +			    u64 *lsn)
 +{
 +	struct bbr_table_entry *e;
@@ -431,7 +414,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 + * If any of the sectors in the range [lsn, lsn+nr_sects] are in the remap
 + * table return TRUE, Else, return FALSE.
 + **/
-+static inline int bbr_remap_probe(struct bbr_private *bbr_id,
++static int bbr_remap_probe(struct bbr_private *bbr_id,
 +				  u64 lsn, u64 nr_sects)
 +{
 +	u64 tmp, cnt;
@@ -440,9 +423,8 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +		for (cnt = 0, tmp = lsn;
 +		     cnt < nr_sects;
 +		     cnt += bbr_id->blksize_in_sects, tmp = lsn + cnt) {
-+			if (bbr_remap(bbr_id,&tmp)) {
++			if (bbr_remap(bbr_id,&tmp))
 +				return 1;
-+			}
 +		}
 +	}
 +	return 0;
@@ -471,22 +453,19 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +			job.sector = bbr_id->lba_table2 + i;
 +			rc = dm_io_sync_vm(1, &job, READ, table, &error);
 +		}
-+		if (rc) {
++		if (rc)
 +			goto out;
-+		}
 +
 +		rc = validate_bbr_table_sector(table);
-+		if (rc) {
++		if (rc)
 +			goto out;
-+		}
 +	}
 +	atomic_set(&bbr_id->in_use_replacement_blks,
 +		   bbr_table_to_remap_list(bbr_id));
 +
 +out:
-+	if (rc) {
-+		DMERR("dm-bbr: error during device setup: %d", rc);
-+	}
++	if (rc)
++		DMERR("error during device setup: %d", rc);
 +	return rc;
 +}
 +
@@ -542,7 +521,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +			new_lsn += bbr_id->start_replacement_sect;
 +
 +			/* Write the data to its new location. */
-+			DMWARN("dm-bbr: device %s: Trying to remap bad sector "PFU64" to sector "PFU64,
++			DMWARN("device %s: Trying to remap bad sector "PFU64" to sector "PFU64,
 +			       format_dev_t(b, bbr_id->dev->bdev->bd_dev),
 +			       starting_lsn + lsn, new_lsn);
 +			job.sector = new_lsn;
@@ -551,7 +530,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +				/* This replacement sector is bad.
 +				 * Try the next one.
 +				 */
-+				DMERR("dm-bbr: device %s: replacement sector "PFU64" is bad. Skipping.",
++				DMERR("device %s: replacement sector "PFU64" is bad. Skipping.",
 +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev), new_lsn);
 +				atomic_inc(&bbr_id->in_use_replacement_blks);
 +				continue;
@@ -588,7 +567,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +
 +			if (rc) {
 +				/* Error writing one of the tables to disk. */
-+				DMERR("dm-bbr: device %s: error updating BBR tables on disk.",
++				DMERR("device %s: error updating BBR tables on disk.",
 +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev));
 +				return rc;
 +			}
@@ -597,7 +576,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +			rc = bbr_insert_remap_entry(bbr_id,
 +						    &bbr_table->entries[index]);
 +			if (rc) {
-+				DMERR("dm-bbr: device %s: error adding new entry to remap tree.",
++				DMERR("device %s: error adding new entry to remap tree.",
 +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev));
 +				return rc;
 +			}
@@ -773,9 +752,10 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 + * thread that doesn't need special processing will cause severe
 + * performance degredation.
 + **/
-+static void bbr_remap_handler(void *data)
++static void bbr_remap_handler(struct work_struct *work)
 +{
-+	struct bbr_private *bbr_id = data;
++	struct bbr_private *bbr_id =
++		container_of(work, struct bbr_private, remap_work);
 +	struct bio *bio;
 +	unsigned long flags;
 +
@@ -805,7 +785,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +		dm_bio_restore(bbr_io, bio);
 +		map_context->ptr = NULL;
 +
-+		DMERR("dm-bbr: device %s: I/O failure on sector %lu. "
++		DMERR("device %s: I/O failure on sector %lu. "
 +		      "Scheduling for retry.",
 +		      format_dev_t(b, bbr_id->dev->bdev->bd_dev),
 +		      (unsigned long)bio->bi_sector);
@@ -970,7 +950,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +
 +	rc = dm_register_target(&bbr_target);
 +	if (rc) {
-+		DMERR("dm-bbr: error registering target.");
++		DMERR("error registering target.");
 +		goto err1;
 +	}
 +
@@ -978,7 +958,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +					    sizeof(struct bbr_runtime_remap),
 +					    0, SLAB_HWCACHE_ALIGN, NULL, NULL);
 +	if (!bbr_remap_cache) {
-+		DMERR("dm-bbr: error creating remap cache.");
++		DMERR("error creating remap cache.");
 +		rc = ENOMEM;
 +		goto err2;
 +	}
@@ -986,7 +966,7 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +	bbr_io_cache = kmem_cache_create("bbr-io", sizeof(struct dm_bio_details),
 +					 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
 +	if (!bbr_io_cache) {
-+		DMERR("dm-bbr: error creating io cache.");
++		DMERR("error creating io cache.");
 +		rc = ENOMEM;
 +		goto err3;
 +	}
@@ -994,21 +974,21 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +	bbr_io_pool = mempool_create(256, mempool_alloc_slab,
 +				     mempool_free_slab, bbr_io_cache);
 +	if (!bbr_io_pool) {
-+		DMERR("dm-bbr: error creating io mempool.");
++		DMERR("error creating io mempool.");
 +		rc = ENOMEM;
 +		goto err4;
 +	}
 +
 +	dm_bbr_wq = create_workqueue("dm-bbr");
 +	if (!dm_bbr_wq) {
-+		DMERR("dm-bbr: error creating work-queue.");
++		DMERR("error creating work-queue.");
 +		rc = ENOMEM;
 +		goto err5;
 +	}
 +
 +	rc = dm_io_get(1);
 +	if (rc) {
-+		DMERR("dm-bbr: error initializing I/O service.");
++		DMERR("error initializing I/O service.");
 +		goto err6;
 +	}
 +
@@ -1041,10 +1021,10 @@ Index: linux-2.6.19/drivers/md/dm-bbr.c
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.19/drivers/md/dm-bbr.h
+Index: linux-2.6.20-rc6/drivers/md/dm-bbr.h
 ===================================================================
 --- /dev/null
-+++ linux-2.6.19/drivers/md/dm-bbr.h
++++ linux-2.6.20-rc6/drivers/md/dm-bbr.h
 @@ -0,0 +1,125 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
