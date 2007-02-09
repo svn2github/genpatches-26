@@ -1,8 +1,8 @@
-Index: linux-2.6.19/arch/alpha/Kconfig
+Index: linux-2.6.20/arch/alpha/Kconfig
 ===================================================================
---- linux-2.6.19.orig/arch/alpha/Kconfig
-+++ linux-2.6.19/arch/alpha/Kconfig
-@@ -590,6 +590,32 @@ config VERBOSE_MCHECK_ON
+--- linux-2.6.20.orig/arch/alpha/Kconfig
++++ linux-2.6.20/arch/alpha/Kconfig
+@@ -598,6 +598,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -35,10 +35,10 @@ Index: linux-2.6.19/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux-2.6.19/arch/alpha/kernel/traps.c
+Index: linux-2.6.20/arch/alpha/kernel/traps.c
 ===================================================================
---- linux-2.6.19.orig/arch/alpha/kernel/traps.c
-+++ linux-2.6.19/arch/alpha/kernel/traps.c
+--- linux-2.6.20.orig/arch/alpha/kernel/traps.c
++++ linux-2.6.20/arch/alpha/kernel/traps.c
 @@ -14,6 +14,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -123,10 +123,10 @@ Index: linux-2.6.19/arch/alpha/kernel/traps.c
  }
 +
 +__initcall(init_uac_sysctl);
-Index: linux-2.6.19/include/linux/sysctl.h
+Index: linux-2.6.20/include/linux/sysctl.h
 ===================================================================
---- linux-2.6.19.orig/include/linux/sysctl.h
-+++ linux-2.6.19/include/linux/sysctl.h
+--- linux-2.6.20.orig/include/linux/sysctl.h
++++ linux-2.6.20/include/linux/sysctl.h
 @@ -160,7 +160,10 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
@@ -157,21 +157,21 @@ Index: linux-2.6.19/include/linux/sysctl.h
  /* /proc/sys/bus/isa */
  enum
  {
-Index: linux-2.6.19/kernel/sysctl.c
+Index: linux-2.6.20/kernel/sysctl.c
 ===================================================================
---- linux-2.6.19.orig/kernel/sysctl.c
-+++ linux-2.6.19/kernel/sysctl.c
-@@ -161,6 +161,9 @@ extern ctl_table inotify_table[];
- #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
- int sysctl_legacy_va_layout;
+--- linux-2.6.20.orig/kernel/sysctl.c
++++ linux-2.6.20/kernel/sysctl.c
+@@ -169,6 +169,9 @@ extern ctl_table pty_table[];
+ #ifdef CONFIG_INOTIFY_USER
+ extern ctl_table inotify_table[];
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +extern ctl_table uac_table[];
 +#endif
  
- /* /proc declarations: */
- 
-@@ -223,7 +226,14 @@ static ctl_table root_table[] = {
+ #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
+ int sysctl_legacy_va_layout;
+@@ -269,7 +272,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
