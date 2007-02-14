@@ -2,7 +2,7 @@ Index: linux-2.6.21/arch/alpha/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/arch/alpha/Kconfig
 +++ linux-2.6.21/arch/alpha/Kconfig
-@@ -598,6 +598,32 @@ config VERBOSE_MCHECK_ON
+@@ -602,6 +602,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -127,7 +127,7 @@ Index: linux-2.6.21/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.21.orig/include/linux/sysctl.h
 +++ linux-2.6.21/include/linux/sysctl.h
-@@ -161,6 +161,9 @@ enum
+@@ -166,6 +166,9 @@ enum
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
  	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
@@ -137,7 +137,7 @@ Index: linux-2.6.21/include/linux/sysctl.h
  };
  
  
-@@ -249,6 +252,17 @@ enum
+@@ -259,6 +262,17 @@ enum
  	PTY_NR=2
  };
  
@@ -159,7 +159,7 @@ Index: linux-2.6.21/kernel/sysctl.c
 ===================================================================
 --- linux-2.6.21.orig/kernel/sysctl.c
 +++ linux-2.6.21/kernel/sysctl.c
-@@ -172,6 +172,9 @@ extern ctl_table pty_table[];
+@@ -156,6 +156,9 @@ extern ctl_table pty_table[];
  #ifdef CONFIG_INOTIFY_USER
  extern ctl_table inotify_table[];
  #endif
@@ -169,7 +169,7 @@ Index: linux-2.6.21/kernel/sysctl.c
  
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
-@@ -272,7 +275,14 @@ static ctl_table root_table[] = {
+@@ -203,7 +206,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},

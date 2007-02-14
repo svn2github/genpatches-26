@@ -419,7 +419,7 @@ Index: linux-2.6.21/drivers/char/sysrq.c
 ===================================================================
 --- linux-2.6.21.orig/drivers/char/sysrq.c
 +++ linux-2.6.21/drivers/char/sysrq.c
-@@ -240,7 +240,7 @@ static void send_sig_all(int sig)
+@@ -239,7 +239,7 @@ static void send_sig_all(int sig)
  	struct task_struct *p;
  
  	for_each_process(p) {
@@ -432,7 +432,7 @@ Index: linux-2.6.21/drivers/video/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/Kconfig
 +++ linux-2.6.21/drivers/video/Kconfig
-@@ -547,8 +547,22 @@ config FB_TGA
+@@ -519,8 +519,22 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -457,7 +457,7 @@ Index: linux-2.6.21/drivers/video/Kconfig
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -557,7 +571,43 @@ config FB_VESA
+@@ -529,7 +543,43 @@ config FB_VESA
  	  This is the frame buffer device driver for generic VESA 2.0
  	  compliant graphic cards. The older VESA 1.2 cards are not supported.
  	  You will get a boot time penguin logo at no additional cost. Please
@@ -506,8 +506,8 @@ Index: linux-2.6.21/drivers/video/Makefile
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/Makefile
 +++ linux-2.6.21/drivers/video/Makefile
-@@ -103,7 +103,11 @@ obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx
- obj-$(CONFIG_FB_IBM_GXT4500)	  += gxt4500.o
+@@ -101,7 +101,11 @@ obj-$(CONFIG_FB_IBM_GXT4500)	  += gxt450
+ obj-$(CONFIG_FB_PS3)		  += ps3fb.o
  
  # Platform or fallback drivers go here
 -obj-$(CONFIG_FB_VESA)             += vesafb.o
@@ -523,7 +523,7 @@ Index: linux-2.6.21/drivers/video/fbmem.c
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/fbmem.c
 +++ linux-2.6.21/drivers/video/fbmem.c
-@@ -1408,6 +1408,7 @@ fbmem_init(void)
+@@ -1407,6 +1407,7 @@ fbmem_init(void)
  		printk(KERN_WARNING "Unable to create fb class; errno = %ld\n", PTR_ERR(fb_class));
  		fb_class = NULL;
  	}
@@ -535,7 +535,7 @@ Index: linux-2.6.21/drivers/video/modedb.c
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/modedb.c
 +++ linux-2.6.21/drivers/video/modedb.c
-@@ -674,6 +674,7 @@ void fb_var_to_videomode(struct fb_video
+@@ -671,6 +671,7 @@ void fb_var_to_videomode(struct fb_video
  {
  	u32 pixclock, hfreq, htotal, vtotal;
  
@@ -543,7 +543,7 @@ Index: linux-2.6.21/drivers/video/modedb.c
  	mode->name = NULL;
  	mode->xres = var->xres;
  	mode->yres = var->yres;
-@@ -1025,3 +1026,4 @@ EXPORT_SYMBOL(fb_find_best_mode);
+@@ -1027,3 +1028,4 @@ EXPORT_SYMBOL(fb_find_best_mode);
  EXPORT_SYMBOL(fb_find_nearest_mode);
  EXPORT_SYMBOL(fb_videomode_to_modelist);
  EXPORT_SYMBOL(fb_find_mode);
@@ -2899,7 +2899,7 @@ Index: linux-2.6.21/include/linux/sched.h
 ===================================================================
 --- linux-2.6.21.orig/include/linux/sched.h
 +++ linux-2.6.21/include/linux/sched.h
-@@ -1390,6 +1390,8 @@ extern void mmput(struct mm_struct *);
+@@ -1389,6 +1389,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);

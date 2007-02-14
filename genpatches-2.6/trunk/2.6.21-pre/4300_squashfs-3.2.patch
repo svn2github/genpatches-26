@@ -2,7 +2,7 @@ Index: linux-2.6.21/fs/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/fs/Kconfig
 +++ linux-2.6.21/fs/Kconfig
-@@ -1403,6 +1403,71 @@ config CRAMFS
+@@ -1397,6 +1397,71 @@ config CRAMFS
  
  	  If unsure, say N.
  
