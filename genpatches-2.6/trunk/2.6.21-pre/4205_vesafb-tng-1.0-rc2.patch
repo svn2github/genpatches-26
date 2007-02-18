@@ -419,7 +419,7 @@ Index: linux-2.6.21/drivers/char/sysrq.c
 ===================================================================
 --- linux-2.6.21.orig/drivers/char/sysrq.c
 +++ linux-2.6.21/drivers/char/sysrq.c
-@@ -239,7 +239,7 @@ static void send_sig_all(int sig)
+@@ -251,7 +251,7 @@ static void send_sig_all(int sig)
  	struct task_struct *p;
  
  	for_each_process(p) {
