@@ -1700,7 +1700,7 @@ Index: linux-2.6.21/MAINTAINERS
 ===================================================================
 --- linux-2.6.21.orig/MAINTAINERS
 +++ linux-2.6.21/MAINTAINERS
-@@ -3151,6 +3151,13 @@ M:	wli@holomorphy.com
+@@ -3166,6 +3166,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -1718,7 +1718,7 @@ Index: linux-2.6.21/arch/arm/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/arch/arm/Kconfig
 +++ linux-2.6.21/arch/arm/Kconfig
-@@ -939,6 +939,7 @@ source "drivers/leds/Kconfig"
+@@ -975,6 +975,7 @@ source "drivers/leds/Kconfig"
  source "drivers/media/Kconfig"
  
  source "drivers/video/Kconfig"
