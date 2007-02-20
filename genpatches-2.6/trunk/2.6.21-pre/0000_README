@@ -38,10 +38,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	4000_deprecate-sk98lin.patch
-From:	dsd@gentoo.org
-Desc:	Add a note suggesting users try skge
-
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
