@@ -432,7 +432,7 @@ Index: linux-2.6.21/drivers/video/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/Kconfig
 +++ linux-2.6.21/drivers/video/Kconfig
-@@ -519,8 +519,22 @@ config FB_TGA
+@@ -527,8 +527,22 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -457,7 +457,7 @@ Index: linux-2.6.21/drivers/video/Kconfig
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -529,7 +543,43 @@ config FB_VESA
+@@ -537,7 +551,43 @@ config FB_VESA
  	  This is the frame buffer device driver for generic VESA 2.0
  	  compliant graphic cards. The older VESA 1.2 cards are not supported.
  	  You will get a boot time penguin logo at no additional cost. Please
@@ -506,8 +506,8 @@ Index: linux-2.6.21/drivers/video/Makefile
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/Makefile
 +++ linux-2.6.21/drivers/video/Makefile
-@@ -101,7 +101,11 @@ obj-$(CONFIG_FB_IBM_GXT4500)	  += gxt450
- obj-$(CONFIG_FB_PS3)		  += ps3fb.o
+@@ -102,7 +102,11 @@ obj-$(CONFIG_FB_PS3)		  += ps3fb.o
+ obj-$(CONFIG_FB_SM501)            += sm501fb.o
  
  # Platform or fallback drivers go here
 -obj-$(CONFIG_FB_VESA)             += vesafb.o

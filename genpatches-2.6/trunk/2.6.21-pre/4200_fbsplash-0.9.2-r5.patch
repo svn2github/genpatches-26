@@ -252,8 +252,8 @@ Index: linux-2.6.21/drivers/video/Kconfig
 ===================================================================
 --- linux-2.6.21.orig/drivers/video/Kconfig
 +++ linux-2.6.21/drivers/video/Kconfig
-@@ -1651,5 +1651,15 @@ if SYSFS
- 	source "drivers/video/backlight/Kconfig"
+@@ -1666,5 +1666,15 @@ if FB || SGI_NEWPORT_CONSOLE
+ 	source "drivers/video/logo/Kconfig"
  endif
  
 -endmenu
@@ -276,8 +276,8 @@ Index: linux-2.6.21/drivers/video/Makefile
 @@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
- obj-$(CONFIG_SYSFS)		  += backlight/
-+obj-$(CONFIG_FB_SPLASH)           += fbsplash.o cfbsplash.o
+ obj-y				  += backlight/
++obj-$(CONFIG_FB_SPLASH) 	   += fbsplash.o cfbsplash.o
  
  obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
  obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
@@ -1012,7 +1012,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  
  	if (fbcon_is_inactive(vc, info) ||
  	    ops->blank_state != FB_BLANK_UNBLANK)
-@@ -2272,8 +2328,12 @@ static int fbcon_blank(struct vc_data *v
+@@ -2279,8 +2335,12 @@ static int fbcon_blank(struct vc_data *v
  			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  			ops->cursor_flash = (!blank);
  
@@ -1027,7 +1027,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  		}
  
  		if (!blank)
-@@ -2424,13 +2484,22 @@ static int fbcon_do_set_font(struct vc_d
+@@ -2431,13 +2491,22 @@ static int fbcon_do_set_font(struct vc_d
  	}
  
  	if (resize) {
@@ -1050,7 +1050,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  		if (CON_IS_VISIBLE(vc) && softback_buf)
  			fbcon_update_softback(vc);
  	} else if (CON_IS_VISIBLE(vc)
-@@ -2548,7 +2617,7 @@ static int fbcon_set_palette(struct vc_d
+@@ -2555,7 +2624,7 @@ static int fbcon_set_palette(struct vc_d
  	int i, j, k, depth;
  	u8 val;
  
@@ -1059,7 +1059,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2574,7 +2643,49 @@ static int fbcon_set_palette(struct vc_d
+@@ -2581,7 +2650,49 @@ static int fbcon_set_palette(struct vc_d
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1110,7 +1110,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2800,7 +2911,14 @@ static void fbcon_modechanged(struct fb_
+@@ -2807,7 +2918,14 @@ static void fbcon_modechanged(struct fb_
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
@@ -1126,7 +1126,7 @@ Index: linux-2.6.21/drivers/video/console/fbcon.c
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3258,6 +3376,7 @@ static void fbcon_exit(void)
+@@ -3265,6 +3383,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1762,7 +1762,7 @@ Index: linux-2.6.21/include/linux/fb.h
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -794,6 +809,9 @@ struct fb_info {
+@@ -793,6 +808,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
