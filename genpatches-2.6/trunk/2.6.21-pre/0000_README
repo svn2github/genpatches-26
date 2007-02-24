@@ -1,10 +1,11 @@
 README
 --------------------------------------------------------------------------
 This patchset is to be the 2.6 series of gentoo-sources.
-it is designed for cross-compatibility, fixes and stability, with performance and additional
-features/driver support being a second.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
 
-Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
 
 
 Patchset Numbering Scheme
@@ -49,10 +50,6 @@ Desc:	Bootsplash successor by Michal Januszewski
 Patch:	4205_vesafb-tng-1.0-rc2.patch
 From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
 Desc:	Updated vesafb driver for x86.
-
-Patch:	4210_cx88-cinergy-1400-support.patch
-From:	http://bugs.gentoo.org/162239
-Desc:	Support s-video/composite input on Terratec Cinergy 1400
 
 Patch:	4300_squashfs-3.2.patch
 From:	http://squashfs.sourceforge.net/
