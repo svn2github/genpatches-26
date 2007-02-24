@@ -47,6 +47,14 @@ Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
 
+Patch:	4100_sata-promise-ide.patch
+From:	Linux 2.6.21
+Desc:	Enable IDE ports on Promise 2037x controllers
+
+Patch:	4101_sata-promise-ide-cable-detect.patch
+From:	Linux 2.6.21
+Desc:	Fix IDE cable detection
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
