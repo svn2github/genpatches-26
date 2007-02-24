@@ -1,10 +1,11 @@
 README
 --------------------------------------------------------------------------
 This patchset is to be the 2.6 series of gentoo-sources.
-it is designed for cross-compatibility, fixes and stability, with performance and additional
-features/driver support being a second.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
 
-Unless otherwise stated and marked as such, this kernel should be suitable for all environments.
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
 
 
 Patchset Numbering Scheme
