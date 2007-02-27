@@ -8166,6 +8166,19 @@ Index: linux-2.6.19/arch/sparc/mm/srmmu.c
  	BTFIXUPSET_INT(page_kernel, pgprot_val(SRMMU_PAGE_KERNEL));
  	page_kernel = pgprot_val(SRMMU_PAGE_KERNEL);
  
+Index: linux-2.6.19/arch/sparc64/kernel/pci_iommu.c
+===================================================================
+--- linux-2.6.19.orig/arch/sparc64/kernel/pci_iommu.c
++++ linux-2.6.19/arch/sparc64/kernel/pci_iommu.c
+@@ -64,7 +64,7 @@ static void __iommu_flushall(struct pci_
+ #define IOPTE_IS_DUMMY(iommu, iopte)	\
+ 	((iopte_val(*iopte) & IOPTE_PAGE) == (iommu)->dummy_page_pa)
+ 
+-static void inline iopte_make_dummy(struct pci_iommu *iommu, iopte_t *iopte)
++inline static void iopte_make_dummy(struct pci_iommu *iommu, iopte_t *iopte)
+ {
+ 	unsigned long val = iopte_val(*iopte);
+ 
 Index: linux-2.6.19/arch/sparc64/kernel/ptrace.c
 ===================================================================
 --- linux-2.6.19.orig/arch/sparc64/kernel/ptrace.c
@@ -11100,6 +11113,32 @@ Index: linux-2.6.19/fs/exec.c
  	if (current->signal->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
  		goto fail_unlock;
  
+Index: linux-2.6.19/fs/ext2/balloc.c
+===================================================================
+--- linux-2.6.19.orig/fs/ext2/balloc.c
++++ linux-2.6.19/fs/ext2/balloc.c
+@@ -111,7 +111,7 @@ static int reserve_blocks(struct super_b
+ 	if (free_blocks < count)
+ 		count = free_blocks;
+ 
+-	if (free_blocks < root_blocks + count && !capable(CAP_SYS_RESOURCE) &&
++	if (free_blocks < root_blocks + count && !capable_nolog(CAP_SYS_RESOURCE) &&
+ 	    sbi->s_resuid != current->fsuid &&
+ 	    (sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
+ 		/*
+Index: linux-2.6.19/fs/ext3/balloc.c
+===================================================================
+--- linux-2.6.19.orig/fs/ext3/balloc.c
++++ linux-2.6.19/fs/ext3/balloc.c
+@@ -1355,7 +1355,7 @@ static int ext3_has_free_blocks(struct e
+ 
+ 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
+ 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
+-	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
++	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
+ 		sbi->s_resuid != current->fsuid &&
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
+ 		return 0;
 Index: linux-2.6.19/fs/ext3/xattr.c
 ===================================================================
 --- linux-2.6.19.orig/fs/ext3/xattr.c
@@ -11115,6 +11154,19 @@ Index: linux-2.6.19/fs/ext3/xattr.c
  #endif
  
  static void ext3_xattr_cache_insert(struct buffer_head *);
+Index: linux-2.6.19/fs/ext4/balloc.c
+===================================================================
+--- linux-2.6.19.orig/fs/ext4/balloc.c
++++ linux-2.6.19/fs/ext4/balloc.c
+@@ -1372,7 +1372,7 @@ static int ext4_has_free_blocks(struct e
+ 
+ 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
+ 	root_blocks = ext4_r_blocks_count(sbi->s_es);
+-	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
++	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
+ 		sbi->s_resuid != current->fsuid &&
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
+ 		return 0;
 Index: linux-2.6.19/fs/ext4/extents.c
 ===================================================================
 --- linux-2.6.19.orig/fs/ext4/extents.c
@@ -17224,7 +17276,7 @@ Index: linux-2.6.19/grsecurity/gracl_cap.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/gracl_cap.c
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,109 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17306,7 +17358,6 @@ Index: linux-2.6.19/grsecurity/gracl_cap.c
 +
 +	if ((cap >= 0) && (cap < (sizeof(captab_log)/sizeof(captab_log[0]))) && cap_raised(task->cap_effective, cap))
 +		gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, task, captab_log[cap]);
-+
 +	return 0;
 +}
 +
@@ -18085,7 +18136,7 @@ Index: linux-2.6.19/grsecurity/gracl_learn.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/gracl_learn.c
-@@ -0,0 +1,204 @@
+@@ -0,0 +1,211 @@
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
 +#include <linux/sched.h>
@@ -18239,19 +18290,26 @@ Index: linux-2.6.19/grsecurity/gracl_learn.c
 +	if (file->f_mode & FMODE_READ && gr_learn_attached)
 +		return -EBUSY;
 +	if (file->f_mode & FMODE_READ) {
++		int retval = 0;
 +		down(&gr_learn_user_sem);
 +		if (learn_buffer == NULL)
 +			learn_buffer = vmalloc(LEARN_BUFFER_SIZE);
 +		if (learn_buffer_user == NULL)
 +			learn_buffer_user = vmalloc(LEARN_BUFFER_SIZE);
-+		if (learn_buffer == NULL)
-+			return -ENOMEM;
-+		if (learn_buffer_user == NULL)
-+			return -ENOMEM;
++		if (learn_buffer == NULL) {
++			retval = -ENOMEM;
++			goto out_error;
++		}
++		if (learn_buffer_user == NULL) {
++			retval = -ENOMEM;
++			goto out_error;
++		}
 +		learn_buffer_len = 0;
 +		learn_buffer_user_len = 0;
 +		gr_learn_attached = 1;
++out_error:
 +		up(&gr_learn_user_sem);
++		return retval;
 +	}
 +	return 0;
 +}
@@ -18706,7 +18764,7 @@ Index: linux-2.6.19/grsecurity/grsec_chroot.c
 ===================================================================
 --- /dev/null
 +++ linux-2.6.19/grsecurity/grsec_chroot.c
-@@ -0,0 +1,332 @@
+@@ -0,0 +1,333 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -18714,6 +18772,7 @@ Index: linux-2.6.19/grsecurity/grsec_chroot.c
 +#include <linux/fs.h>
 +#include <linux/mount.h>
 +#include <linux/types.h>
++#include <linux/grsecurity.h>
 +#include <linux/grinternal.h>
 +
 +int
@@ -21770,6 +21829,98 @@ Index: linux-2.6.19/include/asm-i386/elf.h
  
  #ifdef CONFIG_COMPAT_VDSO
  # define VDSO_COMPAT_BASE	VDSO_HIGH_BASE
+Index: linux-2.6.19/include/asm-i386/futex.h
+===================================================================
+--- linux-2.6.19.orig/include/asm-i386/futex.h
++++ linux-2.6.19/include/asm-i386/futex.h
+@@ -11,8 +11,11 @@
+ 
+ #define __futex_atomic_op1(insn, ret, oldval, uaddr, oparg) \
+   __asm__ __volatile (						\
++	"movw %w6, %%ds\n"\
+ "1:	" insn "\n"						\
+-"2:	.section .fixup,\"ax\"\n\
++"2:	pushl %%ss\n\
++	popl %%ds\n\
++	.section .fixup,\"ax\"\n\
+ 3:	mov	%3, %1\n\
+ 	jmp	2b\n\
+ 	.previous\n\
+@@ -21,16 +24,19 @@
+ 	.long	1b,3b\n\
+ 	.previous"						\
+ 	: "=r" (oldval), "=r" (ret), "+m" (*uaddr)		\
+-	: "i" (-EFAULT), "0" (oparg), "1" (0))
++	: "i" (-EFAULT), "0" (oparg), "1" (0), "r" (__USER_DS))
+ 
+ #define __futex_atomic_op2(insn, ret, oldval, uaddr, oparg) \
+   __asm__ __volatile (						\
+-"1:	movl	%2, %0\n\
++"	movw %w7, %%es\n\
++1:	movl	%%es:%2, %0\n\
+ 	movl	%0, %3\n"					\
+ 	insn "\n"						\
+-"2:	" LOCK_PREFIX "cmpxchgl %3, %2\n\
++"2:	" LOCK_PREFIX "cmpxchgl %3, %%es:%2\n\
+ 	jnz	1b\n\
+-3:	.section .fixup,\"ax\"\n\
++3:	pushl %%ss\n\
++	popl %%ds\n\
++	.section .fixup,\"ax\"\n\
+ 4:	mov	%5, %1\n\
+ 	jmp	3b\n\
+ 	.previous\n\
+@@ -40,7 +46,7 @@
+ 	.previous"						\
+ 	: "=&a" (oldval), "=&r" (ret), "+m" (*uaddr),		\
+ 	  "=&r" (tem)						\
+-	: "r" (oparg), "i" (-EFAULT), "1" (0))
++	: "r" (oparg), "i" (-EFAULT), "1" (0), "r" (__USER_DS))
+ 
+ static inline int
+ futex_atomic_op_inuser (int encoded_op, int __user *uaddr)
+@@ -59,7 +65,7 @@ futex_atomic_op_inuser (int encoded_op, 
+ 	inc_preempt_count();
+ 
+ 	if (op == FUTEX_OP_SET)
+-		__futex_atomic_op1("xchgl %0, %2", ret, oldval, uaddr, oparg);
++		__futex_atomic_op1("xchgl %0, %%ds:%2", ret, oldval, uaddr, oparg);
+ 	else {
+ #ifndef CONFIG_X86_BSWAP
+ 		if (boot_cpu_data.x86 == 3)
+@@ -68,7 +74,7 @@ futex_atomic_op_inuser (int encoded_op, 
+ #endif
+ 		switch (op) {
+ 		case FUTEX_OP_ADD:
+-			__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %2", ret,
++			__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %%ds:%2", ret,
+ 					   oldval, uaddr, oparg);
+ 			break;
+ 		case FUTEX_OP_OR:
+@@ -111,9 +117,11 @@ futex_atomic_cmpxchg_inatomic(int __user
+ 		return -EFAULT;
+ 
+ 	__asm__ __volatile__(
+-		"1:	" LOCK_PREFIX "cmpxchgl %3, %1		\n"
+-
+-		"2:	.section .fixup, \"ax\"			\n"
++		"	movw %w5, %%ds				\n"
++		"1:	" LOCK_PREFIX "cmpxchgl %3, %%ds:%1	\n"
++		"2:	pushl	%%ss				\n"
++		"	popl	%%ds				\n"
++		"	.section .fixup, \"ax\"			\n"
+ 		"3:	mov     %2, %0				\n"
+ 		"	jmp     2b				\n"
+ 		"	.previous				\n"
+@@ -124,7 +132,7 @@ futex_atomic_cmpxchg_inatomic(int __user
+ 		"	.previous				\n"
+ 
+ 		: "=a" (oldval), "+m" (*uaddr)
+-		: "i" (-EFAULT), "r" (newval), "0" (oldval)
++		: "i" (-EFAULT), "r" (newval), "0" (oldval), "r" (__USER_DS)
+ 		: "memory"
+ 	);
+ 
 Index: linux-2.6.19/include/asm-i386/i387.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-i386/i387.h
@@ -22271,15 +22422,7 @@ Index: linux-2.6.19/include/asm-i386/system.h
 ===================================================================
 --- linux-2.6.19.orig/include/asm-i386/system.h
 +++ linux-2.6.19/include/asm-i386/system.h
-@@ -4,6 +4,7 @@
- #include <linux/kernel.h>
- #include <asm/segment.h>
- #include <asm/cpufeature.h>
-+#include <asm/page.h>
- #include <linux/bitops.h> /* for LOCK_PREFIX */
- 
- #ifdef __KERNEL__
-@@ -155,7 +156,7 @@ static inline unsigned long get_limit(un
+@@ -155,7 +155,7 @@ static inline unsigned long get_limit(un
  	unsigned long __limit;
  	__asm__("lsll %1,%0"
  		:"=r" (__limit):"r" (segment));
@@ -22288,7 +22431,7 @@ Index: linux-2.6.19/include/asm-i386/system.h
  }
  
  #define nop() __asm__ __volatile__ ("nop")
-@@ -516,7 +517,7 @@ static inline void sched_cacheflush(void
+@@ -516,7 +516,7 @@ static inline void sched_cacheflush(void
  	wbinvd();
  }
  
@@ -24060,27 +24203,27 @@ Index: linux-2.6.19/include/linux/grinternal.h
 +#include <linux/grdefs.h>
 +#include <linux/grmsg.h>
 +
-+extern void gr_add_learn_entry(const char *fmt, ...);
-+extern __u32 gr_search_file(const struct dentry *dentry, const __u32 mode,
++void gr_add_learn_entry(const char *fmt, ...);
++__u32 gr_search_file(const struct dentry *dentry, const __u32 mode,
 +			    const struct vfsmount *mnt);
-+extern __u32 gr_check_create(const struct dentry *new_dentry,
++__u32 gr_check_create(const struct dentry *new_dentry,
 +			     const struct dentry *parent,
 +			     const struct vfsmount *mnt, const __u32 mode);
-+extern int gr_check_protected_task(const struct task_struct *task);
-+extern __u32 to_gr_audit(const __u32 reqmode);
-+extern int gr_set_acls(const int type);
++int gr_check_protected_task(const struct task_struct *task);
++__u32 to_gr_audit(const __u32 reqmode);
++int gr_set_acls(const int type);
 +
-+extern int gr_acl_is_enabled(void);
-+extern char gr_roletype_to_char(void);
++int gr_acl_is_enabled(void);
++char gr_roletype_to_char(void);
 +
-+extern void gr_handle_alertkill(struct task_struct *task);
-+extern char *gr_to_filename(const struct dentry *dentry,
++void gr_handle_alertkill(struct task_struct *task);
++char *gr_to_filename(const struct dentry *dentry,
 +			    const struct vfsmount *mnt);
-+extern char *gr_to_filename1(const struct dentry *dentry,
++char *gr_to_filename1(const struct dentry *dentry,
 +			    const struct vfsmount *mnt);
-+extern char *gr_to_filename2(const struct dentry *dentry,
++char *gr_to_filename2(const struct dentry *dentry,
 +			    const struct vfsmount *mnt);
-+extern char *gr_to_filename3(const struct dentry *dentry,
++char *gr_to_filename3(const struct dentry *dentry,
 +			    const struct vfsmount *mnt);
 +
 +extern int grsec_enable_link;
@@ -24255,7 +24398,7 @@ Index: linux-2.6.19/include/linux/grinternal.h
 +#define gr_log_crash2(audit, msg, task, ulong1) gr_log_varargs(audit, msg, GR_CRASH2, task, ulong1)
 +#define gr_log_procacct(audit, msg, task, num1, num2, num3, num4, num5, num6, num7, num8, num9) gr_log_varargs(audit, msg, GR_PSACCT, task, num1, num2, num3, num4, num5, num6, num7, num8, num9)
 +
-+extern void gr_log_varargs(int audit, const char *msg, int argtypes, ...);
++void gr_log_varargs(int audit, const char *msg, int argtypes, ...);
 +
 +#endif
 +
@@ -24384,173 +24527,173 @@ Index: linux-2.6.19/include/linux/grsecurity.h
 +#include <linux/binfmts.h>
 +#include <linux/gracl.h>
 +
-+extern void gr_handle_brute_attach(struct task_struct *p);
-+extern void gr_handle_brute_check(void);
++void gr_handle_brute_attach(struct task_struct *p);
++void gr_handle_brute_check(void);
 +
-+extern char gr_roletype_to_char(void);
++char gr_roletype_to_char(void);
 +
-+extern int gr_check_user_change(int real, int effective, int fs);
-+extern int gr_check_group_change(int real, int effective, int fs);
++int gr_check_user_change(int real, int effective, int fs);
++int gr_check_group_change(int real, int effective, int fs);
 +
-+extern void gr_del_task_from_ip_table(struct task_struct *p);
++void gr_del_task_from_ip_table(struct task_struct *p);
 +
-+extern int gr_pid_is_chrooted(struct task_struct *p);
-+extern int gr_handle_chroot_nice(void);
-+extern int gr_handle_chroot_sysctl(const int op);
-+extern int gr_handle_chroot_setpriority(struct task_struct *p,
++int gr_pid_is_chrooted(struct task_struct *p);
++int gr_handle_chroot_nice(void);
++int gr_handle_chroot_sysctl(const int op);
++int gr_handle_chroot_setpriority(struct task_struct *p,
 +					const int niceval);
-+extern int gr_chroot_fchdir(struct dentry *u_dentry, struct vfsmount *u_mnt);
-+extern int gr_handle_chroot_chroot(const struct dentry *dentry,
++int gr_chroot_fchdir(struct dentry *u_dentry, struct vfsmount *u_mnt);
++int gr_handle_chroot_chroot(const struct dentry *dentry,
 +				   const struct vfsmount *mnt);
-+extern void gr_handle_chroot_caps(struct task_struct *task);
-+extern void gr_handle_chroot_chdir(struct dentry *dentry, struct vfsmount *mnt);
-+extern int gr_handle_chroot_chmod(const struct dentry *dentry,
++void gr_handle_chroot_caps(struct task_struct *task);
++void gr_handle_chroot_chdir(struct dentry *dentry, struct vfsmount *mnt);
++int gr_handle_chroot_chmod(const struct dentry *dentry,
 +				  const struct vfsmount *mnt, const int mode);
-+extern int gr_handle_chroot_mknod(const struct dentry *dentry,
++int gr_handle_chroot_mknod(const struct dentry *dentry,
 +				  const struct vfsmount *mnt, const int mode);
-+extern int gr_handle_chroot_mount(const struct dentry *dentry,
++int gr_handle_chroot_mount(const struct dentry *dentry,
 +				  const struct vfsmount *mnt,
 +				  const char *dev_name);
-+extern int gr_handle_chroot_pivot(void);
-+extern int gr_handle_chroot_unix(const pid_t pid);
++int gr_handle_chroot_pivot(void);
++int gr_handle_chroot_unix(const pid_t pid);
 +
-+extern int gr_handle_rawio(const struct inode *inode);
-+extern int gr_handle_nproc(void);
++int gr_handle_rawio(const struct inode *inode);
++int gr_handle_nproc(void);
 +
-+extern void gr_handle_ioperm(void);
-+extern void gr_handle_iopl(void);
++void gr_handle_ioperm(void);
++void gr_handle_iopl(void);
 +
-+extern int gr_tpe_allow(const struct file *file);
++int gr_tpe_allow(const struct file *file);
 +
-+extern int gr_random_pid(void);
++int gr_random_pid(void);
 +
-+extern void gr_log_forkfail(const int retval);
-+extern void gr_log_timechange(void);
-+extern void gr_log_signal(const int sig, const struct task_struct *t);
-+extern void gr_log_chdir(const struct dentry *dentry,
++void gr_log_forkfail(const int retval);
++void gr_log_timechange(void);
++void gr_log_signal(const int sig, const struct task_struct *t);
++void gr_log_chdir(const struct dentry *dentry,
 +			 const struct vfsmount *mnt);
-+extern void gr_log_chroot_exec(const struct dentry *dentry,
++void gr_log_chroot_exec(const struct dentry *dentry,
 +			       const struct vfsmount *mnt);
-+extern void gr_handle_exec_args(struct linux_binprm *bprm, char **argv);
-+extern void gr_log_remount(const char *devname, const int retval);
-+extern void gr_log_unmount(const char *devname, const int retval);
-+extern void gr_log_mount(const char *from, const char *to, const int retval);
-+extern void gr_log_msgget(const int ret, const int msgflg);
-+extern void gr_log_msgrm(const uid_t uid, const uid_t cuid);
-+extern void gr_log_semget(const int err, const int semflg);
-+extern void gr_log_semrm(const uid_t uid, const uid_t cuid);
-+extern void gr_log_shmget(const int err, const int shmflg, const size_t size);
-+extern void gr_log_shmrm(const uid_t uid, const uid_t cuid);
-+extern void gr_log_textrel(struct vm_area_struct *vma);
++void gr_handle_exec_args(struct linux_binprm *bprm, char **argv);
++void gr_log_remount(const char *devname, const int retval);
++void gr_log_unmount(const char *devname, const int retval);
++void gr_log_mount(const char *from, const char *to, const int retval);
++void gr_log_msgget(const int ret, const int msgflg);
++void gr_log_msgrm(const uid_t uid, const uid_t cuid);
++void gr_log_semget(const int err, const int semflg);
++void gr_log_semrm(const uid_t uid, const uid_t cuid);
++void gr_log_shmget(const int err, const int shmflg, const size_t size);
++void gr_log_shmrm(const uid_t uid, const uid_t cuid);
++void gr_log_textrel(struct vm_area_struct *vma);
 +
-+extern int gr_handle_follow_link(const struct inode *parent,
++int gr_handle_follow_link(const struct inode *parent,
 +				 const struct inode *inode,
 +				 const struct dentry *dentry,
 +				 const struct vfsmount *mnt);
-+extern int gr_handle_fifo(const struct dentry *dentry,
++int gr_handle_fifo(const struct dentry *dentry,
 +			  const struct vfsmount *mnt,
 +			  const struct dentry *dir, const int flag,
 +			  const int acc_mode);
-+extern int gr_handle_hardlink(const struct dentry *dentry,
++int gr_handle_hardlink(const struct dentry *dentry,
 +			      const struct vfsmount *mnt,
 +			      struct inode *inode,
 +			      const int mode, const char *to);
 +
-+extern int gr_task_is_capable(struct task_struct *task, const int cap);
-+extern int gr_is_capable_nolog(const int cap);
-+extern void gr_learn_resource(const struct task_struct *task, const int limit,
++int gr_task_is_capable(struct task_struct *task, const int cap);
++int gr_is_capable_nolog(const int cap);
++void gr_learn_resource(const struct task_struct *task, const int limit,
 +			      const unsigned long wanted, const int gt);
-+extern void gr_copy_label(struct task_struct *tsk);
-+extern void gr_handle_crash(struct task_struct *task, const int sig);
-+extern int gr_handle_signal(const struct task_struct *p, const int sig);
-+extern int gr_check_crash_uid(const uid_t uid);
-+extern int gr_check_protected_task(const struct task_struct *task);
-+extern int gr_acl_handle_mmap(const struct file *file,
++void gr_copy_label(struct task_struct *tsk);
++void gr_handle_crash(struct task_struct *task, const int sig);
++int gr_handle_signal(const struct task_struct *p, const int sig);
++int gr_check_crash_uid(const uid_t uid);
++int gr_check_protected_task(const struct task_struct *task);
++int gr_acl_handle_mmap(const struct file *file,
 +			      const unsigned long prot);
-+extern int gr_acl_handle_mprotect(const struct file *file,
++int gr_acl_handle_mprotect(const struct file *file,
 +				  const unsigned long prot);
-+extern int gr_check_hidden_task(const struct task_struct *tsk);
-+extern __u32 gr_acl_handle_truncate(const struct dentry *dentry,
++int gr_check_hidden_task(const struct task_struct *tsk);
++__u32 gr_acl_handle_truncate(const struct dentry *dentry,
 +				    const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_utime(const struct dentry *dentry,
++__u32 gr_acl_handle_utime(const struct dentry *dentry,
 +				 const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_access(const struct dentry *dentry,
++__u32 gr_acl_handle_access(const struct dentry *dentry,
 +				  const struct vfsmount *mnt, const int fmode);
-+extern __u32 gr_acl_handle_fchmod(const struct dentry *dentry,
++__u32 gr_acl_handle_fchmod(const struct dentry *dentry,
 +				  const struct vfsmount *mnt, mode_t mode);
-+extern __u32 gr_acl_handle_chmod(const struct dentry *dentry,
++__u32 gr_acl_handle_chmod(const struct dentry *dentry,
 +				 const struct vfsmount *mnt, mode_t mode);
-+extern __u32 gr_acl_handle_chown(const struct dentry *dentry,
++__u32 gr_acl_handle_chown(const struct dentry *dentry,
 +				 const struct vfsmount *mnt);
-+extern int gr_handle_ptrace(struct task_struct *task, const long request);
-+extern int gr_handle_proc_ptrace(struct task_struct *task);
-+extern __u32 gr_acl_handle_execve(const struct dentry *dentry,
++int gr_handle_ptrace(struct task_struct *task, const long request);
++int gr_handle_proc_ptrace(struct task_struct *task);
++__u32 gr_acl_handle_execve(const struct dentry *dentry,
 +				  const struct vfsmount *mnt);
-+extern int gr_check_crash_exec(const struct file *filp);
-+extern int gr_acl_is_enabled(void);
-+extern void gr_set_kernel_label(struct task_struct *task);
-+extern void gr_set_role_label(struct task_struct *task, const uid_t uid,
++int gr_check_crash_exec(const struct file *filp);
++int gr_acl_is_enabled(void);
++void gr_set_kernel_label(struct task_struct *task);
++void gr_set_role_label(struct task_struct *task, const uid_t uid,
 +			      const gid_t gid);
-+extern int gr_set_proc_label(const struct dentry *dentry,
++int gr_set_proc_label(const struct dentry *dentry,
 +			      const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_hidden_file(const struct dentry *dentry,
++__u32 gr_acl_handle_hidden_file(const struct dentry *dentry,
 +				       const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_open(const struct dentry *dentry,
++__u32 gr_acl_handle_open(const struct dentry *dentry,
 +				const struct vfsmount *mnt, const int fmode);
-+extern __u32 gr_acl_handle_creat(const struct dentry *dentry,
++__u32 gr_acl_handle_creat(const struct dentry *dentry,
 +				 const struct dentry *p_dentry,
 +				 const struct vfsmount *p_mnt, const int fmode,
 +				 const int imode);
-+extern void gr_handle_create(const struct dentry *dentry,
++void gr_handle_create(const struct dentry *dentry,
 +			     const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_mknod(const struct dentry *new_dentry,
++__u32 gr_acl_handle_mknod(const struct dentry *new_dentry,
 +				 const struct dentry *parent_dentry,
 +				 const struct vfsmount *parent_mnt,
 +				 const int mode);
-+extern __u32 gr_acl_handle_mkdir(const struct dentry *new_dentry,
++__u32 gr_acl_handle_mkdir(const struct dentry *new_dentry,
 +				 const struct dentry *parent_dentry,
 +				 const struct vfsmount *parent_mnt);
-+extern __u32 gr_acl_handle_rmdir(const struct dentry *dentry,
++__u32 gr_acl_handle_rmdir(const struct dentry *dentry,
 +				 const struct vfsmount *mnt);
-+extern void gr_handle_delete(const ino_t ino, const dev_t dev);
-+extern __u32 gr_acl_handle_unlink(const struct dentry *dentry,
++void gr_handle_delete(const ino_t ino, const dev_t dev);
++__u32 gr_acl_handle_unlink(const struct dentry *dentry,
 +				  const struct vfsmount *mnt);
-+extern __u32 gr_acl_handle_symlink(const struct dentry *new_dentry,
++__u32 gr_acl_handle_symlink(const struct dentry *new_dentry,
 +				   const struct dentry *parent_dentry,
 +				   const struct vfsmount *parent_mnt,
 +				   const char *from);
-+extern __u32 gr_acl_handle_link(const struct dentry *new_dentry,
++__u32 gr_acl_handle_link(const struct dentry *new_dentry,
 +				const struct dentry *parent_dentry,
 +				const struct vfsmount *parent_mnt,
 +				const struct dentry *old_dentry,
 +				const struct vfsmount *old_mnt, const char *to);
-+extern int gr_acl_handle_rename(struct dentry *new_dentry,
++int gr_acl_handle_rename(struct dentry *new_dentry,
 +				struct dentry *parent_dentry,
 +				const struct vfsmount *parent_mnt,
 +				struct dentry *old_dentry,
 +				struct inode *old_parent_inode,
 +				struct vfsmount *old_mnt, const char *newname);
-+extern void gr_handle_rename(struct inode *old_dir, struct inode *new_dir,
++void gr_handle_rename(struct inode *old_dir, struct inode *new_dir,
 +				struct dentry *old_dentry,
 +				struct dentry *new_dentry,
 +				struct vfsmount *mnt, const __u8 replace);
-+extern __u32 gr_check_link(const struct dentry *new_dentry,
++__u32 gr_check_link(const struct dentry *new_dentry,
 +			   const struct dentry *parent_dentry,
 +			   const struct vfsmount *parent_mnt,
 +			   const struct dentry *old_dentry,
 +			   const struct vfsmount *old_mnt);
-+extern int gr_acl_handle_filldir(const struct file *file, const char *name,
++int gr_acl_handle_filldir(const struct file *file, const char *name,
 +				 const unsigned int namelen, const ino_t ino);
 +
-+extern __u32 gr_acl_handle_unix(const struct dentry *dentry,
++__u32 gr_acl_handle_unix(const struct dentry *dentry,
 +				const struct vfsmount *mnt);
-+extern void gr_acl_handle_exit(void);
-+extern void gr_acl_handle_psacct(struct task_struct *task, const long code);
-+extern int gr_acl_handle_procpidmem(const struct task_struct *task);
-+extern __u32 gr_cap_rtnetlink(void);
++void gr_acl_handle_exit(void);
++void gr_acl_handle_psacct(struct task_struct *task, const long code);
++int gr_acl_handle_procpidmem(const struct task_struct *task);
++__u32 gr_cap_rtnetlink(void);
 +
 +#ifdef CONFIG_SYSVIPC
-+extern void gr_shm_exit(struct task_struct *task);
++void gr_shm_exit(struct task_struct *task);
 +#else
 +static inline void gr_shm_exit(struct task_struct *task)
 +{
@@ -24559,13 +24702,13 @@ Index: linux-2.6.19/include/linux/grsecurity.h
 +#endif
 +
 +#ifdef CONFIG_GRKERNSEC
-+extern void gr_handle_mem_write(void);
-+extern void gr_handle_kmem_write(void);
-+extern void gr_handle_open_port(void);
-+extern int gr_handle_mem_mmap(const unsigned long offset,
++void gr_handle_mem_write(void);
++void gr_handle_kmem_write(void);
++void gr_handle_open_port(void);
++int gr_handle_mem_mmap(const unsigned long offset,
 +			      struct vm_area_struct *vma);
 +
-+extern unsigned long pax_get_random_long(void);
++unsigned long pax_get_random_long(void);
 +#define get_random_long() pax_get_random_long()
 +
 +extern int grsec_enable_dmesg;
@@ -24919,20 +25062,19 @@ Index: linux-2.6.19/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.19.orig/include/linux/sysctl.h
 +++ linux-2.6.19/include/linux/sysctl.h
-@@ -163,9 +163,20 @@ enum
+@@ -163,9 +163,21 @@ enum
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
 - };
--
--
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
-+  
+ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
+ 
 +};
 +  
 +#ifdef CONFIG_PAX_SOFTMODE
@@ -25743,15 +25885,17 @@ Index: linux-2.6.19/kernel/futex.c
  	/*
  	 * The futex address must be "naturally" aligned.
  	 */
-@@ -195,7 +200,7 @@ static int get_futex_key(u32 __user *uad
+@@ -195,8 +200,8 @@ static int get_futex_key(u32 __user *uad
  	 * The futex is hashed differently depending on whether
  	 * it's in a shared or private mapping.  So check vma first.
  	 */
 -	vma = find_extend_vma(mm, address);
+-	if (unlikely(!vma))
 +	vma = find_vma(mm, address);
- 	if (unlikely(!vma))
++	if (unlikely(!vma) || address < vma->vm_start)
  		return -EFAULT;
  
+ 	/*
 Index: linux-2.6.19/kernel/kallsyms.c
 ===================================================================
 --- linux-2.6.19.orig/kernel/kallsyms.c
@@ -26867,6 +27011,15 @@ Index: linux-2.6.19/mm/memory.c
  		if (!vma && in_gate_area(tsk, start)) {
  			unsigned long pg = start & PAGE_MASK;
  			struct vm_area_struct *gate_vma = get_gate_vma(tsk);
+@@ -1035,7 +1052,7 @@ int get_user_pages(struct task_struct *t
+ 			continue;
+ 		}
+ 
+-		if (!vma || (vma->vm_flags & (VM_IO | VM_PFNMAP))
++		if (!vma || start < vma->vm_start || (vma->vm_flags & (VM_IO | VM_PFNMAP))
+ 				|| !(vm_flags & vma->vm_flags))
+ 			return i ? : -EFAULT;
+ 
 @@ -1469,6 +1486,88 @@ static inline void cow_user_page(struct 
  	copy_user_highpage(dst, src, va);
  }
@@ -29618,15 +29771,15 @@ Index: linux-2.6.19/security/commoncap.c
  {
  	/* Derived from include/linux/sched.h:capable. */
 -	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap) && gr_task_is_capable(tsk, cap))
++	if (cap_raised (tsk->cap_effective, cap))
 +		return 0;
 +	return -EPERM;
 +}
 +
 +int cap_capable_nolog (struct task_struct *tsk, int cap)
 +{
-+	/* Derived from include/linux/sched.h:capable. */
-+	if (cap_raised (tsk->cap_effective, cap))
++	/* tsk = current for all callers */
++	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
  		return 0;
  	return -EPERM;
  }
