@@ -1,0 +1,829 @@
+diff --git a/drivers/input/mouse/psmouse-base.c b/drivers/input/mouse/psmouse-base.c
+index 6f9b2c7..d5c9c4b 100644
+--- a/drivers/input/mouse/psmouse-base.c
++++ b/drivers/input/mouse/psmouse-base.c
+@@ -986,8 +986,36 @@ static void psmouse_resync(void *p)
+ static void psmouse_cleanup(struct serio *serio)
+ {
+ 	struct psmouse *psmouse = serio_get_drvdata(serio);
++	struct psmouse *parent = NULL;
++
++	mutex_lock(&psmouse_mutex);
++
++	if (serio->parent && serio->id.type == SERIO_PS_PSTHRU) {
++		parent = serio_get_drvdata(serio->parent);
++		psmouse_deactivate(parent);
++	}
++
++	psmouse_deactivate(psmouse);
++
++	if (psmouse->cleanup)
++		psmouse->cleanup(psmouse);
+ 
+ 	psmouse_reset(psmouse);
++
++/*
++ * Some boxes, such as HP nx7400, get terribly confused if mouse
++ * is not fully enabled before suspending/shutting down.
++ */
++	ps2_command(&psmouse->ps2dev, NULL, PSMOUSE_CMD_ENABLE);
++
++	if (parent) {
++		if (parent->pt_deactivate)
++			parent->pt_deactivate(parent);
++
++		psmouse_activate(parent);
++	}
++
++	mutex_unlock(&psmouse_mutex);
+ }
+ 
+ /*
+diff --git a/drivers/input/mouse/psmouse.h b/drivers/input/mouse/psmouse.h
+index 1b74cae..cf1de95 100644
+--- a/drivers/input/mouse/psmouse.h
++++ b/drivers/input/mouse/psmouse.h
+@@ -68,6 +68,7 @@ struct psmouse {
+ 
+ 	int (*reconnect)(struct psmouse *psmouse);
+ 	void (*disconnect)(struct psmouse *psmouse);
++	void (*cleanup)(struct psmouse *psmouse);
+ 	int (*poll)(struct psmouse *psmouse);
+ 
+ 	void (*pt_activate)(struct psmouse *psmouse);
+diff --git a/drivers/input/mouse/synaptics.c b/drivers/input/mouse/synaptics.c
+index 49ac696..f0f9413 100644
+--- a/drivers/input/mouse/synaptics.c
++++ b/drivers/input/mouse/synaptics.c
+@@ -652,6 +652,7 @@ int synaptics_init(struct psmouse *psmouse)
+ 	psmouse->set_rate = synaptics_set_rate;
+ 	psmouse->disconnect = synaptics_disconnect;
+ 	psmouse->reconnect = synaptics_reconnect;
++	psmouse->cleanup = synaptics_reset;
+ 	psmouse->pktsize = 6;
+ 	/* Synaptics can usually stay in sync without extra help */
+ 	psmouse->resync_time = 0;
+diff --git a/drivers/net/8139cp.c b/drivers/net/8139cp.c
+index 458dd9f..e2cb19b 100644
+--- a/drivers/net/8139cp.c
++++ b/drivers/net/8139cp.c
+@@ -617,13 +617,15 @@ rx_next:
+ 	 * this round of polling
+ 	 */
+ 	if (rx_work) {
++		unsigned long flags;
++
+ 		if (cpr16(IntrStatus) & cp_rx_intr_mask)
+ 			goto rx_status_loop;
+ 
+-		local_irq_disable();
++		local_irq_save(flags);
+ 		cpw16_f(IntrMask, cp_intr_mask);
+ 		__netif_rx_complete(dev);
+-		local_irq_enable();
++		local_irq_restore(flags);
+ 
+ 		return 0;	/* done */
+ 	}
+diff --git a/drivers/net/b44.c b/drivers/net/b44.c
+index 474a4e3..5eb2ec6 100644
+--- a/drivers/net/b44.c
++++ b/drivers/net/b44.c
+@@ -879,12 +879,14 @@ static int b44_poll(struct net_device *netdev, int *budget)
+ 	}
+ 
+ 	if (bp->istat & ISTAT_ERRORS) {
+-		spin_lock_irq(&bp->lock);
++		unsigned long flags;
++
++		spin_lock_irqsave(&bp->lock, flags);
+ 		b44_halt(bp);
+ 		b44_init_rings(bp);
+ 		b44_init_hw(bp, 1);
+ 		netif_wake_queue(bp->dev);
+-		spin_unlock_irq(&bp->lock);
++		spin_unlock_irqrestore(&bp->lock, flags);
+ 		done = 1;
+ 	}
+ 
+diff --git a/drivers/net/forcedeth.c b/drivers/net/forcedeth.c
+index 72325fa..75b9404 100644
+--- a/drivers/net/forcedeth.c
++++ b/drivers/net/forcedeth.c
+@@ -2544,14 +2544,15 @@ static int nv_napi_poll(struct net_device *dev, int *budget)
+ 	int pkts, limit = min(*budget, dev->quota);
+ 	struct fe_priv *np = netdev_priv(dev);
+ 	u8 __iomem *base = get_hwbase(dev);
++	unsigned long flags;
+ 
+ 	pkts = nv_rx_process(dev, limit);
+ 
+ 	if (nv_alloc_rx(dev)) {
+-		spin_lock_irq(&np->lock);
++		spin_lock_irqsave(&np->lock, flags);
+ 		if (!np->in_shutdown)
+ 			mod_timer(&np->oom_kick, jiffies + OOM_REFILL);
+-		spin_unlock_irq(&np->lock);
++		spin_unlock_irqrestore(&np->lock, flags);
+ 	}
+ 
+ 	if (pkts < limit) {
+@@ -2559,13 +2560,15 @@ static int nv_napi_poll(struct net_device *dev, int *budget)
+ 		netif_rx_complete(dev);
+ 
+ 		/* re-enable receive interrupts */
+-		spin_lock_irq(&np->lock);
++		spin_lock_irqsave(&np->lock, flags);
++
+ 		np->irqmask |= NVREG_IRQ_RX_ALL;
+ 		if (np->msi_flags & NV_MSI_X_ENABLED)
+ 			writel(NVREG_IRQ_RX_ALL, base + NvRegIrqMask);
+ 		else
+ 			writel(np->irqmask, base + NvRegIrqMask);
+-		spin_unlock_irq(&np->lock);
++
++		spin_unlock_irqrestore(&np->lock, flags);
+ 		return 0;
+ 	} else {
+ 		/* used up our quantum, so reschedule */
+diff --git a/drivers/net/skge.c b/drivers/net/skge.c
+index b294903..2505da2 100644
+--- a/drivers/net/skge.c
++++ b/drivers/net/skge.c
+@@ -2919,6 +2919,7 @@ static int skge_poll(struct net_device *dev, int *budget)
+ 	struct skge_hw *hw = skge->hw;
+ 	struct skge_ring *ring = &skge->rx_ring;
+ 	struct skge_element *e;
++	unsigned long flags;
+ 	int to_do = min(dev->quota, *budget);
+ 	int work_done = 0;
+ 
+@@ -2956,12 +2957,12 @@ static int skge_poll(struct net_device *dev, int *budget)
+ 	if (work_done >=  to_do)
+ 		return 1; /* not done */
+ 
+-	spin_lock_irq(&hw->hw_lock);
++	spin_lock_irqsave(&hw->hw_lock, flags);
+ 	__netif_rx_complete(dev);
+ 	hw->intr_mask |= irqmask[skge->port];
+   	skge_write32(hw, B0_IMSK, hw->intr_mask);
+ 	skge_read32(hw, B0_IMSK);
+-	spin_unlock_irq(&hw->hw_lock);
++	spin_unlock_irqrestore(&hw->hw_lock, flags);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/net/sky2.c b/drivers/net/sky2.c
+index 16616f5..71f7126 100644
+--- a/drivers/net/sky2.c
++++ b/drivers/net/sky2.c
+@@ -569,8 +569,8 @@ static void sky2_phy_power(struct sky2_hw *hw, unsigned port, int onoff)
+ 	if (hw->chip_id == CHIP_ID_YUKON_XL && hw->chip_rev > 1)
+ 		onoff = !onoff;
+ 
++	sky2_write8(hw, B2_TST_CTRL1, TST_CFG_WRITE_ON);
+ 	reg1 = sky2_pci_read32(hw, PCI_DEV_REG1);
+-
+ 	if (onoff)
+ 		/* Turn off phy power saving */
+ 		reg1 &= ~phy_power[port];
+@@ -579,6 +579,7 @@ static void sky2_phy_power(struct sky2_hw *hw, unsigned port, int onoff)
+ 
+ 	sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
+ 	sky2_pci_read32(hw, PCI_DEV_REG1);
++	sky2_write8(hw, B2_TST_CTRL1, TST_CFG_WRITE_OFF);
+ 	udelay(100);
+ }
+ 
+@@ -699,8 +700,14 @@ static void sky2_mac_init(struct sky2_hw *hw, unsigned port)
+ }
+ 
+ /* Assign Ram Buffer allocation in units of 64bit (8 bytes) */
+-static void sky2_ramset(struct sky2_hw *hw, u16 q, u32 start, u32 end)
++static void sky2_ramset(struct sky2_hw *hw, u16 q, u32 start, u32 space)
+ {
++	u32 end;
++
++	start *= 1024/8;
++	space *= 1024/8;
++	end = start + space - 1;
++
+ 	pr_debug(PFX "q %d %#x %#x\n", q, start, end);
+ 
+ 	sky2_write8(hw, RB_ADDR(q, RB_CTRL), RB_RST_CLR);
+@@ -1192,20 +1199,21 @@ static int sky2_up(struct net_device *dev)
+ 
+ 	sky2_mac_init(hw, port);
+ 
+-	/* Determine available ram buffer space in qwords.  */
+-	ramsize = sky2_read8(hw, B2_E_0) * 4096/8;
+-
+-	if (ramsize > 6*1024/8)
+-		rxspace = ramsize - (ramsize + 2) / 3;
+-	else
+-		rxspace = ramsize / 2;
++	/* Determine available ram buffer space (in 4K blocks). */
++	ramsize = sky2_read8(hw, B2_E_0) * 4;
++	if (ramsize != 0) {
++		if (ramsize < 16)
++			rxspace = ramsize / 2;
++		else
++			rxspace = 8 + (2*(ramsize - 16))/3;
+ 
+-	sky2_ramset(hw, rxqaddr[port], 0, rxspace-1);
+-	sky2_ramset(hw, txqaddr[port], rxspace, ramsize-1);
++		sky2_ramset(hw, rxqaddr[port], 0, rxspace);
++		sky2_ramset(hw, txqaddr[port], rxspace, ramsize - rxspace);
+ 
+-	/* Make sure SyncQ is disabled */
+-	sky2_write8(hw, RB_ADDR(port == 0 ? Q_XS1 : Q_XS2, RB_CTRL),
+-		    RB_RST_SET);
++		/* Make sure SyncQ is disabled */
++		sky2_write8(hw, RB_ADDR(port == 0 ? Q_XS1 : Q_XS2, RB_CTRL),
++ 			    RB_RST_SET);
++	}
+ 
+ 	sky2_qset(hw, txqaddr[port]);
+ 
+@@ -1453,7 +1461,7 @@ static void sky2_tx_complete(struct sky2_port *sky2, u16 done)
+ 			if (unlikely(netif_msg_tx_done(sky2)))
+ 				printk(KERN_DEBUG "%s: tx done %u\n",
+ 				       dev->name, idx);
+-			dev_kfree_skb(re->skb);
++			dev_kfree_skb_any(re->skb);
+ 		}
+ 
+ 		le->opcode = 0;	/* paranoia */
+@@ -1498,6 +1506,13 @@ static int sky2_down(struct net_device *dev)
+ 	imask &= ~portirq_msk[port];
+ 	sky2_write32(hw, B0_IMSK, imask);
+ 
++	/*
++	 * Both ports share the NAPI poll on port 0, so if necessary undo the
++	 * the disable that is done in dev_close.
++	 */
++	if (sky2->port == 0 && hw->ports > 1)
++		netif_poll_enable(dev);
++
+ 	sky2_gmac_reset(hw, port);
+ 
+ 	/* Stop transmitter */
+@@ -1775,6 +1790,7 @@ out:
+ 
+ /* Transmit timeout is only called if we are running, carries is up
+  * and tx queue is full (stopped).
++ * Called with netif_tx_lock held.
+  */
+ static void sky2_tx_timeout(struct net_device *dev)
+ {
+@@ -1800,17 +1816,14 @@ static void sky2_tx_timeout(struct net_device *dev)
+ 		sky2_write8(hw, STAT_TX_TIMER_CTRL, TIM_START);
+ 	} else if (report != sky2->tx_cons) {
+ 		printk(KERN_INFO PFX "status report lost?\n");
+-
+-		netif_tx_lock_bh(dev);
+ 		sky2_tx_complete(sky2, report);
+-		netif_tx_unlock_bh(dev);
+ 	} else {
+ 		printk(KERN_INFO PFX "hardware hung? flushing\n");
+ 
+ 		sky2_write32(hw, Q_ADDR(txq, Q_CSR), BMU_STOP);
+ 		sky2_write32(hw, Y2_QADDR(txq, PREF_UNIT_CTRL), PREF_UNIT_RST_SET);
+ 
+-		sky2_tx_clean(dev);
++		sky2_tx_complete(sky2, sky2->tx_prod);
+ 
+ 		sky2_qset(hw, txq);
+ 		sky2_prefetch_init(hw, txq, sky2->tx_le_map, TX_RING_SIZE - 1);
+diff --git a/drivers/net/sky2.h b/drivers/net/sky2.h
+index 6d2a23f..3f05492 100644
+--- a/drivers/net/sky2.h
++++ b/drivers/net/sky2.h
+@@ -1576,7 +1576,7 @@ enum {
+ 
+ 	GMR_FS_ANY_ERR	= GMR_FS_RX_FF_OV | GMR_FS_CRC_ERR |
+ 			  GMR_FS_FRAGMENT | GMR_FS_LONG_ERR |
+-		  	  GMR_FS_MII_ERR | GMR_FS_GOOD_FC | GMR_FS_BAD_FC |
++		  	  GMR_FS_MII_ERR | GMR_FS_BAD_FC |
+ 			  GMR_FS_UN_SIZE | GMR_FS_JABBER,
+ };
+ 
+diff --git a/drivers/usb/net/usbnet.c b/drivers/usb/net/usbnet.c
+index 760b532..4f08614 100644
+--- a/drivers/usb/net/usbnet.c
++++ b/drivers/usb/net/usbnet.c
+@@ -1181,6 +1181,9 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
+ 	// NOTE net->name still not usable ...
+ 	if (info->bind) {
+ 		status = info->bind (dev, udev);
++		if (status < 0)
++			goto out1;
++
+ 		// heuristic:  "usb%d" for links we know are two-host,
+ 		// else "eth%d" when there's reasonable doubt.  userspace
+ 		// can rename the link if it knows better.
+@@ -1207,12 +1210,12 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
+ 	if (status == 0 && dev->status)
+ 		status = init_status (dev, udev);
+ 	if (status < 0)
+-		goto out1;
++		goto out3;
+ 
+ 	if (!dev->rx_urb_size)
+ 		dev->rx_urb_size = dev->hard_mtu;
+ 	dev->maxpacket = usb_maxpacket (dev->udev, dev->out, 1);
+-	
++
+ 	SET_NETDEV_DEV(net, &udev->dev);
+ 	status = register_netdev (net);
+ 	if (status)
+diff --git a/fs/bad_inode.c b/fs/bad_inode.c
+index 34e6d7b..869f519 100644
+--- a/fs/bad_inode.c
++++ b/fs/bad_inode.c
+@@ -14,59 +14,307 @@
+ #include <linux/time.h>
+ #include <linux/smp_lock.h>
+ #include <linux/namei.h>
++#include <linux/poll.h>
+ 
+-static int return_EIO(void)
++
++static loff_t bad_file_llseek(struct file *file, loff_t offset, int origin)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_read(struct file *filp, char __user *buf,
++			size_t size, loff_t *ppos)
++{
++        return -EIO;
++}
++
++static ssize_t bad_file_write(struct file *filp, const char __user *buf,
++			size_t siz, loff_t *ppos)
++{
++        return -EIO;
++}
++
++static ssize_t bad_file_aio_read(struct kiocb *iocb, const struct iovec *iov,
++			unsigned long nr_segs, loff_t pos)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
++			unsigned long nr_segs, loff_t pos)
++{
++	return -EIO;
++}
++
++static int bad_file_readdir(struct file *filp, void *dirent, filldir_t filldir)
++{
++	return -EIO;
++}
++
++static unsigned int bad_file_poll(struct file *filp, poll_table *wait)
++{
++	return POLLERR;
++}
++
++static int bad_file_ioctl (struct inode *inode, struct file *filp,
++			unsigned int cmd, unsigned long arg)
++{
++	return -EIO;
++}
++
++static long bad_file_unlocked_ioctl(struct file *file, unsigned cmd,
++			unsigned long arg)
++{
++	return -EIO;
++}
++
++static long bad_file_compat_ioctl(struct file *file, unsigned int cmd,
++			unsigned long arg)
++{
++	return -EIO;
++}
++
++static int bad_file_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	return -EIO;
++}
++
++static int bad_file_open(struct inode *inode, struct file *filp)
++{
++	return -EIO;
++}
++
++static int bad_file_flush(struct file *file, fl_owner_t id)
++{
++	return -EIO;
++}
++
++static int bad_file_release(struct inode *inode, struct file *filp)
++{
++	return -EIO;
++}
++
++static int bad_file_fsync(struct file *file, struct dentry *dentry,
++			int datasync)
++{
++	return -EIO;
++}
++
++static int bad_file_aio_fsync(struct kiocb *iocb, int datasync)
++{
++	return -EIO;
++}
++
++static int bad_file_fasync(int fd, struct file *filp, int on)
++{
++	return -EIO;
++}
++
++static int bad_file_lock(struct file *file, int cmd, struct file_lock *fl)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_sendfile(struct file *in_file, loff_t *ppos,
++			size_t count, read_actor_t actor, void *target)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_sendpage(struct file *file, struct page *page,
++			int off, size_t len, loff_t *pos, int more)
++{
++	return -EIO;
++}
++
++static unsigned long bad_file_get_unmapped_area(struct file *file,
++				unsigned long addr, unsigned long len,
++				unsigned long pgoff, unsigned long flags)
++{
++	return -EIO;
++}
++
++static int bad_file_check_flags(int flags)
+ {
+ 	return -EIO;
+ }
+ 
+-#define EIO_ERROR ((void *) (return_EIO))
++static int bad_file_dir_notify(struct file *file, unsigned long arg)
++{
++	return -EIO;
++}
++
++static int bad_file_flock(struct file *filp, int cmd, struct file_lock *fl)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_splice_write(struct pipe_inode_info *pipe,
++			struct file *out, loff_t *ppos, size_t len,
++			unsigned int flags)
++{
++	return -EIO;
++}
++
++static ssize_t bad_file_splice_read(struct file *in, loff_t *ppos,
++			struct pipe_inode_info *pipe, size_t len,
++			unsigned int flags)
++{
++	return -EIO;
++}
+ 
+ static const struct file_operations bad_file_ops =
+ {
+-	.llseek		= EIO_ERROR,
+-	.aio_read	= EIO_ERROR,
+-	.read		= EIO_ERROR,
+-	.write		= EIO_ERROR,
+-	.aio_write	= EIO_ERROR,
+-	.readdir	= EIO_ERROR,
+-	.poll		= EIO_ERROR,
+-	.ioctl		= EIO_ERROR,
+-	.mmap		= EIO_ERROR,
+-	.open		= EIO_ERROR,
+-	.flush		= EIO_ERROR,
+-	.release	= EIO_ERROR,
+-	.fsync		= EIO_ERROR,
+-	.aio_fsync	= EIO_ERROR,
+-	.fasync		= EIO_ERROR,
+-	.lock		= EIO_ERROR,
+-	.sendfile	= EIO_ERROR,
+-	.sendpage	= EIO_ERROR,
+-	.get_unmapped_area = EIO_ERROR,
++	.llseek		= bad_file_llseek,
++	.read		= bad_file_read,
++	.write		= bad_file_write,
++	.aio_read	= bad_file_aio_read,
++	.aio_write	= bad_file_aio_write,
++	.readdir	= bad_file_readdir,
++	.poll		= bad_file_poll,
++	.ioctl		= bad_file_ioctl,
++	.unlocked_ioctl	= bad_file_unlocked_ioctl,
++	.compat_ioctl	= bad_file_compat_ioctl,
++	.mmap		= bad_file_mmap,
++	.open		= bad_file_open,
++	.flush		= bad_file_flush,
++	.release	= bad_file_release,
++	.fsync		= bad_file_fsync,
++	.aio_fsync	= bad_file_aio_fsync,
++	.fasync		= bad_file_fasync,
++	.lock		= bad_file_lock,
++	.sendfile	= bad_file_sendfile,
++	.sendpage	= bad_file_sendpage,
++	.get_unmapped_area = bad_file_get_unmapped_area,
++	.check_flags	= bad_file_check_flags,
++	.dir_notify	= bad_file_dir_notify,
++	.flock		= bad_file_flock,
++	.splice_write	= bad_file_splice_write,
++	.splice_read	= bad_file_splice_read,
+ };
+ 
++static int bad_inode_create (struct inode *dir, struct dentry *dentry,
++		int mode, struct nameidata *nd)
++{
++	return -EIO;
++}
++
++static struct dentry *bad_inode_lookup(struct inode *dir,
++			struct dentry *dentry, struct nameidata *nd)
++{
++	return ERR_PTR(-EIO);
++}
++
++static int bad_inode_link (struct dentry *old_dentry, struct inode *dir,
++		struct dentry *dentry)
++{
++	return -EIO;
++}
++
++static int bad_inode_unlink(struct inode *dir, struct dentry *dentry)
++{
++	return -EIO;
++}
++
++static int bad_inode_symlink (struct inode *dir, struct dentry *dentry,
++		const char *symname)
++{
++	return -EIO;
++}
++
++static int bad_inode_mkdir(struct inode *dir, struct dentry *dentry,
++			int mode)
++{
++	return -EIO;
++}
++
++static int bad_inode_rmdir (struct inode *dir, struct dentry *dentry)
++{
++	return -EIO;
++}
++
++static int bad_inode_mknod (struct inode *dir, struct dentry *dentry,
++			int mode, dev_t rdev)
++{
++	return -EIO;
++}
++
++static int bad_inode_rename (struct inode *old_dir, struct dentry *old_dentry,
++		struct inode *new_dir, struct dentry *new_dentry)
++{
++	return -EIO;
++}
++
++static int bad_inode_readlink(struct dentry *dentry, char __user *buffer,
++		int buflen)
++{
++	return -EIO;
++}
++
++static int bad_inode_permission(struct inode *inode, int mask,
++			struct nameidata *nd)
++{
++	return -EIO;
++}
++
++static int bad_inode_getattr(struct vfsmount *mnt, struct dentry *dentry,
++			struct kstat *stat)
++{
++	return -EIO;
++}
++
++static int bad_inode_setattr(struct dentry *direntry, struct iattr *attrs)
++{
++	return -EIO;
++}
++
++static int bad_inode_setxattr(struct dentry *dentry, const char *name,
++		const void *value, size_t size, int flags)
++{
++	return -EIO;
++}
++
++static ssize_t bad_inode_getxattr(struct dentry *dentry, const char *name,
++			void *buffer, size_t size)
++{
++	return -EIO;
++}
++
++static ssize_t bad_inode_listxattr(struct dentry *dentry, char *buffer,
++			size_t buffer_size)
++{
++	return -EIO;
++}
++
++static int bad_inode_removexattr(struct dentry *dentry, const char *name)
++{
++	return -EIO;
++}
++
+ static struct inode_operations bad_inode_ops =
+ {
+-	.create		= EIO_ERROR,
+-	.lookup		= EIO_ERROR,
+-	.link		= EIO_ERROR,
+-	.unlink		= EIO_ERROR,
+-	.symlink	= EIO_ERROR,
+-	.mkdir		= EIO_ERROR,
+-	.rmdir		= EIO_ERROR,
+-	.mknod		= EIO_ERROR,
+-	.rename		= EIO_ERROR,
+-	.readlink	= EIO_ERROR,
++	.create		= bad_inode_create,
++	.lookup		= bad_inode_lookup,
++	.link		= bad_inode_link,
++	.unlink		= bad_inode_unlink,
++	.symlink	= bad_inode_symlink,
++	.mkdir		= bad_inode_mkdir,
++	.rmdir		= bad_inode_rmdir,
++	.mknod		= bad_inode_mknod,
++	.rename		= bad_inode_rename,
++	.readlink	= bad_inode_readlink,
+ 	/* follow_link must be no-op, otherwise unmounting this inode
+ 	   won't work */
+-	.truncate	= EIO_ERROR,
+-	.permission	= EIO_ERROR,
+-	.getattr	= EIO_ERROR,
+-	.setattr	= EIO_ERROR,
+-	.setxattr	= EIO_ERROR,
+-	.getxattr	= EIO_ERROR,
+-	.listxattr	= EIO_ERROR,
+-	.removexattr	= EIO_ERROR,
++	/* put_link returns void */
++	/* truncate returns void */
++	.permission	= bad_inode_permission,
++	.getattr	= bad_inode_getattr,
++	.setattr	= bad_inode_setattr,
++	.setxattr	= bad_inode_setxattr,
++	.getxattr	= bad_inode_getxattr,
++	.listxattr	= bad_inode_listxattr,
++	.removexattr	= bad_inode_removexattr,
++	/* truncate_range returns void */
+ };
+ 
+ 
+@@ -88,7 +336,7 @@ static struct inode_operations bad_inode_ops =
+  *	on it to fail from this point on.
+  */
+  
+-void make_bad_inode(struct inode * inode) 
++void make_bad_inode(struct inode *inode)
+ {
+ 	remove_inode_hash(inode);
+ 
+@@ -113,7 +361,7 @@ EXPORT_SYMBOL(make_bad_inode);
+  *	Returns true if the inode in question has been marked as bad.
+  */
+  
+-int is_bad_inode(struct inode * inode) 
++int is_bad_inode(struct inode *inode)
+ {
+ 	return (inode->i_op == &bad_inode_ops);	
+ }
+diff --git a/fs/cifs/sess.c b/fs/cifs/sess.c
+index bbdda99..df8c525 100644
+--- a/fs/cifs/sess.c
++++ b/fs/cifs/sess.c
+@@ -182,11 +182,14 @@ static int decode_unicode_ssetup(char ** pbcc_area, int bleft, struct cifsSesInf
+ 	cFYI(1,("bleft %d",bleft));
+ 
+ 
+-	/* word align, if bytes remaining is not even */
+-	if(bleft % 2) {
+-		bleft--;
+-		data++;
+-	}
++	/* SMB header is unaligned, so cifs servers word align start of
++	   Unicode strings */
++	data++;
++	bleft--; /* Windows servers do not always double null terminate
++		    their final Unicode string - in which case we
++		    now will not attempt to decode the byte of junk
++		    which follows it */
++
+ 	words_left = bleft / 2;
+ 
+ 	/* save off server operating system */
+diff --git a/fs/ext2/super.c b/fs/ext2/super.c
+index d8b9abd..fc77349 100644
+--- a/fs/ext2/super.c
++++ b/fs/ext2/super.c
+@@ -710,10 +710,14 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
+ 		set_opt(sbi->s_mount_opt, GRPID);
+ 	if (def_mount_opts & EXT2_DEFM_UID16)
+ 		set_opt(sbi->s_mount_opt, NO_UID32);
++#ifdef CONFIG_EXT2_FS_XATTR
+ 	if (def_mount_opts & EXT2_DEFM_XATTR_USER)
+ 		set_opt(sbi->s_mount_opt, XATTR_USER);
++#endif
++#ifdef CONFIG_EXT2_FS_POSIX_ACL
+ 	if (def_mount_opts & EXT2_DEFM_ACL)
+ 		set_opt(sbi->s_mount_opt, POSIX_ACL);
++#endif
+ 	
+ 	if (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_PANIC)
+ 		set_opt(sbi->s_mount_opt, ERRORS_PANIC);
+diff --git a/fs/ext3/super.c b/fs/ext3/super.c
+index afc2d4f..65d3f0b 100644
+--- a/fs/ext3/super.c
++++ b/fs/ext3/super.c
+@@ -1455,10 +1455,14 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
+ 		set_opt(sbi->s_mount_opt, GRPID);
+ 	if (def_mount_opts & EXT3_DEFM_UID16)
+ 		set_opt(sbi->s_mount_opt, NO_UID32);
++#ifdef CONFIG_EXT3_FS_XATTR
+ 	if (def_mount_opts & EXT3_DEFM_XATTR_USER)
+ 		set_opt(sbi->s_mount_opt, XATTR_USER);
++#endif
++#ifdef CONFIG_EXT3_FS_POSIX_ACL
+ 	if (def_mount_opts & EXT3_DEFM_ACL)
+ 		set_opt(sbi->s_mount_opt, POSIX_ACL);
++#endif
+ 	if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_DATA)
+ 		sbi->s_mount_opt |= EXT3_MOUNT_JOURNAL_DATA;
+ 	else if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_ORDERED)
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index b4b022a..9bc16c2 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -1512,10 +1512,14 @@ static int ext4_fill_super (struct super_block *sb, void *data, int silent)
+ 		set_opt(sbi->s_mount_opt, GRPID);
+ 	if (def_mount_opts & EXT4_DEFM_UID16)
+ 		set_opt(sbi->s_mount_opt, NO_UID32);
++#ifdef CONFIG_EXT4DEV_FS_XATTR
+ 	if (def_mount_opts & EXT4_DEFM_XATTR_USER)
+ 		set_opt(sbi->s_mount_opt, XATTR_USER);
++#endif
++#ifdef CONFIG_EXT4DEV_FS_POSIX_ACL
+ 	if (def_mount_opts & EXT4_DEFM_ACL)
+ 		set_opt(sbi->s_mount_opt, POSIX_ACL);
++#endif
+ 	if ((def_mount_opts & EXT4_DEFM_JMODE) == EXT4_DEFM_JMODE_DATA)
+ 		sbi->s_mount_opt |= EXT4_MOUNT_JOURNAL_DATA;
+ 	else if ((def_mount_opts & EXT4_DEFM_JMODE) == EXT4_DEFM_JMODE_ORDERED)
+diff --git a/lib/swiotlb.c b/lib/swiotlb.c
+index 1062578..d6d57fb 100644
+--- a/lib/swiotlb.c
++++ b/lib/swiotlb.c
+@@ -750,7 +750,7 @@ swiotlb_sync_sg(struct device *hwdev, struct scatterlist *sg,
+ 
+ 	for (i = 0; i < nelems; i++, sg++)
+ 		if (sg->dma_address != SG_ENT_PHYS_ADDRESS(sg))
+-			sync_single(hwdev, (void *) sg->dma_address,
++			sync_single(hwdev, phys_to_virt(sg->dma_address),
+ 				    sg->dma_length, dir, target);
+ }
+ 
+diff --git a/sound/pci/hda/hda_intel.c b/sound/pci/hda/hda_intel.c
+index e35cfd3..1b4b0da 100644
+--- a/sound/pci/hda/hda_intel.c
++++ b/sound/pci/hda/hda_intel.c
+@@ -198,7 +198,7 @@ enum { SDI0, SDI1, SDI2, SDI3, SDO0, SDO1, SDO2, SDO3 };
+ 
+ /* STATESTS int mask: SD2,SD1,SD0 */
+ #define STATESTS_INT_MASK	0x07
+-#define AZX_MAX_CODECS		4
++#define AZX_MAX_CODECS		3
+ 
+ /* SD_CTL bits */
+ #define SD_CTL_STREAM_RESET	0x01	/* stream reset bit */
+diff --git a/sound/pci/hda/patch_si3054.c b/sound/pci/hda/patch_si3054.c
+index cc87dff..ed5e45e 100644
+--- a/sound/pci/hda/patch_si3054.c
++++ b/sound/pci/hda/patch_si3054.c
+@@ -243,7 +243,8 @@ static int si3054_init(struct hda_codec *codec)
+ 
+ 	if((val&SI3054_MEI_READY) != SI3054_MEI_READY) {
+ 		snd_printk(KERN_ERR "si3054: cannot initialize. EXT MID = %04x\n", val);
+-		return -EACCES;
++		/* let's pray that this is no fatal error */
++		/* return -EACCES; */
+ 	}
+ 
+ 	SET_REG(codec, SI3054_GPIO_POLARITY, 0xffff);
