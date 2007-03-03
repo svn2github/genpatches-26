@@ -66,25 +66,9 @@ Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
 
-Patch:	1900_ext3-dir-corruption.patch
-From:	http://bugs.gentoo.org/158784
-Desc:	Handle ext3 directory corruption better
-
-Patch:	1905_fs-buffers-infinite-loop.patch
-From:	http://bugs.gentoo.org/158782
-Desc:	Fix a possible infinite loop in isofs
-
 Patch:	1910_cramfs-block-corruption.patch
 From:	http://bugs.gentoo.org/158783
 Desc:	Fix handling of corrupt cramfs blocks
-
-Patch:	1915_hfs-root-inode.patch
-From:	http://bugs.gentoo.org/158786
-Desc:	Fix handling of corrupt HFS root inode
-
-Patch:	1920_ext2-corrupt-dir-size.patch
-From:	http://bugs.gentoo.org/158785
-Desc:	Fix handling of corrupt ext2 directory size field
 
 Patch:	1925_cifs-page-corruption.patch
 From:	2.6.20 tree
