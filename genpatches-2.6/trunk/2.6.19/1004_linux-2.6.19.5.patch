@@ -1,0 +1,926 @@
+diff --git a/arch/x86_64/ia32/ptrace32.c b/arch/x86_64/ia32/ptrace32.c
+index 04566fe..4de3a54 100644
+--- a/arch/x86_64/ia32/ptrace32.c
++++ b/arch/x86_64/ia32/ptrace32.c
+@@ -243,6 +243,7 @@ asmlinkage long sys32_ptrace(long request, u32 pid, u32 addr, u32 data)
+ 	case PTRACE_SINGLESTEP:
+ 	case PTRACE_DETACH:
+ 	case PTRACE_SYSCALL:
++	case PTRACE_OLDSETOPTIONS:
+ 	case PTRACE_SETOPTIONS:
+ 	case PTRACE_SET_THREAD_AREA:
+ 	case PTRACE_GET_THREAD_AREA:
+diff --git a/drivers/ata/pata_amd.c b/drivers/ata/pata_amd.c
+index 5c47a9e..3a1f83c 100644
+--- a/drivers/ata/pata_amd.c
++++ b/drivers/ata/pata_amd.c
+@@ -128,7 +128,7 @@ static void timing_setup(struct ata_port *ap, struct ata_device *adev, int offse
+ 
+ static int amd_pre_reset(struct ata_port *ap)
+ {
+-	static const u32 bitmask[2] = {0x03, 0xC0};
++	static const u32 bitmask[2] = {0x03, 0x0C};
+ 	static const struct pci_bits amd_enable_bits[] = {
+ 		{ 0x40, 1, 0x02, 0x02 },
+ 		{ 0x40, 1, 0x01, 0x01 }
+@@ -247,7 +247,7 @@ static void amd133_set_dmamode(struct ata_port *ap, struct ata_device *adev)
+  */
+ 
+ static int nv_pre_reset(struct ata_port *ap) {
+-	static const u8 bitmask[2] = {0x03, 0xC0};
++	static const u8 bitmask[2] = {0x03, 0x0C};
+ 	static const struct pci_bits nv_enable_bits[] = {
+ 		{ 0x50, 1, 0x02, 0x02 },
+ 		{ 0x50, 1, 0x01, 0x01 }
+diff --git a/drivers/ide/ide-iops.c b/drivers/ide/ide-iops.c
+index badde63..6558055 100644
+--- a/drivers/ide/ide-iops.c
++++ b/drivers/ide/ide-iops.c
+@@ -607,6 +607,8 @@ u8 eighty_ninty_three (ide_drive_t *drive)
+ 	if(!(drive->id->hw_config & 0x4000))
+ 		return 0;
+ #endif /* CONFIG_IDEDMA_IVB */
++	if (!(drive->id->hw_config & 0x2000))
++		return 0;
+ 	return 1;
+ }
+ 
+diff --git a/drivers/media/video/ks0127.c b/drivers/media/video/ks0127.c
+index c1a377f..b6cd21e 100644
+--- a/drivers/media/video/ks0127.c
++++ b/drivers/media/video/ks0127.c
+@@ -712,13 +712,13 @@ static int ks0127_command(struct i2c_client *client,
+ 		*iarg = 0;
+ 		status = ks0127_read(ks, KS_STAT);
+ 		if (!(status & 0x20))		 /* NOVID not set */
+-			*iarg = (*iarg & DECODER_STATUS_GOOD);
++			*iarg = (*iarg | DECODER_STATUS_GOOD);
+ 		if ((status & 0x01))		      /* CLOCK set */
+-			*iarg = (*iarg & DECODER_STATUS_COLOR);
++			*iarg = (*iarg | DECODER_STATUS_COLOR);
+ 		if ((status & 0x08))		   /* PALDET set */
+-			*iarg = (*iarg & DECODER_STATUS_PAL);
++			*iarg = (*iarg | DECODER_STATUS_PAL);
+ 		else
+-			*iarg = (*iarg & DECODER_STATUS_NTSC);
++			*iarg = (*iarg | DECODER_STATUS_NTSC);
+ 		break;
+ 
+ 	//Catch any unknown command
+diff --git a/drivers/media/video/tveeprom.c b/drivers/media/video/tveeprom.c
+index 6b9ef73..192a9d2 100644
+--- a/drivers/media/video/tveeprom.c
++++ b/drivers/media/video/tveeprom.c
+@@ -184,7 +184,7 @@ hauppauge_tuner[] =
+ 	{ TUNER_ABSENT,        "Thompson DTT757"},
+ 	/* 80-89 */
+ 	{ TUNER_ABSENT,        "Philips FQ1216LME MK3"},
+-	{ TUNER_ABSENT,        "LG TAPC G701D"},
++	{ TUNER_LG_PAL_NEW_TAPC, "LG TAPC G701D"},
+ 	{ TUNER_LG_NTSC_NEW_TAPC, "LG TAPC H791F"},
+ 	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MB 3"},
+ 	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MI 3"},
+diff --git a/drivers/media/video/usbvideo/quickcam_messenger.h b/drivers/media/video/usbvideo/quickcam_messenger.h
+index baab9c0..17ace39 100644
+--- a/drivers/media/video/usbvideo/quickcam_messenger.h
++++ b/drivers/media/video/usbvideo/quickcam_messenger.h
+@@ -35,27 +35,13 @@ struct rgb {
+ };
+ 
+ struct bayL0 {
+-#ifdef __BIG_ENDIAN
+-	u8 r;
+-	u8 g;
+-#elif __LITTLE_ENDIAN
+ 	u8 g;
+ 	u8 r;
+-#else
+-#error not byte order defined
+-#endif
+ };
+ 
+ struct bayL1 {
+-#ifdef __BIG_ENDIAN
+-	u8 g;
+-	u8 b;
+-#elif __LITTLE_ENDIAN
+ 	u8 b;
+ 	u8 g;
+-#else
+-#error not byte order defined
+-#endif
+ };
+ 
+ struct cam_size {
+diff --git a/drivers/media/video/video-buf.c b/drivers/media/video/video-buf.c
+index f429f49..3f65fb6 100644
+--- a/drivers/media/video/video-buf.c
++++ b/drivers/media/video/video-buf.c
+@@ -700,6 +700,7 @@ videobuf_qbuf(struct videobuf_queue *q,
+ 		goto done;
+ 	}
+ 	if (buf->state == STATE_QUEUED ||
++	    buf->state == STATE_PREPARED ||
+ 	    buf->state == STATE_ACTIVE) {
+ 		dprintk(1,"qbuf: buffer is already queued or active.\n");
+ 		goto done;
+diff --git a/drivers/net/8139too.c b/drivers/net/8139too.c
+index d02ed51..48fffdf 100644
+--- a/drivers/net/8139too.c
++++ b/drivers/net/8139too.c
+@@ -2129,14 +2129,15 @@ static int rtl8139_poll(struct net_device *dev, int *budget)
+ 	}
+ 
+ 	if (done) {
++		unsigned long flags;
+ 		/*
+ 		 * Order is important since data can get interrupted
+ 		 * again when we think we are done.
+ 		 */
+-		local_irq_disable();
++		local_irq_save(flags);
+ 		RTL_W16_F(IntrMask, rtl8139_intr_mask);
+ 		__netif_rx_complete(dev);
+-		local_irq_enable();
++		local_irq_restore(flags);
+ 	}
+ 	spin_unlock(&tp->rx_lock);
+ 
+diff --git a/drivers/net/smc911x.c b/drivers/net/smc911x.c
+index 797ab91..3d86b0d 100644
+--- a/drivers/net/smc911x.c
++++ b/drivers/net/smc911x.c
+@@ -965,11 +965,11 @@ static void smc911x_phy_configure(void *data)
+ 	 * We should not be called if phy_type is zero.
+ 	 */
+ 	if (lp->phy_type == 0)
+-		 goto smc911x_phy_configure_exit;
++		 goto smc911x_phy_configure_exit_nolock;
+ 
+ 	if (smc911x_phy_reset(dev, phyaddr)) {
+ 		printk("%s: PHY reset timed out\n", dev->name);
+-		goto smc911x_phy_configure_exit;
++		goto smc911x_phy_configure_exit_nolock;
+ 	}
+ 	spin_lock_irqsave(&lp->lock, flags);
+ 
+@@ -1038,6 +1038,7 @@ static void smc911x_phy_configure(void *data)
+ 
+ smc911x_phy_configure_exit:
+ 	spin_unlock_irqrestore(&lp->lock, flags);
++smc911x_phy_configure_exit_nolock:
+ 	lp->work_pending = 0;
+ }
+ 
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx.h b/drivers/net/wireless/bcm43xx/bcm43xx.h
+index d6a8bf0..655919c 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx.h
++++ b/drivers/net/wireless/bcm43xx/bcm43xx.h
+@@ -21,7 +21,7 @@
+ #define PFX				KBUILD_MODNAME ": "
+ 
+ #define BCM43xx_SWITCH_CORE_MAX_RETRIES	50
+-#define BCM43xx_IRQWAIT_MAX_RETRIES	50
++#define BCM43xx_IRQWAIT_MAX_RETRIES	100
+ 
+ #define BCM43xx_IO_SIZE			8192
+ 
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx_main.c b/drivers/net/wireless/bcm43xx/bcm43xx_main.c
+index a1b7838..65a91ca 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx_main.c
++++ b/drivers/net/wireless/bcm43xx/bcm43xx_main.c
+@@ -1449,12 +1449,10 @@ static void handle_irq_transmit_status(struct bcm43xx_private *bcm)
+ 
+ 		bcm43xx_debugfs_log_txstat(bcm, &stat);
+ 
+-		if (stat.flags & BCM43xx_TXSTAT_FLAG_IGNORE)
++		if (stat.flags & BCM43xx_TXSTAT_FLAG_AMPDU)
++			continue;
++		if (stat.flags & BCM43xx_TXSTAT_FLAG_INTER)
+ 			continue;
+-		if (!(stat.flags & BCM43xx_TXSTAT_FLAG_ACK)) {
+-			//TODO: packet was not acked (was lost)
+-		}
+-		//TODO: There are more (unknown) flags to test. see bcm43xx_main.h
+ 
+ 		if (bcm43xx_using_pio(bcm))
+ 			bcm43xx_pio_handle_xmitstatus(bcm, &stat);
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h b/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
+index 2aed19e..9ecf2bf 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
++++ b/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
+@@ -137,14 +137,8 @@ struct bcm43xx_xmitstatus {
+ 	u16 unknown; //FIXME
+ };
+ 
+-#define BCM43xx_TXSTAT_FLAG_ACK		0x01
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x02
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x04
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x08
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x10
+-#define BCM43xx_TXSTAT_FLAG_IGNORE	0x20
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x40
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x80
++#define BCM43xx_TXSTAT_FLAG_AMPDU	0x10
++#define BCM43xx_TXSTAT_FLAG_INTER	0x20
+ 
+ u8 bcm43xx_plcp_get_ratecode_cck(const u8 bitrate);
+ u8 bcm43xx_plcp_get_ratecode_ofdm(const u8 bitrate);
+diff --git a/drivers/net/wireless/prism54/isl_ioctl.c b/drivers/net/wireless/prism54/isl_ioctl.c
+index 286325c..c347f87 100644
+--- a/drivers/net/wireless/prism54/isl_ioctl.c
++++ b/drivers/net/wireless/prism54/isl_ioctl.c
+@@ -1395,11 +1395,16 @@ static int prism54_set_auth(struct net_device *ndev,
+ 		break;
+ 
+ 	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
+-		dot1x = param->value ? 1 : 0;
++		/* dot1x should be the opposite of RX_UNENCRYPTED_EAPOL;
++		 * turn off dot1x when  allowing recepit of unencrypted eapol
++		 * frames, turn on dot1x when we disallow receipt
++		 */
++		dot1x = param->value ? 0x00 : 0x01;
+ 		break;
+ 
+ 	case IW_AUTH_PRIVACY_INVOKED:
+ 		privinvoked = param->value ? 1 : 0;
++		break;
+ 
+ 	case IW_AUTH_DROP_UNENCRYPTED:
+ 		exunencrypt = param->value ? 1 : 0;
+@@ -1589,6 +1594,7 @@ static int prism54_set_encodeext(struct net_device *ndev,
+ 			}
+ 			key.type = DOT11_PRIV_TKIP;
+ 			key.length = KEY_SIZE_TKIP;
++			break;
+ 		default:
+ 			return -EINVAL;
+ 		}
+diff --git a/drivers/rtc/rtc-pcf8563.c b/drivers/rtc/rtc-pcf8563.c
+index a760cf6..5842a48 100644
+--- a/drivers/rtc/rtc-pcf8563.c
++++ b/drivers/rtc/rtc-pcf8563.c
+@@ -53,6 +53,25 @@ I2C_CLIENT_INSMOD;
+ #define PCF8563_SC_LV		0x80 /* low voltage */
+ #define PCF8563_MO_C		0x80 /* century */
+ 
++struct pcf8563 {
++	struct i2c_client client;
++	/*
++	 * The meaning of MO_C bit varies by the chip type.
++	 * From PCF8563 datasheet: this bit is toggled when the years
++	 * register overflows from 99 to 00
++	 *   0 indicates the century is 20xx
++	 *   1 indicates the century is 19xx
++	 * From RTC8564 datasheet: this bit indicates change of
++	 * century. When the year digit data overflows from 99 to 00,
++	 * this bit is set. By presetting it to 0 while still in the
++	 * 20th century, it will be set in year 2000, ...
++	 * There seems no reliable way to know how the system use this
++	 * bit.  So let's do it heuristically, assuming we are live in
++	 * 1970...2069.
++	 */
++	int c_polarity;	/* 0: MO_C=1 means 19xx, otherwise MO_C=1 means 20xx */
++};
++
+ static int pcf8563_probe(struct i2c_adapter *adapter, int address, int kind);
+ static int pcf8563_detach(struct i2c_client *client);
+ 
+@@ -62,6 +81,7 @@ static int pcf8563_detach(struct i2c_client *client);
+  */
+ static int pcf8563_get_datetime(struct i2c_client *client, struct rtc_time *tm)
+ {
++	struct pcf8563 *pcf8563 = container_of(client, struct pcf8563, client);
+ 	unsigned char buf[13] = { PCF8563_REG_ST1 };
+ 
+ 	struct i2c_msg msgs[] = {
+@@ -94,8 +114,12 @@ static int pcf8563_get_datetime(struct i2c_client *client, struct rtc_time *tm)
+ 	tm->tm_mday = BCD2BIN(buf[PCF8563_REG_DM] & 0x3F);
+ 	tm->tm_wday = buf[PCF8563_REG_DW] & 0x07;
+ 	tm->tm_mon = BCD2BIN(buf[PCF8563_REG_MO] & 0x1F) - 1; /* rtc mn 1-12 */
+-	tm->tm_year = BCD2BIN(buf[PCF8563_REG_YR])
+-		+ (buf[PCF8563_REG_MO] & PCF8563_MO_C ? 0 : 100);
++	tm->tm_year = BCD2BIN(buf[PCF8563_REG_YR]);
++	if (tm->tm_year < 70)
++		tm->tm_year += 100;	/* assume we are in 1970...2069 */
++	/* detect the polarity heuristically. see note above. */
++	pcf8563->c_polarity = (buf[PCF8563_REG_MO] & PCF8563_MO_C) ?
++		(tm->tm_year >= 100) : (tm->tm_year < 100);
+ 
+ 	dev_dbg(&client->dev, "%s: tm is secs=%d, mins=%d, hours=%d, "
+ 		"mday=%d, mon=%d, year=%d, wday=%d\n",
+@@ -114,6 +138,7 @@ static int pcf8563_get_datetime(struct i2c_client *client, struct rtc_time *tm)
+ 
+ static int pcf8563_set_datetime(struct i2c_client *client, struct rtc_time *tm)
+ {
++	struct pcf8563 *pcf8563 = container_of(client, struct pcf8563, client);
+ 	int i, err;
+ 	unsigned char buf[9];
+ 
+@@ -135,7 +160,7 @@ static int pcf8563_set_datetime(struct i2c_client *client, struct rtc_time *tm)
+ 
+ 	/* year and century */
+ 	buf[PCF8563_REG_YR] = BIN2BCD(tm->tm_year % 100);
+-	if (tm->tm_year < 100)
++	if (pcf8563->c_polarity ? (tm->tm_year >= 100) : (tm->tm_year < 100))
+ 		buf[PCF8563_REG_MO] |= PCF8563_MO_C;
+ 
+ 	buf[PCF8563_REG_DW] = tm->tm_wday & 0x07;
+@@ -248,6 +273,7 @@ static struct i2c_driver pcf8563_driver = {
+ 
+ static int pcf8563_probe(struct i2c_adapter *adapter, int address, int kind)
+ {
++	struct pcf8563 *pcf8563;
+ 	struct i2c_client *client;
+ 	struct rtc_device *rtc;
+ 
+@@ -260,11 +286,12 @@ static int pcf8563_probe(struct i2c_adapter *adapter, int address, int kind)
+ 		goto exit;
+ 	}
+ 
+-	if (!(client = kzalloc(sizeof(struct i2c_client), GFP_KERNEL))) {
++	if (!(pcf8563 = kzalloc(sizeof(struct pcf8563), GFP_KERNEL))) {
+ 		err = -ENOMEM;
+ 		goto exit;
+ 	}
+ 
++	client = &pcf8563->client;
+ 	client->addr = address;
+ 	client->driver = &pcf8563_driver;
+ 	client->adapter	= adapter;
+@@ -301,7 +328,7 @@ exit_detach:
+ 	i2c_detach_client(client);
+ 
+ exit_kfree:
+-	kfree(client);
++	kfree(pcf8563);
+ 
+ exit:
+ 	return err;
+@@ -309,6 +336,7 @@ exit:
+ 
+ static int pcf8563_detach(struct i2c_client *client)
+ {
++	struct pcf8563 *pcf8563 = container_of(client, struct pcf8563, client);
+ 	int err;
+ 	struct rtc_device *rtc = i2c_get_clientdata(client);
+ 
+@@ -318,7 +346,7 @@ static int pcf8563_detach(struct i2c_client *client)
+ 	if ((err = i2c_detach_client(client)))
+ 		return err;
+ 
+-	kfree(client);
++	kfree(pcf8563);
+ 
+ 	return 0;
+ }
+diff --git a/fs/aio.c b/fs/aio.c
+index 9476659..bf02ef7 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -298,17 +298,23 @@ static void wait_for_all_aios(struct kioctx *ctx)
+ 	struct task_struct *tsk = current;
+ 	DECLARE_WAITQUEUE(wait, tsk);
+ 
++	spin_lock_irq(&ctx->ctx_lock);
+ 	if (!ctx->reqs_active)
+-		return;
++		goto out;
+ 
+ 	add_wait_queue(&ctx->wait, &wait);
+ 	set_task_state(tsk, TASK_UNINTERRUPTIBLE);
+ 	while (ctx->reqs_active) {
++		spin_unlock_irq(&ctx->ctx_lock);
+ 		schedule();
+ 		set_task_state(tsk, TASK_UNINTERRUPTIBLE);
++		spin_lock_irq(&ctx->ctx_lock);
+ 	}
+ 	__set_task_state(tsk, TASK_RUNNING);
+ 	remove_wait_queue(&ctx->wait, &wait);
++
++out:
++	spin_unlock_irq(&ctx->ctx_lock);
+ }
+ 
+ /* wait_on_sync_kiocb:
+@@ -425,7 +431,6 @@ static struct kiocb fastcall *__aio_get_req(struct kioctx *ctx)
+ 	ring = kmap_atomic(ctx->ring_info.ring_pages[0], KM_USER0);
+ 	if (ctx->reqs_active < aio_ring_avail(&ctx->ring_info, ring)) {
+ 		list_add(&req->ki_list, &ctx->active_reqs);
+-		get_ioctx(ctx);
+ 		ctx->reqs_active++;
+ 		okay = 1;
+ 	}
+@@ -538,8 +543,6 @@ int fastcall aio_put_req(struct kiocb *req)
+ 	spin_lock_irq(&ctx->ctx_lock);
+ 	ret = __aio_put_req(ctx, req);
+ 	spin_unlock_irq(&ctx->ctx_lock);
+-	if (ret)
+-		put_ioctx(ctx);
+ 	return ret;
+ }
+ 
+@@ -795,8 +798,7 @@ static int __aio_run_iocbs(struct kioctx *ctx)
+ 		 */
+ 		iocb->ki_users++;       /* grab extra reference */
+ 		aio_run_iocb(iocb);
+-		if (__aio_put_req(ctx, iocb))  /* drop extra ref */
+-			put_ioctx(ctx);
++		__aio_put_req(ctx, iocb);
+  	}
+ 	if (!list_empty(&ctx->run_list))
+ 		return 1;
+@@ -1014,14 +1016,10 @@ put_rq:
+ 	/* everything turned out well, dispose of the aiocb. */
+ 	ret = __aio_put_req(ctx, iocb);
+ 
+-	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+-
+ 	if (waitqueue_active(&ctx->wait))
+ 		wake_up(&ctx->wait);
+ 
+-	if (ret)
+-		put_ioctx(ctx);
+-
++	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ 	return ret;
+ }
+ 
+diff --git a/include/asm-x86_64/bitops.h b/include/asm-x86_64/bitops.h
+index 5b535ea..d4dbbe5 100644
+--- a/include/asm-x86_64/bitops.h
++++ b/include/asm-x86_64/bitops.h
+@@ -7,7 +7,13 @@
+ 
+ #include <asm/alternative.h>
+ 
+-#define ADDR (*(volatile long *) addr)
++#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 1)
++/* Technically wrong, but this avoids compilation errors on some gcc
++   versions. */
++#define ADDR "=m" (*(volatile long *) addr)
++#else
++#define ADDR "+m" (*(volatile long *) addr)
++#endif
+ 
+ /**
+  * set_bit - Atomically set a bit in memory
+@@ -23,7 +29,7 @@ static __inline__ void set_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btsl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr) : "memory");
+ }
+ 
+@@ -40,7 +46,7 @@ static __inline__ void __set_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ volatile(
+ 		"btsl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr) : "memory");
+ }
+ 
+@@ -58,7 +64,7 @@ static __inline__ void clear_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btrl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr));
+ }
+ 
+@@ -66,7 +72,7 @@ static __inline__ void __clear_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ __volatile__(
+ 		"btrl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr));
+ }
+ 
+@@ -86,7 +92,7 @@ static __inline__ void __change_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ __volatile__(
+ 		"btcl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr));
+ }
+ 
+@@ -103,7 +109,7 @@ static __inline__ void change_bit(int nr, volatile void * addr)
+ {
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btcl %1,%0"
+-		:"+m" (ADDR)
++		:ADDR
+ 		:"dIr" (nr));
+ }
+ 
+@@ -121,7 +127,7 @@ static __inline__ int test_and_set_bit(int nr, volatile void * addr)
+ 
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btsl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr) : "memory");
+ 	return oldbit;
+ }
+@@ -141,7 +147,7 @@ static __inline__ int __test_and_set_bit(int nr, volatile void * addr)
+ 
+ 	__asm__(
+ 		"btsl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr));
+ 	return oldbit;
+ }
+@@ -160,7 +166,7 @@ static __inline__ int test_and_clear_bit(int nr, volatile void * addr)
+ 
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btrl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr) : "memory");
+ 	return oldbit;
+ }
+@@ -180,7 +186,7 @@ static __inline__ int __test_and_clear_bit(int nr, volatile void * addr)
+ 
+ 	__asm__(
+ 		"btrl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr));
+ 	return oldbit;
+ }
+@@ -192,7 +198,7 @@ static __inline__ int __test_and_change_bit(int nr, volatile void * addr)
+ 
+ 	__asm__ __volatile__(
+ 		"btcl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr) : "memory");
+ 	return oldbit;
+ }
+@@ -211,7 +217,7 @@ static __inline__ int test_and_change_bit(int nr, volatile void * addr)
+ 
+ 	__asm__ __volatile__( LOCK_PREFIX
+ 		"btcl %2,%1\n\tsbbl %0,%0"
+-		:"=r" (oldbit),"+m" (ADDR)
++		:"=r" (oldbit),ADDR
+ 		:"dIr" (nr) : "memory");
+ 	return oldbit;
+ }
+@@ -237,7 +243,7 @@ static __inline__ int variable_test_bit(int nr, volatile const void * addr)
+ 	__asm__ __volatile__(
+ 		"btl %2,%1\n\tsbbl %0,%0"
+ 		:"=r" (oldbit)
+-		:"m" (ADDR),"dIr" (nr));
++		:"m" (*(volatile long *)addr),"dIr" (nr));
+ 	return oldbit;
+ }
+ 
+diff --git a/include/linux/sunrpc/svcsock.h b/include/linux/sunrpc/svcsock.h
+index 98b21ad..db312a1 100644
+--- a/include/linux/sunrpc/svcsock.h
++++ b/include/linux/sunrpc/svcsock.h
+@@ -63,7 +63,7 @@ struct svc_sock {
+  * Function prototypes.
+  */
+ int		svc_makesock(struct svc_serv *, int, unsigned short);
+-void		svc_delete_socket(struct svc_sock *);
++void		svc_close_socket(struct svc_sock *);
+ int		svc_recv(struct svc_rqst *, long);
+ int		svc_send(struct svc_rqst *);
+ void		svc_drop(struct svc_rqst *);
+diff --git a/net/sunrpc/svc.c b/net/sunrpc/svc.c
+index f817975..9359b84 100644
+--- a/net/sunrpc/svc.c
++++ b/net/sunrpc/svc.c
+@@ -387,7 +387,7 @@ svc_destroy(struct svc_serv *serv)
+ 		svsk = list_entry(serv->sv_tempsocks.next,
+ 				  struct svc_sock,
+ 				  sk_list);
+-		svc_delete_socket(svsk);
++		svc_close_socket(svsk);
+ 	}
+ 	if (serv->sv_shutdown)
+ 		serv->sv_shutdown(serv);
+@@ -396,7 +396,7 @@ svc_destroy(struct svc_serv *serv)
+ 		svsk = list_entry(serv->sv_permsocks.next,
+ 				  struct svc_sock,
+ 				  sk_list);
+-		svc_delete_socket(svsk);
++		svc_close_socket(svsk);
+ 	}
+ 	
+ 	cache_clean_deferred(serv);
+diff --git a/net/sunrpc/svcsock.c b/net/sunrpc/svcsock.c
+index 4e86df5..80b9540 100644
+--- a/net/sunrpc/svcsock.c
++++ b/net/sunrpc/svcsock.c
+@@ -61,6 +61,12 @@
+  *		after a clear, the socket must be read/accepted
+  *		 if this succeeds, it must be set again.
+  *	SK_CLOSE can set at any time. It is never cleared.
++ *      sk_inuse contains a bias of '1' until SK_DEAD is set.
++ *             so when sk_inuse hits zero, we know the socket is dead
++ *             and no-one is using it.
++ *      SK_DEAD can only be set while SK_BUSY is held which ensures
++ *             no other thread will be using the socket or will try to
++ *	       set SK_DEAD.
+  *
+  */
+ 
+@@ -69,6 +75,7 @@
+ 
+ static struct svc_sock *svc_setup_socket(struct svc_serv *, struct socket *,
+ 					 int *errp, int pmap_reg);
++static void		svc_delete_socket(struct svc_sock *svsk);
+ static void		svc_udp_data_ready(struct sock *, int);
+ static int		svc_udp_recvfrom(struct svc_rqst *);
+ static int		svc_udp_sendto(struct svc_rqst *);
+@@ -299,8 +306,9 @@ void svc_reserve(struct svc_rqst *rqstp, int space)
+ static inline void
+ svc_sock_put(struct svc_sock *svsk)
+ {
+-	if (atomic_dec_and_test(&svsk->sk_inuse) &&
+-			test_bit(SK_DEAD, &svsk->sk_flags)) {
++	if (atomic_dec_and_test(&svsk->sk_inuse)) {
++		BUG_ON(! test_bit(SK_DEAD, &svsk->sk_flags));
++
+ 		dprintk("svc: releasing dead socket\n");
+ 		if (svsk->sk_sock->file)
+ 			sockfd_put(svsk->sk_sock);
+@@ -490,7 +498,7 @@ svc_sock_names(char *buf, struct svc_serv *serv, char *toclose)
+ 
+ 	if (!serv)
+ 		return 0;
+-	spin_lock(&serv->sv_lock);
++	spin_lock_bh(&serv->sv_lock);
+ 	list_for_each_entry(svsk, &serv->sv_permsocks, sk_list) {
+ 		int onelen = one_sock_name(buf+len, svsk);
+ 		if (toclose && strcmp(toclose, buf+len) == 0)
+@@ -498,12 +506,12 @@ svc_sock_names(char *buf, struct svc_serv *serv, char *toclose)
+ 		else
+ 			len += onelen;
+ 	}
+-	spin_unlock(&serv->sv_lock);
++	spin_unlock_bh(&serv->sv_lock);
+ 	if (closesk)
+ 		/* Should unregister with portmap, but you cannot
+ 		 * unregister just one protocol...
+ 		 */
+-		svc_delete_socket(closesk);
++		svc_close_socket(closesk);
+ 	else if (toclose)
+ 		return -ENOENT;
+ 	return len;
+@@ -653,6 +661,11 @@ svc_udp_recvfrom(struct svc_rqst *rqstp)
+ 		return svc_deferred_recv(rqstp);
+ 	}
+ 
++	if (test_bit(SK_CLOSE, &svsk->sk_flags)) {
++		svc_delete_socket(svsk);
++		return 0;
++	}
++
+ 	clear_bit(SK_DATA, &svsk->sk_flags);
+ 	while ((skb = skb_recv_datagram(svsk->sk_sk, 0, 1, &err)) == NULL) {
+ 		if (err == -EAGAIN) {
+@@ -1142,7 +1155,8 @@ svc_tcp_sendto(struct svc_rqst *rqstp)
+ 		       rqstp->rq_sock->sk_server->sv_name,
+ 		       (sent<0)?"got error":"sent only",
+ 		       sent, xbufp->len);
+-		svc_delete_socket(rqstp->rq_sock);
++		set_bit(SK_CLOSE, &rqstp->rq_sock->sk_flags);
++		svc_sock_enqueue(rqstp->rq_sock);
+ 		sent = -EAGAIN;
+ 	}
+ 	return sent;
+@@ -1461,7 +1475,7 @@ svc_setup_socket(struct svc_serv *serv, struct socket *sock,
+ 	svsk->sk_odata = inet->sk_data_ready;
+ 	svsk->sk_owspace = inet->sk_write_space;
+ 	svsk->sk_server = serv;
+-	atomic_set(&svsk->sk_inuse, 0);
++	atomic_set(&svsk->sk_inuse, 1);
+ 	svsk->sk_lastrecv = get_seconds();
+ 	spin_lock_init(&svsk->sk_defer_lock);
+ 	INIT_LIST_HEAD(&svsk->sk_deferred);
+@@ -1582,7 +1596,7 @@ bummer:
+ /*
+  * Remove a dead socket
+  */
+-void
++static void
+ svc_delete_socket(struct svc_sock *svsk)
+ {
+ 	struct svc_serv	*serv;
+@@ -1608,16 +1622,26 @@ svc_delete_socket(struct svc_sock *svsk)
+ 	 * while still attached to a queue, the queue itself
+ 	 * is about to be destroyed (in svc_destroy).
+ 	 */
+-	if (!test_and_set_bit(SK_DEAD, &svsk->sk_flags))
++	if (!test_and_set_bit(SK_DEAD, &svsk->sk_flags)) {
++		BUG_ON(atomic_read(&svsk->sk_inuse)<2);
++		atomic_dec(&svsk->sk_inuse);
+ 		if (test_bit(SK_TEMP, &svsk->sk_flags))
+ 			serv->sv_tmpcnt--;
++	}
+ 
+-	/* This atomic_inc should be needed - svc_delete_socket
+-	 * should have the semantic of dropping a reference.
+-	 * But it doesn't yet....
+-	 */
+-	atomic_inc(&svsk->sk_inuse);
+ 	spin_unlock_bh(&serv->sv_lock);
++}
++
++void svc_close_socket(struct svc_sock *svsk)
++{
++	set_bit(SK_CLOSE, &svsk->sk_flags);
++	if (test_and_set_bit(SK_BUSY, &svsk->sk_flags))
++		/* someone else will have to effect the close */
++		return;
++
++	atomic_inc(&svsk->sk_inuse);
++	svc_delete_socket(svsk);
++	clear_bit(SK_BUSY, &svsk->sk_flags);
+ 	svc_sock_put(svsk);
+ }
+ 
+diff --git a/security/keys/key.c b/security/keys/key.c
+index 80de8c3..7b98397 100644
+--- a/security/keys/key.c
++++ b/security/keys/key.c
+@@ -188,6 +188,7 @@ static inline void key_alloc_serial(struct key *key)
+ 
+ 	spin_lock(&key_serial_lock);
+ 
++attempt_insertion:
+ 	parent = NULL;
+ 	p = &key_serial_tree.rb_node;
+ 
+@@ -202,39 +203,33 @@ static inline void key_alloc_serial(struct key *key)
+ 		else
+ 			goto serial_exists;
+ 	}
+-	goto insert_here;
++
++	/* we've found a suitable hole - arrange for this key to occupy it */
++	rb_link_node(&key->serial_node, parent, p);
++	rb_insert_color(&key->serial_node, &key_serial_tree);
++
++	spin_unlock(&key_serial_lock);
++	return;
+ 
+ 	/* we found a key with the proposed serial number - walk the tree from
+ 	 * that point looking for the next unused serial number */
+ serial_exists:
+ 	for (;;) {
+ 		key->serial++;
+-		if (key->serial < 2)
+-			key->serial = 2;
+-
+-		if (!rb_parent(parent))
+-			p = &key_serial_tree.rb_node;
+-		else if (rb_parent(parent)->rb_left == parent)
+-			p = &(rb_parent(parent)->rb_left);
+-		else
+-			p = &(rb_parent(parent)->rb_right);
++		if (key->serial < 3) {
++			key->serial = 3;
++			goto attempt_insertion;
++		}
+ 
+ 		parent = rb_next(parent);
+ 		if (!parent)
+-			break;
++			goto attempt_insertion;
+ 
+ 		xkey = rb_entry(parent, struct key, serial_node);
+ 		if (key->serial < xkey->serial)
+-			goto insert_here;
++			goto attempt_insertion;
+ 	}
+ 
+-	/* we've found a suitable hole - arrange for this key to occupy it */
+-insert_here:
+-	rb_link_node(&key->serial_node, parent, p);
+-	rb_insert_color(&key->serial_node, &key_serial_tree);
+-
+-	spin_unlock(&key_serial_lock);
+-
+ } /* end key_alloc_serial() */
+ 
+ /*****************************************************************************/
+diff --git a/sound/usb/usbaudio.c b/sound/usb/usbaudio.c
+index 67202b9..52706aa 100644
+--- a/sound/usb/usbaudio.c
++++ b/sound/usb/usbaudio.c
+@@ -186,6 +186,7 @@ struct snd_usb_substream {
+ 	u64 formats;			/* format bitmasks (all or'ed) */
+ 	unsigned int num_formats;		/* number of supported audio formats (list) */
+ 	struct list_head fmt_list;	/* format list */
++	struct snd_pcm_hw_constraint_list rate_list;	/* limited rates */
+ 	spinlock_t lock;
+ 
+ 	struct snd_urb_ops ops;		/* callbacks (must be filled at init) */
+@@ -1810,28 +1811,33 @@ static int check_hw_params_convention(struct snd_usb_substream *subs)
+ static int snd_usb_pcm_check_knot(struct snd_pcm_runtime *runtime,
+ 				  struct snd_usb_substream *subs)
+ {
+-	struct list_head *p;
+-	struct snd_pcm_hw_constraint_list constraints_rates;
++	struct audioformat *fp;
++	int count = 0, needs_knot = 0;
+ 	int err;
+ 
+-	list_for_each(p, &subs->fmt_list) {
+-		struct audioformat *fp;
+-		fp = list_entry(p, struct audioformat, list);
+-
+-		if (!fp->needs_knot)
+-			continue;
+-
+-		constraints_rates.count = fp->nr_rates;
+-		constraints_rates.list = fp->rate_table;
+-		constraints_rates.mask = 0;
+-
+-		err = snd_pcm_hw_constraint_list(runtime, 0,
+-			SNDRV_PCM_HW_PARAM_RATE,
+-			&constraints_rates);
+-
+-		if (err < 0)
+-			return err;
++	list_for_each_entry(fp, &subs->fmt_list, list) {
++		if (fp->rates & SNDRV_PCM_RATE_CONTINUOUS)
++			return 0;
++		count += fp->nr_rates;
++		if (fp->needs_knot)
++			needs_knot = 1;
+ 	}
++	if (!needs_knot)
++		return 0;
++
++	subs->rate_list.count = count;
++	subs->rate_list.list = kmalloc(sizeof(int) * count, GFP_KERNEL);
++	subs->rate_list.mask = 0;
++	count = 0;
++	list_for_each_entry(fp, &subs->fmt_list, list) {
++		int i;
++		for (i = 0; i < fp->nr_rates; i++)
++			subs->rate_list.list[count++] = fp->rate_table[i];
++	}
++	err = snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
++					 &subs->rate_list);
++	if (err < 0)
++		return err;
+ 
+ 	return 0;
+ }
+@@ -2231,6 +2237,7 @@ static void free_substream(struct snd_usb_substream *subs)
+ 		kfree(fp->rate_table);
+ 		kfree(fp);
+ 	}
++	kfree(subs->rate_list.list);
+ }
+ 
+ 
+@@ -2456,6 +2463,7 @@ static int parse_audio_format_rates(struct snd_usb_audio *chip, struct audioform
+ 		 * build the rate table and bitmap flags
+ 		 */
+ 		int r, idx, c;
++		unsigned int nonzero_rates = 0;
+ 		/* this table corresponds to the SNDRV_PCM_RATE_XXX bit */
+ 		static unsigned int conv_rates[] = {
+ 			5512, 8000, 11025, 16000, 22050, 32000, 44100, 48000,
+@@ -2471,7 +2479,14 @@ static int parse_audio_format_rates(struct snd_usb_audio *chip, struct audioform
+ 		fp->nr_rates = nr_rates;
+ 		fp->rate_min = fp->rate_max = combine_triple(&fmt[8]);
+ 		for (r = 0, idx = offset + 1; r < nr_rates; r++, idx += 3) {
+-			unsigned int rate = fp->rate_table[r] = combine_triple(&fmt[idx]);
++			unsigned int rate = combine_triple(&fmt[idx]);
++			/* C-Media CM6501 mislabels its 96 kHz altsetting */
++			if (rate == 48000 && nr_rates == 1 &&
++			    chip->usb_id == USB_ID(0x0d8c, 0x0201) &&
++			    fp->altsetting == 5 && fp->maxpacksize == 392)
++				rate = 96000;
++			fp->rate_table[r] = rate;
++			nonzero_rates |= rate;
+ 			if (rate < fp->rate_min)
+ 				fp->rate_min = rate;
+ 			else if (rate > fp->rate_max)
+@@ -2487,6 +2502,10 @@ static int parse_audio_format_rates(struct snd_usb_audio *chip, struct audioform
+ 			if (!found)
+ 				fp->needs_knot = 1;
+ 		}
++		if (!nonzero_rates) {
++			hwc_debug("All rates were zero. Skipping format!\n");
++			return -1;
++		}
+ 		if (fp->needs_knot)
+ 			fp->rates |= SNDRV_PCM_RATE_KNOT;
+ 	} else {
