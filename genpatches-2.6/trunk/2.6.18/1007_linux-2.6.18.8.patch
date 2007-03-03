@@ -1,0 +1,909 @@
+diff --git a/arch/x86_64/ia32/ptrace32.c b/arch/x86_64/ia32/ptrace32.c
+index 659c072..215dfac 100644
+--- a/arch/x86_64/ia32/ptrace32.c
++++ b/arch/x86_64/ia32/ptrace32.c
+@@ -239,6 +239,7 @@ asmlinkage long sys32_ptrace(long request, u32 pid, u32 addr, u32 data)
+ 	case PTRACE_SINGLESTEP:
+ 	case PTRACE_DETACH:
+ 	case PTRACE_SYSCALL:
++	case PTRACE_OLDSETOPTIONS:
+ 	case PTRACE_SETOPTIONS:
+ 		return sys_ptrace(request, pid, addr, data); 
+ 
+diff --git a/arch/x86_64/kernel/entry.S b/arch/x86_64/kernel/entry.S
+index aa8d893..28e88bf 100644
+--- a/arch/x86_64/kernel/entry.S
++++ b/arch/x86_64/kernel/entry.S
+@@ -146,6 +146,10 @@
+ /* rdi:	prev */	
+ ENTRY(ret_from_fork)
+ 	CFI_DEFAULT_STACK
++	push kernel_eflags(%rip)
++	CFI_ADJUST_CFA_OFFSET 4
++	popf				# reset kernel eflags
++	CFI_ADJUST_CFA_OFFSET -4
+ 	call schedule_tail
+ 	GET_THREAD_INFO(%rcx)
+ 	testl $(_TIF_SYSCALL_TRACE|_TIF_SYSCALL_AUDIT),threadinfo_flags(%rcx)
+diff --git a/arch/x86_64/kernel/setup64.c b/arch/x86_64/kernel/setup64.c
+index 417de56..845785e 100644
+--- a/arch/x86_64/kernel/setup64.c
++++ b/arch/x86_64/kernel/setup64.c
+@@ -178,6 +178,8 @@ void __cpuinit check_efer(void)
+         }       
+ }
+ 
++unsigned long kernel_eflags;
++
+ /*
+  * cpu_init() initializes state that is per-CPU. Some data is already
+  * initialized (naturally) in the bootstrap process, such as the GDT
+@@ -290,4 +292,6 @@ void __cpuinit cpu_init (void)
+ 	set_debugreg(0UL, 7);
+ 
+ 	fpu_init(); 
++
++	raw_local_save_flags(kernel_eflags);
+ }
+diff --git a/drivers/char/mem.c b/drivers/char/mem.c
+index 917b204..4851dce 100644
+--- a/drivers/char/mem.c
++++ b/drivers/char/mem.c
+@@ -616,7 +616,8 @@ static inline size_t read_zero_pagealigned(char __user * buf, size_t size)
+ 			count = size;
+ 
+ 		zap_page_range(vma, addr, count, NULL);
+-        	zeromap_page_range(vma, addr, count, PAGE_COPY);
++        	if (zeromap_page_range(vma, addr, count, PAGE_COPY))
++			break;
+ 
+ 		size -= count;
+ 		buf += count;
+@@ -683,11 +684,14 @@ out:
+ 
+ static int mmap_zero(struct file * file, struct vm_area_struct * vma)
+ {
++	int err;
++
+ 	if (vma->vm_flags & VM_SHARED)
+ 		return shmem_zero_setup(vma);
+-	if (zeromap_page_range(vma, vma->vm_start, vma->vm_end - vma->vm_start, vma->vm_page_prot))
+-		return -EAGAIN;
+-	return 0;
++	err = zeromap_page_range(vma, vma->vm_start,
++			vma->vm_end - vma->vm_start, vma->vm_page_prot);
++	BUG_ON(err == -EEXIST);
++	return err;
+ }
+ #else /* CONFIG_MMU */
+ static ssize_t read_zero(struct file * file, char * buf, 
+diff --git a/drivers/i2c/chips/ds1337.c b/drivers/i2c/chips/ds1337.c
+index 93d483b..ec17d6b 100644
+--- a/drivers/i2c/chips/ds1337.c
++++ b/drivers/i2c/chips/ds1337.c
+@@ -347,13 +347,19 @@ static void ds1337_init_client(struct i2c_client *client)
+ 
+ 	if ((status & 0x80) || (control & 0x80)) {
+ 		/* RTC not running */
+-		u8 buf[16];
++		u8 buf[1+16];	/* First byte is interpreted as address */
+ 		struct i2c_msg msg[1];
+ 
+ 		dev_dbg(&client->dev, "%s: RTC not running!\n", __FUNCTION__);
+ 
+ 		/* Initialize all, including STATUS and CONTROL to zero */
+ 		memset(buf, 0, sizeof(buf));
++
++		/* Write valid values in the date/time registers */
++		buf[1+DS1337_REG_DAY] = 1;
++		buf[1+DS1337_REG_DATE] = 1;
++		buf[1+DS1337_REG_MONTH] = 1;
++
+ 		msg[0].addr = client->addr;
+ 		msg[0].flags = 0;
+ 		msg[0].len = sizeof(buf);
+diff --git a/drivers/infiniband/core/mad.c b/drivers/infiniband/core/mad.c
+index 1c3cfbb..045336b 100644
+--- a/drivers/infiniband/core/mad.c
++++ b/drivers/infiniband/core/mad.c
+@@ -1750,7 +1750,7 @@ ib_find_send_mad(struct ib_mad_agent_private *mad_agent_priv,
+ 		     */
+ 		    (is_direct(wc->recv_buf.mad->mad_hdr.mgmt_class) ||
+ 		     rcv_has_same_gid(mad_agent_priv, wr, wc)))
+-			return wr;
++			return (wr->status == IB_WC_SUCCESS) ? wr : NULL;
+ 	}
+ 
+ 	/*
+diff --git a/drivers/infiniband/ulp/srp/ib_srp.c b/drivers/infiniband/ulp/srp/ib_srp.c
+index fd8344c..d667d01 100644
+--- a/drivers/infiniband/ulp/srp/ib_srp.c
++++ b/drivers/infiniband/ulp/srp/ib_srp.c
+@@ -1851,7 +1851,7 @@ static void srp_add_one(struct ib_device *device)
+ 	 */
+ 	srp_dev->fmr_page_shift = max(9, ffs(dev_attr->page_size_cap) - 1);
+ 	srp_dev->fmr_page_size  = 1 << srp_dev->fmr_page_shift;
+-	srp_dev->fmr_page_mask  = ~((unsigned long) srp_dev->fmr_page_size - 1);
++	srp_dev->fmr_page_mask  = ~((u64) srp_dev->fmr_page_size - 1);
+ 
+ 	INIT_LIST_HEAD(&srp_dev->dev_list);
+ 
+diff --git a/drivers/infiniband/ulp/srp/ib_srp.h b/drivers/infiniband/ulp/srp/ib_srp.h
+index 5b581fb..c1865ed 100644
+--- a/drivers/infiniband/ulp/srp/ib_srp.h
++++ b/drivers/infiniband/ulp/srp/ib_srp.h
+@@ -87,7 +87,7 @@ struct srp_device {
+ 	struct ib_fmr_pool     *fmr_pool;
+ 	int			fmr_page_shift;
+ 	int			fmr_page_size;
+-	unsigned long		fmr_page_mask;
++	u64			fmr_page_mask;
+ };
+ 
+ struct srp_host {
+diff --git a/drivers/media/dvb/dvb-core/dvb_net.c b/drivers/media/dvb/dvb-core/dvb_net.c
+index 8859ab7..ee23125 100644
+--- a/drivers/media/dvb/dvb-core/dvb_net.c
++++ b/drivers/media/dvb/dvb-core/dvb_net.c
+@@ -604,7 +604,7 @@ static void dvb_net_ule( struct net_device *dev, const u8 *buf, size_t buf_len )
+ 				{ &utype, sizeof utype },
+ 				{ priv->ule_skb->data, priv->ule_skb->len - 4 }
+ 			};
+-			unsigned long ule_crc = ~0L, expected_crc;
++			u32 ule_crc = ~0L, expected_crc;
+ 			if (priv->ule_dbit) {
+ 				/* Set D-bit for CRC32 verification,
+ 				 * if it was set originally. */
+@@ -617,7 +617,7 @@ static void dvb_net_ule( struct net_device *dev, const u8 *buf, size_t buf_len )
+ 				       *((u8 *)priv->ule_skb->tail - 2) << 8 |
+ 				       *((u8 *)priv->ule_skb->tail - 1);
+ 			if (ule_crc != expected_crc) {
+-				printk(KERN_WARNING "%lu: CRC32 check FAILED: %#lx / %#lx, SNDU len %d type %#x, ts_remain %d, next 2: %x.\n",
++				printk(KERN_WARNING "%lu: CRC32 check FAILED: %08x / %08x, SNDU len %d type %#x, ts_remain %d, next 2: %x.\n",
+ 				       priv->ts_count, ule_crc, expected_crc, priv->ule_sndu_len, priv->ule_sndu_type, ts_remain, ts_remain > 2 ? *(unsigned short *)from_where : 0);
+ 
+ #ifdef ULE_DEBUG
+diff --git a/drivers/media/video/cx88/cx88-cards.c b/drivers/media/video/cx88/cx88-cards.c
+index 14bd486..23e4101 100644
+--- a/drivers/media/video/cx88/cx88-cards.c
++++ b/drivers/media/video/cx88/cx88-cards.c
+@@ -1465,7 +1465,7 @@ const unsigned int cx88_idcount = ARRAY_SIZE(cx88_subids);
+ /* ----------------------------------------------------------------------- */
+ /* some leadtek specific stuff                                             */
+ 
+-static void __devinit leadtek_eeprom(struct cx88_core *core, u8 *eeprom_data)
++static void leadtek_eeprom(struct cx88_core *core, u8 *eeprom_data)
+ {
+ 	/* This is just for the "Winfast 2000XP Expert" board ATM; I don't have data on
+ 	 * any others.
+diff --git a/drivers/media/video/ks0127.c b/drivers/media/video/ks0127.c
+index 3bf7ac4..ceef5e6 100644
+--- a/drivers/media/video/ks0127.c
++++ b/drivers/media/video/ks0127.c
+@@ -712,13 +712,13 @@ static int ks0127_command(struct i2c_client *client,
+ 		*iarg = 0;
+ 		status = ks0127_read(ks, KS_STAT);
+ 		if (!(status & 0x20))		 /* NOVID not set */
+-			*iarg = (*iarg & DECODER_STATUS_GOOD);
++			*iarg = (*iarg | DECODER_STATUS_GOOD);
+ 		if ((status & 0x01))		      /* CLOCK set */
+-			*iarg = (*iarg & DECODER_STATUS_COLOR);
++			*iarg = (*iarg | DECODER_STATUS_COLOR);
+ 		if ((status & 0x08))		   /* PALDET set */
+-			*iarg = (*iarg & DECODER_STATUS_PAL);
++			*iarg = (*iarg | DECODER_STATUS_PAL);
+ 		else
+-			*iarg = (*iarg & DECODER_STATUS_NTSC);
++			*iarg = (*iarg | DECODER_STATUS_NTSC);
+ 		break;
+ 
+ 	//Catch any unknown command
+diff --git a/drivers/media/video/tveeprom.c b/drivers/media/video/tveeprom.c
+index d95529e..2ebe2cf 100644
+--- a/drivers/media/video/tveeprom.c
++++ b/drivers/media/video/tveeprom.c
+@@ -184,7 +184,7 @@ hauppauge_tuner[] =
+ 	{ TUNER_ABSENT,        "Thompson DTT757"},
+ 	/* 80-89 */
+ 	{ TUNER_ABSENT,        "Philips FQ1216LME MK3"},
+-	{ TUNER_ABSENT,        "LG TAPC G701D"},
++	{ TUNER_LG_PAL_NEW_TAPC, "LG TAPC G701D"},
+ 	{ TUNER_LG_NTSC_NEW_TAPC, "LG TAPC H791F"},
+ 	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MB 3"},
+ 	{ TUNER_LG_PAL_NEW_TAPC, "TCL 2002MI 3"},
+diff --git a/drivers/media/video/usbvideo/quickcam_messenger.h b/drivers/media/video/usbvideo/quickcam_messenger.h
+index baab9c0..17ace39 100644
+--- a/drivers/media/video/usbvideo/quickcam_messenger.h
++++ b/drivers/media/video/usbvideo/quickcam_messenger.h
+@@ -35,27 +35,13 @@ struct rgb {
+ };
+ 
+ struct bayL0 {
+-#ifdef __BIG_ENDIAN
+-	u8 r;
+-	u8 g;
+-#elif __LITTLE_ENDIAN
+ 	u8 g;
+ 	u8 r;
+-#else
+-#error not byte order defined
+-#endif
+ };
+ 
+ struct bayL1 {
+-#ifdef __BIG_ENDIAN
+-	u8 g;
+-	u8 b;
+-#elif __LITTLE_ENDIAN
+ 	u8 b;
+ 	u8 g;
+-#else
+-#error not byte order defined
+-#endif
+ };
+ 
+ struct cam_size {
+diff --git a/drivers/media/video/video-buf.c b/drivers/media/video/video-buf.c
+index acc5ea9..97cc913 100644
+--- a/drivers/media/video/video-buf.c
++++ b/drivers/media/video/video-buf.c
+@@ -695,6 +695,7 @@ videobuf_qbuf(struct videobuf_queue *q,
+ 		goto done;
+ 	}
+ 	if (buf->state == STATE_QUEUED ||
++	    buf->state == STATE_PREPARED ||
+ 	    buf->state == STATE_ACTIVE) {
+ 		dprintk(1,"qbuf: buffer is already queued or active.\n");
+ 		goto done;
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx.h b/drivers/net/wireless/bcm43xx/bcm43xx.h
+index 6d4ea36..b02cf35 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx.h
++++ b/drivers/net/wireless/bcm43xx/bcm43xx.h
+@@ -21,7 +21,7 @@
+ #define PFX				KBUILD_MODNAME ": "
+ 
+ #define BCM43xx_SWITCH_CORE_MAX_RETRIES	50
+-#define BCM43xx_IRQWAIT_MAX_RETRIES	50
++#define BCM43xx_IRQWAIT_MAX_RETRIES	100
+ 
+ #define BCM43xx_IO_SIZE			8192
+ 
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx_main.c b/drivers/net/wireless/bcm43xx/bcm43xx_main.c
+index 42eecf2..b5badbf 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx_main.c
++++ b/drivers/net/wireless/bcm43xx/bcm43xx_main.c
+@@ -1449,12 +1449,10 @@ static void handle_irq_transmit_status(struct bcm43xx_private *bcm)
+ 
+ 		bcm43xx_debugfs_log_txstat(bcm, &stat);
+ 
+-		if (stat.flags & BCM43xx_TXSTAT_FLAG_IGNORE)
++		if (stat.flags & BCM43xx_TXSTAT_FLAG_AMPDU)
++			continue;
++		if (stat.flags & BCM43xx_TXSTAT_FLAG_INTER)
+ 			continue;
+-		if (!(stat.flags & BCM43xx_TXSTAT_FLAG_ACK)) {
+-			//TODO: packet was not acked (was lost)
+-		}
+-		//TODO: There are more (unknown) flags to test. see bcm43xx_main.h
+ 
+ 		if (bcm43xx_using_pio(bcm))
+ 			bcm43xx_pio_handle_xmitstatus(bcm, &stat);
+diff --git a/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h b/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
+index 2aed19e..9ecf2bf 100644
+--- a/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
++++ b/drivers/net/wireless/bcm43xx/bcm43xx_xmit.h
+@@ -137,14 +137,8 @@ struct bcm43xx_xmitstatus {
+ 	u16 unknown; //FIXME
+ };
+ 
+-#define BCM43xx_TXSTAT_FLAG_ACK		0x01
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x02
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x04
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x08
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x10
+-#define BCM43xx_TXSTAT_FLAG_IGNORE	0x20
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x40
+-//TODO #define BCM43xx_TXSTAT_FLAG_???	0x80
++#define BCM43xx_TXSTAT_FLAG_AMPDU	0x10
++#define BCM43xx_TXSTAT_FLAG_INTER	0x20
+ 
+ u8 bcm43xx_plcp_get_ratecode_cck(const u8 bitrate);
+ u8 bcm43xx_plcp_get_ratecode_ofdm(const u8 bitrate);
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 3031078..e5296fc 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -191,6 +191,7 @@ int scsi_execute(struct scsi_device *sdev, const unsigned char *cmd,
+ 		goto out;
+ 
+ 	req->cmd_len = COMMAND_SIZE(cmd[0]);
++	memset(req->cmd, 0, BLK_MAX_CDB); /* ATAPI hates garbage after CDB */
+ 	memcpy(req->cmd, cmd, req->cmd_len);
+ 	req->sense = sense;
+ 	req->sense_len = 0;
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 5b329f0..29fc99f 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -1179,8 +1179,21 @@ grow_buffers(struct block_device *bdev, sector_t block, int size)
+ 	} while ((size << sizebits) < PAGE_SIZE);
+ 
+ 	index = block >> sizebits;
+-	block = index << sizebits;
+ 
++	/*
++	 * Check for a block which wants to lie outside our maximum possible
++	 * pagecache index.  (this comparison is done using sector_t types).
++	 */
++	if (unlikely(index != block >> sizebits)) {
++		char b[BDEVNAME_SIZE];
++
++		printk(KERN_ERR "%s: requested out-of-range block %llu for "
++			"device %s\n",
++			__FUNCTION__, (unsigned long long)block,
++			bdevname(bdev, b));
++		return -EIO;
++	}
++	block = index << sizebits;
+ 	/* Create a page with the proper size buffers.. */
+ 	page = grow_dev_page(bdev, block, index, size);
+ 	if (!page)
+@@ -1207,12 +1220,16 @@ __getblk_slow(struct block_device *bdev, sector_t block, int size)
+ 
+ 	for (;;) {
+ 		struct buffer_head * bh;
++		int ret;
+ 
+ 		bh = __find_get_block(bdev, block, size);
+ 		if (bh)
+ 			return bh;
+ 
+-		if (!grow_buffers(bdev, block, size))
++		ret = grow_buffers(bdev, block, size);
++		if (ret < 0)
++			return NULL;
++		if (ret == 0)
+ 			free_more_memory();
+ 	}
+ }
+diff --git a/fs/ext2/super.c b/fs/ext2/super.c
+index 4286ff6..9d27f2e 100644
+--- a/fs/ext2/super.c
++++ b/fs/ext2/super.c
+@@ -701,10 +701,14 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
+ 		set_opt(sbi->s_mount_opt, GRPID);
+ 	if (def_mount_opts & EXT2_DEFM_UID16)
+ 		set_opt(sbi->s_mount_opt, NO_UID32);
++#ifdef CONFIG_EXT2_FS_XATTR
+ 	if (def_mount_opts & EXT2_DEFM_XATTR_USER)
+ 		set_opt(sbi->s_mount_opt, XATTR_USER);
++#endif
++#ifdef CONFIG_EXT2_FS_POSIX_ACL
+ 	if (def_mount_opts & EXT2_DEFM_ACL)
+ 		set_opt(sbi->s_mount_opt, POSIX_ACL);
++#endif
+ 	
+ 	if (le16_to_cpu(sbi->s_es->s_errors) == EXT2_ERRORS_PANIC)
+ 		set_opt(sbi->s_mount_opt, ERRORS_PANIC);
+diff --git a/fs/ext3/super.c b/fs/ext3/super.c
+index 3559086..666a162 100644
+--- a/fs/ext3/super.c
++++ b/fs/ext3/super.c
+@@ -1451,10 +1451,14 @@ static int ext3_fill_super (struct super_block *sb, void *data, int silent)
+ 		set_opt(sbi->s_mount_opt, GRPID);
+ 	if (def_mount_opts & EXT3_DEFM_UID16)
+ 		set_opt(sbi->s_mount_opt, NO_UID32);
++#ifdef CONFIG_EXT3_FS_XATTR
+ 	if (def_mount_opts & EXT3_DEFM_XATTR_USER)
+ 		set_opt(sbi->s_mount_opt, XATTR_USER);
++#endif
++#ifdef CONFIG_EXT3_FS_POSIX_ACL
+ 	if (def_mount_opts & EXT3_DEFM_ACL)
+ 		set_opt(sbi->s_mount_opt, POSIX_ACL);
++#endif
+ 	if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_DATA)
+ 		sbi->s_mount_opt |= EXT3_MOUNT_JOURNAL_DATA;
+ 	else if ((def_mount_opts & EXT3_DEFM_JMODE) == EXT3_DEFM_JMODE_ORDERED)
+diff --git a/fs/hfs/super.c b/fs/hfs/super.c
+index 34937ee..9882a90 100644
+--- a/fs/hfs/super.c
++++ b/fs/hfs/super.c
+@@ -391,11 +391,13 @@ static int hfs_fill_super(struct super_block *sb, void *data, int silent)
+ 		hfs_find_exit(&fd);
+ 		goto bail_no_root;
+ 	}
++	res = -EINVAL;
+ 	root_inode = hfs_iget(sb, &fd.search_key->cat, &rec);
+ 	hfs_find_exit(&fd);
+ 	if (!root_inode)
+ 		goto bail_no_root;
+ 
++	res = -ENOMEM;
+ 	sb->s_root = d_alloc_root(root_inode);
+ 	if (!sb->s_root)
+ 		goto bail_iput;
+diff --git a/include/asm-powerpc/current.h b/include/asm-powerpc/current.h
+index 1938d6a..b8708ae 100644
+--- a/include/asm-powerpc/current.h
++++ b/include/asm-powerpc/current.h
+@@ -14,7 +14,17 @@ struct task_struct;
+ #ifdef __powerpc64__
+ #include <asm/paca.h>
+ 
+-#define current		(get_paca()->__current)
++static inline struct task_struct *get_current(void)
++{
++	struct task_struct *task;
++
++	__asm__ __volatile__("ld %0,%1(13)"
++	: "=r" (task)
++	: "i" (offsetof(struct paca_struct, __current)));
++
++	return task;
++}
++#define current	get_current()
+ 
+ #else
+ 
+diff --git a/include/asm-x86_64/system.h b/include/asm-x86_64/system.h
+index 6bf170b..bd376bc 100644
+--- a/include/asm-x86_64/system.h
++++ b/include/asm-x86_64/system.h
+@@ -14,12 +14,13 @@
+ #define __RESTORE(reg,offset) "movq (14-" #offset ")*8(%%rsp),%%" #reg "\n\t"
+ 
+ /* frame pointer must be last for get_wchan */
+-#define SAVE_CONTEXT    "pushq %%rbp ; movq %%rsi,%%rbp\n\t"
+-#define RESTORE_CONTEXT "movq %%rbp,%%rsi ; popq %%rbp\n\t"
++#define SAVE_CONTEXT    "pushf ; pushq %%rbp ; movq %%rsi,%%rbp\n\t"
++#define RESTORE_CONTEXT "movq %%rbp,%%rsi ; popq %%rbp ; popf\t"
+ 
+ #define __EXTRA_CLOBBER  \
+ 	,"rcx","rbx","rdx","r8","r9","r10","r11","r12","r13","r14","r15"
+ 
++/* Save restore flags to clear handle leaking NT */
+ #define switch_to(prev,next,last) \
+ 	asm volatile(SAVE_CONTEXT						    \
+ 		     "movq %%rsp,%P[threadrsp](%[prev])\n\t" /* save RSP */	  \
+diff --git a/include/media/cx2341x.h b/include/media/cx2341x.h
+index d91d88f..ecad55b 100644
+--- a/include/media/cx2341x.h
++++ b/include/media/cx2341x.h
+@@ -49,7 +49,7 @@ struct cx2341x_mpeg_params {
+ 	enum v4l2_mpeg_audio_mode_extension audio_mode_extension;
+ 	enum v4l2_mpeg_audio_emphasis audio_emphasis;
+ 	enum v4l2_mpeg_audio_crc audio_crc;
+-	u8 audio_properties;
++	u16 audio_properties;
+ 
+ 	/* video */
+ 	enum v4l2_mpeg_video_encoding video_encoding;
+diff --git a/mm/memory.c b/mm/memory.c
+index d28450c..7c2c4c9 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -1104,21 +1104,27 @@ static int zeromap_pte_range(struct mm_struct *mm, pmd_t *pmd,
+ {
+ 	pte_t *pte;
+ 	spinlock_t *ptl;
++	int err = 0;
+ 
+ 	pte = pte_alloc_map_lock(mm, pmd, addr, &ptl);
+ 	if (!pte)
+-		return -ENOMEM;
++		return -EAGAIN;
+ 	do {
+ 		struct page *page = ZERO_PAGE(addr);
+ 		pte_t zero_pte = pte_wrprotect(mk_pte(page, prot));
++
++		if (unlikely(!pte_none(*pte))) {
++			err = -EEXIST;
++			pte++;
++			break;
++		}
+ 		page_cache_get(page);
+ 		page_add_file_rmap(page);
+ 		inc_mm_counter(mm, file_rss);
+-		BUG_ON(!pte_none(*pte));
+ 		set_pte_at(mm, addr, pte, zero_pte);
+ 	} while (pte++, addr += PAGE_SIZE, addr != end);
+ 	pte_unmap_unlock(pte - 1, ptl);
+-	return 0;
++	return err;
+ }
+ 
+ static inline int zeromap_pmd_range(struct mm_struct *mm, pud_t *pud,
+@@ -1126,16 +1132,18 @@ static inline int zeromap_pmd_range(struct mm_struct *mm, pud_t *pud,
+ {
+ 	pmd_t *pmd;
+ 	unsigned long next;
++	int err;
+ 
+ 	pmd = pmd_alloc(mm, pud, addr);
+ 	if (!pmd)
+-		return -ENOMEM;
++		return -EAGAIN;
+ 	do {
+ 		next = pmd_addr_end(addr, end);
+-		if (zeromap_pte_range(mm, pmd, addr, next, prot))
+-			return -ENOMEM;
++		err = zeromap_pte_range(mm, pmd, addr, next, prot);
++		if (err)
++			break;
+ 	} while (pmd++, addr = next, addr != end);
+-	return 0;
++	return err;
+ }
+ 
+ static inline int zeromap_pud_range(struct mm_struct *mm, pgd_t *pgd,
+@@ -1143,16 +1151,18 @@ static inline int zeromap_pud_range(struct mm_struct *mm, pgd_t *pgd,
+ {
+ 	pud_t *pud;
+ 	unsigned long next;
++	int err;
+ 
+ 	pud = pud_alloc(mm, pgd, addr);
+ 	if (!pud)
+-		return -ENOMEM;
++		return -EAGAIN;
+ 	do {
+ 		next = pud_addr_end(addr, end);
+-		if (zeromap_pmd_range(mm, pud, addr, next, prot))
+-			return -ENOMEM;
++		err = zeromap_pmd_range(mm, pud, addr, next, prot);
++		if (err)
++			break;
+ 	} while (pud++, addr = next, addr != end);
+-	return 0;
++	return err;
+ }
+ 
+ int zeromap_page_range(struct vm_area_struct *vma,
+diff --git a/mm/mincore.c b/mm/mincore.c
+index 7289078..8aca6f7 100644
+--- a/mm/mincore.c
++++ b/mm/mincore.c
+@@ -1,7 +1,7 @@
+ /*
+  *	linux/mm/mincore.c
+  *
+- * Copyright (C) 1994-1999  Linus Torvalds
++ * Copyright (C) 1994-2006  Linus Torvalds
+  */
+ 
+ /*
+@@ -38,46 +38,51 @@ static unsigned char mincore_page(struct vm_area_struct * vma,
+ 	return present;
+ }
+ 
+-static long mincore_vma(struct vm_area_struct * vma,
+-	unsigned long start, unsigned long end, unsigned char __user * vec)
++/*
++ * Do a chunk of "sys_mincore()". We've already checked
++ * all the arguments, we hold the mmap semaphore: we should
++ * just return the amount of info we're asked for.
++ */
++static long do_mincore(unsigned long addr, unsigned char *vec, unsigned long pages)
+ {
+-	long error, i, remaining;
+-	unsigned char * tmp;
+-
+-	error = -ENOMEM;
+-	if (!vma->vm_file)
+-		return error;
+-
+-	start = ((start - vma->vm_start) >> PAGE_SHIFT) + vma->vm_pgoff;
+-	if (end > vma->vm_end)
+-		end = vma->vm_end;
+-	end = ((end - vma->vm_start) >> PAGE_SHIFT) + vma->vm_pgoff;
++	unsigned long i, nr, pgoff;
++	struct vm_area_struct *vma = find_vma(current->mm, addr);
+ 
+-	error = -EAGAIN;
+-	tmp = (unsigned char *) __get_free_page(GFP_KERNEL);
+-	if (!tmp)
+-		return error;
++	/*
++	 * find_vma() didn't find anything above us, or we're
++	 * in an unmapped hole in the address space: ENOMEM.
++	 */
++	if (!vma || addr < vma->vm_start)
++		return -ENOMEM;
+ 
+-	/* (end - start) is # of pages, and also # of bytes in "vec */
+-	remaining = (end - start),
++	/*
++	 * Ok, got it. But check whether it's a segment we support
++	 * mincore() on. Right now, we don't do any anonymous mappings.
++	 *
++	 * FIXME: This is just stupid. And returning ENOMEM is 
++	 * stupid too. We should just look at the page tables. But
++	 * this is what we've traditionally done, so we'll just
++	 * continue doing it.
++	 */
++	if (!vma->vm_file)
++		return -ENOMEM;
+ 
+-	error = 0;
+-	for (i = 0; remaining > 0; remaining -= PAGE_SIZE, i++) {
+-		int j = 0;
+-		long thispiece = (remaining < PAGE_SIZE) ?
+-						remaining : PAGE_SIZE;
++	/*
++	 * Calculate how many pages there are left in the vma, and
++	 * what the pgoff is for our address.
++	 */
++	nr = (vma->vm_end - addr) >> PAGE_SHIFT;
++	if (nr > pages)
++		nr = pages;
+ 
+-		while (j < thispiece)
+-			tmp[j++] = mincore_page(vma, start++);
++	pgoff = (addr - vma->vm_start) >> PAGE_SHIFT;
++	pgoff += vma->vm_pgoff;
+ 
+-		if (copy_to_user(vec + PAGE_SIZE * i, tmp, thispiece)) {
+-			error = -EFAULT;
+-			break;
+-		}
+-	}
++	/* And then we just fill the sucker in.. */
++	for (i = 0 ; i < nr; i++, pgoff++)
++		vec[i] = mincore_page(vma, pgoff);
+ 
+-	free_page((unsigned long) tmp);
+-	return error;
++	return nr;
+ }
+ 
+ /*
+@@ -107,82 +112,50 @@ static long mincore_vma(struct vm_area_struct * vma,
+ asmlinkage long sys_mincore(unsigned long start, size_t len,
+ 	unsigned char __user * vec)
+ {
+-	int index = 0;
+-	unsigned long end, limit;
+-	struct vm_area_struct * vma;
+-	size_t max;
+-	int unmapped_error = 0;
+-	long error;
+-
+-	/* check the arguments */
+- 	if (start & ~PAGE_CACHE_MASK)
+-		goto einval;
+-
+-	limit = TASK_SIZE;
+-	if (start >= limit)
+-		goto enomem;
+-
+-	if (!len)
+-		return 0;
+-
+-	max = limit - start;
+-	len = PAGE_CACHE_ALIGN(len);
+-	if (len > max || !len)
+-		goto enomem;
++	long retval;
++	unsigned long pages;
++	unsigned char *tmp;
+ 
+-	end = start + len;
++	/* Check the start address: needs to be page-aligned.. */
++ 	if (start & ~PAGE_CACHE_MASK)
++		return -EINVAL;
+ 
+-	/* check the output buffer whilst holding the lock */
+-	error = -EFAULT;
+-	down_read(&current->mm->mmap_sem);
++	/* ..and we need to be passed a valid user-space range */
++	if (!access_ok(VERIFY_READ, (void __user *) start, len))
++		return -ENOMEM;
+ 
+-	if (!access_ok(VERIFY_WRITE, vec, len >> PAGE_SHIFT))
+-		goto out;
++	/* This also avoids any overflows on PAGE_CACHE_ALIGN */
++	pages = len >> PAGE_SHIFT;
++	pages += (len & ~PAGE_MASK) != 0;
+ 
+-	/*
+-	 * If the interval [start,end) covers some unmapped address
+-	 * ranges, just ignore them, but return -ENOMEM at the end.
+-	 */
+-	error = 0;
+-
+-	vma = find_vma(current->mm, start);
+-	while (vma) {
+-		/* Here start < vma->vm_end. */
+-		if (start < vma->vm_start) {
+-			unmapped_error = -ENOMEM;
+-			start = vma->vm_start;
+-		}
++	if (!access_ok(VERIFY_WRITE, vec, pages))
++		return -EFAULT;
+ 
+-		/* Here vma->vm_start <= start < vma->vm_end. */
+-		if (end <= vma->vm_end) {
+-			if (start < end) {
+-				error = mincore_vma(vma, start, end,
+-							&vec[index]);
+-				if (error)
+-					goto out;
+-			}
+-			error = unmapped_error;
+-			goto out;
++	tmp = (void *) __get_free_page(GFP_USER);
++	if (!tmp)
++		return -EAGAIN;
++
++	retval = 0;
++	while (pages) {
++		/*
++		 * Do at most PAGE_SIZE entries per iteration, due to
++		 * the temporary buffer size.
++		 */
++		down_read(&current->mm->mmap_sem);
++		retval = do_mincore(start, tmp, min(pages, PAGE_SIZE));
++		up_read(&current->mm->mmap_sem);
++
++		if (retval <= 0)
++			break;
++		if (copy_to_user(vec, tmp, retval)) {
++			retval = -EFAULT;
++			break;
+ 		}
+-
+-		/* Here vma->vm_start <= start < vma->vm_end < end. */
+-		error = mincore_vma(vma, start, vma->vm_end, &vec[index]);
+-		if (error)
+-			goto out;
+-		index += (vma->vm_end - start) >> PAGE_CACHE_SHIFT;
+-		start = vma->vm_end;
+-		vma = vma->vm_next;
++		pages -= retval;
++		vec += retval;
++		start += retval << PAGE_SHIFT;
++		retval = 0;
+ 	}
+-
+-	/* we found a hole in the area queried if we arrive here */
+-	error = -ENOMEM;
+-
+-out:
+-	up_read(&current->mm->mmap_sem);
+-	return error;
+-
+-einval:
+-	return -EINVAL;
+-enomem:
+-	return -ENOMEM;
++	free_page((unsigned long) tmp);
++	return retval;
+ }
+diff --git a/mm/msync.c b/mm/msync.c
+index d083544..48497dd 100644
+--- a/mm/msync.c
++++ b/mm/msync.c
+@@ -146,10 +146,10 @@ static int msync_interval(struct vm_area_struct *vma, unsigned long addr,
+ asmlinkage long sys_msync(unsigned long start, size_t len, int flags)
+ {
+ 	unsigned long end;
++	struct mm_struct *mm = current->mm;
+ 	struct vm_area_struct *vma;
+ 	int unmapped_error = 0;
+ 	int error = -EINVAL;
+-	int done = 0;
+ 
+ 	if (flags & ~(MS_ASYNC | MS_INVALIDATE | MS_SYNC))
+ 		goto out;
+@@ -169,64 +169,58 @@ asmlinkage long sys_msync(unsigned long start, size_t len, int flags)
+ 	 * If the interval [start,end) covers some unmapped address ranges,
+ 	 * just ignore them, but return -ENOMEM at the end.
+ 	 */
+-	down_read(&current->mm->mmap_sem);
+-	vma = find_vma(current->mm, start);
+-	if (!vma) {
+-		error = -ENOMEM;
+-		goto out_unlock;
+-	}
+-	do {
++	down_read(&mm->mmap_sem);
++	vma = find_vma(mm, start);
++	for (;;) {
+ 		unsigned long nr_pages_dirtied = 0;
+ 		struct file *file;
+ 
++		/* Still start < end. */
++		error = -ENOMEM;
++		if (!vma)
++			goto out_unlock;
+ 		/* Here start < vma->vm_end. */
+ 		if (start < vma->vm_start) {
+-			unmapped_error = -ENOMEM;
+ 			start = vma->vm_start;
+-		}
+-		/* Here vma->vm_start <= start < vma->vm_end. */
+-		if (end <= vma->vm_end) {
+-			if (start < end) {
+-				error = msync_interval(vma, start, end, flags,
+-							&nr_pages_dirtied);
+-				if (error)
+-					goto out_unlock;
+-			}
+-			error = unmapped_error;
+-			done = 1;
+-		} else {
+-			/* Here vma->vm_start <= start < vma->vm_end < end. */
+-			error = msync_interval(vma, start, vma->vm_end, flags,
+-						&nr_pages_dirtied);
+-			if (error)
++			if (start >= end)
+ 				goto out_unlock;
++			unmapped_error = -ENOMEM;
+ 		}
++		/* Here vma->vm_start <= start < vma->vm_end. */
++		error = msync_interval(vma, start, min(end, vma->vm_end),
++						flags, &nr_pages_dirtied);
++		if (error)
++			goto out_unlock;
+ 		file = vma->vm_file;
+ 		start = vma->vm_end;
+ 		if ((flags & MS_ASYNC) && file && nr_pages_dirtied) {
+ 			get_file(file);
+-			up_read(&current->mm->mmap_sem);
++			up_read(&mm->mmap_sem);
+ 			balance_dirty_pages_ratelimited_nr(file->f_mapping,
+ 							nr_pages_dirtied);
+ 			fput(file);
+-			down_read(&current->mm->mmap_sem);
+-			vma = find_vma(current->mm, start);
++			if (start >= end)
++				goto out;
++			down_read(&mm->mmap_sem);
++			vma = find_vma(mm, start);
+ 		} else if ((flags & MS_SYNC) && file &&
+ 				(vma->vm_flags & VM_SHARED)) {
+ 			get_file(file);
+-			up_read(&current->mm->mmap_sem);
++			up_read(&mm->mmap_sem);
+ 			error = do_fsync(file, 0);
+ 			fput(file);
+-			down_read(&current->mm->mmap_sem);
+-			if (error)
+-				goto out_unlock;
+-			vma = find_vma(current->mm, start);
++			if (error || start >= end)
++				goto out;
++			down_read(&mm->mmap_sem);
++			vma = find_vma(mm, start);
+ 		} else {
++			if (start >= end)
++				goto out_unlock;
+ 			vma = vma->vm_next;
+ 		}
+-	} while (vma && !done);
++	}
+ out_unlock:
+-	up_read(&current->mm->mmap_sem);
++	up_read(&mm->mmap_sem);
+ out:
+-	return error;
++	return error ? : unmapped_error;
+ }
+diff --git a/mm/shmem.c b/mm/shmem.c
+index db21c51..7013af1 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -510,7 +510,12 @@ static void shmem_truncate_range(struct inode *inode, loff_t start, loff_t end)
+ 			size = SHMEM_NR_DIRECT;
+ 		nr_swaps_freed = shmem_free_swp(ptr+idx, ptr+size);
+ 	}
+-	if (!topdir)
++
++	/*
++	 * If there are no indirect blocks or we are punching a hole
++	 * below indirect blocks, nothing to be done.
++	 */
++	if (!topdir || (punch_hole && (limit <= SHMEM_NR_DIRECT)))
+ 		goto done2;
+ 
+ 	BUG_ON(limit <= SHMEM_NR_DIRECT);
