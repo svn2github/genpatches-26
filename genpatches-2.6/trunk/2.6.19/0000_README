@@ -50,10 +50,6 @@ Patch:	1002_linux-2.6.19.3.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
-Patch:	1500_x86-64-bitops-gcc34.patch
-From:	http://bugs.gentoo.org/156843
-Desc:	Fix x86_64 NFS compilation with GCC 3.4
-
 Patch:	2900_usblp-kyocera-820-workaround.patch
 From:	http://bugs.gentoo.org/157608
 Desc:	Work around problem with Kyocera FS-820 initialization
