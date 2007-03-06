@@ -127,7 +127,8 @@ Index: linux-2.6.18/include/linux/sysctl.h
 ===================================================================
 --- linux-2.6.18.orig/include/linux/sysctl.h
 +++ linux-2.6.18/include/linux/sysctl.h
-@@ -151,6 +151,9 @@ enum
+@@ -150,6 +150,9 @@ enum
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
  	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
  	KERN_MAX_LOCK_DEPTH=74,
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
@@ -135,7 +136,6 @@ Index: linux-2.6.18/include/linux/sysctl.h
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
-
  
 @@ -238,6 +241,17 @@ enum
  	PTY_NR=2
@@ -159,7 +159,7 @@ Index: linux-2.6.18/kernel/sysctl.c
 ===================================================================
 --- linux-2.6.18.orig/kernel/sysctl.c
 +++ linux-2.6.18/kernel/sysctl.c
-@@ -164,6 +164,9 @@ extern ctl_table inotify_table[];
+@@ -161,6 +161,9 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -169,7 +169,7 @@ Index: linux-2.6.18/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -226,7 +229,14 @@ static ctl_table root_table[] = {
+@@ -223,7 +226,14 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
