@@ -43,6 +43,10 @@ Patch:	1000_linux-2.6.20.1.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.1
 
+Patch:	2700_cx25840-firmware-load.patch
+From:	http://bugs.gentoo.org/168007
+Desc:	Fix DVB/CX25840 firmware load regression
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
