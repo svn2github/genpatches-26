@@ -47,6 +47,10 @@ Patch:	1700_sparc64-atyfb-delay.patch
 From:	http://bugs.gentoo.org/169622
 Desc:	Fix mach64 card hang
 
+Patch:	1705_sparc64-bbc-i2c-cpu-hog.patch
+From:	http://bugs.gentoo.org/169622
+Desc:	Fix bbc_i2c CPU hog
+
 Patch:	2700_cx25840-firmware-load.patch
 From:	http://bugs.gentoo.org/168007
 Desc:	Fix DVB/CX25840 firmware load regression
