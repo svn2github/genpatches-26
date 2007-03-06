@@ -51,6 +51,10 @@ Patch:	1705_sparc64-bbc-i2c-cpu-hog.patch
 From:	http://bugs.gentoo.org/169622
 Desc:	Fix bbc_i2c CPU hog
 
+Patch:	1710_sparc64-e450-pci-interrupts.patch
+From:	http://bugs.gentoo.org/169622
+Desc:	Fix PCI interrupts on sparc64 E450 hardware
+
 Patch:	2700_cx25840-firmware-load.patch
 From:	http://bugs.gentoo.org/168007
 Desc:	Fix DVB/CX25840 firmware load regression
