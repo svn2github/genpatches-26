@@ -3132,7 +3132,7 @@ Index: linux-2.6.21/mm/mmap.c
 ===================================================================
 --- linux-2.6.21.orig/mm/mmap.c
 +++ linux-2.6.21/mm/mmap.c
-@@ -2031,6 +2031,7 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2033,6 +2033,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }
