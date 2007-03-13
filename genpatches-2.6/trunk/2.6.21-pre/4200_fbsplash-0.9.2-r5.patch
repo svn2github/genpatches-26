@@ -1,7 +1,7 @@
-Index: linux-git/Documentation/fb/00-INDEX
+Index: linux-2.6.21/Documentation/fb/00-INDEX
 ===================================================================
---- linux-git.orig/Documentation/fb/00-INDEX
-+++ linux-git/Documentation/fb/00-INDEX
+--- linux-2.6.21.orig/Documentation/fb/00-INDEX
++++ linux-2.6.21/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
  	- info on the Matrox frame buffer driver
  pvr2fb.txt
@@ -11,10 +11,10 @@ Index: linux-git/Documentation/fb/00-INDEX
  tgafb.txt
  	- info on the TGA (DECChip 21030) frame buffer driver
  vesafb.txt
-Index: linux-git/Documentation/fb/splash.txt
+Index: linux-2.6.21/Documentation/fb/splash.txt
 ===================================================================
 --- /dev/null
-+++ linux-git/Documentation/fb/splash.txt
++++ linux-2.6.21/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
 +What is it?
 +-----------
@@ -223,10 +223,10 @@ Index: linux-git/Documentation/fb/splash.txt
 +Fbsplash, splash protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 +
-Index: linux-git/drivers/Makefile
+Index: linux-2.6.21/drivers/Makefile
 ===================================================================
---- linux-git.orig/drivers/Makefile
-+++ linux-git/drivers/Makefile
+--- linux-2.6.21.orig/drivers/Makefile
++++ linux-2.6.21/drivers/Makefile
 @@ -8,6 +8,9 @@
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
@@ -248,11 +248,11 @@ Index: linux-git/drivers/Makefile
  obj-$(CONFIG_CONNECTOR)		+= connector/
  
  # i810fb and intelfb depend on char/agp/
-Index: linux-git/drivers/video/Kconfig
+Index: linux-2.6.21/drivers/video/Kconfig
 ===================================================================
---- linux-git.orig/drivers/video/Kconfig
-+++ linux-git/drivers/video/Kconfig
-@@ -1665,5 +1665,15 @@ if FB || SGI_NEWPORT_CONSOLE
+--- linux-2.6.21.orig/drivers/video/Kconfig
++++ linux-2.6.21/drivers/video/Kconfig
+@@ -1663,5 +1663,15 @@ if FB || SGI_NEWPORT_CONSOLE
  	source "drivers/video/logo/Kconfig"
  endif
  
@@ -269,10 +269,10 @@ Index: linux-git/drivers/video/Kconfig
  
 +	  If unsure, say N.
 +endmenu
-Index: linux-git/drivers/video/Makefile
+Index: linux-2.6.21/drivers/video/Makefile
 ===================================================================
---- linux-git.orig/drivers/video/Makefile
-+++ linux-git/drivers/video/Makefile
+--- linux-2.6.21.orig/drivers/video/Makefile
++++ linux-2.6.21/drivers/video/Makefile
 @@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
@@ -281,10 +281,10 @@ Index: linux-git/drivers/video/Makefile
  
  obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
  obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
-Index: linux-git/drivers/video/cfbsplash.c
+Index: linux-2.6.21/drivers/video/cfbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/cfbsplash.c
++++ linux-2.6.21/drivers/video/cfbsplash.c
 @@ -0,0 +1,471 @@
 +/*
 + *  linux/drivers/video/cfbsplash.c -- Framebuffer splash render functions
@@ -757,10 +757,10 @@ Index: linux-git/drivers/video/cfbsplash.c
 +	}
 +}
 +
-Index: linux-git/drivers/video/console/bitblit.c
+Index: linux-2.6.21/drivers/video/console/bitblit.c
 ===================================================================
---- linux-git.orig/drivers/video/console/bitblit.c
-+++ linux-git/drivers/video/console/bitblit.c
+--- linux-2.6.21.orig/drivers/video/console/bitblit.c
++++ linux-2.6.21/drivers/video/console/bitblit.c
 @@ -17,6 +17,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
@@ -803,10 +803,10 @@ Index: linux-git/drivers/video/console/bitblit.c
  
  	ops->cursor_reset = 0;
  }
-Index: linux-git/drivers/video/console/fbcon.c
+Index: linux-2.6.21/drivers/video/console/fbcon.c
 ===================================================================
---- linux-git.orig/drivers/video/console/fbcon.c
-+++ linux-git/drivers/video/console/fbcon.c
+--- linux-2.6.21.orig/drivers/video/console/fbcon.c
++++ linux-2.6.21/drivers/video/console/fbcon.c
 @@ -90,6 +90,7 @@
  #endif
  
@@ -1134,10 +1134,10 @@ Index: linux-git/drivers/video/console/fbcon.c
  	fbcon_has_exited = 1;
  }
  
-Index: linux-git/drivers/video/fbcmap.c
+Index: linux-2.6.21/drivers/video/fbcmap.c
 ===================================================================
---- linux-git.orig/drivers/video/fbcmap.c
-+++ linux-git/drivers/video/fbcmap.c
+--- linux-2.6.21.orig/drivers/video/fbcmap.c
++++ linux-2.6.21/drivers/video/fbcmap.c
 @@ -15,6 +15,7 @@
  #include <linux/module.h>
  #include <linux/fb.h>
@@ -1176,10 +1176,10 @@ Index: linux-git/drivers/video/fbcmap.c
  	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
  			        !info->fbops->fb_setcmap))
  		return -EINVAL;
-Index: linux-git/drivers/video/fbsplash.c
+Index: linux-2.6.21/drivers/video/fbsplash.c
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/fbsplash.c
++++ linux-2.6.21/drivers/video/fbsplash.c
 @@ -0,0 +1,424 @@
 +/* 
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
@@ -1605,10 +1605,10 @@ Index: linux-git/drivers/video/fbsplash.c
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
-Index: linux-git/drivers/video/fbsplash.h
+Index: linux-2.6.21/drivers/video/fbsplash.h
 ===================================================================
 --- /dev/null
-+++ linux-git/drivers/video/fbsplash.h
++++ linux-2.6.21/drivers/video/fbsplash.h
 @@ -0,0 +1,78 @@
 +/* 
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
@@ -1688,10 +1688,10 @@ Index: linux-git/drivers/video/fbsplash.h
 +#endif /* CONFIG_FB_SPLASH */
 +
 +#endif /* __FB_SPLASH_H */
-Index: linux-git/include/linux/console_splash.h
+Index: linux-2.6.21/include/linux/console_splash.h
 ===================================================================
 --- /dev/null
-+++ linux-git/include/linux/console_splash.h
++++ linux-2.6.21/include/linux/console_splash.h
 @@ -0,0 +1,13 @@
 +#ifndef _LINUX_CONSOLE_SPLASH_H_
 +#define _LINUX_CONSOLE_SPLASH_H_ 1
@@ -1706,10 +1706,10 @@ Index: linux-git/include/linux/console_splash.h
 +};
 +
 +#endif
-Index: linux-git/include/linux/console_struct.h
+Index: linux-2.6.21/include/linux/console_struct.h
 ===================================================================
---- linux-git.orig/include/linux/console_struct.h
-+++ linux-git/include/linux/console_struct.h
+--- linux-2.6.21.orig/include/linux/console_struct.h
++++ linux-2.6.21/include/linux/console_struct.h
 @@ -16,6 +16,7 @@
  struct vt_struct;
  
@@ -1727,10 +1727,10 @@ Index: linux-git/include/linux/console_struct.h
  	/* additional information is in vt_kern.h */
  };
  
-Index: linux-git/include/linux/fb.h
+Index: linux-2.6.21/include/linux/fb.h
 ===================================================================
---- linux-git.orig/include/linux/fb.h
-+++ linux-git/include/linux/fb.h
+--- linux-2.6.21.orig/include/linux/fb.h
++++ linux-2.6.21/include/linux/fb.h
 @@ -9,6 +9,13 @@
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
@@ -1772,10 +1772,10 @@ Index: linux-git/include/linux/fb.h
  	/* From here on everything is device dependent */
  	void *par;	
  };
-Index: linux-git/include/linux/sysctl.h
+Index: linux-2.6.21/include/linux/sysctl.h
 ===================================================================
---- linux-git.orig/include/linux/sysctl.h
-+++ linux-git/include/linux/sysctl.h
+--- linux-2.6.21.orig/include/linux/sysctl.h
++++ linux-2.6.21/include/linux/sysctl.h
 @@ -165,6 +165,7 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
@@ -1784,10 +1784,10 @@ Index: linux-git/include/linux/sysctl.h
  };
  
  
-Index: linux-git/kernel/sysctl.c
+Index: linux-2.6.21/kernel/sysctl.c
 ===================================================================
---- linux-git.orig/kernel/sysctl.c
-+++ linux-git/kernel/sysctl.c
+--- linux-2.6.21.orig/kernel/sysctl.c
++++ linux-2.6.21/kernel/sysctl.c
 @@ -87,6 +87,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
