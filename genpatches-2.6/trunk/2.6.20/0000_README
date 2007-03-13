@@ -47,6 +47,10 @@ Patch:	1001_linux-2.6.20.2.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.2
 
+Patch:	1002_linux-2.6.20.3.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.3
+
 Patch:	2400_r8169-link-speed.patch
 From:	http://bugs.gentoo.org/166490
 Desc:	Fix link speed negotiation on r8169 ethernet driver
