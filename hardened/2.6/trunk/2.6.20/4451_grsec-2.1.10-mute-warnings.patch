@@ -6,11 +6,11 @@ warning flags of vanilla kernel versions.
 
 Acked-by: Christian Heim <phreak@gentoo.org>
 
-Index: linux-2.6.19/Makefile
+Index: linux-2.6.20/Makefile
 ===================================================================
---- linux-2.6.19.orig/Makefile
-+++ linux-2.6.19/Makefile
-@@ -313,8 +313,9 @@ LINUXINCLUDE    := -Iinclude \
+--- linux-2.6.20.orig/Makefile
++++ linux-2.6.20/Makefile
+@@ -312,8 +312,9 @@ LINUXINCLUDE    := -Iinclude \
  
  CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
  

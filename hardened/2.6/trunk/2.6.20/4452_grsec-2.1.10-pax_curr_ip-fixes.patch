@@ -1,7 +1,7 @@
-Index: linux-2.6.19/arch/i386/mm/fault.c
+Index: linux-2.6.20/arch/i386/mm/fault.c
 ===================================================================
---- linux-2.6.19.orig/arch/i386/mm/fault.c
-+++ linux-2.6.19/arch/i386/mm/fault.c
+--- linux-2.6.20.orig/arch/i386/mm/fault.c
++++ linux-2.6.20/arch/i386/mm/fault.c
 @@ -715,10 +715,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code) {
@@ -9,17 +9,17 @@ Index: linux-2.6.19/arch/i386/mm/fault.c
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
  			if (tsk->signal->curr_ip)
  				printk(KERN_ERR "PAX: From %u.%u.%u.%u: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
- 						 NIPQUAD(tsk->signal->curr_ip), tsk->comm, tsk->pid, tsk->uid, tsk->euid);
+ 					 NIPQUAD(tsk->signal->curr_ip), tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  			else
 +#endif
  				printk(KERN_ERR "PAX: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
- 						 tsk->comm, tsk->pid, tsk->uid, tsk->euid);
+ 					 tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  		}
-Index: linux-2.6.19/fs/exec.c
+Index: linux-2.6.20/fs/exec.c
 ===================================================================
---- linux-2.6.19.orig/fs/exec.c
-+++ linux-2.6.19/fs/exec.c
-@@ -1595,9 +1595,11 @@ void pax_report_fault(struct pt_regs *re
+--- linux-2.6.20.orig/fs/exec.c
++++ linux-2.6.20/fs/exec.c
+@@ -1596,9 +1596,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
  	}
@@ -31,10 +31,10 @@ Index: linux-2.6.19/fs/exec.c
  		printk(KERN_ERR "PAX: execution attempt in: %s, %08lx-%08lx %08lx\n", path_fault, start, end, offset);
  	printk(KERN_ERR "PAX: terminating task: %s(%s):%d, uid/euid: %u/%u, "
  			"PC: %p, SP: %p\n", path_exec, tsk->comm, tsk->pid,
-Index: linux-2.6.19/security/Kconfig
+Index: linux-2.6.20/security/Kconfig
 ===================================================================
---- linux-2.6.19.orig/security/Kconfig
-+++ linux-2.6.19/security/Kconfig
+--- linux-2.6.20.orig/security/Kconfig
++++ linux-2.6.20/security/Kconfig
 @@ -8,7 +8,7 @@ menu "PaX"
  
  config PAX
