@@ -2,7 +2,7 @@ Index: linux-2.6.20/arch/i386/mm/fault.c
 ===================================================================
 --- linux-2.6.20.orig/arch/i386/mm/fault.c
 +++ linux-2.6.20/arch/i386/mm/fault.c
-@@ -715,10 +715,12 @@ no_context:
+@@ -716,10 +716,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code) {
  #endif
