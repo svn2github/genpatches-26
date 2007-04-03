@@ -1700,7 +1700,7 @@ Index: linux-2.6.21/MAINTAINERS
 ===================================================================
 --- linux-2.6.21.orig/MAINTAINERS
 +++ linux-2.6.21/MAINTAINERS
-@@ -3160,6 +3160,13 @@ M:	wli@holomorphy.com
+@@ -3174,6 +3174,13 @@ M:	wli@holomorphy.com
  L:	sparclinux@vger.kernel.org
  S:	Maintained
  
@@ -11621,7 +11621,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  #define MAX_NR_CON_DRIVER 16
  
  #define CON_DRIVER_FLAG_MODULE 1
-@@ -736,6 +741,7 @@ int vc_allocate(unsigned int currcons)	/
+@@ -737,6 +742,7 @@ int vc_allocate(unsigned int currcons)	/
  	    }
  	    vc->vc_kmalloced = 1;
  	    vc_init(vc, vc->vc_rows, vc->vc_cols, 1);
@@ -11629,7 +11629,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  	}
  	return 0;
  }
-@@ -1000,6 +1006,7 @@ static void lf(struct vc_data *vc)
+@@ -1001,6 +1007,7 @@ static void lf(struct vc_data *vc)
  		vc->vc_pos += vc->vc_size_row;
  	}
  	vc->vc_need_wrap = 0;
@@ -11637,7 +11637,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  }
  
  static void ri(struct vc_data *vc)
-@@ -1028,6 +1035,7 @@ static inline void bs(struct vc_data *vc
+@@ -1029,6 +1036,7 @@ static inline void bs(struct vc_data *vc
  		vc->vc_pos -= 2;
  		vc->vc_x--;
  		vc->vc_need_wrap = 0;
@@ -11645,7 +11645,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  	}
  }
  
-@@ -1565,6 +1573,7 @@ static void do_con_trol(struct tty_struc
+@@ -1566,6 +1574,7 @@ static void do_con_trol(struct tty_struc
  				break;
  		}
  		vc->vc_pos += (vc->vc_x << 1);
@@ -11653,7 +11653,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  		return;
  	case 10: case 11: case 12:
  		lf(vc);
-@@ -2104,6 +2113,7 @@ display_glyph:
+@@ -2105,6 +2114,7 @@ display_glyph:
  			}
  			if (vc->vc_decim)
  				insert_char(vc, 1);
@@ -11661,7 +11661,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  			scr_writew(himask ?
  				     ((vc->vc_attr << 8) & ~himask) + ((tc & 0x100) ? himask : 0) + (tc & 0xff) :
  				     (vc->vc_attr << 8) + tc,
-@@ -2138,6 +2148,7 @@ display_glyph:
+@@ -2139,6 +2149,7 @@ display_glyph:
  	release_console_sem();
  
  out:
@@ -11669,7 +11669,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  	return n;
  #undef FLUSH
  }
-@@ -2163,6 +2174,7 @@ static void console_callback(struct work
+@@ -2164,6 +2175,7 @@ static void console_callback(struct work
  			/* we only changed when the console had already
  			   been allocated - a new console is not created
  			   in an interrupt routine */
@@ -11677,7 +11677,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  		}
  		want_console = -1;
  	}
-@@ -2181,6 +2193,7 @@ static void console_callback(struct work
+@@ -2182,6 +2194,7 @@ static void console_callback(struct work
  		do_blank_screen(0);
  		blank_timer_expired = 0;
  	}
@@ -11685,7 +11685,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  
  	release_console_sem();
  }
-@@ -2226,6 +2239,7 @@ static void vt_console_print(struct cons
+@@ -2245,6 +2258,7 @@ static void vt_console_print(struct cons
  		/* printk("vt_console_print: tty %d not allocated ??\n", currcons+1); */
  		goto quit;
  	}
@@ -11693,7 +11693,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  
  	if (vc->vc_mode != KD_TEXT)
  		goto quit;
-@@ -2238,6 +2252,7 @@ static void vt_console_print(struct cons
+@@ -2257,6 +2271,7 @@ static void vt_console_print(struct cons
  
  	/* Contrived structure to try to emulate original need_wrap behaviour
  	 * Problems caused when we have need_wrap set on '\n' character */
@@ -11701,7 +11701,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  	while (count--) {
  		c = *b++;
  		if (c == 10 || c == 13 || c == 8 || vc->vc_need_wrap) {
-@@ -2282,6 +2297,7 @@ static void vt_console_print(struct cons
+@@ -2301,6 +2316,7 @@ static void vt_console_print(struct cons
  		}
  	}
  	set_cursor(vc);
@@ -11709,7 +11709,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  
  quit:
  	clear_bit(0, &printing);
-@@ -2646,6 +2662,7 @@ static int __init con_init(void)
+@@ -2665,6 +2681,7 @@ static int __init con_init(void)
  	master_display_fg = vc = vc_cons[currcons].d;
  	set_origin(vc);
  	save_screen(vc);
@@ -11717,7 +11717,7 @@ Index: linux-2.6.21/drivers/char/vt.c
  	gotoxy(vc, vc->vc_x, vc->vc_y);
  	csi_J(vc, 0);
  	update_screen(vc);
-@@ -3816,3 +3833,4 @@ EXPORT_SYMBOL(vc_cons);
+@@ -3835,3 +3852,4 @@ EXPORT_SYMBOL(vc_cons);
  EXPORT_SYMBOL(take_over_console);
  EXPORT_SYMBOL(give_up_console);
  #endif

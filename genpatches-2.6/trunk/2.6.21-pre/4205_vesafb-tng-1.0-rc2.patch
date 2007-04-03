@@ -405,9 +405,9 @@ Index: linux-2.6.21/arch/i386/boot/video.S
  
 +#ifdef CONFIG_FB_VESA_STD
  check_vesa:
+ #ifdef CONFIG_FIRMWARE_EDID
  	leaw	modelist+1024, %di
- 	subb	$VIDEO_FIRST_VESA>>8, %bh
-@@ -603,6 +610,7 @@ check_vesa:
+@@ -613,6 +620,7 @@ check_vesa:
  	ret
  
  _setbad:	jmp	setbad          	# Ugly...
