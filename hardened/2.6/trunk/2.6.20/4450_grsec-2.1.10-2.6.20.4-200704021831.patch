@@ -4255,18 +4255,15 @@ Index: linux-2.6.20/arch/i386/lib/mmx.c
 ===================================================================
 --- linux-2.6.20.orig/arch/i386/lib/mmx.c
 +++ linux-2.6.20/arch/i386/lib/mmx.c
-@@ -31,6 +31,10 @@ void *_mmx_memcpy(void *to, const void *
+@@ -30,6 +30,7 @@ void *_mmx_memcpy(void *to, const void *
+ {
  	void *p;
  	int i;
- 
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
-+
+ 
  	if (unlikely(in_interrupt()))
  		return __memcpy(to, from, len);
- 
-@@ -40,52 +44,80 @@ void *_mmx_memcpy(void *to, const void *
+@@ -40,52 +41,80 @@ void *_mmx_memcpy(void *to, const void *
  	kernel_fpu_begin();
  
  	__asm__ __volatile__ (
@@ -4373,17 +4370,15 @@ Index: linux-2.6.20/arch/i386/lib/mmx.c
  		from+=64;
  		to+=64;
  	}
-@@ -165,57 +197,89 @@ static void fast_copy_page(void *to, voi
+@@ -164,6 +193,7 @@ static void fast_clear_page(void *page)
+ static void fast_copy_page(void *to, void *from)
  {
  	int i;
- 
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
-+
+ 
  	kernel_fpu_begin();
  
- 	/* maybe the prefetch stuff can go before the expensive fnsave...
+@@ -171,51 +201,79 @@ static void fast_copy_page(void *to, voi
  	 * but that is for later. -AV
  	 */
  	__asm__ __volatile__ (
@@ -4489,16 +4484,13 @@ Index: linux-2.6.20/arch/i386/lib/mmx.c
  		from+=64;
  		to+=64;
  	}
-@@ -296,56 +360,87 @@ static void fast_clear_page(void *page)
+@@ -296,56 +354,84 @@ static void fast_clear_page(void *page)
  static void fast_copy_page(void *to, void *from)
  {
  	int i;
 -	
 -	
-+
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
 +
  	kernel_fpu_begin();
  
@@ -27339,6 +27331,7 @@ Index: linux-2.6.20/include/linux/sysctl.h
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
 - };
+-
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
@@ -27348,7 +27341,7 @@ Index: linux-2.6.20/include/linux/sysctl.h
 +#endif
 +  
 +};
- 
++  
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
