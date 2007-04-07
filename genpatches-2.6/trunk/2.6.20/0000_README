@@ -55,9 +55,13 @@ Patch:	1003_linux-2.6.20.4.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.4
 
-Patch:	2300_generic-serial-baudrate.patch
-From:	http://bugs.gentoo.org/170554
-Desc:	Fix generic_serial baudrate handling
+Patch:	1004_linux-2.6.20.5.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.5
+
+Patch:	1005_linux-2.6.20.6.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.6
 
 Patch:	2400_r8169-link-speed.patch
 From:	http://bugs.gentoo.org/166490
