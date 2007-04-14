@@ -1,0 +1,23 @@
+
+From: Daniel Drake <dsd@gentoo.org>
+
+Index: linux-2.6.20-gentoo/drivers/char/speakup/speakup.c
+===================================================================
+--- linux-2.6.20-gentoo.orig/drivers/char/speakup/speakup.c
++++ linux-2.6.20-gentoo/drivers/char/speakup/speakup.c
+@@ -2027,6 +2027,7 @@ struct st_proc_var spk_proc_vars[] = {
+ 
+ #endif // CONFIG_PROC_FS
+ 
++#ifndef MODULE
+ void __init speakup_init(struct vc_data *vc)
+ {
+ 	struct st_spk_t *first_console =
+@@ -2034,6 +2035,7 @@ void __init speakup_init(struct vc_data 
+ 	memset( first_console, 0, sizeof(struct st_spk_t));
+ 	speakup_open(vc, first_console);
+ }
++#endif
+ 
+ void speakup_allocate(struct vc_data *vc)
+ {
