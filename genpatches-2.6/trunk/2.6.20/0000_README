@@ -67,6 +67,10 @@ Patch:	1006_linux-2.6.20.7.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.7
 
+Patch:	1700_sparc64-sbus-iommu.patch
+From:	David S. Miller <davem@sunset.davemloft.net>
+Desc:	Fix SBUS IOMMU allocation code.
+
 Patch:	2300_i2c-i801-resume.patch
 From:	http://bugs.gentoo.org/172244
 Desc:	Fix i2c-i801 hang on resume
