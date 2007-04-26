@@ -67,6 +67,14 @@ Patch:	1006_linux-2.6.20.7.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.7
 
+Patch:	1007_linux-2.6.20.8.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.8
+
+Patch:	1008_linux-2.6.20.9.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.9
+
 Patch:	1700_sparc64-sbus-iommu.patch
 From:	David S. Miller <davem@sunset.davemloft.net>
 Desc:	Fix SBUS IOMMU allocation code.
