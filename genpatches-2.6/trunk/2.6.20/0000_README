@@ -131,6 +131,10 @@ Patch:	4401_speakup-fix-module-build.patch
 From:	http://bugs.gentoo.org/166086
 Desc:	Fix speakup modular build
 
+Patch:	4402_speakup-fix-jiffies.patch
+From:	http://bugs.gentoo.org/173131
+Desc:	Fix speakup on non-x86 platforms
+
 Patch:	4405_alpha-sysctl-uac.patch
 From:	
 Desc:	enable control of the unaligned access control policy from sysctl
