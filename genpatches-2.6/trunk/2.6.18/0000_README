@@ -72,7 +72,7 @@ Desc:	Misc fixes
 
 Patch:	1400_netlink-fib_lookup.patch
 From:	git.kernel.org (stable git)
-Desc:	Infinite recursion in netlink.
+Desc:	Infinite recursion in netlink (CVE-2007-1861).
 
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
