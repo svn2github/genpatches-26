@@ -70,6 +70,10 @@ Patch:	1007_linux-2.6.18.8.patch
 From:	www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1400_netlink-fib_lookup.patch
+From:	git.kernel.org (stable git)
+Desc:	Infinite recursion in netlink.
+
 Patch:	1705_sparc-U1-hme-lockup.patch
 From:	sparc patch tarball
 Desc:	Fix hme related lockup on u1s
