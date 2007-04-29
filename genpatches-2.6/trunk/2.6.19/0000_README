@@ -66,6 +66,10 @@ Patch:	1006_linux-2.6.19.7.patch
 From:	http://www.kernel.org
 Desc:	Misc fixes
 
+Patch:	1400_netlink-fib_lookup.patch
+From:	git.kernel.org (stable git)
+Desc:	Infinite recursion in netlink (CVE-2007-1861).
+
 Patch:	2900_usblp-kyocera-820-workaround.patch
 From:	http://bugs.gentoo.org/157608
 Desc:	Work around problem with Kyocera FS-820 initialization
