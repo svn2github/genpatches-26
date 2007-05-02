@@ -1,3 +1,475 @@
+---
+ Documentation/dontdiff                            |    6 
+ Makefile                                          |    4 
+ arch/alpha/kernel/module.c                        |    2 
+ arch/alpha/kernel/osf_sys.c                       |    8 
+ arch/alpha/kernel/ptrace.c                        |    4 
+ arch/alpha/mm/fault.c                             |  142 
+ arch/arm/mm/mmap.c                                |   10 
+ arch/avr32/mm/fault.c                             |   27 
+ arch/i386/Kconfig                                 |    6 
+ arch/i386/Kconfig.cpu                             |    4 
+ arch/i386/Kconfig.debug                           |    2 
+ arch/i386/boot/setup.S                            |    2 
+ arch/i386/kernel/acpi/boot.c                      |    2 
+ arch/i386/kernel/acpi/sleep.c                     |    2 
+ arch/i386/kernel/acpi/wakeup.S                    |    6 
+ arch/i386/kernel/alternative.c                    |  104 
+ arch/i386/kernel/apm.c                            |  109 
+ arch/i386/kernel/asm-offsets.c                    |    7 
+ arch/i386/kernel/cpu/common.c                     |  103 
+ arch/i386/kernel/cpu/cpufreq/acpi-cpufreq.c       |    2 
+ arch/i386/kernel/cpu/cpufreq/speedstep-centrino.c |    4 
+ arch/i386/kernel/cpu/mcheck/therm_throt.c         |    2 
+ arch/i386/kernel/cpu/mtrr/generic.c               |    2 
+ arch/i386/kernel/crash.c                          |    2 
+ arch/i386/kernel/doublefault.c                    |   10 
+ arch/i386/kernel/efi.c                            |   65 
+ arch/i386/kernel/efi_stub.S                       |   44 
+ arch/i386/kernel/entry.S                          |   98 
+ arch/i386/kernel/head.S                           |  248 +
+ arch/i386/kernel/i386_ksyms.c                     |    4 
+ arch/i386/kernel/i8259.c                          |    2 
+ arch/i386/kernel/init_task.c                      |    2 
+ arch/i386/kernel/io_apic.c                        |    4 
+ arch/i386/kernel/ioport.c                         |   17 
+ arch/i386/kernel/irq.c                            |    8 
+ arch/i386/kernel/kprobes.c                        |    2 
+ arch/i386/kernel/ldt.c                            |   23 
+ arch/i386/kernel/machine_kexec.c                  |    8 
+ arch/i386/kernel/module.c                         |   74 
+ arch/i386/kernel/paravirt.c                       |   28 
+ arch/i386/kernel/process.c                        |   58 
+ arch/i386/kernel/ptrace.c                         |   27 
+ arch/i386/kernel/reboot.c                         |   50 
+ arch/i386/kernel/setup.c                          |   18 
+ arch/i386/kernel/signal.c                         |    9 
+ arch/i386/kernel/smp.c                            |    2 
+ arch/i386/kernel/smpboot.c                        |   20 
+ arch/i386/kernel/sys_i386.c                       |  185 +
+ arch/i386/kernel/syscall_table.S                  |    1 
+ arch/i386/kernel/sysenter.c                       |   30 
+ arch/i386/kernel/traps.c                          |   59 
+ arch/i386/kernel/tsc.c                            |    2 
+ arch/i386/kernel/vm86.c                           |    4 
+ arch/i386/kernel/vmi.c                            |   24 
+ arch/i386/kernel/vmlinux.lds.S                    |  235 -
+ arch/i386/lib/checksum.S                          |   81 
+ arch/i386/lib/getuser.S                           |   15 
+ arch/i386/lib/mmx.c                               |  246 +
+ arch/i386/lib/putuser.S                           |   19 
+ arch/i386/lib/usercopy.c                          |  652 ++--
+ arch/i386/mach-default/setup.c                    |    2 
+ arch/i386/mach-voyager/voyager_smp.c              |    8 
+ arch/i386/mm/boot_ioremap.c                       |   49 
+ arch/i386/mm/extable.c                            |    2 
+ arch/i386/mm/fault.c                              |  343 +-
+ arch/i386/mm/hugetlbpage.c                        |   35 
+ arch/i386/mm/init.c                               |  183 -
+ arch/i386/mm/mmap.c                               |   22 
+ arch/i386/mm/pageattr.c                           |   16 
+ arch/i386/oprofile/backtrace.c                    |    2 
+ arch/i386/oprofile/op_model_p4.c                  |    2 
+ arch/i386/pci/common.c                            |    2 
+ arch/i386/pci/early.c                             |    2 
+ arch/i386/pci/fixup.c                             |    2 
+ arch/i386/pci/irq.c                               |    4 
+ arch/i386/power/cpu.c                             |    2 
+ arch/ia64/ia32/binfmt_elf32.c                     |   11 
+ arch/ia64/ia32/ia32priv.h                         |    9 
+ arch/ia64/kernel/module.c                         |   47 
+ arch/ia64/kernel/ptrace.c                         |    4 
+ arch/ia64/kernel/sys_ia64.c                       |   11 
+ arch/ia64/mm/fault.c                              |   34 
+ arch/ia64/mm/init.c                               |    2 
+ arch/mips/kernel/binfmt_elfn32.c                  |   11 
+ arch/mips/kernel/binfmt_elfo32.c                  |   11 
+ arch/mips/kernel/syscall.c                        |    7 
+ arch/mips/mm/fault.c                              |   17 
+ arch/parisc/kernel/module.c                       |   72 
+ arch/parisc/kernel/ptrace.c                       |    1 
+ arch/parisc/kernel/sys_parisc.c                   |    2 
+ arch/parisc/kernel/traps.c                        |    4 
+ arch/parisc/mm/fault.c                            |  141 
+ arch/powerpc/kernel/module_32.c                   |   13 
+ arch/powerpc/kernel/signal_32.c                   |    2 
+ arch/powerpc/kernel/signal_64.c                   |    2 
+ arch/powerpc/kernel/vdso.c                        |   17 
+ arch/powerpc/mm/fault.c                           |  399 ++
+ arch/powerpc/mm/hugetlbpage.c                     |   25 
+ arch/powerpc/mm/mmap.c                            |   12 
+ arch/ppc/mm/fault.c                               |  398 ++
+ arch/s390/kernel/module.c                         |   22 
+ arch/sparc/Makefile                               |    2 
+ arch/sparc/kernel/ptrace.c                        |    6 
+ arch/sparc/kernel/sys_sparc.c                     |    2 
+ arch/sparc/mm/fault.c                             |  268 +
+ arch/sparc/mm/init.c                              |   12 
+ arch/sparc/mm/srmmu.c                             |    7 
+ arch/sparc64/kernel/Makefile                      |    2 
+ arch/sparc64/kernel/ptrace.c                      |    6 
+ arch/sparc64/kernel/sys_sparc.c                   |   24 
+ arch/sparc64/mm/Makefile                          |    2 
+ arch/sparc64/mm/fault.c                           |  394 ++
+ arch/v850/kernel/module.c                         |    4 
+ arch/x86_64/boot/compressed/head.S                |    2 
+ arch/x86_64/ia32/ia32_binfmt.c                    |   11 
+ arch/x86_64/ia32/mmap32.c                         |   12 
+ arch/x86_64/ia32/syscall32.c                      |   13 
+ arch/x86_64/kernel/ioport.c                       |   13 
+ arch/x86_64/kernel/process.c                      |    7 
+ arch/x86_64/kernel/ptrace.c                       |    1 
+ arch/x86_64/kernel/setup64.c                      |    7 
+ arch/x86_64/kernel/signal.c                       |    4 
+ arch/x86_64/kernel/sys_x86_64.c                   |   12 
+ arch/x86_64/mm/fault.c                            |   39 
+ arch/x86_64/mm/mmap.c                             |    6 
+ crypto/lrw.c                                      |    2 
+ drivers/acpi/blacklist.c                          |    2 
+ drivers/acpi/glue.c                               |    2 
+ drivers/acpi/processor_core.c                     |    2 
+ drivers/acpi/processor_idle.c                     |    2 
+ drivers/acpi/sleep/main.c                         |    2 
+ drivers/acpi/tables/tbfadt.c                      |    4 
+ drivers/ata/ata_piix.c                            |    4 
+ drivers/ata/libata-core.c                         |    6 
+ drivers/char/agp/frontend.c                       |    2 
+ drivers/char/agp/intel-agp.c                      |    2 
+ drivers/char/drm/drm_drawable.c                   |    4 
+ drivers/char/drm/drm_pciids.h                     |    2 
+ drivers/char/hpet.c                               |    2 
+ drivers/char/keyboard.c                           |   14 
+ drivers/char/mem.c                                |   57 
+ drivers/char/n_tty.c                              |    4 
+ drivers/char/nvram.c                              |    5 
+ drivers/char/random.c                             |   34 
+ drivers/char/vt_ioctl.c                           |   13 
+ drivers/edac/edac_mc.h                            |   10 
+ drivers/hwmon/fscpos.c                            |    1 
+ drivers/hwmon/k8temp.c                            |    2 
+ drivers/hwmon/sis5595.c                           |    2 
+ drivers/hwmon/via686a.c                           |    2 
+ drivers/hwmon/vt8231.c                            |    2 
+ drivers/hwmon/w83791d.c                           |    4 
+ drivers/i2c/busses/i2c-i801.c                     |    2 
+ drivers/i2c/busses/i2c-i810.c                     |    2 
+ drivers/i2c/busses/i2c-piix4.c                    |    4 
+ drivers/i2c/i2c-core.c                            |    2 
+ drivers/ide/ide-cd.c                              |    2 
+ drivers/ieee1394/dv1394.c                         |    6 
+ drivers/ieee1394/eth1394.c                        |    2 
+ drivers/ieee1394/hosts.c                          |    1 
+ drivers/ieee1394/ohci1394.c                       |    6 
+ drivers/ieee1394/raw1394.c                        |    2 
+ drivers/ieee1394/sbp2.c                           |    4 
+ drivers/ieee1394/video1394.c                      |   10 
+ drivers/input/keyboard/atkbd.c                    |    2 
+ drivers/input/mouse/lifebook.c                    |    2 
+ drivers/input/mouse/psmouse-base.c                |    2 
+ drivers/input/mouse/synaptics.c                   |    4 
+ drivers/input/mousedev.c                          |    2 
+ drivers/input/serio/i8042-x86ia64io.h             |    4 
+ drivers/input/serio/serio_raw.c                   |    2 
+ drivers/kvm/kvm_main.c                            |   31 
+ drivers/kvm/vmx.c                                 |    2 
+ drivers/md/bitmap.c                               |    2 
+ drivers/mtd/devices/doc2001.c                     |    2 
+ drivers/net/eepro100.c                            |   56 
+ drivers/net/pcnet32.c                             |    2 
+ drivers/net/tg3.c                                 |    2 
+ drivers/net/tg3.h                                 |    1 
+ drivers/pci/pcie/aer/aerdrv.c                     |    2 
+ drivers/pci/pcie/aer/aerdrv_core.c                |    2 
+ drivers/pci/pcie/portdrv_pci.c                    |    2 
+ drivers/pci/proc.c                                |    8 
+ drivers/pcmcia/ti113x.h                           |    2 
+ drivers/pcmcia/yenta_socket.c                     |    2 
+ drivers/pnp/pnpbios/bioscalls.c                   |   17 
+ drivers/pnp/quirks.c                              |    2 
+ drivers/pnp/resource.c                            |    4 
+ drivers/scsi/scsi_lib.c                           |    2 
+ drivers/scsi/scsi_logging.h                       |    2 
+ drivers/serial/8250_pci.c                         |    2 
+ drivers/usb/class/cdc-acm.c                       |    2 
+ drivers/usb/class/usblp.c                         |    4 
+ drivers/usb/core/hub.c                            |    2 
+ drivers/usb/host/ehci-pci.c                       |    2 
+ drivers/usb/host/uhci-hcd.c                       |    2 
+ drivers/usb/storage/debug.h                       |    6 
+ drivers/usb/storage/usb.c                         |    4 
+ drivers/video/fbcmap.c                            |    3 
+ drivers/video/fbmem.c                             |    4 
+ drivers/video/fbmon.c                             |    2 
+ drivers/video/i810/i810_accel.c                   |    1 
+ drivers/video/i810/i810_main.c                    |    4 
+ drivers/video/modedb.c                            |  112 
+ drivers/video/vesafb.c                            |    2 
+ fs/Kconfig                                        |    2 
+ fs/binfmt_aout.c                                  |   31 
+ fs/binfmt_elf.c                                   |  438 ++
+ fs/binfmt_flat.c                                  |    6 
+ fs/binfmt_misc.c                                  |    6 
+ fs/block_dev.c                                    |    2 
+ fs/buffer.c                                       |    2 
+ fs/cifs/cifs_uniupr.h                             |    2 
+ fs/compat.c                                       |   51 
+ fs/dcache.c                                       |    2 
+ fs/debugfs/inode.c                                |    2 
+ fs/exec.c                                         |  262 +
+ fs/ext2/balloc.c                                  |    2 
+ fs/ext3/balloc.c                                  |    2 
+ fs/ext3/xattr.c                                   |    4 
+ fs/ext4/balloc.c                                  |    2 
+ fs/fcntl.c                                        |    8 
+ fs/fuse/control.c                                 |    2 
+ fs/namei.c                                        |  160 
+ fs/namespace.c                                    |   17 
+ fs/nls/nls_base.c                                 |    2 
+ fs/ntfs/file.c                                    |    4 
+ fs/open.c                                         |   66 
+ fs/partitions/efi.c                               |    2 
+ fs/pipe.c                                         |    2 
+ fs/proc/array.c                                   |   56 
+ fs/proc/base.c                                    |  102 
+ fs/proc/inode.c                                   |    4 
+ fs/proc/internal.h                                |    3 
+ fs/proc/proc_misc.c                               |   23 
+ fs/proc/root.c                                    |   14 
+ fs/proc/task_mmu.c                                |   62 
+ fs/readdir.c                                      |   20 
+ fs/udf/balloc.c                                   |   14 
+ fs/udf/inode.c                                    |    7 
+ fs/ufs/inode.c                                    |   10 
+ fs/utimes.c                                       |   13 
+ fs/xfs/linux-2.6/xfs_file.c                       |    6 
+ fs/xfs/xfs_bmap.c                                 |    2 
+ grsecurity/Kconfig                                |  872 +++++
+ grsecurity/Makefile                               |   20 
+ grsecurity/gracl.c                                | 3550 ++++++++++++++++++++++
+ grsecurity/gracl_alloc.c                          |   91 
+ grsecurity/gracl_cap.c                            |  110 
+ grsecurity/gracl_fs.c                             |  423 ++
+ grsecurity/gracl_ip.c                             |  313 +
+ grsecurity/gracl_learn.c                          |  211 +
+ grsecurity/gracl_res.c                            |   45 
+ grsecurity/gracl_segv.c                           |  295 +
+ grsecurity/gracl_shm.c                            |   33 
+ grsecurity/grsec_chdir.c                          |   19 
+ grsecurity/grsec_chroot.c                         |  335 ++
+ grsecurity/grsec_disabled.c                       |  418 ++
+ grsecurity/grsec_exec.c                           |   88 
+ grsecurity/grsec_fifo.c                           |   22 
+ grsecurity/grsec_fork.c                           |   15 
+ grsecurity/grsec_init.c                           |  232 +
+ grsecurity/grsec_ipc.c                            |   81 
+ grsecurity/grsec_link.c                           |   39 
+ grsecurity/grsec_log.c                            |  265 +
+ grsecurity/grsec_mem.c                            |   71 
+ grsecurity/grsec_mount.c                          |   34 
+ grsecurity/grsec_sig.c                            |   59 
+ grsecurity/grsec_sock.c                           |  263 +
+ grsecurity/grsec_sysctl.c                         |  456 ++
+ grsecurity/grsec_textrel.c                        |   16 
+ grsecurity/grsec_time.c                           |   13 
+ grsecurity/grsec_tpe.c                            |   37 
+ grsecurity/grsum.c                                |   58 
+ include/acpi/acmacros.h                           |    2 
+ include/asm-alpha/a.out.h                         |    2 
+ include/asm-alpha/elf.h                           |   11 
+ include/asm-alpha/kmap_types.h                    |    3 
+ include/asm-alpha/page.h                          |    9 
+ include/asm-alpha/pgtable.h                       |   11 
+ include/asm-arm/a.out.h                           |    2 
+ include/asm-arm/elf.h                             |   11 
+ include/asm-arm/kmap_types.h                      |    1 
+ include/asm-arm26/kmap_types.h                    |    3 
+ include/asm-avr32/a.out.h                         |    2 
+ include/asm-avr32/elf.h                           |   12 
+ include/asm-cris/kmap_types.h                     |    1 
+ include/asm-frv/kmap_types.h                      |    1 
+ include/asm-h8300/kmap_types.h                    |    1 
+ include/asm-i386/a.out.h                          |    6 
+ include/asm-i386/alternative.h                    |    4 
+ include/asm-i386/apic.h                           |    2 
+ include/asm-i386/checksum.h                       |   10 
+ include/asm-i386/desc.h                           |   52 
+ include/asm-i386/elf.h                            |   17 
+ include/asm-i386/futex.h                          |   32 
+ include/asm-i386/i387.h                           |    9 
+ include/asm-i386/irqflags.h                       |    2 
+ include/asm-i386/kmap_types.h                     |    3 
+ include/asm-i386/mach-default/apm.h               |    4 
+ include/asm-i386/mman.h                           |    4 
+ include/asm-i386/mmu.h                            |   15 
+ include/asm-i386/mmu_context.h                    |   23 
+ include/asm-i386/module.h                         |    8 
+ include/asm-i386/page.h                           |   27 
+ include/asm-i386/paravirt.h                       |   18 
+ include/asm-i386/pda.h                            |   37 
+ include/asm-i386/pgalloc.h                        |    8 
+ include/asm-i386/pgtable.h                        |   42 
+ include/asm-i386/processor.h                      |   28 
+ include/asm-i386/ptrace.h                         |    9 
+ include/asm-i386/segment.h                        |    4 
+ include/asm-i386/serial.h                         |    8 
+ include/asm-i386/system.h                         |   19 
+ include/asm-i386/uaccess.h                        |   29 
+ include/asm-ia64/elf.h                            |   10 
+ include/asm-ia64/kmap_types.h                     |    3 
+ include/asm-ia64/page.h                           |    9 
+ include/asm-ia64/pgtable.h                        |   11 
+ include/asm-ia64/processor.h                      |    2 
+ include/asm-ia64/ustack.h                         |    4 
+ include/asm-m32r/kmap_types.h                     |    3 
+ include/asm-m68k/kmap_types.h                     |    1 
+ include/asm-m68knommu/kmap_types.h                |    1 
+ include/asm-mips/a.out.h                          |    4 
+ include/asm-mips/elf.h                            |   11 
+ include/asm-mips/kmap_types.h                     |    3 
+ include/asm-mips/page.h                           |   11 
+ include/asm-parisc/a.out.h                        |    2 
+ include/asm-parisc/elf.h                          |   11 
+ include/asm-parisc/kmap_types.h                   |    3 
+ include/asm-parisc/page.h                         |    9 
+ include/asm-parisc/pgtable.h                      |   11 
+ include/asm-powerpc/a.out.h                       |    4 
+ include/asm-powerpc/elf.h                         |   20 
+ include/asm-powerpc/kmap_types.h                  |    1 
+ include/asm-powerpc/page.h                        |   14 
+ include/asm-powerpc/page_64.h                     |    7 
+ include/asm-ppc/mmu_context.h                     |    3 
+ include/asm-ppc/page.h                            |    9 
+ include/asm-ppc/pgtable.h                         |   36 
+ include/asm-s390/kmap_types.h                     |    1 
+ include/asm-sh/kmap_types.h                       |    3 
+ include/asm-sparc/a.out.h                         |    2 
+ include/asm-sparc/elf.h                           |   11 
+ include/asm-sparc/kmap_types.h                    |    1 
+ include/asm-sparc/page.h                          |    9 
+ include/asm-sparc/pgtable.h                       |   17 
+ include/asm-sparc/pgtsrmmu.h                      |   10 
+ include/asm-sparc/uaccess.h                       |    2 
+ include/asm-sparc64/a.out.h                       |    2 
+ include/asm-sparc64/elf.h                         |   10 
+ include/asm-sparc64/kmap_types.h                  |    1 
+ include/asm-sparc64/page.h                        |    9 
+ include/asm-v850/kmap_types.h                     |    1 
+ include/asm-x86_64/a.out.h                        |    2 
+ include/asm-x86_64/elf.h                          |   11 
+ include/asm-x86_64/ia32.h                         |    8 
+ include/asm-x86_64/kmap_types.h                   |    1 
+ include/asm-x86_64/page.h                         |   11 
+ include/asm-x86_64/pgalloc.h                      |    2 
+ include/asm-x86_64/pgtable.h                      |   36 
+ include/asm-x86_64/system.h                       |    2 
+ include/asm-xtensa/kmap_types.h                   |    1 
+ include/linux/a.out.h                             |   18 
+ include/linux/binfmts.h                           |   10 
+ include/linux/capability.h                        |    1 
+ include/linux/elf.h                               |   33 
+ include/linux/ext4_fs_extents.h                   |    2 
+ include/linux/gracl.h                             |  316 +
+ include/linux/gralloc.h                           |    8 
+ include/linux/grdefs.h                            |  131 
+ include/linux/grinternal.h                        |  208 +
+ include/linux/grmsg.h                             |  108 
+ include/linux/grsecurity.h                        |  196 +
+ include/linux/highmem.h                           |    7 
+ include/linux/jbd.h                               |    2 
+ include/linux/jbd2.h                              |    2 
+ include/linux/mm.h                                |   55 
+ include/linux/mman.h                              |    5 
+ include/linux/module.h                            |    8 
+ include/linux/moduleloader.h                      |   12 
+ include/linux/random.h                            |    2 
+ include/linux/sched.h                             |   53 
+ include/linux/security.h                          |    2 
+ include/linux/shm.h                               |    4 
+ include/linux/skbuff.h                            |    2 
+ include/linux/sysctl.h                            |   16 
+ include/linux/uaccess.h                           |    4 
+ include/linux/udf_fs.h                            |    2 
+ include/net/sctp/sctp.h                           |    4 
+ include/sound/core.h                              |    6 
+ init/Kconfig                                      |    1 
+ init/do_mounts.c                                  |   36 
+ init/do_mounts.h                                  |    6 
+ init/do_mounts_md.c                               |    6 
+ init/initramfs.c                                  |   30 
+ init/main.c                                       |   12 
+ ipc/msg.c                                         |    4 
+ ipc/sem.c                                         |    5 
+ ipc/shm.c                                         |   63 
+ kernel/acct.c                                     |    2 
+ kernel/capability.c                               |   15 
+ kernel/configs.c                                  |    8 
+ kernel/exit.c                                     |   32 
+ kernel/fork.c                                     |   18 
+ kernel/futex.c                                    |    9 
+ kernel/irq/handle.c                               |    3 
+ kernel/kallsyms.c                                 |   15 
+ kernel/kprobes.c                                  |    2 
+ kernel/module.c                                   |  236 +
+ kernel/mutex.c                                    |    2 
+ kernel/pid.c                                      |   12 
+ kernel/posix-cpu-timers.c                         |    2 
+ kernel/power/poweroff.c                           |    2 
+ kernel/printk.c                                   |    6 
+ kernel/ptrace.c                                   |   10 
+ kernel/rcupdate.c                                 |    6 
+ kernel/resource.c                                 |   17 
+ kernel/sched.c                                    |    4 
+ kernel/signal.c                                   |   15 
+ kernel/sys.c                                      |   30 
+ kernel/sysctl.c                                   |   57 
+ kernel/time.c                                     |    6 
+ lib/radix-tree.c                                  |    2 
+ mm/filemap.c                                      |   10 
+ mm/filemap_xip.c                                  |    5 
+ mm/madvise.c                                      |   37 
+ mm/memory.c                                       |  179 +
+ mm/mempolicy.c                                    |    6 
+ mm/mlock.c                                        |  122 
+ mm/mmap.c                                         |  382 +-
+ mm/mprotect.c                                     |  212 +
+ mm/mremap.c                                       |   41 
+ mm/nommu.c                                        |    9 
+ mm/page_alloc.c                                   |    7 
+ mm/rmap.c                                         |   13 
+ mm/shmem.c                                        |    2 
+ mm/slab.c                                         |   13 
+ mm/swap.c                                         |    4 
+ mm/thrash.c                                       |    5 
+ mm/tiny-shmem.c                                   |    2 
+ mm/vmalloc.c                                      |    4 
+ net/core/flow.c                                   |    6 
+ net/dccp/ccids/ccid3.c                            |    4 
+ net/dccp/dccp.h                                   |    4 
+ net/ipv4/inet_connection_sock.c                   |    1 
+ net/ipv4/inet_hashtables.c                        |    5 
+ net/ipv4/netfilter/Kconfig                        |   16 
+ net/ipv4/netfilter/Makefile                       |    1 
+ net/ipv4/netfilter/ipt_stealth.c                  |  114 
+ net/ipv4/tcp_ipv4.c                               |    1 
+ net/ipv4/udp.c                                    |   26 
+ net/ipv6/exthdrs.c                                |    2 
+ net/ipv6/raw.c                                    |    2 
+ net/sctp/sm_statetable.c                          |    2 
+ net/sctp/socket.c                                 |    4 
+ net/socket.c                                      |   61 
+ net/unix/af_unix.c                                |   26 
+ scripts/pnmtologo.c                               |    6 
+ security/Kconfig                                  |  426 ++
+ security/commoncap.c                              |   25 
+ security/dummy.c                                  |    8 
+ sound/core/oss/pcm_oss.c                          |    4 
+ sound/core/seq/seq_lock.h                         |    8 
+ sound/pci/ac97/ac97_patch.c                       |    4 
+ sound/pci/ens1370.c                               |    2 
+ sound/pci/intel8x0.c                              |    4 
+ sound/pci/intel8x0m.c                             |    4 
+ 469 files changed, 18750 insertions(+), 1993 deletions(-)
+
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
 @@ -55,7 +55,7 @@ aic7*seq.h*
@@ -30320,7 +30792,7 @@
  obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
 --- /dev/null
 +++ b/net/ipv4/netfilter/ipt_stealth.c
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,114 @@
 +/* Kernel module to add stealth support.
 + *
 + * Copyright (C) 2002-2006 Brad Spengler  <spender@grsecurity.net>
@@ -30414,8 +30886,9 @@
 +}
 +
 +
-+static struct ipt_match stealth_match = {
++static struct xt_match stealth_match = {
 +	.name = "stealth",
++	.family = AF_INET,
 +	.match = match,
 +	.checkentry = checkentry,
 +	.destroy = NULL,
@@ -30424,12 +30897,12 @@
 +
 +static int __init init(void)
 +{
-+	return ipt_register_match(&stealth_match);
++	return xt_register_match(&stealth_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&stealth_match);
++	xt_unregister_match(&stealth_match);
 +}
 +
 +module_init(init);

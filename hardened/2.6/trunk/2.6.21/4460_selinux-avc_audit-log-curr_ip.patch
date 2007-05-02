@@ -6,13 +6,11 @@ provided by grSecurity patch to be applied before.
 Signed-off-by: Lorenzo Hernandez Garcia-Hierro <lorenzo@gnu.org>
 ---
 
- linux-2.6.11-lorenzo/security/selinux/avc.c |    6 ++++++
- 1 files changed, 6 insertions(+)
+ security/selinux/avc.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
 
-Index: linux-2.6.20/security/selinux/avc.c
-===================================================================
---- linux-2.6.20.orig/security/selinux/avc.c
-+++ linux-2.6.20/security/selinux/avc.c
+--- a/security/selinux/avc.c
++++ b/security/selinux/avc.c
 @@ -202,6 +202,12 @@ static void avc_dump_query(struct audit_
  	char *scontext;
  	u32 scontext_len;

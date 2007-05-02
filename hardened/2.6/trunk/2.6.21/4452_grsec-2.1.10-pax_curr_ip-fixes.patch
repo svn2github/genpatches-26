@@ -1,3 +1,9 @@
+---
+ arch/i386/mm/fault.c |    2 ++
+ fs/exec.c            |    2 ++
+ security/Kconfig     |    2 +-
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
 --- a/arch/i386/mm/fault.c
 +++ b/arch/i386/mm/fault.c
 @@ -688,10 +688,12 @@ no_context:
