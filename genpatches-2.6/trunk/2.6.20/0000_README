@@ -79,9 +79,9 @@ Patch:	1009_linux-2.6.20.10.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.10
 
-PPatch:	1700_sparc64-sbus-iommu.patch
-From:	David S. Miller <davem@sunset.davemloft.net>
-Desc:	Fix SBUS IOMMU allocation code.
+Patch:	1010_linux-2.6.20.11.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.11
 
 Patch:	1701_netfilter-ulog-alignment.patch
 From:	Patrick McHardy <kaber@trash.net>
