@@ -87,6 +87,10 @@ Patch:	1701_netfilter-ulog-alignment.patch
 From:	Patrick McHardy <kaber@trash.net>
 Desc:	Use put_unaligned to fix warnings about unaligned accesses.
 
+Patch:	1705_alpha-arch-compile-fix.patch
+From:	http://bugs.gentoo.org/175264
+Desc:	Fix alpha gcc-4.1 compile
+
 Patch:	2300_i2c-i801-resume.patch
 From:	http://bugs.gentoo.org/172244
 Desc:	Fix i2c-i801 hang on resume
