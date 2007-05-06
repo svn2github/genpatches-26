@@ -245,7 +245,7 @@
  fs/xfs/xfs_bmap.c                                 |    2 
  grsecurity/Kconfig                                |  872 +++++
  grsecurity/Makefile                               |   20 
- grsecurity/gracl.c                                | 3550 ++++++++++++++++++++++
+ grsecurity/gracl.c                                | 3547 ++++++++++++++++++++++
  grsecurity/gracl_alloc.c                          |   91 
  grsecurity/gracl_cap.c                            |  110 
  grsecurity/gracl_fs.c                             |  423 ++
@@ -386,7 +386,7 @@
  include/linux/security.h                          |    2 
  include/linux/shm.h                               |    4 
  include/linux/skbuff.h                            |    2 
- include/linux/sysctl.h                            |   16 
+ include/linux/sysctl.h                            |   14 
  include/linux/uaccess.h                           |    4 
  include/linux/udf_fs.h                            |    2 
  include/net/sctp/sctp.h                           |    4 
@@ -421,7 +421,7 @@
  kernel/sched.c                                    |    4 
  kernel/signal.c                                   |   15 
  kernel/sys.c                                      |   30 
- kernel/sysctl.c                                   |   57 
+ kernel/sysctl.c                                   |   53 
  kernel/time.c                                     |    6 
  lib/radix-tree.c                                  |    2 
  mm/filemap.c                                      |   10 
@@ -468,7 +468,7 @@
  sound/pci/ens1370.c                               |    2 
  sound/pci/intel8x0.c                              |    4 
  sound/pci/intel8x0m.c                             |    4 
- 469 files changed, 18750 insertions(+), 1993 deletions(-)
+ 469 files changed, 18744 insertions(+), 1990 deletions(-)
 
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
@@ -15671,7 +15671,7 @@
 +
 --- /dev/null
 +++ b/grsecurity/gracl.c
-@@ -0,0 +1,3550 @@
+@@ -0,0 +1,3547 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -18824,8 +18824,6 @@
 +#endif
 +
 +#ifdef CONFIG_SYSCTL
-+extern ctl_table root_table[];
-+
 +/* the following function is called under the BKL */
 +
 +__u32
@@ -18853,7 +18851,7 @@
 +
 +	/* convert the requested sysctl entry into a pathname */
 +
-+	for (tmp = (ctl_table *)table; tmp != (ctl_table *)&root_table; tmp = tmp->parent) {
++	for (tmp = (ctl_table *)table; tmp != NULL; tmp = tmp->parent) {
 +		len += strlen(tmp->procname);
 +		len++;
 +		depth++;
@@ -18871,8 +18869,7 @@
 +	for (; depth > 0; depth--) {
 +		path[pos] = '/';
 +		pos++;
-+		for (i = 1, tmp = (ctl_table *)table; tmp != (ctl_table *)&root_table;
-+		     tmp = tmp->parent) {
++		for (i = 1, tmp = (ctl_table *)table; tmp != NULL; tmp = tmp->parent) {
 +			if (depth == i) {
 +				memcpy(path + pos, tmp->procname,
 +				       strlen(tmp->procname));
@@ -26976,7 +26973,6 @@
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
 - };
--
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
@@ -26984,9 +26980,9 @@
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
-+  
+ 
 +};
-+  
++
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
@@ -28636,19 +28632,16 @@
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -137,9 +145,9 @@ static int proc_dointvec_taint(ctl_table
- 			       void __user *buffer, size_t *lenp, loff_t *ppos);
- #endif
+@@ -139,7 +147,7 @@ static int proc_dointvec_taint(ctl_table
  
--static ctl_table root_table[];
-+ctl_table root_table[];
+ static ctl_table root_table[];
  static struct ctl_table_header root_table_header =
 -	{ root_table, LIST_HEAD_INIT(root_table_header.ctl_entry) };
 +	{ root_table, LIST_HEAD_INIT(root_table_header.ctl_entry), 0, NULL };
  
  static ctl_table kern_table[];
  static ctl_table vm_table[];
-@@ -156,15 +164,30 @@ extern ctl_table inotify_table[];
+@@ -156,11 +164,26 @@ extern ctl_table inotify_table[];
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  extern ctl_table uac_table[];
  #endif
@@ -28675,11 +28668,6 @@
  
  /* The default sysctl tables: */
  
--static ctl_table root_table[] = {
-+ctl_table root_table[] = {
- 	{
- 		.ctl_name	= CTL_KERN,
- 		.procname	= "kernel",
 @@ -614,6 +637,24 @@ static ctl_table kern_table[] = {
  	},
  #endif
