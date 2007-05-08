@@ -386,7 +386,7 @@
  include/linux/security.h                          |    2 
  include/linux/shm.h                               |    4 
  include/linux/skbuff.h                            |    2 
- include/linux/sysctl.h                            |   14 
+ include/linux/sysctl.h                            |   16 
  include/linux/uaccess.h                           |    4 
  include/linux/udf_fs.h                            |    2 
  include/net/sctp/sctp.h                           |    4 
@@ -468,7 +468,7 @@
  sound/pci/ens1370.c                               |    2 
  sound/pci/intel8x0.c                              |    4 
  sound/pci/intel8x0m.c                             |    4 
- 469 files changed, 18744 insertions(+), 1990 deletions(-)
+ 469 files changed, 18745 insertions(+), 1991 deletions(-)
 
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
@@ -26973,16 +26973,17 @@
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
 - };
+-
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
- 
++
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
  
 +};
-+
++ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
@@ -31282,7 +31283,7 @@
 +
 +config PAX
 +	bool "Enable various PaX features"
-+	depends on GRSECURITY && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
++	depends on GRKERNSEC && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
 +	help
 +	  This allows you to enable various PaX features.  PaX adds
 +	  intrusion prevention mechanisms to the kernel that reduce
