@@ -1,8 +1,7 @@
-Index: linux-2.6.21/arch/alpha/Kconfig
-===================================================================
---- linux-2.6.21.orig/arch/alpha/Kconfig
-+++ linux-2.6.21/arch/alpha/Kconfig
-@@ -602,6 +602,32 @@ config VERBOSE_MCHECK_ON
+diff -urN linux-2.6.21.orig/arch/alpha/Kconfig linux-2.6.21/arch/alpha/Kconfig
+--- linux-2.6.21.orig/arch/alpha/Kconfig	2007-04-26 03:08:32.000000000 +0000
++++ linux-2.6.21/arch/alpha/Kconfig	2007-05-14 16:20:45.000000000 +0000
+@@ -602,6 +602,32 @@
  
  	  Take the default (1) unless you want more control or more info.
  
@@ -35,10 +34,9 @@ Index: linux-2.6.21/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux-2.6.21/arch/alpha/kernel/traps.c
-===================================================================
---- linux-2.6.21.orig/arch/alpha/kernel/traps.c
-+++ linux-2.6.21/arch/alpha/kernel/traps.c
+diff -urN linux-2.6.21.orig/arch/alpha/kernel/traps.c linux-2.6.21/arch/alpha/kernel/traps.c
+--- linux-2.6.21.orig/arch/alpha/kernel/traps.c	2007-04-26 03:08:32.000000000 +0000
++++ linux-2.6.21/arch/alpha/kernel/traps.c	2007-05-14 16:22:16.000000000 +0000
 @@ -14,6 +14,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -47,7 +45,7 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
  #include <linux/init.h>
  #include <linux/kallsyms.h>
  
-@@ -102,6 +103,38 @@ static char * ireg_name[] = {"v0", "t0",
+@@ -102,6 +103,38 @@
  			   "t10", "t11", "ra", "pv", "at", "gp", "sp", "zero"};
  #endif
  
@@ -59,9 +57,9 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
 +static int enabled_nofix = 0;
 +
 +ctl_table uac_table[] = {
-+	{KERN_UAC_NOPRINT, "noprint", &enabled_noprint, sizeof (int), 0644, NULL, &proc_dointvec},
-+	{KERN_UAC_SIGBUS, "sigbus", &enabled_sigbus, sizeof (int), 0644, NULL, &proc_dointvec},
-+	{KERN_UAC_NOFIX, "nofix", &enabled_nofix, sizeof (int), 0644, NULL, &proc_dointvec},
++	{KERN_UAC_NOPRINT, "noprint", &enabled_noprint, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
++	{KERN_UAC_SIGBUS, "sigbus", &enabled_sigbus, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
++	{KERN_UAC_NOFIX, "nofix", &enabled_nofix, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
 +        {0}
 +};
 +
@@ -73,7 +71,7 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
 +	enabled_nofix = (test_thread_flag (TIF_UAC_NOFIX)) ? 1 : 0;
 +
 +	/* save this for later so we can clean up */
-+	uac_sysctl_header = register_sysctl_table(uac_table, 0);
++	uac_sysctl_header = register_sysctl_table(uac_table);
 +	return 0;
 +}
 +
@@ -86,7 +84,7 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
  static void
  dik_show_code(unsigned int *pc)
  {
-@@ -779,7 +812,11 @@ do_entUnaUser(void __user * va, unsigned
+@@ -779,7 +812,11 @@
  	/* Check the UAC bits to decide what the user wants us to do
  	   with the unaliged access.  */
  
@@ -98,7 +96,7 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
  		if (cnt >= 5 && jiffies - last_time > 5*HZ) {
  			cnt = 0;
  		}
-@@ -790,10 +827,18 @@ do_entUnaUser(void __user * va, unsigned
+@@ -790,10 +827,18 @@
  		}
  		last_time = jiffies;
  	}
@@ -117,17 +115,18 @@ Index: linux-2.6.21/arch/alpha/kernel/traps.c
  		return;
  
  	/* Don't bother reading ds in the access check since we already
-@@ -1088,3 +1133,5 @@ trap_init(void)
+@@ -1088,3 +1133,7 @@
  	wrent(entSys, 5);
  	wrent(entDbg, 6);
  }
 +
++#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +__initcall(init_uac_sysctl);
-Index: linux-2.6.21/include/linux/sysctl.h
-===================================================================
---- linux-2.6.21.orig/include/linux/sysctl.h
-+++ linux-2.6.21/include/linux/sysctl.h
-@@ -166,6 +166,9 @@ enum
++#endif
+diff -urN linux-2.6.21.orig/include/linux/sysctl.h linux-2.6.21/include/linux/sysctl.h
+--- linux-2.6.21.orig/include/linux/sysctl.h	2007-05-14 16:20:23.000000000 +0000
++++ linux-2.6.21/include/linux/sysctl.h	2007-05-14 16:20:45.000000000 +0000
+@@ -166,6 +166,9 @@
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
  	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
@@ -137,7 +136,7 @@ Index: linux-2.6.21/include/linux/sysctl.h
  };
  
  
-@@ -259,6 +262,17 @@ enum
+@@ -259,6 +262,17 @@
  	PTY_NR=2
  };
  
@@ -155,11 +154,10 @@ Index: linux-2.6.21/include/linux/sysctl.h
  /* /proc/sys/bus/isa */
  enum
  {
-Index: linux-2.6.21/kernel/sysctl.c
-===================================================================
---- linux-2.6.21.orig/kernel/sysctl.c
-+++ linux-2.6.21/kernel/sysctl.c
-@@ -156,6 +156,9 @@ extern ctl_table pty_table[];
+diff -urN linux-2.6.21.orig/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
+--- linux-2.6.21.orig/kernel/sysctl.c	2007-05-14 16:20:23.000000000 +0000
++++ linux-2.6.21/kernel/sysctl.c	2007-05-14 16:20:45.000000000 +0000
+@@ -156,6 +156,9 @@
  #ifdef CONFIG_INOTIFY_USER
  extern ctl_table inotify_table[];
  #endif
@@ -169,7 +167,7 @@ Index: linux-2.6.21/kernel/sysctl.c
  
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
-@@ -203,7 +206,14 @@ static ctl_table root_table[] = {
+@@ -203,7 +206,14 @@
  		.mode		= 0555,
  		.child		= dev_table,
  	},
