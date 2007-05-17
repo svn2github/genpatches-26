@@ -47,6 +47,10 @@ Patch:	1700_amd64-time-usecs.patch
 From:	http://bugs.gentoo.org/177890
 Desc:	Fix vgettimeofday() system call on x86-64
 
+Patch:	4000_zd1211rw-al2230s.patch
+From:	dsd@gentoo.org
+Desc:	Add support for AL2230S-based ZD1211 USB-WLAN devices
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
