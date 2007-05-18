@@ -55,6 +55,10 @@ Patch:	2400_sky2-enable-88e8056.patch
 From:	http://bugs.gentoo.org/176219
 Desc:	Re-enable Marvell Yukon-2 88E8056 support
 
+Patch:	2405_sis900-rx-crash.patch
+From:	http://bugs.gentoo.org/176398
+Desc:	Fix crash with sis900 network driver
+
 Patch:	2600_i8042-aux-detection.patch
 From:	http://bugs.gentoo.org/168447
 Desc:	Fix mouse probing on HP-500
