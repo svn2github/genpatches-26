@@ -1,0 +1,20 @@
+[PATCH] x86_64 : Fix vgettimeofday()
+
+vgettimeofday() may return some bad timeval values, (tv_usec = 1000000),
+because of a wrong compare.
+
+Signed-off-by: Eric Dumazet <dada1@cosmosbay.com>
+
+Index: linux-2.6.21-gentoo/arch/x86_64/kernel/vsyscall.c
+===================================================================
+--- linux-2.6.21-gentoo.orig/arch/x86_64/kernel/vsyscall.c
++++ linux-2.6.21-gentoo/arch/x86_64/kernel/vsyscall.c
+@@ -132,7 +132,7 @@ static __always_inline void do_vgettimeo
+ 
+ 	/* convert to usecs and add to timespec: */
+ 	tv->tv_usec += nsec_delta / NSEC_PER_USEC;
+-	while (tv->tv_usec > USEC_PER_SEC) {
++	while (tv->tv_usec >= USEC_PER_SEC) {
+ 		tv->tv_sec += 1;
+ 		tv->tv_usec -= USEC_PER_SEC;
+ 	}
