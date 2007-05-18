@@ -51,6 +51,10 @@ Patch:	2100_ahci-ati-disable-si.patch
 From:	http://bugs.gentoo.org/161448
 Desc:	Fix AHCI boot on ATI chipsets
 
+Patch:	2400_sky2-enable-88e8056.patch
+From:	http://bugs.gentoo.org/176219
+Desc:	Re-enable Marvell Yukon-2 88E8056 support
+
 Patch:	2600_i8042-aux-detection.patch
 From:	http://bugs.gentoo.org/168447
 Desc:	Fix mouse probing on HP-500
