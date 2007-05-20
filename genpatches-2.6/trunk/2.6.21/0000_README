@@ -47,7 +47,7 @@ Patch:	1700_amd64-time-usecs.patch
 From:	http://bugs.gentoo.org/177890
 Desc:	Fix vgettimeofday() system call on x86-64
 
-Patch:	2100_ahci-ati-disable-si.patch
+Patch:	2100_ahci-ati-disable-msi.patch
 From:	http://bugs.gentoo.org/161448
 Desc:	Fix AHCI boot on ATI chipsets
 
@@ -59,7 +59,7 @@ Patch:	2111_sd-start-stop.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	[SCSI] sd: implement START/STOP management
 
-Patch:	2112-libata-suspend.patch
+Patch:	2112_libata-suspend.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	libata: reimplement suspend/resume support
 
