@@ -51,6 +51,34 @@ Patch:	2100_ahci-ati-disable-si.patch
 From:	http://bugs.gentoo.org/161448
 Desc:	Fix AHCI boot on ATI chipsets
 
+Patch:	2110_scsi-sd-printing.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	[SCSI] sd: make printing use a common prefix
+
+Patch:	2111_sd-start-stop.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	[SCSI] sd: implement START/STOP management
+
+Patch:	2112-libata-suspend.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	libata: reimplement suspend/resume support
+
+Patch:	2113_libata-spindown-compat.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	libata: implement libata.spindown_compat
+
+Patch:	2114_libata-shutdown-warning.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	libata: fix shutdown warning message printing
+
+Patch:	2115_libata-spindown-status.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	libata: track spindown status and skip spindown_compat if possible
+
+Patch:	2116_libata-remove-spindown-compat.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	libata: remove libata.spindown_compat
+
 Patch:	2400_sky2-enable-88e8056.patch
 From:	http://bugs.gentoo.org/176219
 Desc:	Re-enable Marvell Yukon-2 88E8056 support
