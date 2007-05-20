@@ -87,6 +87,10 @@ Patch:	2405_sis900-rx-crash.patch
 From:	http://bugs.gentoo.org/176398
 Desc:	Fix crash with sis900 network driver
 
+Patch:	2500_tifm-updates.patch
+From:	http://bugs.gentoo.org/171123
+Desc:	Fix tifm MMC driver
+
 Patch:	2600_i8042-aux-detection.patch
 From:	http://bugs.gentoo.org/168447
 Desc:	Fix mouse probing on HP-500
