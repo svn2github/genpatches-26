@@ -43,13 +43,9 @@ Patch:	1000_linux-2.6.21.1.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.21.1
 
-Patch:	1700_amd64-time-usecs.patch
-From:	http://bugs.gentoo.org/177890
-Desc:	Fix vgettimeofday() system call on x86-64
-
-Patch:	2100_ahci-ati-disable-msi.patch
-From:	http://bugs.gentoo.org/161448
-Desc:	Fix AHCI boot on ATI chipsets
+Patch:	1001_linux-2.6.21.2.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.21.2
 
 Patch:	2110_scsi-sd-printing.patch
 From:	http://bugs.gentoo.org/174373
@@ -78,14 +74,6 @@ Desc:	libata: track spindown status and skip spindown_compat if possible
 Patch:	2116_libata-remove-spindown-compat.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	libata: remove libata.spindown_compat
-
-Patch:	2400_sky2-enable-88e8056.patch
-From:	http://bugs.gentoo.org/176219
-Desc:	Re-enable Marvell Yukon-2 88E8056 support
-
-Patch:	2405_sis900-rx-crash.patch
-From:	http://bugs.gentoo.org/176398
-Desc:	Fix crash with sis900 network driver
 
 Patch:	2500_tifm-updates.patch
 From:	http://bugs.gentoo.org/171123
