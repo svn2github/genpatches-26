@@ -75,6 +75,10 @@ Patch:	2116_libata-remove-spindown-compat.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	libata: remove libata.spindown_compat
 
+Patch:	2117_sata-via-suspend.patch
+From:	http://bugs.gentoo.org/174373
+Desc:	Fix 2.6.21.2 vs libata shutdown fixes conflict
+
 Patch:	2500_tifm-updates.patch
 From:	http://bugs.gentoo.org/171123
 Desc:	Fix tifm MMC driver
