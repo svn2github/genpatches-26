@@ -91,6 +91,10 @@ Patch:	1705_alpha-arch-compile-fix.patch
 From:	http://bugs.gentoo.org/175264
 Desc:	Fix alpha gcc-4.1 compile
 
+Patch:	1900_reiserfs-key-decrement.patch
+From:	http://bugs.gentoo.org/179563
+Desc:	Fix possible reiserfs corruption
+
 Patch:	2300_i2c-i801-resume.patch
 From:	http://bugs.gentoo.org/172244
 Desc:	Fix i2c-i801 hang on resume
