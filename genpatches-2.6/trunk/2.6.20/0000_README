@@ -83,6 +83,10 @@ Patch:	1010_linux-2.6.20.11.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.11
 
+Patch:	1011_linux-2.6.20.12.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.12
+
 Patch:	1701_netfilter-ulog-alignment.patch
 From:	Patrick McHardy <kaber@trash.net>
 Desc:	Use put_unaligned to fix warnings about unaligned accesses.
