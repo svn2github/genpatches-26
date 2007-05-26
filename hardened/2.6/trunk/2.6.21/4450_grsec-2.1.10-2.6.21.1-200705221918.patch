@@ -142,7 +142,7 @@
  drivers/char/mem.c                                |   57 
  drivers/char/n_tty.c                              |    4 
  drivers/char/nvram.c                              |    5 
- drivers/char/random.c                             |   34 
+ drivers/char/random.c                             |   36 
  drivers/char/vt_ioctl.c                           |   13 
  drivers/edac/edac_mc.h                            |   10 
  drivers/hwmon/fscpos.c                            |    1 
@@ -386,7 +386,7 @@
  include/linux/security.h                          |    2 
  include/linux/shm.h                               |    4 
  include/linux/skbuff.h                            |    2 
- include/linux/sysctl.h                            |   16 
+ include/linux/sysctl.h                            |   14 
  include/linux/uaccess.h                           |    4 
  include/linux/udf_fs.h                            |    2 
  include/net/sctp/sctp.h                           |    4 
@@ -468,7 +468,7 @@
  sound/pci/ens1370.c                               |    2 
  sound/pci/intel8x0.c                              |    4 
  sound/pci/intel8x0m.c                             |    4 
- 469 files changed, 18745 insertions(+), 1991 deletions(-)
+ 469 files changed, 18746 insertions(+), 1990 deletions(-)
 
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
@@ -10312,7 +10312,7 @@
  };
  
  static struct pci_driver piix_pci_driver = {
-@@ -581,7 +581,7 @@ static const struct ich_laptop ich_lapto
+@@ -577,7 +577,7 @@ static const struct ich_laptop ich_lapto
  	{ 0x27DF, 0x0005, 0x0280 },	/* ICH7 on Acer 5602WLMi */
  	{ 0x27DF, 0x1025, 0x0110 },	/* ICH7 on Acer 3682WLMi */
  	/* end marker */
@@ -10641,6 +10641,15 @@
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
+@@ -1162,7 +1174,7 @@ EXPORT_SYMBOL(generate_random_uuid);
+ #include <linux/sysctl.h>
+ 
+ static int min_read_thresh = 8, min_write_thresh;
+-static int max_read_thresh = INPUT_POOL_WORDS * 32;
++static int max_read_thresh = INPUT_POOL_WORDS * 8;
+ static int max_write_thresh = INPUT_POOL_WORDS * 32;
+ static char sysctl_bootid[16];
+ 
 @@ -1662,3 +1674,25 @@ randomize_range(unsigned long start, uns
  		return 0;
  	return PAGE_ALIGN(get_random_int() % range + start);
@@ -11264,7 +11273,7 @@
  static int pcnet32_debug = 0;
 --- a/drivers/net/tg3.c
 +++ b/drivers/net/tg3.c
-@@ -10578,7 +10578,7 @@ static int __devinit tg3_get_invariants(
+@@ -10576,7 +10576,7 @@ static int __devinit tg3_get_invariants(
  			tp->tg3_flags2 |= TG3_FLG2_HW_TSO_1 | TG3_FLG2_TSO_BUG;
  			if (GET_ASIC_REV(tp->pci_chip_rev_id) ==
  				ASIC_REV_5750 &&
@@ -26968,22 +26977,20 @@
  
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -168,9 +168,21 @@ enum
- #ifdef CONFIG_ALPHA_UAC_SYSCTL
- 	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
+@@ -170,7 +170,21 @@ enum
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
-- };
--
+  };
+ 
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
-+
+ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
- 
++  
 +};
-+ 
++  
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
@@ -30973,7 +30980,7 @@
  		copied = len;
 --- a/net/ipv6/exthdrs.c
 +++ b/net/ipv6/exthdrs.c
-@@ -719,7 +719,7 @@ static struct tlvtype_proc tlvprochopopt
+@@ -727,7 +727,7 @@ static struct tlvtype_proc tlvprochopopt
  		.type	= IPV6_TLV_JUMBO,
  		.func	= ipv6_hop_jumbo,
  	},
