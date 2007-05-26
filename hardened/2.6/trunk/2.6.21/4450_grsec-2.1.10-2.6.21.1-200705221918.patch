@@ -386,7 +386,7 @@
  include/linux/security.h                          |    2 
  include/linux/shm.h                               |    4 
  include/linux/skbuff.h                            |    2 
- include/linux/sysctl.h                            |   14 
+ include/linux/sysctl.h                            |   15 
  include/linux/uaccess.h                           |    4 
  include/linux/udf_fs.h                            |    2 
  include/net/sctp/sctp.h                           |    4 
@@ -468,7 +468,7 @@
  sound/pci/ens1370.c                               |    2 
  sound/pci/intel8x0.c                              |    4 
  sound/pci/intel8x0m.c                             |    4 
- 469 files changed, 18746 insertions(+), 1990 deletions(-)
+ 469 files changed, 18746 insertions(+), 1991 deletions(-)
 
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
@@ -26977,9 +26977,11 @@
  
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -170,7 +170,21 @@ enum
+@@ -168,9 +168,22 @@ enum
+ #ifdef CONFIG_ALPHA_UAC_SYSCTL
+ 	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
-  };
+- };
  
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
