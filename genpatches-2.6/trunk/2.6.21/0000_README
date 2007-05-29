@@ -87,6 +87,10 @@ Patch:	2118_scsi-constants.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	required for libata/scsi shutdown fixes
 
+Patch:	2300_eth1394-parent-device.patch
+From:	http://bugs.gentoo.org/177199
+Desc:	Fix eth1394 network interface renaming
+
 Patch:	2500_tifm-updates.patch
 From:	http://bugs.gentoo.org/171123
 Desc:	Fix tifm MMC driver

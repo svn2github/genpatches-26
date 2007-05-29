@@ -1,0 +1,40 @@
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Date: Sun, 20 May 2007 23:05:41 +0000 (+0200)
+Subject: ieee1394: eth1394: bring back a parent device
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=ef50a6c59dc66f22eba67704e291d709f21e0456
+
+ieee1394: eth1394: bring back a parent device
+
+This adds a real parent device to eth1394's ethX device like in Linux
+2.6.20 and older.  However, due to unfinished conversion of the ieee1394
+away from class_device, we now refer to the FireWire controller's PCI
+device as the parent, not to the ieee1394 driver's fw-host device.
+
+Having a real parent device instead of a virtual one allows udev scripts
+to distinguish eth1394 interfaces from networking bridges, bondings and
+the likes.
+
+Fixes a regression since 2.6.21:
+https://bugs.gentoo.org/show_bug.cgi?id=177199
+
+Signed-off-by: Stefan Richter <stefanr@s5r6.in-berlin.de>
+---
+
+diff --git a/drivers/ieee1394/eth1394.c b/drivers/ieee1394/eth1394.c
+index d6b19c2..5f026b5 100644
+--- a/drivers/ieee1394/eth1394.c
++++ b/drivers/ieee1394/eth1394.c
+@@ -599,10 +599,9 @@ static void ether1394_add_host(struct hpsb_host *host)
+ 	}
+ 
+ 	SET_MODULE_OWNER(dev);
+-#if 0
+-	/* FIXME - Is this the correct parent device anyway? */
+-	SET_NETDEV_DEV(dev, &host->device);
+-#endif
++
++	/* This used to be &host->device in Linux 2.6.20 and before. */
++	SET_NETDEV_DEV(dev, host->device.parent);
+ 
+ 	priv = netdev_priv(dev);
+ 	INIT_LIST_HEAD(&priv->ip_node_list);
