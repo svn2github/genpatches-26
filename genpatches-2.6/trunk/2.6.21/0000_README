@@ -51,6 +51,10 @@ Patch:	1002_linux-2.6.21.3.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.21.3
 
+Patch:	1003_linux-2.6.21.4.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.21.4
+
 Patch:	2110_scsi-sd-printing.patch
 From:	http://bugs.gentoo.org/174373
 Desc:	[SCSI] sd: make printing use a common prefix
