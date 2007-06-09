@@ -111,6 +111,10 @@ Patch:	2710_hda-asus-m2v.patch
 From:	http://bugs.gentoo.org/178243
 Desc:	Fix silent audio on Asus M2V
 
+Patch:	2900_powernow-k8-acpi.patch
+From:	http://bugs.gentoo.org/178585
+Desc:	Reduce confusion around powernow-k8 vs ACPI configuration
+
 Patch:	4000_zd1211rw-al2230s.patch
 From:	dsd@gentoo.org
 Desc:	Add support for AL2230S-based ZD1211 USB-WLAN devices
