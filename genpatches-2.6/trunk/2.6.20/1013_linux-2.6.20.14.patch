@@ -1,16 +1,3 @@
-diff --git a/Makefile b/Makefile
-index a87a7d1..710c004 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 20
--EXTRAVERSION = .13
-+EXTRAVERSION = .14
- NAME = Homicidal Dwarf Hamster
- 
- # *DOCUMENTATION*
 diff --git a/arch/arm/mach-iop13xx/pci.c b/arch/arm/mach-iop13xx/pci.c
 index 89ec70e..d907a2a 100644
 --- a/arch/arm/mach-iop13xx/pci.c
