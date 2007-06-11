@@ -115,10 +115,6 @@ Patch:	2400_r8169-link-speed.patch
 From:	http://bugs.gentoo.org/166490
 Desc:	Fix link speed negotiation on r8169 ethernet driver
 
-Patch:	2700_usb-audio-quickcam.patch
-From:	http://bugs.gentoo.org/175715
-Desc:	Fix detection of Logitech QuickCam microphone
-
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
