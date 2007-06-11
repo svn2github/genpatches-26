@@ -1,0 +1,38 @@
+From: Daniel Drake <dsd@gentoo.org>
+Date: Thu, 10 May 2007 06:52:19 +0000 (+0200)
+Subject: [ALSA] usb-audio: another Logitech QuickCam ID
+X-Git-Tag: v2.6.22-rc2~65^2~8
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=d417045e7deeb37d97793805fe302da7b4f82eec
+
+[ALSA] usb-audio: another Logitech QuickCam ID
+
+This patch adds the ID for another quickcam microphone, reported by freqmod
+on ALSA ticket #0003040
+I'm going to submit a USB patch separately to provide a macro to simplify these
+entries, as suggested by Alan Stern. We could switch to using that in future.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+Signed-off-by: Clemens Ladisch <clemens@ladisch.de>
+Signed-off-by: Jaroslav Kysela <perex@suse.cz>
+---
+
+diff --git a/sound/usb/usbquirks.h b/sound/usb/usbquirks.h
+index 8fcbe93..374fbf6 100644
+--- a/sound/usb/usbquirks.h
++++ b/sound/usb/usbquirks.h
+@@ -48,6 +48,15 @@
+ 		       USB_DEVICE_ID_MATCH_INT_CLASS |
+ 		       USB_DEVICE_ID_MATCH_INT_SUBCLASS,
+ 	.idVendor = 0x046d,
++	.idProduct = 0x0850,
++	.bInterfaceClass = USB_CLASS_AUDIO,
++	.bInterfaceSubClass = USB_SUBCLASS_AUDIO_CONTROL
++},
++{
++	.match_flags = USB_DEVICE_ID_MATCH_DEVICE |
++		       USB_DEVICE_ID_MATCH_INT_CLASS |
++		       USB_DEVICE_ID_MATCH_INT_SUBCLASS,
++	.idVendor = 0x046d,
+ 	.idProduct = 0x08f0,
+ 	.bInterfaceClass = USB_CLASS_AUDIO,
+ 	.bInterfaceSubClass = USB_SUBCLASS_AUDIO_CONTROL

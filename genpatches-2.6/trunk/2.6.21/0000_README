@@ -99,6 +99,10 @@ Patch:	2500_tifm-updates.patch
 From:	http://bugs.gentoo.org/171123
 Desc:	Fix tifm MMC driver
 
+Patch:	2700_usb-audio-quickcam-quirks.patch
+From:	Linux 2.6.22 / Daniel Drake <dsd@gentoo.org>
+Desc:	Adding another quickcam microphone
+
 Patch:	2710_hda-asus-m2v.patch
 From:	http://bugs.gentoo.org/178243
 Desc:	Fix silent audio on Asus M2V
