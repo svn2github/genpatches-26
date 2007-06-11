@@ -107,10 +107,6 @@ Patch:	2900_powernow-k8-acpi.patch
 From:	http://bugs.gentoo.org/178585
 Desc:	Reduce confusion around powernow-k8 vs ACPI configuration
 
-Patch:	4000_zd1211rw-band-edge.patch
-From:	Daniel Drake <dsd@gentoo.org>
-Desc:	zd1211rw: rework band edge patching
-
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
