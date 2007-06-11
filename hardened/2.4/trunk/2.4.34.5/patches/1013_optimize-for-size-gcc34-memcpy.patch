@@ -1,0 +1,16 @@
+--- linux-2.4.29-grsec-2.1.1/arch/i386/kernel/i386_ksyms.c.mps	2005-03-03 09:50:31 +0100
++++ linux-2.4.29-grsec-2.1.1/arch/i386/kernel/i386_ksyms.c	2005-03-03 09:51:56 +0100
+@@ -173,10 +173,13 @@
+ 
+ #undef memcpy
+ #undef memset
++#undef memcmp
+ extern void * memset(void *,int,__kernel_size_t);
+ extern void * memcpy(void *,const void *,__kernel_size_t);
++extern void * memcmp(const void * cs,const void * ct,size_t count);
+ EXPORT_SYMBOL_NOVERS(memcpy);
+ EXPORT_SYMBOL_NOVERS(memset);
++EXPORT_SYMBOL_NOVERS(memcmp);
+ 
+ #ifdef CONFIG_HAVE_DEC_LOCK
+ EXPORT_SYMBOL(atomic_dec_and_lock);
