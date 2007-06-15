@@ -263,7 +263,7 @@
  # i810fb and intelfb depend on char/agp/
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -1854,5 +1854,15 @@ if FB || SGI_NEWPORT_CONSOLE
+@@ -1851,5 +1851,15 @@ if FB || SGI_NEWPORT_CONSOLE
  	source "drivers/video/logo/Kconfig"
  endif
  
@@ -1703,7 +1703,7 @@
 +#endif
 --- a/include/linux/console_struct.h
 +++ b/include/linux/console_struct.h
-@@ -16,6 +16,7 @@
+@@ -19,6 +19,7 @@
  struct vt_struct;
  
  #define NPAR 16
@@ -1711,7 +1711,7 @@
  
  struct vc_data {
  	unsigned short	vc_num;			/* Console number */
-@@ -102,6 +103,8 @@ struct vc_data {
+@@ -105,6 +106,8 @@ struct vc_data {
  	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
  	unsigned long	vc_uni_pagedir;
  	unsigned long	*vc_uni_pagedir_loc;  /* [!] Location of uni_pagedir variable for this console */

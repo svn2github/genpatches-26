@@ -7,7 +7,7 @@
 
 --- a/arch/alpha/Kconfig
 +++ b/arch/alpha/Kconfig
-@@ -602,6 +602,32 @@ config VERBOSE_MCHECK_ON
+@@ -613,6 +613,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
  

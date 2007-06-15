@@ -2896,7 +2896,7 @@
 +
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1414,6 +1414,8 @@ extern void mmput(struct mm_struct *);
+@@ -1416,6 +1416,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -3060,7 +3060,7 @@
 +
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -99,6 +99,7 @@ struct kmem_cache *fs_cachep;
+@@ -100,6 +100,7 @@ struct kmem_cache *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
  struct kmem_cache *vm_area_cachep;
@@ -3068,7 +3068,7 @@
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
  static struct kmem_cache *mm_cachep;
-@@ -400,6 +401,40 @@ void mmput(struct mm_struct *mm)
+@@ -401,6 +402,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
