@@ -8,6 +8,7 @@ $tag = shift;
 $tag =~ m/(2\.6\.\d+)-(\d+)/;
 $ver = $1;
 $rel = $2;
+$kernel_name = $3;
 $have_history = 0;
 
 # Try and find previous release
@@ -29,9 +30,9 @@ if ($lastrev) {
 }
 
 $email .= "To: Gentoo Kernel List <gentoo-kernel\@lists.gentoo.org>\n";
-$email .= "Subject: [ANNOUNCE] genpatches-$tag release\n";
+$email .= "Subject: [ANNOUNCE] $kernel_name-$tag release\n";
 
-$email .= "\nThis is an automated email announcing the release of genpatches-$tag\n\n";
+$email .= "\nThis is an automated email announcing the release of $kernel_name-$tag\n\n";
 
 if ($lastrev && $have_history) {
 	$email .= "\nCHANGES SINCE $oldtag\n";
@@ -53,15 +54,17 @@ $email .= "-------\n\n";
 $email .= "When the website updates, the complete patch list and split-out patches will be\n";
 $email .= "available here:\n";
 $email .= $website_base."/patches-".$tag.".htm\n";
-$email .= $website_base."/tarballs/genpatches-".$tag.".base.tar.bz2\n";
-$email .= $website_base."/tarballs/genpatches-".$tag.".extras.tar.bz2\n";
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".base.tar.bz2\n";
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".extras.tar.bz2\n"
 
-$email .= "\n\nABOUT GENPATCHES\n";
-$email .= "----------------\n\n";
-$email .= "genpatches is the patchset applied to some kernels available in Portage.\n\n";
-$email .= "For more information, see the genpatches homepage:\n";
-$email .= $website_base."\n\n";
-$email .= "For a simple example of how to use genpatches in your kernel ebuild, look at a\n";
-$email .= "recent gentoo-sources-2.6.* ebuild.\n";
+if ($kernel_name = "genpatches") {
+	$email .= "\n\nABOUT GENPATCHES\n";
+	$email .= "----------------\n\n";
+	$email .= "genpatches is the patchset applied to some kernels available in Portage.\n\n";
+	$email .= "For more information, see the genpatches homepage:\n";
+	$email .= $website_base."\n\n";
+	$email .= "For a simple example of how to use genpatches in your kernel ebuild, look at a\n";
+	$email .= "recent gentoo-sources-2.6.* ebuild.\n";
+}
 
 print $email;

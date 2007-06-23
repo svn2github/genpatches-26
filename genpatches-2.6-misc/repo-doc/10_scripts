@@ -26,24 +26,28 @@ variables.
 Here's a sample config:
 
 --- start ~/.genpatchesrc -----------------------------------------------------
-
 # Your username for Gentoo SVN
 USERNAME="dsd"
 
 # The path to the directory where you have checked out trunk
-GENPATCHES_TRUNK="/home/dsd/projects/gentoo/genpatches"
+LOCAL_PATCHES_TRUNK="/home/dsd/projects/gentoo/genpatches"
 
-# Optional stuff
-DO_WEBSITE="no"
-DO_EMAIL_ANNOUNCEMENT="no"
+# Remote repository configuration
+REMOTE_BASE="svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches"
+REMOTE_TRUNK="${REMOTE_BASE}/genpatches-2.6/trunk"
+REMOTE_TAGS="${REMOTE_BASE}/genpatches-2.6/tags"
 
-# Website stuff (if DO_WEBSITE=yes)
+TARBALL_BASENAME="genpatches"
+KERNEL_NAME="genpatches"
+WE_WANT="base extras"
+
+DO_WEBSITE="yes"
+DO_EMAIL_ANNOUNCEMENT="yes"
+
+# Website/email stuff
 WEB_LOCAL="/home/dsd/projects/gentoo/genpatches-misc/web"
 WEB_GENPATCHES_BASE="dev.gentoo.org:/home/dsd/public_html/genpatches"
-
-# Path to sendmail (if DO_EMAIL_ANNOUNCEMENT=yes)
-SENDMAIL=/usr/sbin/sendmail
-
+SENDMAIL="ssh dsd@zog /usr/sbin/sendmail"
 --- end ~/.genpatchesrc -------------------------------------------------------
 
 gppatch

@@ -1,21 +1,28 @@
 #!/bin/bash
 
-. ~/.genpatchesrc
-
 if [[ ${#@} == 0 ]] ; then
 	echo ">>> USAGE: gpdorelease <branch-minor>"
 	echo "This will expand to ${GENPATCHES_TRUNK}/2.6.<branch-minor>"
 	exit -1
 fi
 
+if [[ ${1} == "--config" ]] ; then
+	echo "Sourcing ${2} instead of ~/.genpatchesrc"
+	source ${2}
+	shift 2
+else
+	echo "Using default config at ~/.genpatchesrc"
+	source ~/.genpatchesrc
+fi
+
 BRANCH="2.6.$1"
 
-if [[ $(svn status ${GENPATCHES_TRUNK} | wc -l) != "0" ]] ; then
+if [[ $(svn status ${LOCAL_PATCHES_TRUNK} | wc -l) != "0" ]] ; then
 	echo ">>> ERROR: There are uncommited changes in ${GENPATCHES_TRUNK}"
 	exit -1
 fi
 
-EXISTING_TAGS="$(svn ls svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags)"
+EXISTING_TAGS="$(svn ls ${REMOTE_TAGS})"
 
 lastver=0
 for i in $EXISTING_TAGS ; do
@@ -47,22 +54,25 @@ echo "Press enter to continue."
 
 read
 
-svn copy svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/trunk/${BRANCH} svn+ssh://${USERNAME}@svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6/tags/${newfullver} -m "${newfullver} release"
+svn copy ${REMOTE_TRUNK}/${BRANCH} ${REMOTE_TAGS}/${newfullver} -m "${newfullver} release"
 
-file_base="/tmp/genpatches-$newfullver.base.tar.bz2"
-file_extras="/tmp/genpatches-$newfullver.extras.tar.bz2"
+file_base="/tmp/${TARBALL_BASENAME}-$newfullver.base.tar.bz2"
+file_extras="/tmp/${TARBALL_BASENAME}-$newfullver.extras.tar.bz2"
 dir="${BRANCH}"
-cd ${GENPATCHES_TRUNK}
+cd ${LOCAL_TRUNK}
 
-[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvjf ${file_base} ${dir}/[012]*
-[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+if [[ "${WE_WANT}" == "base extras" ]] ; then
+	[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvjf ${file_base} ${dir}/[012]*
+	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+elif [[ "${WE_WANT}" == "extras" ]] ; then
+	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+fi
 
-scp /tmp/genpatches-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
+scp /tmp/${TARBALL_BASENAME}-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
 
 if [[ ${DO_WEBSITE} == "yes" ]] ; then
 	mv ${file_base} ${file_extras} ${WEB_LOCAL}/tarballs/
 	gpdoweb
 fi
 
-[[ ${DO_EMAIL_ANNOUNCEMENT} == "yes" ]] && gpdoemail $newfullver
-
+[[ ${DO_EMAIL_ANNOUNCEMENT} == "yes" ]] && gpdoemail $newfullver $KERNEL_NAME
