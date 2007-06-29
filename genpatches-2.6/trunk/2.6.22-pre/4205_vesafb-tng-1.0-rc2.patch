@@ -3121,7 +3121,7 @@
  {
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -2025,6 +2025,7 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2030,6 +2030,7 @@ int insert_vm_struct(struct mm_struct * 
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }
