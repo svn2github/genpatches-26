@@ -2,14 +2,14 @@
  fs/Kconfig                     |   65 +
  fs/Makefile                    |    1 
  fs/squashfs/Makefile           |    7 
- fs/squashfs/inode.c            | 2329 +++++++++++++++++++++++++++++++++++++++++
+ fs/squashfs/inode.c            | 2327 +++++++++++++++++++++++++++++++++++++++++
  fs/squashfs/squashfs.h         |   87 +
  fs/squashfs/squashfs2_0.c      |  742 +++++++++++++
  include/linux/squashfs_fs.h    |  934 ++++++++++++++++
  include/linux/squashfs_fs_i.h  |   45 
  include/linux/squashfs_fs_sb.h |   74 +
  init/do_mounts_rd.c            |   16 
- 10 files changed, 4300 insertions(+)
+ 10 files changed, 4298 insertions(+)
 
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
@@ -107,7 +107,7 @@
 +squashfs-y += squashfs2_0.o
 --- /dev/null
 +++ b/fs/squashfs/inode.c
-@@ -0,0 +1,2329 @@
+@@ -0,0 +1,2327 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -2408,9 +2408,7 @@
 +{
 +	struct squashfs_inode_info *ei = foo;
 +
-+	if ((flags & (SLAB_CTOR_VERIFY|SLAB_CTOR_CONSTRUCTOR)) ==
-+							SLAB_CTOR_CONSTRUCTOR)
-+		inode_init_once(&ei->vfs_inode);
++	inode_init_once(&ei->vfs_inode);
 +}
 + 
 +
