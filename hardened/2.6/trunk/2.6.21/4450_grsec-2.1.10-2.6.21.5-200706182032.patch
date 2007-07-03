@@ -7,7 +7,7 @@
  arch/alpha/mm/fault.c                             |  142 
  arch/arm/mm/mmap.c                                |   10 
  arch/avr32/mm/fault.c                             |   27 
- arch/i386/Kconfig                                 |    6 
+ arch/i386/Kconfig                                 |    8 
  arch/i386/Kconfig.cpu                             |    4 
  arch/i386/Kconfig.debug                           |    2 
  arch/i386/boot/setup.S                            |    2 
@@ -49,7 +49,7 @@
  arch/i386/kernel/sys_i386.c                       |  185 +
  arch/i386/kernel/syscall_table.S                  |    1 
  arch/i386/kernel/sysenter.c                       |   30 
- arch/i386/kernel/traps.c                          |   59 
+ arch/i386/kernel/traps.c                          |   57 
  arch/i386/kernel/tsc.c                            |    2 
  arch/i386/kernel/vm86.c                           |    4 
  arch/i386/kernel/vmi.c                            |   24 
@@ -58,12 +58,12 @@
  arch/i386/lib/getuser.S                           |   15 
  arch/i386/lib/mmx.c                               |  246 +
  arch/i386/lib/putuser.S                           |   19 
- arch/i386/lib/usercopy.c                          |  652 ++--
+ arch/i386/lib/usercopy.c                          |  652 ++-
  arch/i386/mach-default/setup.c                    |    2 
  arch/i386/mach-voyager/voyager_smp.c              |    8 
  arch/i386/mm/boot_ioremap.c                       |   49 
  arch/i386/mm/extable.c                            |    2 
- arch/i386/mm/fault.c                              |  343 +-
+ arch/i386/mm/fault.c                              |  356 +-
  arch/i386/mm/hugetlbpage.c                        |   35 
  arch/i386/mm/init.c                               |  183 -
  arch/i386/mm/mmap.c                               |   22 
@@ -113,7 +113,7 @@
  arch/sparc64/mm/fault.c                           |  394 ++
  arch/v850/kernel/module.c                         |    4 
  arch/x86_64/boot/compressed/head.S                |    2 
- arch/x86_64/ia32/ia32_binfmt.c                    |   11 
+ arch/x86_64/ia32/ia32_binfmt.c                    |   20 
  arch/x86_64/ia32/mmap32.c                         |   12 
  arch/x86_64/ia32/syscall32.c                      |   13 
  arch/x86_64/kernel/ioport.c                       |   13 
@@ -176,7 +176,6 @@
  drivers/mtd/devices/doc2001.c                     |    2 
  drivers/net/eepro100.c                            |   56 
  drivers/net/pcnet32.c                             |    2 
- drivers/net/tg3.c                                 |    2 
  drivers/net/tg3.h                                 |    1 
  drivers/pci/pcie/aer/aerdrv.c                     |    2 
  drivers/pci/pcie/aer/aerdrv_core.c                |    2 
@@ -206,7 +205,7 @@
  drivers/video/vesafb.c                            |    2 
  fs/Kconfig                                        |    2 
  fs/binfmt_aout.c                                  |   31 
- fs/binfmt_elf.c                                   |  438 ++
+ fs/binfmt_elf.c                                   |  446 ++
  fs/binfmt_flat.c                                  |    6 
  fs/binfmt_misc.c                                  |    6 
  fs/block_dev.c                                    |    2 
@@ -215,7 +214,7 @@
  fs/compat.c                                       |   51 
  fs/dcache.c                                       |    2 
  fs/debugfs/inode.c                                |    2 
- fs/exec.c                                         |  262 +
+ fs/exec.c                                         |  305 +
  fs/ext2/balloc.c                                  |    2 
  fs/ext3/balloc.c                                  |    2 
  fs/ext3/xattr.c                                   |    4 
@@ -234,6 +233,7 @@
  fs/proc/inode.c                                   |    4 
  fs/proc/internal.h                                |    3 
  fs/proc/proc_misc.c                               |   23 
+ fs/proc/proc_sysctl.c                             |   33 
  fs/proc/root.c                                    |   14 
  fs/proc/task_mmu.c                                |   62 
  fs/readdir.c                                      |   20 
@@ -245,7 +245,7 @@
  fs/xfs/xfs_bmap.c                                 |    2 
  grsecurity/Kconfig                                |  872 +++++
  grsecurity/Makefile                               |   20 
- grsecurity/gracl.c                                | 3547 ++++++++++++++++++++++
+ grsecurity/gracl.c                                | 3641 ++++++++++++++++++++++
  grsecurity/gracl_alloc.c                          |   91 
  grsecurity/gracl_cap.c                            |  110 
  grsecurity/gracl_fs.c                             |  423 ++
@@ -263,7 +263,7 @@
  grsecurity/grsec_init.c                           |  232 +
  grsecurity/grsec_ipc.c                            |   81 
  grsecurity/grsec_link.c                           |   39 
- grsecurity/grsec_log.c                            |  265 +
+ grsecurity/grsec_log.c                            |  269 +
  grsecurity/grsec_mem.c                            |   71 
  grsecurity/grsec_mount.c                          |   34 
  grsecurity/grsec_sig.c                            |   59 
@@ -305,7 +305,7 @@
  include/asm-i386/module.h                         |    8 
  include/asm-i386/page.h                           |   27 
  include/asm-i386/paravirt.h                       |   18 
- include/asm-i386/pda.h                            |   37 
+ include/asm-i386/pda.h                            |   38 
  include/asm-i386/pgalloc.h                        |    8 
  include/asm-i386/pgtable.h                        |   42 
  include/asm-i386/processor.h                      |   28 
@@ -371,13 +371,13 @@
  include/linux/gracl.h                             |  316 +
  include/linux/gralloc.h                           |    8 
  include/linux/grdefs.h                            |  131 
- include/linux/grinternal.h                        |  208 +
+ include/linux/grinternal.h                        |  210 +
  include/linux/grmsg.h                             |  108 
  include/linux/grsecurity.h                        |  196 +
  include/linux/highmem.h                           |    7 
  include/linux/jbd.h                               |    2 
  include/linux/jbd2.h                              |    2 
- include/linux/mm.h                                |   55 
+ include/linux/mm.h                                |   57 
  include/linux/mman.h                              |    5 
  include/linux/module.h                            |    8 
  include/linux/moduleloader.h                      |   12 
@@ -386,7 +386,7 @@
  include/linux/security.h                          |    2 
  include/linux/shm.h                               |    4 
  include/linux/skbuff.h                            |    2 
- include/linux/sysctl.h                            |   15 
+ include/linux/sysctl.h                            |   16 
  include/linux/uaccess.h                           |    4 
  include/linux/udf_fs.h                            |    2 
  include/net/sctp/sctp.h                           |    4 
@@ -407,9 +407,9 @@
  kernel/fork.c                                     |   18 
  kernel/futex.c                                    |    9 
  kernel/irq/handle.c                               |    3 
- kernel/kallsyms.c                                 |   15 
+ kernel/kallsyms.c                                 |   20 
  kernel/kprobes.c                                  |    2 
- kernel/module.c                                   |  236 +
+ kernel/module.c                                   |  257 +
  kernel/mutex.c                                    |    2 
  kernel/pid.c                                      |   12 
  kernel/posix-cpu-timers.c                         |    2 
@@ -421,15 +421,17 @@
  kernel/sched.c                                    |    4 
  kernel/signal.c                                   |   15 
  kernel/sys.c                                      |   30 
- kernel/sysctl.c                                   |   53 
+ kernel/sysctl.c                                   |   64 
  kernel/time.c                                     |    6 
+ lib/extable.c                                     |   12 
  lib/radix-tree.c                                  |    2 
+ localversion-grsec                                |    1 
  mm/filemap.c                                      |   10 
  mm/filemap_xip.c                                  |    5 
  mm/madvise.c                                      |   37 
  mm/memory.c                                       |  179 +
  mm/mempolicy.c                                    |    6 
- mm/mlock.c                                        |  122 
+ mm/mlock.c                                        |  115 
  mm/mmap.c                                         |  382 +-
  mm/mprotect.c                                     |  212 +
  mm/mremap.c                                       |   41 
@@ -437,7 +439,7 @@
  mm/page_alloc.c                                   |    7 
  mm/rmap.c                                         |   13 
  mm/shmem.c                                        |    2 
- mm/slab.c                                         |   13 
+ mm/slab.c                                         |    8 
  mm/swap.c                                         |    4 
  mm/thrash.c                                       |    5 
  mm/tiny-shmem.c                                   |    2 
@@ -468,7 +470,7 @@
  sound/pci/ens1370.c                               |    2 
  sound/pci/intel8x0.c                              |    4 
  sound/pci/intel8x0m.c                             |    4 
- 469 files changed, 18746 insertions(+), 1991 deletions(-)
+ 471 files changed, 18980 insertions(+), 2003 deletions(-)
 
 --- a/Documentation/dontdiff
 +++ b/Documentation/dontdiff
@@ -820,6 +822,15 @@
  		   tsk->thread.error_code = ecr; */
 --- a/arch/i386/Kconfig
 +++ b/arch/i386/Kconfig
+@@ -578,7 +578,7 @@ endchoice
+ config PAGE_OFFSET
+ 	hex
+ 	default 0xB0000000 if VMSPLIT_3G_OPT
+-	default 0x78000000 if VMSPLIT_2G
++	default 0x70000000 if VMSPLIT_2G
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0xC0000000
+ 
 @@ -892,7 +892,7 @@ config HOTPLUG_CPU
  
  config COMPAT_VDSO
@@ -1636,7 +1647,7 @@
  			(u32 *)&gdt[GDT_ENTRY_PDA].b,
  			(unsigned long)pda, sizeof(*pda) - 1,
 -			0x80 | DESCTYPE_S | 0x2, 0); /* present read-write data segment */
-+			0x80 | DESCTYPE_S | 0x3, 0); /* present read-write accessed data segment */
++			0x80 | DESCTYPE_S | 0x3, 0x4); /* present read-write accessed data segment */
  
 -	memset(pda, 0, sizeof(*pda));
 -	pda->_pda = pda;
@@ -2260,13 +2271,13 @@
 +
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c09700),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_KERNEL_DS * 8 + 4)
++1:
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0f300),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_DEFAULT_USER_DS * 8 + 4)
-+1:
 +#endif
 +
 +#ifdef CONFIG_PAX_KERNEXEC
-+	movl $ __KERNEL_TEXT_OFFSET,%eax
++	movl $__KERNEL_TEXT_OFFSET,%eax
 +	movw %ax,(cpu_gdt_table - __PAGE_OFFSET + __KERNEL_CS + 2)
 +	rorl $16,%eax
 +	movb %al,(cpu_gdt_table - __PAGE_OFFSET + __KERNEL_CS + 4)
@@ -2288,9 +2299,9 @@
 -page_pde_offset = (__PAGE_OFFSET >> 20);
 -
 +#ifdef CONFIG_X86_PAE
-+page_pde_offset = ((__PAGE_OFFSET >> 21) * (4096 / PTRS_PER_PTE_asm));
++page_pde_offset = ((__PAGE_OFFSET >> 21) * (PAGE_SIZE_asm / PTRS_PER_PTE_asm));
 +#else
-+page_pde_offset = ((__PAGE_OFFSET >> 22) * (4096 / PTRS_PER_PTE_asm));
++page_pde_offset = ((__PAGE_OFFSET >> 22) * (PAGE_SIZE_asm / PTRS_PER_PTE_asm));
 +#endif
  	movl $(pg0 - __PAGE_OFFSET), %edi
 +#ifdef CONFIG_X86_PAE
@@ -3119,8 +3130,8 @@
  	savesegment(gs, prev->gs);
  
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
-+	if (!segment_eq(prev_p->thread_info->addr_limit, next_p->thread_info->addr_limit))
-+		__set_fs(next_p->thread_info->addr_limit, cpu);
++	if (!segment_eq(task_thread_info(prev_p)->addr_limit, task_thread_info(next_p)->addr_limit))
++		__set_fs(task_thread_info(next_p)->addr_limit, cpu);
 +#endif
 +
  	/*
@@ -3252,7 +3263,7 @@
  static int reboot_thru_bios;
  
  #ifdef CONFIG_SMP
-@@ -120,7 +120,7 @@ static struct dmi_system_id __initdata r
+@@ -128,7 +128,7 @@ static struct dmi_system_id __initdata r
  			DMI_MATCH(DMI_PRODUCT_NAME, "HP Compaq"),
  		},
  	},
@@ -3261,7 +3272,7 @@
  };
  
  static int __init reboot_init(void)
-@@ -138,18 +138,18 @@ core_initcall(reboot_init);
+@@ -146,18 +146,18 @@ core_initcall(reboot_init);
     doesn't work with at least one type of 486 motherboard.  It is easy
     to stop this code working; hence the copious comments. */
  
@@ -3288,7 +3299,7 @@
  
  
  /* This is 16-bit protected mode code to disable paging and the cache,
-@@ -171,7 +171,7 @@ no_idt = { 0, 0 };
+@@ -179,7 +179,7 @@ no_idt = { 0, 0 };
     More could be done here to set up the registers as if a CPU reset had
     occurred; hopefully real BIOSs don't assume much. */
  
@@ -3297,7 +3308,7 @@
  {
  	0x66, 0x0f, 0x20, 0xc0,			/*    movl  %cr0,%eax        */
  	0x66, 0x83, 0xe0, 0x11,			/*    andl  $0x00000011,%eax */
-@@ -185,7 +185,7 @@ static unsigned char real_mode_switch []
+@@ -193,7 +193,7 @@ static unsigned char real_mode_switch []
  	0x24, 0x10,				/* f: andb  $0x10,al         */
  	0x66, 0x0f, 0x22, 0xc0			/*    movl  %eax,%cr0        */
  };
@@ -3306,7 +3317,7 @@
  {
  	0xea, 0x00, 0x00, 0xff, 0xff		/*    ljmp  $0xffff,$0x0000  */
  };
-@@ -195,10 +195,14 @@ static unsigned char jump_to_bios [] =
+@@ -203,10 +203,14 @@ static unsigned char jump_to_bios [] =
   * specified by the code and length parameters.
   * We assume that length will aways be less that 100!
   */
@@ -3322,7 +3333,7 @@
  	local_irq_disable();
  
  	/* Write zero to CMOS register number 0x0f, which the BIOS POST
-@@ -219,8 +223,16 @@ void machine_real_restart(unsigned char 
+@@ -227,8 +231,16 @@ void machine_real_restart(unsigned char 
  	   from the kernel segment.  This assumes the kernel segment starts at
  	   virtual address PAGE_OFFSET. */
  
@@ -3341,7 +3352,7 @@
  
  	/*
  	 * Use `swapper_pg_dir' as our page directory.
-@@ -233,7 +245,7 @@ void machine_real_restart(unsigned char 
+@@ -241,7 +253,7 @@ void machine_real_restart(unsigned char 
  	   REBOOT.COM programs, and the previous reset routine did this
  	   too. */
  
@@ -3350,7 +3361,7 @@
  
  	/* For the switch to real mode, copy some code to low memory.  It has
  	   to be in the first 64k because it is running in 16-bit mode, and it
-@@ -241,9 +253,9 @@ void machine_real_restart(unsigned char 
+@@ -249,9 +261,9 @@ void machine_real_restart(unsigned char 
  	   off paging.  Copy it near the end of the first page, out of the way
  	   of BIOS variables. */
  
@@ -3362,7 +3373,7 @@
  
  	/* Set up the IDT for real mode. */
  
-@@ -325,7 +337,7 @@ void machine_emergency_restart(void)
+@@ -333,7 +345,7 @@ void machine_emergency_restart(void)
  			__asm__ __volatile__("int3");
  		}
  		/* rebooting needs to touch the page at absolute addr 0 */
@@ -3808,15 +3819,6 @@
  
  asmlinkage void divide_error(void);
  asmlinkage void debug(void);
-@@ -141,7 +137,7 @@ static inline unsigned long print_contex
- #else
- 	while (valid_stack_ptr(tinfo, stack)) {
- 		addr = *stack++;
--		if (__kernel_text_address(addr))
-+		if (__kernel_text_address(addr + __KERNEL_TEXT_OFFSET))
- 			ops->address(data, addr);
- 	}
- #endif
 @@ -297,7 +293,7 @@ void show_registers(struct pt_regs *regs
  	esp = (unsigned long) (&regs->esp);
  	savesegment(ss, ss);
@@ -6204,7 +6206,7 @@
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -371,10 +402,101 @@ fastcall void __kprobes do_page_fault(st
+@@ -371,10 +402,105 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -6272,8 +6274,10 @@
 +	 * PaX: fill DTLB with user rights and retry
 +	 */
 +	__asm__ __volatile__ (
-+		"movw %w4,%%ds\n"
-+		"orb %2,%%ss:(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
++		"movw %w4,%%es\n"
++#endif
++		"orb %2,(%1)\n"
 +#if defined(CONFIG_M586) || defined(CONFIG_M586TSC)
 +/*
 + * PaX: let this uncommented 'invlpg' remind us on the behaviour of Intel's
@@ -6290,10 +6294,12 @@
 + */
 +		"invlpg (%0)\n"
 +#endif
-+		"testb $0,(%0)\n"
-+		"xorb %3,%%ss:(%1)\n"
++		"testb $0,%%es:(%0)\n"
++		"xorb %3,(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
 +		"pushl %%ss\n"
-+		"popl %%ds\n"
++		"popl %%es\n"
++#endif
 +		:
 +		: "q" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER), "r" (__USER_DS)
 +		: "memory", "cc");
@@ -6307,7 +6313,7 @@
  	vma = find_vma(mm, address);
  	if (!vma)
  		goto bad_area;
-@@ -392,6 +514,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -392,6 +518,12 @@ fastcall void __kprobes do_page_fault(st
  		if (address + 65536 + 32 * sizeof(unsigned long) < regs->esp)
  			goto bad_area;
  	}
@@ -6320,7 +6326,7 @@
  	if (expand_stack(vma, address))
  		goto bad_area;
  /*
-@@ -456,6 +584,36 @@ bad_area:
+@@ -456,6 +588,36 @@ bad_area:
  	up_read(&mm->mmap_sem);
  
  bad_area_nosemaphore:
@@ -6357,7 +6363,7 @@
  	/* User mode accesses just cause a SIGSEGV */
  	if (error_code & 4) {
  		/* 
-@@ -480,7 +638,7 @@ bad_area_nosemaphore:
+@@ -480,7 +642,7 @@ bad_area_nosemaphore:
  	if (boot_cpu_data.f00f_bug) {
  		unsigned long nr;
  		
@@ -6366,7 +6372,7 @@
  
  		if (nr == 6) {
  			do_invalid_op(regs, 0);
-@@ -523,6 +681,21 @@ no_context:
+@@ -523,6 +685,21 @@ no_context:
  		if (address < PAGE_SIZE)
  			printk(KERN_ALERT "BUG: unable to handle kernel NULL "
  					"pointer dereference");
@@ -6388,7 +6394,7 @@
  		else
  			printk(KERN_ALERT "BUG: unable to handle kernel paging"
  					" request");
-@@ -530,24 +703,34 @@ no_context:
+@@ -530,24 +707,34 @@ no_context:
  		printk(KERN_ALERT " printing eip:\n");
  		printk("%08lx\n", regs->eip);
  	}
@@ -6439,7 +6445,7 @@
  	tsk->thread.cr2 = address;
  	tsk->thread.trap_no = 14;
  	tsk->thread.error_code = error_code;
-@@ -624,3 +807,101 @@ void vmalloc_sync_all(void)
+@@ -624,3 +811,110 @@ void vmalloc_sync_all(void)
  	}
  }
  #endif
@@ -6454,7 +6460,16 @@
 +static int pax_handle_fetch_fault(struct pt_regs *regs)
 +{
 +
-+	static const unsigned char trans[8] = {6, 1, 2, 0, 13, 5, 3, 4};
++	static const unsigned char trans[8] = {
++		offsetof(struct pt_regs, eax) / 4,
++		offsetof(struct pt_regs, ecx) / 4,
++		offsetof(struct pt_regs, edx) / 4,
++		offsetof(struct pt_regs, ebx) / 4,
++		offsetof(struct pt_regs, esp) / 4,
++		offsetof(struct pt_regs, ebp) / 4,
++		offsetof(struct pt_regs, esi) / 4,
++		offsetof(struct pt_regs, edi) / 4,
++	};
 +	int err;
 +
 +	if (regs->eflags & X86_EFLAGS_VM)
@@ -9932,6 +9947,28 @@
  typedef struct user_i387_ia32_struct elf_fpregset_t;
  typedef struct user32_fxsr_struct elf_fpxregset_t;
  
+@@ -327,15 +338,18 @@ int ia32_setup_arg_pages(struct linux_bi
+ 
+ 	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
+ 		struct page *page = bprm->page[i];
++		int retval;
+ 		if (page) {
+ 			bprm->page[i] = NULL;
+-			install_arg_page(mpnt, page, stack_base);
++			retval = install_arg_page(mpnt, page, stack_base);
++			if (!ret)
++				ret = retval;
+ 		}
+ 		stack_base += PAGE_SIZE;
+ 	}
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ EXPORT_SYMBOL(ia32_setup_arg_pages);
+ 
 --- a/arch/x86_64/ia32/mmap32.c
 +++ b/arch/x86_64/ia32/mmap32.c
 @@ -68,10 +68,22 @@ void ia32_pick_mmap_layout(struct mm_str
@@ -10583,7 +10620,7 @@
  static struct class *mem_class;
 --- a/drivers/char/n_tty.c
 +++ b/drivers/char/n_tty.c
-@@ -1559,6 +1559,8 @@ struct tty_ldisc tty_ldisc_N_TTY = {
+@@ -1560,6 +1560,8 @@ struct tty_ldisc tty_ldisc_N_TTY = {
  	normal_poll,		/* poll */
  	NULL,			/* hangup */
  	n_tty_receive_buf,	/* receive_buf */
@@ -10641,7 +10678,7 @@
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
-@@ -1162,7 +1174,7 @@ EXPORT_SYMBOL(generate_random_uuid);
+@@ -1171,7 +1183,7 @@ EXPORT_SYMBOL(generate_random_uuid);
  #include <linux/sysctl.h>
  
  static int min_read_thresh = 8, min_write_thresh;
@@ -10650,7 +10687,7 @@
  static int max_write_thresh = INPUT_POOL_WORDS * 32;
  static char sysctl_bootid[16];
  
-@@ -1662,3 +1674,25 @@ randomize_range(unsigned long start, uns
+@@ -1671,3 +1683,25 @@ randomize_range(unsigned long start, uns
  		return 0;
  	return PAGE_ALIGN(get_random_int() % range + start);
  }
@@ -11271,17 +11308,6 @@
      { 0x300, 0x320, 0x340, 0x360, 0 };
  
  static int pcnet32_debug = 0;
---- a/drivers/net/tg3.c
-+++ b/drivers/net/tg3.c
-@@ -10576,7 +10576,7 @@ static int __devinit tg3_get_invariants(
- 			tp->tg3_flags2 |= TG3_FLG2_HW_TSO_1 | TG3_FLG2_TSO_BUG;
- 			if (GET_ASIC_REV(tp->pci_chip_rev_id) ==
- 				ASIC_REV_5750 &&
--	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C2)
-+	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C1)
- 				tp->tg3_flags2 &= ~TG3_FLG2_TSO_BUG;
- 		}
- 	}
 --- a/drivers/net/tg3.h
 +++ b/drivers/net/tg3.h
 @@ -127,6 +127,7 @@
@@ -12578,7 +12604,22 @@
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -1186,7 +1482,7 @@ static int dump_seek(struct file *file, 
+@@ -935,9 +1231,11 @@ static int load_elf_binary(struct linux_
+ 		goto out_free_dentry;
+ 	}
+ 	if (likely(elf_bss != elf_brk) && unlikely(padzero(elf_bss))) {
+-		send_sig(SIGSEGV, current, 0);
+-		retval = -EFAULT; /* Nobody gets to see this, but.. */
+-		goto out_free_dentry;
++		/*
++		 * This bss-zeroing can fail if the ELF
++		 * file specifies odd protections. So
++		 * we don't check the return value
++		 */
+ 	}
+ 
+ 	if (elf_interpreter) {
+@@ -1186,7 +1484,7 @@ static int dump_seek(struct file *file, 
   *
   * I think we should skip something. But I am not sure how. H.J.
   */
@@ -12587,7 +12628,7 @@
  {
  	/* The vma can be set up to tell us the answer directly.  */
  	if (vma->vm_flags & VM_ALWAYSDUMP)
-@@ -1201,7 +1497,7 @@ static int maydump(struct vm_area_struct
+@@ -1201,7 +1499,7 @@ static int maydump(struct vm_area_struct
  		return vma->vm_file->f_path.dentry->d_inode->i_nlink == 0;
  
  	/* If it hasn't been written to, don't write it out */
@@ -12596,7 +12637,7 @@
  		return 0;
  
  	return 1;
-@@ -1258,8 +1554,11 @@ static int writenote(struct memelfnote *
+@@ -1258,8 +1556,11 @@ static int writenote(struct memelfnote *
  #undef DUMP_WRITE
  
  #define DUMP_WRITE(addr, nr)	\
@@ -12609,7 +12650,7 @@
  #define DUMP_SEEK(off)	\
  	if (!dump_seek(file, (off))) \
  		goto end_coredump;
-@@ -1647,7 +1946,7 @@ static int elf_core_dump(long signr, str
+@@ -1647,7 +1948,7 @@ static int elf_core_dump(long signr, str
  		phdr.p_offset = offset;
  		phdr.p_vaddr = vma->vm_start;
  		phdr.p_paddr = 0;
@@ -12618,7 +12659,7 @@
  		phdr.p_memsz = sz;
  		offset += phdr.p_filesz;
  		phdr.p_flags = vma->vm_flags & VM_READ ? PF_R : 0;
-@@ -1690,7 +1989,7 @@ static int elf_core_dump(long signr, str
+@@ -1690,7 +1991,7 @@ static int elf_core_dump(long signr, str
  			vma = next_vma(vma, gate_vma)) {
  		unsigned long addr;
  
@@ -12627,7 +12668,7 @@
  			continue;
  
  		for (addr = vma->vm_start;
-@@ -1713,6 +2012,7 @@ static int elf_core_dump(long signr, str
+@@ -1713,6 +2014,7 @@ static int elf_core_dump(long signr, str
  					flush_cache_page(vma, addr,
  							 page_to_pfn(page));
  					kaddr = kmap(page);
@@ -12874,40 +12915,58 @@
  int register_binfmt(struct linux_binfmt * fmt)
  {
  	struct linux_binfmt ** tmp = &formats;
-@@ -313,6 +324,10 @@ void install_arg_page(struct vm_area_str
- 	if (unlikely(anon_vma_prepare(vma)))
- 		goto out;
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (page_count(page) == 1)
-+#endif
-+
- 	flush_dcache_page(page);
- 	pte = get_locked_pte(mm, address, &ptl);
- 	if (!pte)
-@@ -322,9 +337,21 @@ void install_arg_page(struct vm_area_str
- 		goto out;
- 	}
- 	inc_mm_counter(mm, anon_rss);
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (page_count(page) == 1)
-+#endif
-+
- 	lru_cache_add_active(page);
- 	set_pte_at(mm, address, pte, pte_mkdirty(pte_mkwrite(mk_pte(
- 					page, vma->vm_page_prot))));
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (page_count(page) != 1)
-+		page_add_anon_rmap(page, vma, address);
-+	else
-+#endif
-+
- 	page_add_new_anon_rmap(page, vma, address);
+@@ -303,7 +314,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
+  *
+  * vma->vm_mm->mmap_sem is held for writing.
+  */
+-void install_arg_page(struct vm_area_struct *vma,
++int install_arg_page(struct vm_area_struct *vma,
+ 			struct page *page, unsigned long address)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+@@ -329,10 +340,40 @@ void install_arg_page(struct vm_area_str
  	pte_unmap_unlock(pte, ptl);
  
-@@ -347,6 +374,10 @@ int setup_arg_pages(struct linux_binprm 
+ 	/* no need for flush_tlb */
+-	return;
++	return 0;
+ out:
+ 	__free_page(page);
+ 	force_sig(SIGKILL, current);
++	return -ENOMEM;
++}
++
++static int install_arg_page_mirror(struct vm_area_struct *vma,
++			struct page *page, unsigned long address)
++{
++	struct mm_struct *mm = vma->vm_mm;
++	pte_t * pte;
++	spinlock_t *ptl;
++
++	pte = get_locked_pte(mm, address, &ptl);
++	if (!pte)
++		goto out;
++	if (!pte_none(*pte)) {
++		pte_unmap_unlock(pte, ptl);
++		goto out;
++	}
++	inc_mm_counter(mm, anon_rss);
++	set_pte_at(mm, address, pte, mk_pte(page, vma->vm_page_prot));
++	page_add_anon_rmap(page, vma, address);
++	pte_unmap_unlock(pte, ptl);
++
++	/* no need for flush_tlb */
++	unlock_page(page);
++	return 0;
++ out:
++	unlock_page(page);
++	__free_page(page);
++	force_sig(SIGKILL, current);
++	return -ENOMEM;
+ }
+ 
+ #define EXTRA_STACK_VM_PAGES	20	/* random */
+@@ -347,6 +388,10 @@ int setup_arg_pages(struct linux_binprm 
  	int i, ret;
  	long arg_size;
  
@@ -12918,7 +12977,7 @@
  #ifdef CONFIG_STACK_GROWSUP
  	/* Move the argument and environment strings to the bottom of the
  	 * stack space.
-@@ -409,6 +440,16 @@ int setup_arg_pages(struct linux_binprm 
+@@ -409,6 +454,16 @@ int setup_arg_pages(struct linux_binprm 
  	if (!mpnt)
  		return -ENOMEM;
  
@@ -12935,7 +12994,7 @@
  	down_write(&mm->mmap_sem);
  	{
  		mpnt->vm_mm = mm;
-@@ -429,13 +470,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -429,26 +484,80 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -12964,10 +13023,12 @@
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
 +			*mpnt_m = *mpnt;
++			mpnt_m->vm_flags &= ~VM_WRITE;
 +			if (!(mpnt->vm_flags & VM_EXEC)) {
-+				mpnt_m->vm_flags &= ~(VM_READ | VM_WRITE | VM_EXEC);
++				mpnt_m->vm_flags &= ~(VM_READ | VM_EXEC);
 +				mpnt_m->vm_page_prot = PAGE_NONE;
-+			}
++			} else
++				mpnt_m->vm_page_prot = PAGE_READONLY_EXEC;
 +			mpnt_m->vm_start += SEGMEXEC_TASK_SIZE;
 +			mpnt_m->vm_end += SEGMEXEC_TASK_SIZE;
 +			if ((ret = insert_vm_struct(mm, mpnt_m))) {
@@ -12986,23 +13047,44 @@
 +
  	}
  
- 	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -443,6 +521,14 @@ int setup_arg_pages(struct linux_binprm 
- 		if (page) {
- 			bprm->page[i] = NULL;
- 			install_arg_page(mpnt, page, stack_base);
+-	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
++	for (i = 0 ; i < MAX_ARG_PAGES ; i++, stack_base += PAGE_SIZE) {
+ 		struct page *page = bprm->page[i];
+-		if (page) {
+-			bprm->page[i] = NULL;
+-			install_arg_page(mpnt, page, stack_base);
+-		}
+-		stack_base += PAGE_SIZE;
++		int retval;
++		if (!page)
++			continue;
++
++		bprm->page[i] = NULL;
++		retval = install_arg_page(mpnt, page, stack_base);
++		if (!ret)
++			ret = retval;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (mpnt_m) {
-+				page_cache_get(page);
-+				install_arg_page(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
-+			}
++		if (!mpnt_m || retval)
++			continue;
++
++		page_cache_get(page);
++		lock_page(page);
++		retval = install_arg_page_mirror(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
++		if (!ret)
++			ret = retval;
 +#endif
 +
- 		}
- 		stack_base += PAGE_SIZE;
  	}
-@@ -1127,6 +1213,11 @@ int do_execve(char * filename,
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ 
+ EXPORT_SYMBOL(setup_arg_pages);
+@@ -1127,6 +1236,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
  	int i;
@@ -13014,7 +13096,7 @@
  
  	retval = -ENOMEM;
  	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
-@@ -1138,10 +1229,29 @@ int do_execve(char * filename,
+@@ -1138,10 +1252,29 @@ int do_execve(char * filename,
  	if (IS_ERR(file))
  		goto out_kfree;
  
@@ -13044,7 +13126,7 @@
  	bprm->file = file;
  	bprm->filename = filename;
  	bprm->interp = filename;
-@@ -1183,8 +1293,38 @@ int do_execve(char * filename,
+@@ -1183,8 +1316,38 @@ int do_execve(char * filename,
  	if (retval < 0)
  		goto out;
  
@@ -13083,7 +13165,7 @@
  		free_arg_pages(bprm);
  
  		/* execve success */
-@@ -1194,6 +1334,14 @@ int do_execve(char * filename,
+@@ -1194,6 +1357,14 @@ int do_execve(char * filename,
  		return retval;
  	}
  
@@ -13098,7 +13180,7 @@
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1359,6 +1507,114 @@ out:
+@@ -1359,6 +1530,114 @@ out:
  	return ispipe;
  }
  
@@ -13213,7 +13295,7 @@
  static void zap_process(struct task_struct *start)
  {
  	struct task_struct *t;
-@@ -1499,6 +1755,10 @@ int do_coredump(long signr, int exit_cod
+@@ -1499,6 +1778,10 @@ int do_coredump(long signr, int exit_cod
  	 */
  	clear_thread_flag(TIF_SIGPENDING);
  
@@ -14360,6 +14442,76 @@
  	proc_root_kcore = create_proc_entry("kcore", S_IRUSR, NULL);
  	if (proc_root_kcore) {
  		proc_root_kcore->proc_fops = &proc_kcore_operations;
+--- a/fs/proc/proc_sysctl.c
++++ b/fs/proc/proc_sysctl.c
+@@ -7,6 +7,8 @@
+ #include <linux/security.h>
+ #include "internal.h"
+ 
++extern __u32 gr_handle_sysctl(const struct ctl_table *table, const int op);
++
+ static struct dentry_operations proc_sys_dentry_operations;
+ static const struct file_operations proc_sys_file_operations;
+ static struct inode_operations proc_sys_inode_operations;
+@@ -151,6 +153,9 @@ static struct dentry *proc_sys_lookup(st
+ 	if (!table)
+ 		goto out;
+ 
++	if (gr_handle_sysctl(table, 001))
++		goto out;
++
+ 	err = ERR_PTR(-ENOMEM);
+ 	inode = proc_sys_make_inode(dir, table);
+ 	if (!inode)
+@@ -358,6 +363,9 @@ static int proc_sys_readdir(struct file 
+ 			if (pos < filp->f_pos)
+ 				continue;
+ 
++			if (gr_handle_sysctl(table, 0))
++				continue;
++
+ 			if (proc_sys_fill_cache(filp, dirent, filldir, table) < 0)
+ 				goto out;
+ 			filp->f_pos = pos + 1;
+@@ -420,6 +428,30 @@ out:
+ 	return error;
+ }
+ 
++/* Eric Biederman is to blame */
++static int proc_sys_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
++{
++	int error = 0;
++	struct ctl_table_header *head;
++	struct ctl_table *table;
++
++	table = do_proc_sys_lookup(dentry->d_parent, &dentry->d_name, &head);
++	/* Has the sysctl entry disappeared on us? */
++	if (!table)
++		goto out;
++
++	if (gr_handle_sysctl(table, 001)) {
++		error = -ENOENT;
++		goto out;
++	}
++
++out:
++	sysctl_head_finish(head);
++
++	generic_fillattr(dentry->d_inode, stat);
++
++	return error;
++}
+ static int proc_sys_setattr(struct dentry *dentry, struct iattr *attr)
+ {
+ 	struct inode *inode = dentry->d_inode;
+@@ -451,6 +483,7 @@ static struct inode_operations proc_sys_
+ 	.lookup		= proc_sys_lookup,
+ 	.permission	= proc_sys_permission,
+ 	.setattr	= proc_sys_setattr,
++	.getattr	= proc_sys_getattr,
+ };
+ 
+ static int proc_sys_revalidate(struct dentry *dentry, struct nameidata *nd)
 --- a/fs/proc/root.c
 +++ b/fs/proc/root.c
 @@ -61,7 +61,13 @@ void __init proc_root_init(void)
@@ -15680,7 +15832,7 @@
 +
 --- /dev/null
 +++ b/grsecurity/gracl.c
-@@ -0,0 +1,3547 @@
+@@ -0,0 +1,3641 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17365,7 +17517,9 @@
 +
 +	spin_lock(&dcache_lock);
 +
-+	if (unlikely(mnt == shm_mnt || mnt == pipe_mnt || mnt == sock_mnt)) {
++	if (unlikely(mnt == shm_mnt || mnt == pipe_mnt || mnt == sock_mnt ||
++		/* ignore Eric Biederman */
++	    IS_PRIVATE(l_dentry->d_inode))) {
 +		retval = fakefs_obj;
 +		goto out;
 +	}
@@ -17482,6 +17636,17 @@
 +		       task->uid, task->gid, task->exec_file ? gr_to_filename1(task->exec_file->f_dentry,
 +		       task->exec_file->f_vfsmnt) : task->acl->filename, task->acl->filename,
 +		       1, 1, gr_to_filename(dentry, mnt), (unsigned long) mode, NIPQUAD(task->signal->curr_ip));
++
++	return;
++}
++
++static void
++gr_log_learn_sysctl(const struct task_struct *task, const char *path, const __u32 mode)
++{
++	security_learn(GR_LEARN_AUDIT_MSG, task->role->rolename, task->role->roletype,
++		       task->uid, task->gid, task->exec_file ? gr_to_filename1(task->exec_file->f_dentry,
++		       task->exec_file->f_vfsmnt) : task->acl->filename, task->acl->filename,
++		       1, 1, path, (unsigned long) mode, NIPQUAD(task->signal->curr_ip));
 +
 +	return;
 +}
@@ -18833,11 +18998,71 @@
 +#endif
 +
 +#ifdef CONFIG_SYSCTL
-+/* the following function is called under the BKL */
++/* Eric Biederman likes breaking userland ABI and every inode-based security
++   system to save 35kb of memory */
 +
++/* we modify the passed in filename, but adjust it back before returning */
++static struct acl_object_label *gr_lookup_by_name(char *name, unsigned int len)
++{
++	struct name_entry *nmatch;
++	char *p, *lastp = NULL;
++	struct acl_object_label *obj = NULL, *tmp;
++	struct acl_subject_label *tmpsubj;
++	int done = 0;
++	char c = '\0';
++
++	read_lock(&gr_inode_lock);
++
++	p = name + len - 1;
++	do {
++		nmatch = lookup_name_entry(name);
++		if (lastp != NULL)
++			*lastp = c;
++
++		if (nmatch == NULL)
++			goto next_component;
++		tmpsubj = current->acl;
++		do {
++			obj = lookup_acl_obj_label(nmatch->inode, nmatch->device, tmpsubj);
++			if (obj != NULL) {
++				tmp = obj->globbed;
++				while (tmp) {
++					if (!glob_match(tmp->filename, name)) {
++						obj = tmp;
++						goto found_obj;
++					}
++					tmp = tmp->next;
++				}
++				goto found_obj;
++			}
++		} while ((tmpsubj = tmpsubj->parent_subject));
++next_component:
++		/* end case */
++		if (p == name)
++			break;
++
++		while (*p != '/')
++			p--;
++		if (p == name)
++			lastp = p + 1;
++		else {
++			lastp = p;
++			p--;
++		}
++		c = *lastp;
++		*lastp = '\0';
++	} while (1);
++found_obj:
++	read_unlock(&gr_inode_lock);
++	/* obj returned will always be non-null */
++	return obj;
++}
++
++/* returns 0 when allowing, non-zero on error
++   op of 0 is used for readdir, so we don't log the names of hidden files
++*/
 +__u32
-+gr_handle_sysctl(const struct ctl_table *table, const void *oldval,
-+		 const void *newval)
++gr_handle_sysctl(const struct ctl_table *table, const int op)
 +{
 +	ctl_table *tmp;
 +	struct nameidata nd;
@@ -18849,14 +19074,27 @@
 +	__u32 mode = 0;
 +
 +	if (unlikely(!(gr_status & GR_READY)))
-+		return 1;
++		return 0;
++
++	/* for now, ignore operations on non-sysctl entries if it's not a
++	   readdir*/
++	if (table->child != NULL && op != 0)
++		return 0;
++
++	mode |= GR_FIND;
++	/* it's only a read if it's an entry, read on dirs is for readdir */
++	if (op & 004)
++		mode |= GR_READ;
++	if (op & 002)
++		mode |= GR_WRITE;
++
++	preempt_disable();
 +
 +	path = per_cpu_ptr(gr_shared_page[0], smp_processor_id());
 +
-+	if (oldval)
-+		mode |= GR_READ;
-+	if (newval)
-+		mode |= GR_WRITE;
++	/* it's only a read/write if it's an actual entry, not a dir
++	   (which are opened for readdir)
++	*/
 +
 +	/* convert the requested sysctl entry into a pathname */
 +
@@ -18866,8 +19104,10 @@
 +		depth++;
 +	}
 +
-+	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE)
-+		return 0;	/* deny */
++	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE) {
++		/* deny */
++		goto out;
++	}
 +
 +	memset(path, 0, PAGE_SIZE);
 +
@@ -18888,12 +19128,7 @@
 +		}
 +	}
 +
-+	err = path_lookup(path, LOOKUP_FOLLOW, &nd);
-+
-+	if (err)
-+		goto out;
-+
-+	obj = chk_obj_label(nd.dentry, nd.mnt, current->acl);
++	obj = gr_lookup_by_name(path, pos);
 +	err = obj->mode & (mode | to_gr_audit(mode) | GR_SUPPRESS);
 +
 +	if (unlikely((current->acl->mode & (GR_LEARN | GR_INHERITLEARN)) &&
@@ -18902,24 +19137,31 @@
 +
 +		new_mode &= ~(GR_AUDITS | GR_SUPPRESS);
 +
-+		err = new_mode;
-+		gr_log_learn(current, nd.dentry, nd.mnt, new_mode);
-+	} else if ((err & mode) != mode && !(err & GR_SUPPRESS)) {
++		err = 0;
++		gr_log_learn_sysctl(current, path, new_mode);
++	} else if (!(err & GR_FIND) && !(err & GR_SUPPRESS) && op != 0) {
++		gr_log_hidden_sysctl(GR_DONT_AUDIT, GR_HIDDEN_ACL_MSG, path);
++		err = -ENOENT;
++	} else if (!(err & GR_FIND)) {
++		err = -ENOENT;
++	} else if (((err & mode) & ~GR_FIND) != (mode & ~GR_FIND) && !(err & GR_SUPPRESS)) {
 +		gr_log_str4(GR_DONT_AUDIT, GR_SYSCTL_ACL_MSG, "denied",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+		err = 0;
++		err = -EACCES;
 +	} else if ((err & mode) != mode) {
-+		err = 0;
-+	} else if (((err & mode) == mode) && (err & GR_AUDITS)) {
++		err = -EACCES;
++	} else if ((((err & mode) & ~GR_FIND) == (mode & ~GR_FIND)) && (err & GR_AUDITS)) {
 +		gr_log_str4(GR_DO_AUDIT, GR_SYSCTL_ACL_MSG, "successful",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+	}
-+
-+	path_release(&nd);
++		err = 0;
++	} else
++		err = 0;
 +
 +      out:
++	preempt_enable();
++
 +	return err;
 +}
 +#endif
@@ -19176,6 +19418,10 @@
 +		return 1;
 +
 +	if (task->acl->mode & (GR_LEARN | GR_INHERITLEARN))
++		return 1;
++
++	/* ignore Eric Biederman */
++	if (IS_PRIVATE(dentry->d_inode))
 +		return 1;
 +
 +	subj = task->acl;
@@ -21158,9 +21404,9 @@
 +
 +#ifdef CONFIG_SYSCTL
 +__u32
-+gr_handle_sysctl(const struct ctl_table * table, __u32 mode)
++gr_handle_sysctl(const struct ctl_table * table, const int op)
 +{
-+	return mode;
++	return 0;
 +}
 +#endif
 +
@@ -22051,7 +22297,7 @@
 +}
 --- /dev/null
 +++ b/grsecurity/grsec_log.c
-@@ -0,0 +1,265 @@
+@@ -0,0 +1,269 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/file.h>
@@ -22185,6 +22431,10 @@
 +	case GR_TTYSNIFF:
 +		task = va_arg(ap, struct task_struct *);
 +		gr_log_middle_varargs(audit, msg, NIPQUAD(task->signal->curr_ip), gr_task_fullpath0(task), task->comm, task->pid, gr_parent_task_fullpath0(task), task->parent->comm, task->parent->pid);
++		break;
++	case GR_SYSCTL_HIDDEN:
++		str1 = va_arg(ap, char *);
++		gr_log_middle_varargs(audit, msg, result, str1);
 +		break;
 +	case GR_RBAC:
 +		dentry = va_arg(ap, struct dentry *);
@@ -23517,7 +23767,7 @@
 +#define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
  
 +#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE(tsk)	0x10000000UL
++#define PAX_ELF_ET_DYN_BASE(tsk)	0x00001000UL
 +
 +#define PAX_DELTA_MMAP_LSB(tsk)		PAGE_SHIFT
 +#define PAX_DELTA_MMAP_LEN(tsk)		15
@@ -24141,7 +24391,11 @@
  #endif	/* __ASM_PARAVIRT_H */
 --- a/include/asm-i386/pda.h
 +++ b/include/asm-i386/pda.h
-@@ -11,14 +11,15 @@
+@@ -8,17 +8,19 @@
+ 
+ #include <linux/stddef.h>
+ #include <linux/types.h>
++#include <linux/threads.h>
  
  struct i386_pda
  {
@@ -24159,7 +24413,7 @@
  
  #define cpu_pda(i)	(_cpu_pda[i])
  
-@@ -33,10 +34,13 @@ extern void __bad_pda_field(void);
+@@ -33,10 +35,13 @@ extern void __bad_pda_field(void);
     clobbers, so gcc can readily analyse them. */
  extern struct i386_pda _proxy_pda;
  
@@ -24173,7 +24427,7 @@
  		switch (sizeof(_proxy_pda.field)) {			\
  		case 1:							\
  			asm(op "b %1,%%fs:%c2"				\
-@@ -58,7 +62,36 @@ extern struct i386_pda _proxy_pda;
+@@ -58,7 +63,36 @@ extern struct i386_pda _proxy_pda;
  			break;						\
  		default: __bad_pda_field();				\
  		}							\
@@ -26126,7 +26380,7 @@
 +#endif
 --- /dev/null
 +++ b/include/linux/grinternal.h
-@@ -0,0 +1,208 @@
+@@ -0,0 +1,210 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -26274,6 +26528,7 @@
 +	GR_RBAC_MODE2,
 +	GR_RBAC_MODE3,
 +	GR_FILENAME,
++	GR_SYSCTL_HIDDEN,
 +	GR_NOARGS,
 +	GR_ONE_INT,
 +	GR_ONE_INT_TWO_STR,
@@ -26299,6 +26554,7 @@
 +	GR_PSACCT
 +};
 +
++#define gr_log_hidden_sysctl(audit, msg, str) gr_log_varargs(audit, msg, GR_SYSCTL_HIDDEN, str)
 +#define gr_log_ttysniff(audit, msg, task) gr_log_varargs(audit, msg, GR_TTYSNIFF, task)
 +#define gr_log_fs_rbac_generic(audit, msg, dentry, mnt) gr_log_varargs(audit, msg, GR_RBAC, dentry, mnt)
 +#define gr_log_fs_rbac_str(audit, msg, dentry, mnt, str) gr_log_varargs(audit, msg, GR_RBAC_STR, dentry, mnt, str)
@@ -26756,6 +27012,15 @@
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
  #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
  #endif
+@@ -771,7 +819,7 @@ static inline int handle_mm_fault(struct
+ 
+ extern int make_pages_present(unsigned long addr, unsigned long end);
+ extern int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len, int write);
+-void install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
++int install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
+ 
+ int get_user_pages(struct task_struct *tsk, struct mm_struct *mm, unsigned long start,
+ 		int len, int write, int force, struct page **pages, struct vm_area_struct **vmas);
 @@ -1114,7 +1162,6 @@ static inline unsigned long vma_pages(st
  }
  
@@ -26977,22 +27242,21 @@
  
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -168,9 +168,22 @@ enum
- #ifdef CONFIG_ALPHA_UAC_SYSCTL
- 	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
+@@ -170,7 +170,21 @@ enum
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
-- };
+  };
  
+-
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
- 
++
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
 +  
 +};
-+  
++ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
@@ -27792,18 +28056,23 @@
  };
 --- a/kernel/kallsyms.c
 +++ b/kernel/kallsyms.c
-@@ -72,8 +72,8 @@ static inline int is_kernel(unsigned lon
+@@ -65,6 +65,15 @@ static inline int is_kernel_text(unsigne
  
- static int is_ksym_addr(unsigned long addr)
+ static inline int is_kernel(unsigned long addr)
  {
--	if (all_var)
--		return is_kernel(addr);
-+	if (all_var && is_kernel(addr))
++
++#ifdef CONFIG_PAX_KERNEXEC
++	if ((unsigned long)MODULES_VADDR <= addr + __KERNEL_TEXT_OFFSET &&
++	    addr + __KERNEL_TEXT_OFFSET < (unsigned long)MODULES_END)
++		return 0;
++	if (is_kernel_inittext(addr))
 +		return 1;
- 
- 	return is_kernel_text(addr) || is_kernel_inittext(addr) ||
- 		is_kernel_extratext(addr);
-@@ -334,7 +334,6 @@ static unsigned long get_ksymbol_core(st
++#endif
++
+ 	if (addr >= (unsigned long)_stext && addr <= (unsigned long)_end)
+ 		return 1;
+ 	return in_gate_area_no_task(addr);
+@@ -334,7 +343,6 @@ static unsigned long get_ksymbol_core(st
  
  static void reset_iter(struct kallsym_iter *iter, loff_t new_pos)
  {
@@ -27811,7 +28080,7 @@
  	iter->nameoff = get_symbol_offset(new_pos);
  	iter->pos = new_pos;
  }
-@@ -413,7 +412,7 @@ static int kallsyms_open(struct inode *i
+@@ -413,7 +421,7 @@ static int kallsyms_open(struct inode *i
  	struct kallsym_iter *iter;
  	int ret;
  
@@ -27820,7 +28089,7 @@
  	if (!iter)
  		return -ENOMEM;
  	reset_iter(iter, 0);
-@@ -444,7 +443,15 @@ static int __init kallsyms_init(void)
+@@ -444,7 +452,15 @@ static int __init kallsyms_init(void)
  {
  	struct proc_dir_entry *entry;
  
@@ -27870,6 +28139,15 @@
  int register_module_notifier(struct notifier_block * nb)
  {
  	return blocking_notifier_chain_register(&module_notify_list, nb);
+@@ -346,7 +353,7 @@ static void *percpu_modalloc(unsigned lo
+ 	unsigned int i;
+ 	void *ptr;
+ 
+-	if (align > SMP_CACHE_BYTES) {
++	if (align-1 > SMP_CACHE_BYTES) {
+ 		printk(KERN_WARNING "%s: per-cpu alignment %li > %i\n",
+ 		       name, align, SMP_CACHE_BYTES);
+ 		align = SMP_CACHE_BYTES;
 @@ -660,6 +667,9 @@ sys_delete_module(const char __user *nam
  	char name[MODULE_NAME_LEN];
  	int ret, forced = 0;
@@ -27903,7 +28181,56 @@
  }
  
  void *__symbol_get(const char *symbol)
-@@ -1377,11 +1390,14 @@ static void layout_sections(struct modul
+@@ -1285,6 +1298,10 @@ static int simplify_symbols(Elf_Shdr *se
+ 	unsigned int i, n = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
+ 	int ret = 0;
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
++
+ 	for (i = 1; i < n; i++) {
+ 		switch (sym[i].st_shndx) {
+ 		case SHN_COMMON:
+@@ -1303,10 +1320,19 @@ static int simplify_symbols(Elf_Shdr *se
+ 			break;
+ 
+ 		case SHN_UNDEF:
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_open_kernel(cr0);
++#endif
++
+ 			sym[i].st_value
+ 			  = resolve_symbol(sechdrs, versindex,
+ 					   strtab + sym[i].st_name, mod);
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
+ 			/* Ok if resolved.  */
+ 			if (sym[i].st_value != 0)
+ 				break;
+@@ -1325,7 +1351,17 @@ static int simplify_symbols(Elf_Shdr *se
+ 				secbase = (unsigned long)mod->percpu;
+ 			else
+ 				secbase = sechdrs[sym[i].st_shndx].sh_addr;
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_open_kernel(cr0);
++#endif
++
+ 			sym[i].st_value += secbase;
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
+ 			break;
+ 		}
+ 	}
+@@ -1377,11 +1413,14 @@ static void layout_sections(struct modul
  			    || strncmp(secstrings + s->sh_name,
  				       ".init", 5) == 0)
  				continue;
@@ -27920,7 +28247,7 @@
  	}
  
  	DEBUGP("Init section allocation order:\n");
-@@ -1395,12 +1411,15 @@ static void layout_sections(struct modul
+@@ -1395,12 +1434,15 @@ static void layout_sections(struct modul
  			    || strncmp(secstrings + s->sh_name,
  				       ".init", 5) != 0)
  				continue;
@@ -27939,7 +28266,36 @@
  	}
  }
  
-@@ -1582,6 +1601,10 @@ static struct module *load_module(void _
+@@ -1527,14 +1569,28 @@ static void add_kallsyms(struct module *
+ {
+ 	unsigned int i;
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
++
+ 	mod->symtab = (void *)sechdrs[symindex].sh_addr;
+ 	mod->num_symtab = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
+ 	mod->strtab = (void *)sechdrs[strindex].sh_addr;
+ 
+ 	/* Set types up while we still have access to sections. */
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
+ 	for (i = 0; i < mod->num_symtab; i++)
+ 		mod->symtab[i].st_info
+ 			= elf_type(&mod->symtab[i], sechdrs, secstrings, mod);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ }
+ #else
+ static inline void add_kallsyms(struct module *mod,
+@@ -1582,6 +1638,10 @@ static struct module *load_module(void _
  	struct exception_table_entry *extable;
  	mm_segment_t old_fs;
  
@@ -27950,7 +28306,7 @@
  	DEBUGP("load_module: umod=%p, len=%lu, uargs=%p\n",
  	       umod, len, uargs);
  	if (len < sizeof(*hdr))
-@@ -1740,21 +1763,57 @@ static struct module *load_module(void _
+@@ -1740,21 +1800,57 @@ static struct module *load_module(void _
  	layout_sections(mod, hdr, sechdrs, secstrings);
  
  	/* Do the allocs. */
@@ -27964,7 +28320,9 @@
 -	mod->module_core = ptr;
 +	memset(ptr, 0, mod->core_size_rw);
 +	mod->module_core_rw = ptr;
-+
+ 
+-	ptr = module_alloc(mod->init_size);
+-	if (!ptr && mod->init_size) {
 +	ptr = module_alloc(mod->init_size_rw);
 +	if (!ptr && mod->init_size_rw) {
 +		err = -ENOMEM;
@@ -27975,12 +28333,13 @@
 +
 +	ptr = module_alloc_exec(mod->core_size_rx);
 +	if (!ptr) {
-+		err = -ENOMEM;
+ 		err = -ENOMEM;
+-		goto free_core;
 +		goto free_init_rw;
-+	}
- 
--	ptr = module_alloc(mod->init_size);
--	if (!ptr && mod->init_size) {
+ 	}
+-	memset(ptr, 0, mod->init_size);
+-	mod->module_init = ptr;
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
@@ -27995,12 +28354,9 @@
 +
 +	ptr = module_alloc_exec(mod->init_size_rx);
 +	if (!ptr && mod->init_size_rx) {
- 		err = -ENOMEM;
--		goto free_core;
++		err = -ENOMEM;
 +		goto free_core_rx;
- 	}
--	memset(ptr, 0, mod->init_size);
--	mod->module_init = ptr;
++	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
@@ -28016,7 +28372,7 @@
  
  	/* Transfer each section which specifies SHF_ALLOC */
  	DEBUGP("final section addresses:\n");
-@@ -1764,17 +1823,44 @@ static struct module *load_module(void _
+@@ -1764,17 +1860,44 @@ static struct module *load_module(void _
  		if (!(sechdrs[i].sh_flags & SHF_ALLOC))
  			continue;
  
@@ -28040,17 +28396,17 @@
 +		}
 +
 +		if (sechdrs[i].sh_type != SHT_NOBITS) {
- 
--		if (sechdrs[i].sh_type != SHT_NOBITS)
--			memcpy(dest, (void *)sechdrs[i].sh_addr,
--			       sechdrs[i].sh_size);
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
 +				pax_open_kernel(cr0);
 +#endif
 +
 +			memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
-+
+ 
+-		if (sechdrs[i].sh_type != SHT_NOBITS)
+-			memcpy(dest, (void *)sechdrs[i].sh_addr,
+-			       sechdrs[i].sh_size);
 +#ifdef CONFIG_PAX_KERNEXEC
 +			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
 +				pax_close_kernel(cr0);
@@ -28070,26 +28426,7 @@
  		DEBUGP("\t0x%lx %s\n", sechdrs[i].sh_addr, secstrings + sechdrs[i].sh_name);
  	}
  	/* Module has been moved. */
-@@ -1799,8 +1885,18 @@ static struct module *load_module(void _
- 	setup_modinfo(mod, sechdrs, infoindex);
- 
- 	/* Fix up syms, so that st_value is a pointer to location. */
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
-+#endif
-+
- 	err = simplify_symbols(sechdrs, symindex, strtab, versindex, pcpuindex,
- 			       mod);
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
-+
- 	if (err < 0)
- 		goto cleanup;
- 
-@@ -1855,11 +1951,20 @@ static struct module *load_module(void _
+@@ -1855,11 +1978,20 @@ static struct module *load_module(void _
  		if (!(sechdrs[info].sh_flags & SHF_ALLOC))
  			continue;
  
@@ -28110,39 +28447,16 @@
  		if (err < 0)
  			goto cleanup;
  	}
-@@ -1873,14 +1978,31 @@ static struct module *load_module(void _
-   	/* Set up and sort exception table */
- 	mod->num_exentries = sechdrs[exindex].sh_size / sizeof(*mod->extable);
- 	mod->extable = extable = (void *)sechdrs[exindex].sh_addr;
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
-+#endif
-+
- 	sort_extable(extable, extable + mod->num_exentries);
- 
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
-+
- 	/* Finally, copy percpu area over. */
- 	percpu_modcopy(mod->percpu, (void *)sechdrs[pcpuindex].sh_addr,
- 		       sechdrs[pcpuindex].sh_size);
- 
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
-+#endif
-+
- 	add_kallsyms(mod, sechdrs, symindex, strindex, secstrings);
- 
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
-+
- 	err = module_finalize(hdr, sechdrs, mod);
+@@ -1870,7 +2002,7 @@ static struct module *load_module(void _
  	if (err < 0)
  		goto cleanup;
-@@ -1894,12 +2016,12 @@ static struct module *load_module(void _
+ 
+-  	/* Set up and sort exception table */
++	/* Set up and sort exception table */
+ 	mod->num_exentries = sechdrs[exindex].sh_size / sizeof(*mod->extable);
+ 	mod->extable = extable = (void *)sechdrs[exindex].sh_addr;
+ 	sort_extable(extable, extable + mod->num_exentries);
+@@ -1894,12 +2026,12 @@ static struct module *load_module(void _
  	 * Do it before processing of module parameters, so the module
  	 * can provide parameter accessor functions of its own.
  	 */
@@ -28161,7 +28475,7 @@
  
  	set_fs(old_fs);
  
-@@ -1942,9 +2064,13 @@ static struct module *load_module(void _
+@@ -1942,9 +2074,13 @@ static struct module *load_module(void _
  	module_arch_cleanup(mod);
   cleanup:
  	module_unload_free(mod);
@@ -28178,7 +28492,7 @@
   free_percpu:
  	if (percpu)
  		percpu_modfree(percpu);
-@@ -1980,6 +2106,9 @@ sys_init_module(void __user *umod,
+@@ -1980,6 +2116,9 @@ sys_init_module(void __user *umod,
  	struct module *mod;
  	int ret = 0;
  
@@ -28188,7 +28502,7 @@
  	/* Must have permission */
  	if (!capable(CAP_SYS_MODULE))
  		return -EPERM;
-@@ -2031,10 +2160,12 @@ sys_init_module(void __user *umod,
+@@ -2031,10 +2170,12 @@ sys_init_module(void __user *umod,
  	/* Drop initial reference. */
  	module_put(mod);
  	unwind_remove_table(mod->unwind_info, 1);
@@ -28205,7 +28519,21 @@
  	mutex_unlock(&module_mutex);
  
  	return 0;
-@@ -2065,10 +2196,14 @@ static const char *get_ksymbol(struct mo
+@@ -2042,6 +2183,13 @@ sys_init_module(void __user *umod,
+ 
+ static inline int within(unsigned long addr, void *start, unsigned long size)
+ {
++
++#ifdef CONFIG_PAX_KERNEXEC
++	if (addr + __KERNEL_TEXT_OFFSET >= (unsigned long)start &&
++	    addr + __KERNEL_TEXT_OFFSET < (unsigned long)start + size)
++		return 1;
++#endif
++
+ 	return ((void *)addr >= start && (void *)addr < start + size);
+ }
+ 
+@@ -2065,10 +2213,14 @@ static const char *get_ksymbol(struct mo
  	unsigned long nextval;
  
  	/* At worse, next value is at end of module */
@@ -28214,17 +28542,17 @@
 -	else 
 -		nextval = (unsigned long)mod->module_core+mod->core_text_size;
 +	if (within(addr, mod->module_init_rx, mod->init_size_rx))
-+		nextval = (unsigned long)mod->module_init_rw;
++		nextval = (unsigned long)mod->module_init_rx+mod->init_size_rx;
 +	else if (within(addr, mod->module_init_rw, mod->init_size_rw))
-+		nextval = (unsigned long)mod->module_core_rx;
++		nextval = (unsigned long)mod->module_init_rw+mod->init_size_rw;
 +	else if (within(addr, mod->module_core_rx, mod->core_size_rx))
-+		nextval = (unsigned long)mod->module_core_rw;
++		nextval = (unsigned long)mod->module_core_rx+mod->core_size_rx;
 +	else
 +		nextval = (unsigned long)mod->module_core_rw+mod->core_size_rw;
  
  	/* Scan for closest preceeding symbol, and next symbol. (ELF
             starts real symbols at 1). */
-@@ -2109,8 +2244,10 @@ const char *module_address_lookup(unsign
+@@ -2109,8 +2261,10 @@ const char *module_address_lookup(unsign
  	struct module *mod;
  
  	list_for_each_entry(mod, &modules, list) {
@@ -28237,7 +28565,7 @@
  			if (modname)
  				*modname = mod->name;
  			return get_ksymbol(mod, addr, size, offset);
-@@ -2231,7 +2368,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2231,7 +2385,7 @@ static int m_show(struct seq_file *m, vo
  	char buf[8];
  
  	seq_printf(m, "%s %lu",
@@ -28246,7 +28574,7 @@
  	print_unload_info(m, mod);
  
  	/* Informative for users. */
-@@ -2240,7 +2377,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2240,7 +2394,7 @@ static int m_show(struct seq_file *m, vo
  		   mod->state == MODULE_STATE_COMING ? "Loading":
  		   "Live");
  	/* Used by oprofile and other similar tools. */
@@ -28255,7 +28583,7 @@
  
  	/* Taints info */
  	if (mod->taints)
-@@ -2298,7 +2435,8 @@ int is_module_address(unsigned long addr
+@@ -2298,7 +2452,8 @@ int is_module_address(unsigned long addr
  	spin_lock_irqsave(&modlist_lock, flags);
  
  	list_for_each_entry(mod, &modules, list) {
@@ -28265,7 +28593,7 @@
  			spin_unlock_irqrestore(&modlist_lock, flags);
  			return 1;
  		}
-@@ -2316,8 +2454,8 @@ struct module *__module_text_address(uns
+@@ -2316,8 +2471,8 @@ struct module *__module_text_address(uns
  	struct module *mod;
  
  	list_for_each_entry(mod, &modules, list)
@@ -28627,22 +28955,21 @@
  			}
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -58,6 +58,14 @@ extern int proc_nr_files(ctl_table *tabl
+@@ -58,6 +58,13 @@ extern int proc_nr_files(ctl_table *tabl
  #endif
  
  #if defined(CONFIG_SYSCTL)
 +#include <linux/grsecurity.h>
 +#include <linux/grinternal.h>
 +
-+extern __u32 gr_handle_sysctl(const ctl_table *table, const void *oldval,
-+			      const void *newval);
++extern __u32 gr_handle_sysctl(const ctl_table *table, const int op);
 +extern int gr_handle_sysctl_mod(const char *dirname, const char *name,
 +				const int op);
 +extern int gr_handle_chroot_sysctl(const int op);
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -139,7 +147,7 @@ static int proc_dointvec_taint(ctl_table
+@@ -139,7 +146,7 @@ static int proc_dointvec_taint(ctl_table
  
  static ctl_table root_table[];
  static struct ctl_table_header root_table_header =
@@ -28651,7 +28978,7 @@
  
  static ctl_table kern_table[];
  static ctl_table vm_table[];
-@@ -156,11 +164,26 @@ extern ctl_table inotify_table[];
+@@ -156,11 +163,26 @@ extern ctl_table inotify_table[];
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  extern ctl_table uac_table[];
  #endif
@@ -28678,7 +29005,7 @@
  
  /* The default sysctl tables: */
  
-@@ -614,6 +637,24 @@ static ctl_table kern_table[] = {
+@@ -614,6 +636,24 @@ static ctl_table kern_table[] = {
  	},
  #endif
  
@@ -28703,7 +29030,7 @@
  	{ .ctl_name = 0 }
  };
  
-@@ -1159,6 +1200,12 @@ static int test_perm(int mode, int op)
+@@ -1159,6 +1199,25 @@ static int test_perm(int mode, int op)
  int sysctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -28713,16 +29040,34 @@
 +		return -EACCES;
 +	if (gr_handle_chroot_sysctl(op))
 +		return -EACCES;
++	error = gr_handle_sysctl(table, op);
++	if (error)
++		return error;
++	error = security_sysctl(table, op);
++	if (error)
++		return error;
++	return test_perm(table->mode, op);
++}
++
++int sysctl_perm_nochk(ctl_table *table, int op)
++{
++	int error;
++
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-@@ -1190,6 +1237,10 @@ repeat:
+@@ -1183,13 +1242,14 @@ repeat:
+ 		if (n == table->ctl_name) {
+ 			int error;
+ 			if (table->child) {
+-				if (sysctl_perm(table, 001))
++				if (sysctl_perm_nochk(table, 001))
+ 					return -EPERM;
+ 				name++;
+ 				nlen--;
  				table = table->child;
  				goto repeat;
  			}
-+
-+			if (!gr_handle_sysctl(table, oldval, newval))
-+				return -EPERM;
 +
  			error = do_sysctl_strategy(table, name, nlen,
  						   oldval, oldlenp,
@@ -28756,6 +29101,29 @@
  	return do_sys_settimeofday(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
  }
  
+--- a/lib/extable.c
++++ b/lib/extable.c
+@@ -36,8 +36,20 @@ static int cmp_ex(const void *a, const v
+ void sort_extable(struct exception_table_entry *start,
+ 		  struct exception_table_entry *finish)
+ {
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++
++	pax_open_kernel(cr0);
++#endif
++
+ 	sort(start, finish - start, sizeof(struct exception_table_entry),
+ 	     cmp_ex, NULL);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ }
+ #endif
+ 
 --- a/lib/radix-tree.c
 +++ b/lib/radix-tree.c
 @@ -76,7 +76,7 @@ struct radix_tree_preload {
@@ -28767,6 +29135,10 @@
  
  static inline gfp_t root_gfp_mask(struct radix_tree_root *root)
  {
+--- /dev/null
++++ b/localversion-grsec
+@@ -0,0 +1 @@
++-grsec
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -30,6 +30,7 @@
@@ -29153,13 +29525,13 @@
  		     ((flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) &&
 --- a/mm/mlock.c
 +++ b/mm/mlock.c
-@@ -10,44 +10,46 @@
+@@ -10,44 +10,53 @@
  #include <linux/mm.h>
  #include <linux/mempolicy.h>
  #include <linux/syscalls.h>
 +#include <linux/grsecurity.h>
  
-+static int __mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
++static int __mlock_fixup(struct vm_area_struct **orig_vma, struct vm_area_struct **prev,
 +	unsigned long start, unsigned long end, unsigned int newflags);
  
  static int mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
@@ -29168,10 +29540,15 @@
  	struct mm_struct * mm = vma->vm_mm;
 -	pgoff_t pgoff;
  	int pages;
--	int ret = 0;
--
--	if (newflags == vma->vm_flags) {
--		*prev = vma;
+ 	int ret = 0;
+ 
++#ifdef CONFIG_PAX_SEGMEXEC
++	struct vm_area_struct * vma_m = NULL, *prev_m;
++	unsigned long start_m = 0UL, end_m = 0UL, newflags_m = 0UL;
++#endif
++
+ 	if (newflags == vma->vm_flags) {
+ 		*prev = vma;
 -		goto out;
 -	}
 -
@@ -29181,14 +29558,11 @@
 -	if (*prev) {
 -		vma = *prev;
 -		goto success;
--	}
-+	int ret;
++		return 0;
+ 	}
  
 -	*prev = vma;
 +#ifdef CONFIG_PAX_SEGMEXEC
-+	struct vm_area_struct * vma_m = NULL, *prev_m;
-+	unsigned long start_m = 0UL, end_m = 0UL, newflags_m = 0UL;
-+
 +	if (vma->vm_flags & VM_MIRROR) {
 +		start_m = vma->vm_start + vma->vm_mirror;
 +		vma_m = find_vma_prev(mm, start_m, &prev_m);
@@ -29205,7 +29579,7 @@
 +			newflags_m = vma_m->vm_flags | VM_LOCKED;
 +		else
 +			newflags_m = vma_m->vm_flags & ~VM_LOCKED;
-+		ret = __mlock_fixup(vma_m, &prev_m, start_m, end_m, newflags_m);
++		ret = __mlock_fixup(&vma_m, &prev_m, start_m, end_m, newflags_m);
  		if (ret)
 -			goto out;
 +			return ret;
@@ -29217,7 +29591,7 @@
 -		if (ret)
 -			goto out;
 -	}
-+	ret = __mlock_fixup(vma, prev, start, end, newflags);
++	ret = __mlock_fixup(&vma, prev, start, end, newflags);
 +	if (ret)
 +		return ret;
  
@@ -29225,7 +29599,7 @@
  	/*
  	 * vm_flags is protected by the mmap_sem held in write mode.
  	 * It's okay if try_to_unmap_one unmaps a page just after we
-@@ -55,6 +57,11 @@ success:
+@@ -55,6 +64,11 @@ success:
  	 */
  	vma->vm_flags = newflags;
  
@@ -29237,7 +29611,7 @@
  	/*
  	 * Keep track of amount of locked VM.
  	 */
-@@ -66,6 +73,48 @@ success:
+@@ -66,6 +80,44 @@ success:
  	}
  
  	mm->locked_vm -= pages;
@@ -29252,23 +29626,19 @@
 +	return ret;
 +}
 +
-+static int __mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
++static int __mlock_fixup(struct vm_area_struct **orig_vma, struct vm_area_struct **prev,
 +	unsigned long start, unsigned long end, unsigned int newflags)
 +{
++	struct vm_area_struct *vma = *orig_vma;
 +	struct mm_struct * mm = vma->vm_mm;
 +	pgoff_t pgoff;
 +	int ret = 0;
-+
-+	if (newflags == vma->vm_flags) {
-+		*prev = vma;
-+		goto out;
-+	}
 +
 +	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
 +	*prev = vma_merge(mm, *prev, start, end, newflags, vma->anon_vma,
 +			  vma->vm_file, pgoff, vma_policy(vma));
 +	if (*prev) {
-+		vma = *prev;
++		*orig_vma = *prev;
 +		goto out;
 +	}
 +
@@ -29286,7 +29656,7 @@
  out:
  	if (ret == -ENOMEM)
  		ret = -EAGAIN;
-@@ -84,6 +133,17 @@ static int do_mlock(unsigned long start,
+@@ -84,6 +136,17 @@ static int do_mlock(unsigned long start,
  		return -EINVAL;
  	if (end == start)
  		return 0;
@@ -29304,7 +29674,7 @@
  	vma = find_vma_prev(current->mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -ENOMEM;
-@@ -141,6 +201,7 @@ asmlinkage long sys_mlock(unsigned long 
+@@ -141,6 +204,7 @@ asmlinkage long sys_mlock(unsigned long 
  	lock_limit >>= PAGE_SHIFT;
  
  	/* check against resource limits */
@@ -29312,7 +29682,7 @@
  	if ((locked <= lock_limit) || capable(CAP_IPC_LOCK))
  		error = do_mlock(start, len, 1);
  	up_write(&current->mm->mmap_sem);
-@@ -173,6 +234,16 @@ static int do_mlockall(int flags)
+@@ -173,6 +237,16 @@ static int do_mlockall(int flags)
  	for (vma = current->mm->mmap; vma ; vma = prev->vm_next) {
  		unsigned int newflags;
  
@@ -29329,7 +29699,7 @@
  		newflags = vma->vm_flags | VM_LOCKED;
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
-@@ -202,6 +273,7 @@ asmlinkage long sys_mlockall(int flags)
+@@ -202,6 +276,7 @@ asmlinkage long sys_mlockall(int flags)
  	lock_limit >>= PAGE_SHIFT;
  
  	ret = -ENOMEM;
@@ -30581,18 +30951,6 @@
  
  /* internal cache of cache description objs */
  static struct kmem_cache cache_cache = {
-@@ -1698,6 +1698,11 @@ static void store_stackinfo(struct kmem_
- 
- 		while (!kstack_end(sptr)) {
- 			svalue = *sptr++;
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+			svalue += __KERNEL_TEXT_OFFSET;
-+#endif
-+
- 			if (kernel_text_address(svalue)) {
- 				*addr++ = svalue;
- 				size -= sizeof(unsigned long);
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -174,8 +174,8 @@ EXPORT_SYMBOL(mark_page_accessed);
@@ -30842,7 +31200,7 @@
 +			return 0;
 +		}
 +		if (!(th.syn && !th.ack)) return 0;
-+		sk = inet_lookup_listener(&tcp_hashinfo, ip->daddr, ntohs(th.dest), ((struct rtable*)skb->dst)->rt_iif);	
++		sk = inet_lookup_listener(&tcp_hashinfo, ip->daddr, th.dest, inet_iif(skb));	
 +		break;
 +	case IPPROTO_UDP:
 +		if (skb_copy_bits(skb, skb->nh.iph->ihl*4, &uh, sizeof(uh)) < 0) {
@@ -31576,7 +31934,7 @@
 +
 +config PAX_KERNEXEC
 +	bool "Enforce non-executable kernel pages"
-+	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK
++	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK && !PARAVIRT
 +	help
 +	  This is the kernel land equivalent of PAGEEXEC and MPROTECT,
 +	  that is, enabling this option will make it harder to inject
