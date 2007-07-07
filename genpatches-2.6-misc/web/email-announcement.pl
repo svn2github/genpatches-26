@@ -55,9 +55,9 @@ $email .= "When the website updates, the complete patch list and split-out patch
 $email .= "available here:\n";
 $email .= $website_base."/patches-".$tag.".htm\n";
 $email .= $website_base."/tarballs/".$kernel_name."-".$tag.".base.tar.bz2\n";
-$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".extras.tar.bz2\n"
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".extras.tar.bz2\n";
 
-if ($kernel_name = "genpatches") {
+if ($kernel_name == "genpatches") {
 	$email .= "\n\nABOUT GENPATCHES\n";
 	$email .= "----------------\n\n";
 	$email .= "genpatches is the patchset applied to some kernels available in Portage.\n\n";

@@ -59,7 +59,7 @@ svn copy ${REMOTE_TRUNK}/${BRANCH} ${REMOTE_TAGS}/${newfullver} -m "${newfullver
 file_base="/tmp/${TARBALL_BASENAME}-$newfullver.base.tar.bz2"
 file_extras="/tmp/${TARBALL_BASENAME}-$newfullver.extras.tar.bz2"
 dir="${BRANCH}"
-cd ${LOCAL_TRUNK}
+cd ${LOCAL_PATCHES_TRUNK}
 
 if [[ "${WE_WANT}" == "base extras" ]] ; then
 	[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvjf ${file_base} ${dir}/[012]*
