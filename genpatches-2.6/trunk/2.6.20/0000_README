@@ -89,11 +89,11 @@ Desc:	Linux 2.6.20.12
 
 Patch:	1012_linux-2.6.20.13.patch
 From:	www.kernel.org
-Desc:	Linux 2.6.20.12
+Desc:	Linux 2.6.20.13
 
 Patch:	1013_linux-2.6.20.14.patch
 From:	www.kernel.org
-Desc:	Linux 2.6.20.12
+Desc:	Linux 2.6.20.14
 
 Patch:	1013_linux-2.6.20.15.patch
 From:	www.kernel.org
