@@ -2,7 +2,7 @@
 
 . ~/.genpatchesrc
 
-PATCHES="$(ls ${GENPATCHES_TRUNK}/2.6.$1/*.patch)"
+PATCHES="$(ls ${LOCAL_PATCHES_TRUNK}/2.6.$1/*.patch)"
 for i in ${PATCHES} ; do
 	short="${i##*/}"
 	code="${short:0:4}"

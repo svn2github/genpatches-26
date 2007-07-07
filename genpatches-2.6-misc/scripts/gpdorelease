@@ -2,7 +2,7 @@
 
 if [[ ${#@} == 0 ]] ; then
 	echo ">>> USAGE: gpdorelease <branch-minor>"
-	echo "This will expand to ${GENPATCHES_TRUNK}/2.6.<branch-minor>"
+	echo "This will expand to ${LOCAL_PATCHES_TRUNK}/2.6.<branch-minor>"
 	exit -1
 fi
 
@@ -18,7 +18,7 @@ fi
 BRANCH="2.6.$1"
 
 if [[ $(svn status ${LOCAL_PATCHES_TRUNK} | wc -l) != "0" ]] ; then
-	echo ">>> ERROR: There are uncommited changes in ${GENPATCHES_TRUNK}"
+	echo ">>> ERROR: There are uncommited changes in ${LOCAL_PATCHES_TRUNK}"
 	exit -1
 fi
 
