@@ -1,0 +1,40 @@
+From: Daniel Drake <dsd@gentoo.org>
+Date: Mon, 21 May 2007 10:27:57 +0000 (+0200)
+Subject: [ALSA] hda-intel: fix ASUS M2V detection
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fperex%2Falsa.git;a=commitdiff_plain;h=c50f607d056bc25f7530314dc8970adfab1ea224
+
+[ALSA] hda-intel: fix ASUS M2V detection
+
+Commit f32610edab47f36946d23b883aeae91e15986121 added ALC660VD support, but
+this caused a 2.6.21 regression for some users. The ASUS M2V device is
+now detected as ALC660VD rather than ALC660/861 but the PCI quirk was not
+carried over.
+This patch allows affected users to use audio again.
+http://bugzilla.kernel.org/show_bug.cgi?id=8273
+https://bugs.gentoo.org/show_bug.cgi?id=178243
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+Signed-off-by: Takashi Iwai <tiwai@suse.de>
+Signed-off-by: Jaroslav Kysela <perex@suse.cz>
+---
+
+diff --git a/sound/pci/hda/patch_realtek.c b/sound/pci/hda/patch_realtek.c
+index 34ac634..e37efba 100644
+--- a/sound/pci/hda/patch_realtek.c
++++ b/sound/pci/hda/patch_realtek.c
+@@ -8765,7 +8765,6 @@ static struct snd_pci_quirk alc861_cfg_tbl[] = {
+ 	SND_PCI_QUIRK(0x1043, 0x1338, "ASUS F2/3", ALC861_ASUS_LAPTOP),
+ 	SND_PCI_QUIRK(0x1043, 0x13d7, "ASUS A9rp", ALC861_ASUS_LAPTOP),
+ 	SND_PCI_QUIRK(0x1043, 0x1393, "ASUS", ALC861_ASUS),
+-	SND_PCI_QUIRK(0x1043, 0x81e7, "ASUS", ALC660_3ST),
+ 	SND_PCI_QUIRK(0x1179, 0xff00, "Toshiba", ALC861_TOSHIBA),
+ 	SND_PCI_QUIRK(0x1179, 0xff10, "Toshiba", ALC861_TOSHIBA),
+ 	SND_PCI_QUIRK(0x1584, 0x9072, "Uniwill m31", ALC861_UNIWILL_M31),
+@@ -9473,6 +9472,7 @@ static const char *alc861vd_models[ALC861VD_MODEL_LAST] = {
+ static struct snd_pci_quirk alc861vd_cfg_tbl[] = {
+ 	SND_PCI_QUIRK(0x1043, 0x12e2, "Asus z35m", ALC660VD_3ST),
+ 	SND_PCI_QUIRK(0x1043, 0x1339, "Asus G1", ALC660VD_3ST),
++	SND_PCI_QUIRK(0x1043, 0x81e7, "ASUS", ALC660VD_3ST),
+ 	SND_PCI_QUIRK(0x10de, 0x03f0, "Realtek ALC660 demo", ALC660VD_3ST),
+ 	SND_PCI_QUIRK(0x1019, 0xa88d, "Realtek ALC660 demo", ALC660VD_3ST),
+ 
