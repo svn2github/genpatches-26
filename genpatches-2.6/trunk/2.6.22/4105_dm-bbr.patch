@@ -1,14 +1,12 @@
-BBR Target.
+BBR Target, updated by dsd@gentoo.org
 
----
- drivers/md/Kconfig  |   11 
- drivers/md/Makefile |    1 
- drivers/md/dm-bbr.c |  982 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-bbr.h |  125 ++++++
- 4 files changed, 1119 insertions(+)
+Incomplete changelog:
+ 2007/07/08: updated for new API in 2.6.22
 
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
+Index: linux-2.6.22/drivers/md/Kconfig
+===================================================================
+--- linux-2.6.22.orig/drivers/md/Kconfig
++++ linux-2.6.22/drivers/md/Kconfig
 @@ -271,6 +271,17 @@ config DM_DELAY
  
  	If unsure, say N.
@@ -27,8 +25,10 @@ BBR Target.
  endmenu
  
  endif
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
+Index: linux-2.6.22/drivers/md/Makefile
+===================================================================
+--- linux-2.6.22.orig/drivers/md/Makefile
++++ linux-2.6.22/drivers/md/Makefile
 @@ -37,6 +37,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
@@ -37,9 +37,11 @@ BBR Target.
  
  quiet_cmd_unroll = UNROLL  $@
        cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
+Index: linux-2.6.22/drivers/md/dm-bbr.c
+===================================================================
 --- /dev/null
-+++ b/drivers/md/dm-bbr.c
-@@ -0,0 +1,982 @@
++++ linux-2.6.22/drivers/md/dm-bbr.c
+@@ -0,0 +1,1012 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
 + *
@@ -431,6 +433,27 @@ BBR Target.
 +	return 0;
 +}
 +
++static int rw_table(struct bbr_private *bbr_id, void *vma,
++		    struct io_region *ptr, int rw)
++{
++	bbr_id->vma_io_req.bi_rw = rw;
++	bbr_id->vma_io_req.mem.ptr.vma = vma;
++	bbr_id->vma_io_req.notify.fn = NULL;
++
++	return dm_io(&bbr_id->vma_io_req, 1, ptr, NULL);
++}
++
++static int io_sync(struct bbr_private *bbr_id, struct page_list *pl,
++		   unsigned offset, struct io_region *ptr, int rw)
++{
++	bbr_id->page_io_req.bi_rw = rw;
++	bbr_id->page_io_req.mem.ptr.pl = pl;
++	bbr_id->page_io_req.mem.offset = offset;
++	bbr_id->page_io_req.notify.fn = NULL;
++
++	return dm_io(&bbr_id->page_io_req, 1, ptr, NULL);
++}
++
 +/**
 + * bbr_setup
 + *
@@ -440,7 +463,6 @@ BBR Target.
 +{
 +	struct bbr_table *table = bbr_id->bbr_table;
 +	struct io_region job;
-+	unsigned long error;
 +	int i, rc = 0;
 +
 +	job.bdev = bbr_id->dev->bdev;
@@ -449,10 +471,10 @@ BBR Target.
 +	/* Read and verify each BBR table sector individually. */
 +	for (i = 0; i < bbr_id->nr_sects_bbr_table; i++, table++) {
 +		job.sector = bbr_id->lba_table1 + i;
-+		rc = dm_io_sync_vm(1, &job, READ, table, &error);
++		rc = rw_table(bbr_id, table, &job, READ);
 +		if (rc && bbr_id->lba_table2) {
 +			job.sector = bbr_id->lba_table2 + i;
-+			rc = dm_io_sync_vm(1, &job, READ, table, &error);
++			rc = rw_table(bbr_id, table, &job, READ);
 +		}
 +		if (rc)
 +			goto out;
@@ -498,7 +520,6 @@ BBR Target.
 +	unsigned long table_sector_index;
 +	unsigned long table_sector_offset;
 +	unsigned long index;
-+	unsigned long error;
 +	u64 lsn, new_lsn;
 +	char b[32];
 +	int rc;
@@ -511,7 +532,7 @@ BBR Target.
 +	/* For each sector in the request. */
 +	for (lsn = 0; lsn < count; lsn++, offset += SECTOR_SIZE) {
 +		job.sector = starting_lsn + lsn;
-+		rc = dm_io_sync(1, &job, rw, &pl, offset, &error);
++		rc = io_sync(bbr_id, &pl, offset, &job, rw);
 +		while (rc) {
 +			/* Find the next available relocation sector. */
 +			new_lsn = atomic_read(&bbr_id->in_use_replacement_blks);
@@ -526,7 +547,7 @@ BBR Target.
 +			       format_dev_t(b, bbr_id->dev->bdev->bd_dev),
 +			       starting_lsn + lsn, new_lsn);
 +			job.sector = new_lsn;
-+			rc = dm_io_sync(1, &job, rw, &pl, offset, &error);
++			rc = io_sync(bbr_id, &pl, offset, &job, rw);
 +			if (rc) {
 +				/* This replacement sector is bad.
 +				 * Try the next one.
@@ -558,11 +579,11 @@ BBR Target.
 +			cpu_bbr_table_sector_to_le(bbr_table, bbr_table);
 +			if (bbr_id->lba_table1) {
 +				job.sector = bbr_id->lba_table1 + table_sector_offset;
-+				rc = dm_io_sync_vm(1, &job, WRITE, bbr_table, &error);
++				rc = rw_table(bbr_id, bbr_table, &job, WRITE);
 +			}
 +			if (bbr_id->lba_table2) {
 +				job.sector = bbr_id->lba_table2 + table_sector_offset;
-+				rc |= dm_io_sync_vm(1, &job, WRITE, bbr_table, &error);
++				rc |= rw_table(bbr_id, bbr_table, &job, WRITE);
 +			}
 +			le_bbr_table_sector_to_cpu(bbr_table);
 +
@@ -612,7 +633,6 @@ BBR Target.
 +	u64 count, lsn, remapped_lsn;
 +	struct page_list pl;
 +	unsigned int offset;
-+	unsigned long error;
 +	int i, rw = bio_data_dir(bio);
 +	int rc = 0;
 +
@@ -652,8 +672,7 @@ BBR Target.
 +			if (lsn > 0) {
 +				job.sector = starting_lsn;
 +				job.count = lsn;
-+				rc = dm_io_sync(1, &job, rw, &pl,
-+						offset, &error);
++				rc = io_sync(bbr_id, &pl, offset, &job, rw);
 +				if (rc) {
 +					/* If this I/O failed, then one of the
 +					 * sectors in this request needs to be
@@ -674,7 +693,7 @@ BBR Target.
 +			/* Process the remapped sector. */
 +			job.sector = remapped_lsn;
 +			job.count = 1;
-+			rc = dm_io_sync(1, &job, rw, &pl, offset, &error);
++			rc = io_sync(bbr_id, &pl, offset, &job, rw);
 +			if (rc) {
 +				/* BUGBUG - Need more processing if this caused
 +				 * an error. If this I/O failed, then the
@@ -703,7 +722,7 @@ BBR Target.
 +		if (count) {
 +			job.sector = starting_lsn;
 +			job.count = count;
-+			rc = dm_io_sync(1, &job, rw, &pl, offset, &error);
++			rc = io_sync(bbr_id, &pl, offset, &job, rw);
 +			if (rc) {
 +				/* If this I/O failed, then one of the sectors
 +				 * in this request needs to be relocated.
@@ -837,29 +856,49 @@ BBR Target.
 +	block_size = simple_strtoul(argv[7], &end, 10);
 +	bbr_id->blksize_in_sects = (block_size >> SECTOR_SHIFT);
 +
++	bbr_id->vma_io_req.mem.type = DM_IO_VMA;
++	bbr_id->vma_io_req.client = dm_io_client_create(1);
++	if (IS_ERR(bbr_id->vma_io_req.client)) {
++		rc = PTR_ERR(bbr_id->vma_io_req.client);
++		DMWARN("couldn't allocate disk VMA io client");
++		goto out2;
++	}
++
++	bbr_id->page_io_req.mem.type = DM_IO_PAGE_LIST;
++	bbr_id->page_io_req.client = dm_io_client_create(1);
++	if (IS_ERR(bbr_id->page_io_req.client)) {
++		rc = PTR_ERR(bbr_id->page_io_req.client);
++		DMWARN("couldn't allocate pagelist io client");
++		goto out3;
++	}
++
 +	bbr_id->bbr_table = vmalloc(bbr_id->nr_sects_bbr_table << SECTOR_SHIFT);
 +	if (!bbr_id->bbr_table) {
 +		ti->error = "dm-bbr: Error allocating bbr table.";
-+		goto out2;
++		goto out4;
 +	}
 +
 +	if (dm_get_device(ti, argv[0], 0, ti->len,
 +			  dm_table_get_mode(ti->table), &bbr_id->dev)) {
 +		ti->error = "dm-bbr: Device lookup failed";
-+		goto out2;
++		goto out4;
 +	}
 +
 +	rc = bbr_setup(bbr_id);
 +	if (rc) {
 +		ti->error = "dm-bbr: Device setup failed";
-+		goto out3;
++		goto out5;
 +	}
 +
 +	ti->private = bbr_id;
 +	return 0;
 +
-+out3:
++out5:
 +	dm_put_device(ti, bbr_id->dev);
++out4:
++	dm_io_client_destroy(bbr_id->page_io_req.client);
++out3:
++	dm_io_client_destroy(bbr_id->vma_io_req.client);
 +out2:
 +	bbr_free_private(bbr_id);
 +out1:
@@ -871,6 +910,8 @@ BBR Target.
 +	struct bbr_private *bbr_id = ti->private;
 +
 +	dm_put_device(ti, bbr_id->dev);
++	dm_io_client_destroy(bbr_id->page_io_req.client);
++	dm_io_client_destroy(bbr_id->vma_io_req.client);
 +	bbr_free_private(bbr_id);
 +}
 +
@@ -987,16 +1028,8 @@ BBR Target.
 +		goto err5;
 +	}
 +
-+	rc = dm_io_get(1);
-+	if (rc) {
-+		DMERR("error initializing I/O service.");
-+		goto err6;
-+	}
-+
 +	return 0;
 +
-+err6:
-+	destroy_workqueue(dm_bbr_wq);
 +err5:
 +	mempool_destroy(bbr_io_pool);
 +err4:
@@ -1011,7 +1044,6 @@ BBR Target.
 +
 +void __exit dm_bbr_exit(void)
 +{
-+	dm_io_put(1);
 +	destroy_workqueue(dm_bbr_wq);
 +	mempool_destroy(bbr_io_pool);
 +	kmem_cache_destroy(bbr_io_cache);
@@ -1022,9 +1054,11 @@ BBR Target.
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
+Index: linux-2.6.22/drivers/md/dm-bbr.h
+===================================================================
 --- /dev/null
-+++ b/drivers/md/dm-bbr.h
-@@ -0,0 +1,125 @@
++++ linux-2.6.22/drivers/md/dm-bbr.h
+@@ -0,0 +1,130 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
 + *
@@ -1051,6 +1085,8 @@ BBR Target.
 + * this means that our software BBR will be only activated when all hardware
 + * BBR replacement sectors have been used.
 + */
++
++#include "dm-io.h"
 +
 +#define BBR_TABLE_SIGNATURE		0x42627254 /* BbrT */
 +#define BBR_ENTRIES_PER_SECT		31
@@ -1135,6 +1171,9 @@ BBR Target.
 +	struct bbr_table		*bbr_table;
 +	struct bbr_runtime_remap	*remap_root;
 +	spinlock_t			remap_root_lock;
++
++	struct dm_io_request vma_io_req;
++	struct dm_io_request page_io_req;
 +
 +	struct work_struct		remap_work;
 +	struct bio_list			remap_ios;
