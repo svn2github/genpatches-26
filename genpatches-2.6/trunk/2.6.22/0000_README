@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	2700_usbaudio-logitech-id.patch
+From:	http://bugs.gentoo.org/184554
+Desc:	Another Logitech QuickCam snd-usb-audio ID
+
 Patch:	2900_powernow-k8-acpi.patch
 From:	http://bugs.gentoo.org/178585
 Desc:	Reduce confusion around powernow-k8 vs ACPI configuration
