@@ -3,11 +3,9 @@ BBR Target, updated by dsd@gentoo.org
 Incomplete changelog:
  2007/07/08: updated for new API in 2.6.22
 
-Index: linux-2.6.22/drivers/md/Kconfig
-===================================================================
---- linux-2.6.22.orig/drivers/md/Kconfig
-+++ linux-2.6.22/drivers/md/Kconfig
-@@ -271,6 +271,17 @@ config DM_DELAY
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -276,4 +276,15 @@ config DM_DELAY
  
  	If unsure, say N.
  
@@ -22,14 +20,10 @@ Index: linux-2.6.22/drivers/md/Kconfig
 +
 +	  If unsure, say N.
 +
- endmenu
- 
- endif
-Index: linux-2.6.22/drivers/md/Makefile
-===================================================================
---- linux-2.6.22.orig/drivers/md/Makefile
-+++ linux-2.6.22/drivers/md/Makefile
-@@ -37,6 +37,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
+ endif # MD
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -39,6 +39,7 @@ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rd
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
@@ -37,10 +31,8 @@ Index: linux-2.6.22/drivers/md/Makefile
  
  quiet_cmd_unroll = UNROLL  $@
        cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
-Index: linux-2.6.22/drivers/md/dm-bbr.c
-===================================================================
 --- /dev/null
-+++ linux-2.6.22/drivers/md/dm-bbr.c
++++ b/drivers/md/dm-bbr.c
 @@ -0,0 +1,1012 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -998,7 +990,7 @@ Index: linux-2.6.22/drivers/md/dm-bbr.c
 +
 +	bbr_remap_cache = kmem_cache_create("bbr-remap",
 +					    sizeof(struct bbr_runtime_remap),
-+					    0, SLAB_HWCACHE_ALIGN, NULL, NULL);
++					    0, SLAB_HWCACHE_ALIGN, NULL);
 +	if (!bbr_remap_cache) {
 +		DMERR("error creating remap cache.");
 +		rc = ENOMEM;
@@ -1006,7 +998,7 @@ Index: linux-2.6.22/drivers/md/dm-bbr.c
 +	}
 +
 +	bbr_io_cache = kmem_cache_create("bbr-io", sizeof(struct dm_bio_details),
-+					 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
++					 0, SLAB_HWCACHE_ALIGN, NULL);
 +	if (!bbr_io_cache) {
 +		DMERR("error creating io cache.");
 +		rc = ENOMEM;
@@ -1054,10 +1046,8 @@ Index: linux-2.6.22/drivers/md/dm-bbr.c
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-Index: linux-2.6.22/drivers/md/dm-bbr.h
-===================================================================
 --- /dev/null
-+++ linux-2.6.22/drivers/md/dm-bbr.h
++++ b/drivers/md/dm-bbr.h
 @@ -0,0 +1,130 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
