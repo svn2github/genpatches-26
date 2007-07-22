@@ -103,6 +103,10 @@ Patch:	2500_tifm-updates.patch
 From:	http://bugs.gentoo.org/171123
 Desc:	Fix tifm MMC driver
 
+Patch:	2505_usb-storage-nikon-d100-quirk.patch
+From:	http://bugs.gentoo.org/185517
+Desc:	usb-storage capacity quirk for Nikon D100 camera
+
 Patch:	2700_usb-audio-quickcam-quirks.patch
 From:	Linux 2.6.22 / Daniel Drake <dsd@gentoo.org>
 Desc:	Adding another quickcam microphone
