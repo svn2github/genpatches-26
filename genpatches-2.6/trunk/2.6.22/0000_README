@@ -43,6 +43,10 @@ Patch:	1000_linux-2.6.22.1.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.1
 
+Patch:	2505_usb-storage-nikon-d100-quirk.patch
+From:	http://bugs.gentoo.org/185517
+Desc:	usb-storage capacity quirk for Nikon D100 camera
+
 Patch:	2700_usbaudio-logitech-id.patch
 From:	http://bugs.gentoo.org/184554
 Desc:	Another Logitech QuickCam snd-usb-audio ID
