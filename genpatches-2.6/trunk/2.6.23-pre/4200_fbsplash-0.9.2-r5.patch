@@ -263,7 +263,7 @@
  # i810fb and intelfb depend on char/agp/
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -1855,5 +1855,15 @@ if FB || SGI_NEWPORT_CONSOLE
+@@ -1866,5 +1866,15 @@ if FB || SGI_NEWPORT_CONSOLE
  	source "drivers/video/logo/Kconfig"
  endif
  
