@@ -47,6 +47,10 @@ Patch:	2000_mac80211-rtnl-deadlock.patch
 From:	http://bugs.gentoo.org/185255
 Desc:	Fix a mac80211 deadlock
 
+Patch:	2500_pata-hpt37x-pll-clock.patch
+From:	http://bugs.gentoo.org/185983
+Desc:	Fix disk detection in pata_hpt37x driver
+
 Patch:	2505_usb-storage-nikon-d100-quirk.patch
 From:	http://bugs.gentoo.org/185517
 Desc:	usb-storage capacity quirk for Nikon D100 camera
