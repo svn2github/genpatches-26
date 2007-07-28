@@ -111,6 +111,10 @@ Patch:	2700_usb-audio-quickcam-quirks.patch
 From:	Linux 2.6.22 / Daniel Drake <dsd@gentoo.org>
 Desc:	Adding another quickcam microphone
 
+Patch:	2705_usbaudio-logitech-id.patch
+From:	http://bugs.gentoo.org/184554
+Desc:	Another Logitech QuickCam snd-usb-audio ID
+
 Patch:	2710_hda-asus-m2v.patch
 From:	http://bugs.gentoo.org/178243
 Desc:	Fix silent audio on Asus M2V
