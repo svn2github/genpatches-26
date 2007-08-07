@@ -59,7 +59,7 @@ Patch:	1004_linux-2.6.21.5.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.21.5
 
-Patch:	1004_linux-2.6.21.6.patch
+Patch:	1005_linux-2.6.21.6.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.21.6
 
