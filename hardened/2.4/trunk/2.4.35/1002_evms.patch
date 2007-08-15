@@ -1,0 +1,1470 @@
+diff -Nru linux-2.4.28/drivers/md/Config.in linux-2.4.28-hardened/drivers/md/Config.in
+--- linux-2.4.28/drivers/md/Config.in	2005-01-17 15:33:26.530462736 -0500
++++ linux-2.4.28-hardened/drivers/md/Config.in	2005-01-17 15:34:34.657105912 -0500
+@@ -16,5 +16,8 @@
+ dep_tristate ' Logical volume manager (LVM) support' CONFIG_BLK_DEV_LVM $CONFIG_MD
+ dep_tristate ' Device-mapper support' CONFIG_BLK_DEV_DM $CONFIG_MD
+ dep_tristate '  Mirror (RAID-1) support' CONFIG_BLK_DEV_DM_MIRROR $CONFIG_BLK_DEV_DM
++if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
++   dep_tristate '  Bad Block Relocation Device Target (EXPERIMENTAL)' CONFIG_BLK_DEV_DM_BBR $CONFIG_BLK_DEV_DM
++fi
+ 
+ endmenu
+diff -Nru linux-2.4.28/drivers/md/Makefile linux-2.4.28-hardened/drivers/md/Makefile
+--- linux-2.4.28/drivers/md/Makefile	2005-01-17 15:33:26.532462432 -0500
++++ linux-2.4.28-hardened/drivers/md/Makefile	2005-01-17 15:34:34.658105760 -0500
+@@ -30,6 +30,7 @@
+ 
+ obj-$(CONFIG_BLK_DEV_DM)		+= dm-mod.o
+ obj-$(CONFIG_BLK_DEV_DM_MIRROR)		+= dm-mirror.o
++obj-$(CONFIG_BLK_DEV_DM_BBR)		+= dm-bbr.o
+ 
+ include $(TOPDIR)/Rules.make
+ 
+diff -Nru linux-2.4.28/drivers/md/dm-bbr.c linux-2.4.28-hardened/drivers/md/dm-bbr.c
+--- linux-2.4.28/drivers/md/dm-bbr.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.4.28-hardened/drivers/md/dm-bbr.c	2005-01-17 15:34:34.662105152 -0500
+@@ -0,0 +1,1013 @@
++/*
++ *   (C) Copyright IBM Corp. 2002, 2004
++ *
++ *   This program is free software;  you can redistribute it and/or modify
++ *   it under the terms of the GNU General Public License as published by
++ *   the Free Software Foundation; either version 2 of the License, or
++ *   (at your option) any later version.
++ *
++ *   This program is distributed in the hope that it will be useful,
++ *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
++ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++ *   the GNU General Public License for more details.
++ *
++ *   You should have received a copy of the GNU General Public License
++ *   along with this program;  if not, write to the Free Software
++ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ * linux/drivers/md/dm-bbr.c
++ *
++ * Bad-block-relocation (BBR) target for device-mapper.
++ *
++ * The BBR target is designed to remap I/O write failures to another safe
++ * location on disk. Note that most disk drives have BBR built into them,
++ * this means that our software BBR will be only activated when all hardware
++ * BBR replacement sectors have been used.
++ */
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/blkdev.h>
++#include <linux/spinlock.h>
++#include <linux/slab.h>
++#include <linux/mempool.h>
++
++#include "dm.h"
++#include "dm-bh-list.h"
++#include "dm-bh-record.h"
++#include "dm-bbr.h"
++#include "dm-io.h"
++#include "dm-daemon.h"
++
++static struct dm_daemon bbr_daemon;
++static LIST_HEAD(bbr_daemon_list);
++static DECLARE_MUTEX(bbr_daemon_list_lock);
++static kmem_cache_t *bbr_remap_cache;
++static kmem_cache_t *bbr_io_cache;
++static mempool_t *bbr_io_pool;
++
++/**
++ * bbr_binary_tree_destroy
++ *
++ * Destroy the binary tree.
++ **/
++static void bbr_binary_tree_destroy(struct bbr_runtime_remap *root)
++{
++	struct bbr_runtime_remap **link = NULL;
++	struct bbr_runtime_remap *node = root;
++
++	while (node) {
++		if (node->left) {
++			link = &(node->left);
++			node = node->left;
++			continue;
++		}
++		if (node->right) {
++			link = &(node->right);
++			node = node->right;
++			continue;
++		}
++
++		kmem_cache_free(bbr_remap_cache, node);
++		if (node == root) {
++			/* If root is deleted, we're done. */
++			break;
++		}
++
++		/* Back to root. */
++		node = root;
++		*link = NULL;
++	}
++}
++
++static void bbr_free_remap(struct bbr_private *bbr_id)
++{
++	spin_lock_irq(&bbr_id->remap_root_lock);
++	bbr_binary_tree_destroy(bbr_id->remap_root);
++	bbr_id->remap_root = NULL;
++	spin_unlock_irq(&bbr_id->remap_root_lock);
++}
++
++static struct bbr_private *bbr_alloc_private(void)
++{
++	struct bbr_private *bbr_id;
++
++	bbr_id = kmalloc(sizeof(*bbr_id), GFP_KERNEL);
++	if (bbr_id) {
++		memset(bbr_id, 0, sizeof(*bbr_id));
++		INIT_LIST_HEAD(&bbr_id->list);
++		bbr_id->remap_root_lock = SPIN_LOCK_UNLOCKED;
++		bbr_id->remap_ios_lock = SPIN_LOCK_UNLOCKED;
++		bbr_id->in_use_replacement_blks = (atomic_t)ATOMIC_INIT(0);
++	}
++
++	return bbr_id;
++}
++
++static void bbr_free_private(struct bbr_private *bbr_id)
++{
++	if (bbr_id->bbr_table) {
++		kfree(bbr_id->bbr_table);
++	}
++	bbr_free_remap(bbr_id);
++	kfree(bbr_id);
++}
++
++static u32 crc_table[256];
++static u32 crc_table_built = 0;
++
++static void build_crc_table(void)
++{
++	u32 i, j, crc;
++
++	for (i = 0; i <= 255; i++) {
++		crc = i;
++		for (j = 8; j > 0; j--) {
++			if (crc & 1)
++				crc = (crc >> 1) ^ CRC_POLYNOMIAL;
++			else
++				crc >>= 1;
++		}
++		crc_table[i] = crc;
++	}
++	crc_table_built = 1;
++}
++
++static u32 calculate_crc(u32 crc, void *buffer, u32 buffersize)
++{
++	unsigned char *current_byte;
++	u32 temp1, temp2, i;
++
++	current_byte = (unsigned char *) buffer;
++	/* Make sure the crc table is available */
++	if (!crc_table_built)
++		build_crc_table();
++	/* Process each byte in the buffer. */
++	for (i = 0; i < buffersize; i++) {
++		temp1 = (crc >> 8) & 0x00FFFFFF;
++		temp2 = crc_table[(crc ^ (u32) * current_byte) &
++				  (u32) 0xff];
++		current_byte++;
++		crc = temp1 ^ temp2;
++	}
++	return crc;
++}
++
++/**
++ * le_bbr_table_sector_to_cpu
++ *
++ * Convert bbr meta data from on-disk (LE) format
++ * to the native cpu endian format.
++ **/
++static void le_bbr_table_sector_to_cpu(struct bbr_table *p)
++{
++	int i;
++	p->signature		= le32_to_cpup(&p->signature);
++	p->crc			= le32_to_cpup(&p->crc);
++	p->sequence_number	= le32_to_cpup(&p->sequence_number);
++	p->in_use_cnt		= le32_to_cpup(&p->in_use_cnt);
++	for (i = 0; i < BBR_ENTRIES_PER_SECT; i++) {
++		p->entries[i].bad_sect =
++			le64_to_cpup(&p->entries[i].bad_sect);
++		p->entries[i].replacement_sect =
++			le64_to_cpup(&p->entries[i].replacement_sect);
++	}
++}
++
++/**
++ * cpu_bbr_table_sector_to_le
++ *
++ * Convert bbr meta data from cpu endian format to on-disk (LE) format
++ **/
++static void cpu_bbr_table_sector_to_le(struct bbr_table *p,
++				       struct bbr_table *le)
++{
++	int i;
++	le->signature		= cpu_to_le32p(&p->signature);
++	le->crc			= cpu_to_le32p(&p->crc);
++	le->sequence_number	= cpu_to_le32p(&p->sequence_number);
++	le->in_use_cnt		= cpu_to_le32p(&p->in_use_cnt);
++	for (i = 0; i < BBR_ENTRIES_PER_SECT; i++) {
++		le->entries[i].bad_sect =
++			cpu_to_le64p(&p->entries[i].bad_sect);
++		le->entries[i].replacement_sect =
++			cpu_to_le64p(&p->entries[i].replacement_sect);
++	}
++}
++
++/**
++ * validate_bbr_table_sector
++ *
++ * Check the specified BBR table sector for a valid signature and CRC. If it's
++ * valid, endian-convert the table sector.
++ **/
++static int validate_bbr_table_sector(struct bbr_table *p)
++{
++	int rc = 0;
++	int org_crc, final_crc;
++
++	if (le32_to_cpup(&p->signature) != BBR_TABLE_SIGNATURE) {
++		DMERR("BBR table signature doesn't match!");
++		DMERR("Found 0x%x. Expecting 0x%x",
++		      le32_to_cpup(&p->signature), BBR_TABLE_SIGNATURE);
++		rc = -EINVAL;
++		goto out;
++	}
++
++	if (!p->crc) {
++		DMERR("BBR table sector has no CRC!");
++		rc = -EINVAL;
++		goto out;
++	}
++
++	org_crc = le32_to_cpup(&p->crc);
++	p->crc = 0;
++	final_crc = calculate_crc(INITIAL_CRC, (void *)p, sizeof(*p));
++	if (final_crc != org_crc) {
++		DMERR("CRC failed!");
++		DMERR("Found 0x%x. Expecting 0x%x",
++		      org_crc, final_crc);
++		rc = -EINVAL;
++		goto out;
++	}
++
++	p->crc = cpu_to_le32p(&org_crc);
++	le_bbr_table_sector_to_cpu(p);
++
++out:
++	return rc;
++}
++
++/**
++ * bbr_binary_tree_insert
++ *
++ * Insert a node into the binary tree.
++ **/
++static void bbr_binary_tree_insert(struct bbr_runtime_remap **root,
++				   struct bbr_runtime_remap *newnode)
++{
++	struct bbr_runtime_remap **node = root;
++	while (node && *node) {
++		if (newnode->remap.bad_sect > (*node)->remap.bad_sect) {
++			node = &((*node)->right);
++		} else {
++			node = &((*node)->left);
++		}
++	}
++
++	newnode->left = newnode->right = NULL;
++	*node = newnode;
++}
++
++/**
++ * bbr_binary_search
++ *
++ * Search for a node that contains bad_sect == lsn.
++ **/
++static struct bbr_runtime_remap *bbr_binary_search(
++	struct bbr_runtime_remap *root,
++	u64 lsn)
++{
++	struct bbr_runtime_remap *node = root;
++	while (node) {
++		if (node->remap.bad_sect == lsn) {
++			break;
++		}
++		if (lsn > node->remap.bad_sect) {
++			node = node->right;
++		} else {
++			node = node->left;
++		}
++	}
++	return node;
++}
++
++/**
++ * bbr_insert_remap_entry
++ *
++ * Create a new remap entry and add it to the binary tree for this node.
++ **/
++static int bbr_insert_remap_entry(struct bbr_private *bbr_id,
++				  struct bbr_table_entry *new_bbr_entry)
++{
++	struct bbr_runtime_remap *newnode;
++
++	newnode = kmem_cache_alloc(bbr_remap_cache, GFP_NOIO);
++	if (!newnode) {
++		DMERR("Could not allocate from remap cache!");
++		return -ENOMEM;
++	}
++	newnode->remap.bad_sect  = new_bbr_entry->bad_sect;
++	newnode->remap.replacement_sect = new_bbr_entry->replacement_sect;
++	spin_lock_irq(&bbr_id->remap_root_lock);
++	bbr_binary_tree_insert(&bbr_id->remap_root, newnode);
++	spin_unlock_irq(&bbr_id->remap_root_lock);
++	return 0;
++}
++
++/**
++ * bbr_table_to_remap_list
++ *
++ * The on-disk bbr table is sorted by the replacement sector LBA. In order to
++ * improve run time performance, the in memory remap list must be sorted by
++ * the bad sector LBA. This function is called at discovery time to initialize
++ * the remap list. This function assumes that at least one copy of meta data
++ * is valid.
++ **/
++static u32 bbr_table_to_remap_list(struct bbr_private *bbr_id)
++{
++	u32 in_use_blks = 0;
++	int i, j;
++	struct bbr_table *p;
++
++	for (i = 0, p = bbr_id->bbr_table;
++	     i < bbr_id->nr_sects_bbr_table;
++	     i++, p++) {
++		if (!p->in_use_cnt) {
++			break;
++		}
++		in_use_blks += p->in_use_cnt;
++		for (j = 0; j < p->in_use_cnt; j++) {
++			bbr_insert_remap_entry(bbr_id, &p->entries[j]);
++		}
++	}
++	if (in_use_blks) {
++		DMWARN("There are %u BBR entries for device %s",
++		       in_use_blks, dm_kdevname(bbr_id->dev->dev));
++	}
++
++	return in_use_blks;
++}
++
++/**
++ * bbr_search_remap_entry
++ *
++ * Search remap entry for the specified sector. If found, return a pointer to
++ * the table entry. Otherwise, return NULL.
++ **/
++static struct bbr_table_entry *bbr_search_remap_entry(
++	struct bbr_private *bbr_id,
++	u64 lsn)
++{
++	struct bbr_runtime_remap *p;
++
++	spin_lock_irq(&bbr_id->remap_root_lock);
++	p = bbr_binary_search(bbr_id->remap_root, lsn);
++	spin_unlock_irq(&bbr_id->remap_root_lock);
++	if (p) {
++		return (&p->remap);
++	} else {
++		return NULL;
++	}
++}
++
++/**
++ * bbr_remap
++ *
++ * If *lsn is in the remap table, return TRUE and modify *lsn,
++ * else, return FALSE.
++ **/
++static inline int bbr_remap(struct bbr_private *bbr_id,
++			    u64 *lsn)
++{
++	struct bbr_table_entry *e;
++
++	if (atomic_read(&bbr_id->in_use_replacement_blks)) {
++		e = bbr_search_remap_entry(bbr_id, *lsn);
++		if (e) {
++			*lsn = e->replacement_sect;
++			return 1;
++		}
++	}
++	return 0;
++}
++
++/**
++ * bbr_remap_probe
++ *
++ * If any of the sectors in the range [lsn, lsn+nr_sects] are in the remap
++ * table return TRUE, Else, return FALSE.
++ **/
++static inline int bbr_remap_probe(struct bbr_private *bbr_id,
++				  u64 lsn, u64 nr_sects)
++{
++	u64 tmp, cnt;
++
++	if (atomic_read(&bbr_id->in_use_replacement_blks)) {
++		for (cnt = 0, tmp = lsn;
++		     cnt < nr_sects;
++		     cnt += bbr_id->blksize_in_sects, tmp = lsn + cnt) {
++			if (bbr_remap(bbr_id,&tmp)) {
++				return 1;
++			}
++		}
++	}
++	return 0;
++}
++
++/**
++ * bbr_setup
++ *
++ * Read the remap tables from disk and set up the initial remap tree.
++ **/
++static int bbr_setup(struct bbr_private *bbr_id)
++{
++	struct bbr_table *table = bbr_id->bbr_table;
++	struct page *page;
++	struct io_region job;
++	unsigned int error, offset;
++	int i, rc = 0;
++
++	job.dev = bbr_id->dev->dev;
++	job.count = 1;
++
++	/* Read and verify each BBR table sector individually. */
++	for (i = 0; i < bbr_id->nr_sects_bbr_table; i++, table++) {
++		job.sector = bbr_id->lba_table1 + i;
++		page = virt_to_page(table);
++		offset = (unsigned long)table & ~PAGE_MASK;
++		rc = dm_io_sync(1, &job, READ, page, offset, &error);
++		if (rc && bbr_id->lba_table2) {
++			job.sector = bbr_id->lba_table2 + i;
++			rc = dm_io_sync(1, &job, READ, page, offset, &error);
++		}
++		if (rc) {
++			goto out;
++		}
++
++		rc = validate_bbr_table_sector(table);
++		if (rc) {
++			goto out;
++		}
++	}
++	atomic_set(&bbr_id->in_use_replacement_blks,
++		   bbr_table_to_remap_list(bbr_id));
++
++out:
++	if (rc) {
++		DMERR("dm-bbr: error during device setup: %d", rc);
++	}
++	return rc;
++}
++
++/**
++ * bbr_io_remap_error
++ * @bbr_id:		Private data for the BBR node.
++ * @rw:			READ or WRITE.
++ * @starting_lsn:	Starting sector of request to remap.
++ * @count:		Number of sectors in the request.
++ * @buffer:		Data buffer for the request.
++ *
++ * For the requested range, try to write each sector individually. For each
++ * sector that fails, find the next available remap location and write the
++ * data to that new location. Then update the table and write both copies
++ * of the table to disk. Finally, update the in-memory mapping and do any
++ * other necessary bookkeeping.
++ **/
++static int bbr_io_remap_error(struct bbr_private *bbr_id,
++			      int rw,
++			      u64 starting_lsn,
++			      u64 count,
++			      char *buffer)
++{
++	struct bbr_table *bbr_table;
++	struct io_region job;
++	struct page *page;
++	unsigned long table_sector_index;
++	unsigned long table_sector_offset;
++	unsigned long index;
++	unsigned int offset_in_page, error;
++	u64 lsn, new_lsn;
++	int rc;
++
++	if (rw == READ) {
++		/* Nothing can be done about read errors. */
++		return -EIO;
++	}
++
++	job.dev = bbr_id->dev->dev;
++	job.count = 1;
++
++	/* For each sector in the request. */
++	for (lsn = 0; lsn < count; lsn++, buffer += SECTOR_SIZE) {
++		job.sector = starting_lsn + lsn;
++		page = virt_to_page(buffer);
++		offset_in_page = (unsigned long)buffer & ~PAGE_MASK;
++		rc = dm_io_sync(1, &job, rw, page, offset_in_page, &error);
++		while (rc) {
++			/* Find the next available relocation sector. */
++			new_lsn = atomic_read(&bbr_id->in_use_replacement_blks);
++			if (new_lsn >= bbr_id->nr_replacement_blks) {
++				/* No more replacement sectors available. */
++				return -EIO;
++			}
++			new_lsn += bbr_id->start_replacement_sect;
++
++			/* Write the data to its new location. */
++			DMWARN("dm-bbr: device %s: Trying to remap bad sector "PFU64" to sector "PFU64,
++			       dm_kdevname(bbr_id->dev->dev),
++			       starting_lsn + lsn, new_lsn);
++			job.sector = new_lsn;
++			rc = dm_io_sync(1, &job, rw, page, offset_in_page, &error);
++			if (rc) {
++				/* This replacement sector is bad.
++				 * Try the next one.
++				 */
++				DMERR("dm-bbr: device %s: replacement sector "PFU64" is bad. Skipping.",
++				      dm_kdevname(bbr_id->dev->dev), new_lsn);
++				atomic_inc(&bbr_id->in_use_replacement_blks);
++				continue;
++			}
++
++			/* Add this new entry to the on-disk table. */
++			table_sector_index = new_lsn -
++					     bbr_id->start_replacement_sect;
++			table_sector_offset = table_sector_index /
++					      BBR_ENTRIES_PER_SECT;
++			index = table_sector_index % BBR_ENTRIES_PER_SECT;
++
++			bbr_table = &bbr_id->bbr_table[table_sector_offset];
++			bbr_table->entries[index].bad_sect = starting_lsn + lsn;
++			bbr_table->entries[index].replacement_sect = new_lsn;
++			bbr_table->in_use_cnt++;
++			bbr_table->sequence_number++;
++			bbr_table->crc = 0;
++			bbr_table->crc = calculate_crc(INITIAL_CRC,
++						       bbr_table,
++						       sizeof(struct bbr_table));
++
++			/* Write the table to disk. */
++			cpu_bbr_table_sector_to_le(bbr_table, bbr_table);
++			page = virt_to_page(bbr_table);
++			offset_in_page = (unsigned long)bbr_table & ~PAGE_MASK;
++			if (bbr_id->lba_table1) {
++				job.sector = bbr_id->lba_table1 + table_sector_offset;
++				rc = dm_io_sync(1, &job, WRITE, page, offset_in_page, &error);
++			}
++			if (bbr_id->lba_table2) {
++				job.sector = bbr_id->lba_table2 + table_sector_offset;
++				rc |= dm_io_sync(1, &job, WRITE, page, offset_in_page, &error);
++			}
++			le_bbr_table_sector_to_cpu(bbr_table);
++
++			if (rc) {
++				/* Error writing one of the tables to disk. */
++				DMERR("dm-bbr: device %s: error updating BBR tables on disk.",
++				      dm_kdevname(bbr_id->dev->dev));
++				return rc;
++			}
++
++			/* Insert a new entry in the remapping binary-tree. */
++			rc = bbr_insert_remap_entry(bbr_id,
++						    &bbr_table->entries[index]);
++			if (rc) {
++				DMERR("dm-bbr: device %s: error adding new entry to remap tree.",
++				      dm_kdevname(bbr_id->dev->dev));
++				return rc;
++			}
++
++			atomic_inc(&bbr_id->in_use_replacement_blks);
++		}
++	}
++
++	return 0;
++}
++
++/**
++ * bbr_io_process_request
++ *
++ * For each sector in this request, check if the sector has already
++ * been remapped. If so, process all previous sectors in the request,
++ * followed by the remapped sector. Then reset the starting lsn and
++ * count, and keep going with the rest of the request as if it were
++ * a whole new request. If any of the sync_io's return an error,
++ * call the remapper to relocate the bad sector(s).
++ **/
++static int bbr_io_process_request(struct bbr_private *bbr_id,
++				  struct buffer_head *bh, int rw)
++{
++	struct io_region job;
++	u64 starting_lsn = bh->b_rsector;
++	u64 count, lsn, remapped_lsn;
++	char *buffer;
++	struct page *page;
++	unsigned int offset_in_page;
++	unsigned int error;
++	int rc = 0;
++
++	count = bh->b_size >> SECTOR_SHIFT;
++	buffer = bh->b_data;
++	page = virt_to_page(buffer);
++	offset_in_page = (unsigned long)buffer & ~PAGE_MASK;
++
++	job.dev = bbr_id->dev->dev;
++
++	/* For each sector in this request, check if this sector has
++	 * already been remapped. If so, process all previous sectors
++	 * in this request, followed by the remapped sector. Then reset
++	 * the starting lsn and count and keep going with the rest of
++	 * the request as if it were a whole new request.
++	 */
++	for (lsn = 0; lsn < count; lsn++) {
++		remapped_lsn = starting_lsn + lsn;
++		rc = bbr_remap(bbr_id, &remapped_lsn);
++		if (!rc) {
++			/* This sector is fine. */
++			continue;
++		}
++
++		/* Process all sectors in the request up to this one. */
++		if (lsn > 0) {
++			job.sector = starting_lsn;
++			job.count = lsn;
++			rc = dm_io_sync(1, &job, rw, page,
++					offset_in_page, &error);
++			if (rc) {
++				/* If this I/O failed, then one of the
++				 * sectors in this request needs to be
++				 * relocated.
++				 */
++				rc = bbr_io_remap_error(bbr_id, rw,
++							starting_lsn,
++							lsn, buffer);
++				if (rc) {
++					return rc;
++				}
++			}
++			buffer += (lsn << SECTOR_SHIFT);
++			page = virt_to_page(buffer);
++			offset_in_page = (unsigned long)buffer & ~PAGE_MASK;
++		}
++
++		/* Process the remapped sector. */
++		job.sector = remapped_lsn;
++		job.count = 1;
++		rc = dm_io_sync(1, &job, rw, page, offset_in_page, &error);
++		if (rc) {
++			/* BUGBUG - Need more processing if this caused
++			 * an error. If this I/O failed, then the
++			 * existing remap is now bad, and we need to
++			 * find a new remap. Can't use
++			 * bbr_io_remap_error(), because the existing
++			 * map entry needs to be changed, not added
++			 * again, and the original table entry also
++			 * needs to be changed.
++			 */
++			return rc;
++		}
++
++		buffer		+= SECTOR_SIZE;
++		starting_lsn	+= (lsn + 1);
++		count		-= (lsn + 1);
++		lsn		= -1;
++		page		= virt_to_page(buffer);
++		offset_in_page	= (unsigned long)buffer & ~PAGE_MASK;
++	}
++
++	/* Check for any remaining sectors after the last split. This
++	 * could potentially be the whole request, but that should be a
++	 * rare case because requests should only be processed by the
++	 * thread if we know an error occurred or they contained one or
++	 * more remapped sectors.
++	 */
++	if (count) {
++		job.sector = starting_lsn;
++		job.count = count;
++		rc = dm_io_sync(1, &job, rw, page, offset_in_page, &error);
++		if (rc) {
++			/* If this I/O failed, then one of the sectors
++			 * in this request needs to be relocated.
++			 */
++			rc = bbr_io_remap_error(bbr_id, rw, starting_lsn,
++						count, buffer);
++			if (rc) {
++				return rc;
++			}
++		}
++	}
++
++	return 0;
++}
++
++static void bbr_io_process_requests(struct bbr_private *bbr_id,
++				    struct buffer_head *bh, int rw)
++{
++	struct buffer_head *next;
++	int rc;
++
++	while (bh) {
++		next = bh->b_reqnext;
++		bh->b_reqnext = NULL;
++
++		rc = bbr_io_process_request(bbr_id, bh, rw);
++
++		if (bh->b_end_io)
++			bh->b_end_io(bh, rc ? 0 : 1);
++
++		bh = next;
++	}
++}
++
++/**
++ * bbr_remap_handler
++ *
++ * This is the handler for the bbr daemon.
++ *
++ * I/O requests should only be sent to this handler if we know that:
++ * a) the request contains at least one remapped sector.
++ *   or
++ * b) the request caused an error on the normal I/O path.
++ *
++ * This function uses synchronous I/O, so sending a request to this
++ * thread that doesn't need special processing will cause severe
++ * performance degredation.
++ **/
++static void bbr_remap_handler(struct bbr_private *bbr_id)
++{
++	struct buffer_head *rbh, *wbh;
++	unsigned long flags;
++
++	spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
++	rbh = bh_list_get(&bbr_id->remap_ios_r);
++	wbh = bh_list_get(&bbr_id->remap_ios_w);
++	spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
++
++	bbr_io_process_requests(bbr_id, rbh, READ);
++	bbr_io_process_requests(bbr_id, wbh, WRITE);
++}
++
++static void do_work(void)
++{
++	struct bbr_private *bbr_id;
++
++	down(&bbr_daemon_list_lock);
++	list_for_each_entry(bbr_id, &bbr_daemon_list, list) {
++		bbr_remap_handler(bbr_id);
++	}
++	up(&bbr_daemon_list_lock);
++}
++
++/**
++ * bbr_endio
++ *
++ * This is the callback for normal write requests. Check for an error
++ * during the I/O, and send to the thread for processing if necessary.
++ **/
++static int bbr_endio(struct dm_target *ti, struct buffer_head *bh, int rw,
++		     int error, union map_info *map_context)
++{
++	struct bbr_private *bbr_id = ti->private;
++	struct dm_bh_details *bbr_io = map_context->ptr;
++
++	if (error && rw == WRITE && bbr_io) {
++		unsigned long flags;
++
++		dm_bh_restore(bbr_io, bh);
++		map_context->ptr = NULL;
++
++		DMERR("dm-bbr: device %s: Write failure on sector %lu. "
++		      "Scheduling for retry.",
++		      dm_kdevname(bbr_id->dev->dev),
++		      (unsigned long)bh->b_rsector);
++
++		spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
++		bh_list_add(&bbr_id->remap_ios_w, bh);
++		spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
++
++		dm_daemon_wake(&bbr_daemon);
++
++		error = 1;
++	}
++
++	if (bbr_io)
++		mempool_free(bbr_io, bbr_io_pool);
++
++	return error;
++}
++
++/**
++ * Construct a bbr mapping
++ **/
++static int bbr_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++{
++	struct bbr_private *bbr_id;
++	unsigned long block_size;
++	char *end;
++	int rc = -EINVAL;
++
++	if (argc != 8) {
++		ti->error = "dm-bbr requires exactly 8 arguments: "
++			    "device offset table1_lsn table2_lsn table_size start_replacement nr_replacement_blks block_size";
++		goto out1;
++	}
++
++	bbr_id = bbr_alloc_private();
++	if (!bbr_id) {
++		ti->error = "dm-bbr: Error allocating bbr private data.";
++		goto out1;
++	}
++
++	bbr_id->offset = simple_strtoull(argv[1], &end, 10);
++	bbr_id->lba_table1 = simple_strtoull(argv[2], &end, 10);
++	bbr_id->lba_table2 = simple_strtoull(argv[3], &end, 10);
++	bbr_id->nr_sects_bbr_table = simple_strtoull(argv[4], &end, 10);
++	bbr_id->start_replacement_sect = simple_strtoull(argv[5], &end, 10);
++	bbr_id->nr_replacement_blks = simple_strtoull(argv[6], &end, 10);
++	block_size = simple_strtoul(argv[7], &end, 10);
++	bbr_id->blksize_in_sects = (block_size >> SECTOR_SHIFT);
++
++	bbr_id->bbr_table = kmalloc(bbr_id->nr_sects_bbr_table << SECTOR_SHIFT,
++				    GFP_KERNEL);
++	if (!bbr_id->bbr_table) {
++		ti->error = "dm-bbr: Error allocating bbr table.";
++		goto out2;
++	}
++
++	if (dm_get_device(ti, argv[0], 0, ti->len,
++			  dm_table_get_mode(ti->table), &bbr_id->dev)) {
++		ti->error = "dm-bbr: Device lookup failed";
++		goto out2;
++	}
++
++	rc = bbr_setup(bbr_id);
++	if (rc) {
++		ti->error = "dm-bbr: Device setup failed";
++		goto out3;
++	}
++
++	down(&bbr_daemon_list_lock);
++	list_add_tail(&bbr_id->list, &bbr_daemon_list);
++	up(&bbr_daemon_list_lock);
++
++	ti->private = bbr_id;
++	return 0;
++
++out3:
++	dm_put_device(ti, bbr_id->dev);
++out2:
++	bbr_free_private(bbr_id);
++out1:
++	return rc;
++}
++
++static void bbr_dtr(struct dm_target *ti)
++{
++	struct bbr_private *bbr_id = ti->private;
++
++	down(&bbr_daemon_list_lock);
++	list_del(&bbr_id->list);
++	up(&bbr_daemon_list_lock);
++
++	dm_put_device(ti, bbr_id->dev);
++	bbr_free_private(bbr_id);
++}
++
++static int bbr_map(struct dm_target *ti, struct buffer_head *bh, int rw,
++		   union map_info *map_context)
++{
++	struct bbr_private *bbr_id = ti->private;
++	struct dm_bh_details *bbr_io;
++	unsigned long flags;
++	int rc = 1;
++
++	bh->b_rsector += bbr_id->offset;
++
++	if (atomic_read(&bbr_id->in_use_replacement_blks) == 0 ||
++	    !bbr_remap_probe(bbr_id, bh->b_rsector, bh->b_size >> SECTOR_SHIFT)) {
++		/* No existing remaps or this request doesn't
++		 * contain any remapped sectors.
++		 */
++		bh->b_rdev = bbr_id->dev->dev;
++
++		bbr_io = mempool_alloc(bbr_io_pool, GFP_NOIO);
++		dm_bh_record(bbr_io, bh);
++		map_context->ptr = bbr_io;
++	} else {
++		/* This request has at least one remapped sector.
++		 * Give it to the daemon for processing.
++		 */
++		map_context->ptr = NULL;
++		spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
++		if (rw == READ)
++			bh_list_add(&bbr_id->remap_ios_r, bh);
++		else if (rw == WRITE)
++			bh_list_add(&bbr_id->remap_ios_w, bh);
++		spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
++
++		dm_daemon_wake(&bbr_daemon);
++		rc = 0;
++	}
++
++	return rc;
++}
++
++static int bbr_status(struct dm_target *ti, status_type_t type,
++		      char *result, unsigned int maxlen)
++{
++	struct bbr_private *bbr_id = ti->private;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		result[0] = '\0';
++		break;
++
++	case STATUSTYPE_TABLE:
++		snprintf(result, maxlen, "%s "PFU64" "PFU64" "PFU64" "PFU64" "PFU64" "PFU64" %u",
++			 dm_kdevname(bbr_id->dev->dev),
++			 bbr_id->offset, bbr_id->lba_table1, bbr_id->lba_table2,
++			 bbr_id->nr_sects_bbr_table,
++			 bbr_id->start_replacement_sect,
++			 bbr_id->nr_replacement_blks,
++			 bbr_id->blksize_in_sects << SECTOR_SHIFT);
++		 break;
++	}
++	return 0;
++}
++
++static struct target_type bbr_target = {
++	.name	= "bbr",
++	.version= {1, 0, 1},
++	.module	= THIS_MODULE,
++	.ctr	= bbr_ctr,
++	.dtr	= bbr_dtr,
++	.map	= bbr_map,
++	.end_io	= bbr_endio,
++	.status	= bbr_status,
++};
++
++int __init dm_bbr_init(void)
++{
++	int rc;
++
++	rc = dm_register_target(&bbr_target);
++	if (rc) {
++		DMERR("dm-bbr: error registering target.");
++		goto err1;
++	}
++
++	bbr_remap_cache = kmem_cache_create("bbr-remap",
++					    sizeof(struct bbr_runtime_remap),
++					    0, SLAB_HWCACHE_ALIGN, NULL, NULL);
++	if (!bbr_remap_cache) {
++		DMERR("dm-bbr: error creating remap cache.");
++		rc = ENOMEM;
++		goto err2;
++	}
++
++	bbr_io_cache = kmem_cache_create("bbr-io", sizeof(struct dm_bh_details),
++					 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
++	if (!bbr_io_cache) {
++		DMERR("dm-bbr: error creating io cache.");
++		rc = ENOMEM;
++		goto err3;
++	}
++
++	bbr_io_pool = mempool_create(256, mempool_alloc_slab,
++				     mempool_free_slab, bbr_io_cache);
++	if (!bbr_io_pool) {
++		DMERR("dm-bbr: error creating io mempool.");
++		rc = ENOMEM;
++		goto err4;
++	}
++
++	rc = dm_daemon_start(&bbr_daemon, "dm-bbr", do_work);
++	if (rc) {
++		DMERR("dm-bbr: error creating daemon.");
++		goto err5;
++	}
++
++	rc = dm_io_get(1);
++	if (rc) {
++		DMERR("dm-bbr: error initializing I/O service.");
++		goto err6;
++	}
++
++	return 0;
++
++err6:
++	dm_daemon_stop(&bbr_daemon);
++err5:
++	mempool_destroy(bbr_io_pool);
++err4:
++	kmem_cache_destroy(bbr_io_cache);
++err3:
++	kmem_cache_destroy(bbr_remap_cache);
++err2:
++	dm_unregister_target(&bbr_target);
++err1:
++	return rc;
++}
++
++void __exit dm_bbr_exit(void)
++{
++	dm_io_put(1);
++	dm_daemon_stop(&bbr_daemon);
++	mempool_destroy(bbr_io_pool);
++	kmem_cache_destroy(bbr_io_cache);
++	kmem_cache_destroy(bbr_remap_cache);
++	dm_unregister_target(&bbr_target);
++}
++
++module_init(dm_bbr_init);
++module_exit(dm_bbr_exit);
++MODULE_LICENSE("GPL");
+diff -Nru linux-2.4.28/drivers/md/dm-bbr.h linux-2.4.28-hardened/drivers/md/dm-bbr.h
+--- linux-2.4.28/drivers/md/dm-bbr.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.4.28-hardened/drivers/md/dm-bbr.h	2005-01-17 15:34:34.663105000 -0500
+@@ -0,0 +1,128 @@
++/*
++ *   (C) Copyright IBM Corp. 2002, 2004
++ *
++ *   This program is free software;  you can redistribute it and/or modify
++ *   it under the terms of the GNU General Public License as published by
++ *   the Free Software Foundation; either version 2 of the License, or
++ *   (at your option) any later version.
++ *
++ *   This program is distributed in the hope that it will be useful,
++ *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
++ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++ *   the GNU General Public License for more details.
++ *
++ *   You should have received a copy of the GNU General Public License
++ *   along with this program;  if not, write to the Free Software
++ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ * linux/drivers/md/dm-bbr.h
++ *
++ * Bad-block-relocation (BBR) target for device-mapper.
++ *
++ * The BBR target is designed to remap I/O write failures to another safe
++ * location on disk. Note that most disk drives have BBR built into them,
++ * this means that our software BBR will be only activated when all hardware
++ * BBR replacement sectors have been used.
++ */
++
++#define BBR_TABLE_SIGNATURE		0x42627254 /* BbrT */
++#define BBR_ENTRIES_PER_SECT		31
++#define INITIAL_CRC			0xFFFFFFFF
++#define CRC_POLYNOMIAL			0xEDB88320L
++
++/**
++ * Macros to cleanly print 64-bit numbers on both 32-bit and 64-bit machines.
++ * Use these in place of %Ld, %Lu, and %Lx.
++ **/
++#if BITS_PER_LONG > 32
++#define PFU64 "%lu"
++#else
++#define PFU64 "%Lu"
++#endif
++
++/**
++ * struct bbr_table_entry
++ * @bad_sect:		LBA of bad location.
++ * @replacement_sect:	LBA of new location.
++ *
++ * Structure to describe one BBR remap.
++ **/
++struct bbr_table_entry {
++	u64 bad_sect;
++	u64 replacement_sect;
++};
++
++/**
++ * struct bbr_table
++ * @signature:		Signature on each BBR table sector.
++ * @crc:		CRC for this table sector.
++ * @sequence_number:	Used to resolve conflicts when primary and secondary
++ *			tables do not match.
++ * @in_use_cnt:		Number of in-use table entries.
++ * @entries:		Actual table of remaps.
++ *
++ * Structure to describe each sector of the metadata table. Each sector in this
++ * table can describe 31 remapped sectors.
++ **/
++struct bbr_table {
++	u32			signature;
++	u32			crc;
++	u32			sequence_number;
++	u32			in_use_cnt;
++	struct bbr_table_entry	entries[BBR_ENTRIES_PER_SECT];
++};
++
++/**
++ * struct bbr_runtime_remap
++ *
++ * Node in the binary tree used to keep track of remaps.
++ **/
++struct bbr_runtime_remap {
++	struct bbr_table_entry		remap;
++	struct bbr_runtime_remap	*left;
++	struct bbr_runtime_remap	*right;
++};
++
++/**
++ * struct bbr_private
++ * @list:			List of all BBR devices.
++ * @dev:			Info about underlying device.
++ * @bbr_table:			Copy of metadata table.
++ * @remap_root:			Binary tree containing all remaps.
++ * @remap_root_lock:		Lock for the binary tree.
++ * @remap_ios_r:		List of read I/Os for the daemon to handle.
++ * @remap_ios_w:		List of read I/Os for the daemon to handle.
++ * @remap_ios_lock:		Lock for the remap_ios list.
++ * @offset:			LBA of data area.
++ * @lba_table1:			LBA of primary BBR table.
++ * @lba_table2:			LBA of secondary BBR table.
++ * @nr_sects_bbr_table:		Size of each BBR table.
++ * @nr_replacement_blks:	Number of replacement blocks.
++ * @start_replacement_sect:	LBA of start of replacement blocks.
++ * @blksize_in_sects:		Size of each block.
++ * @in_use_replacement_blks:	Current number of remapped blocks.
++ *
++ * Private data for each BBR target.
++ **/
++struct bbr_private {
++	struct list_head		list;
++
++	struct dm_dev			*dev;
++	struct bbr_table		*bbr_table;
++	struct bbr_runtime_remap	*remap_root;
++	spinlock_t			remap_root_lock;
++
++	struct bh_list			remap_ios_r;
++	struct bh_list			remap_ios_w;
++	spinlock_t			remap_ios_lock;
++
++	u64				offset;
++	u64				lba_table1;
++	u64				lba_table2;
++	u64				nr_sects_bbr_table;
++	u64				start_replacement_sect;
++	u64				nr_replacement_blks;
++	u32				blksize_in_sects;
++	atomic_t			in_use_replacement_blks;
++};
++
+diff -Nru linux-2.4.28/drivers/md/dm-bh-list.h linux-2.4.28-hardened/drivers/md/dm-bh-list.h
+--- linux-2.4.28/drivers/md/dm-bh-list.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.4.28-hardened/drivers/md/dm-bh-list.h	2005-01-17 15:34:34.664104848 -0500
+@@ -0,0 +1,68 @@
++/*
++ * Copyright (C) 2004 Red Hat UK Ltd.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_BH_LIST_H
++#define DM_BH_LIST_H
++
++#include <linux/fs.h>
++
++struct bh_list {
++	struct buffer_head *head;
++	struct buffer_head *tail;
++};
++
++static inline void bh_list_init(struct bh_list *bl)
++{
++	bl->head = bl->tail = NULL;
++}
++
++static inline void bh_list_add(struct bh_list *bl, struct buffer_head *bh)
++{
++	bh->b_reqnext = NULL;
++
++	if (bl->tail)
++		bl->tail->b_reqnext = bh;
++	else
++		bl->head = bh;
++
++	bl->tail = bh;
++}
++
++static inline void bh_list_merge(struct bh_list *bl, struct bh_list *bl2)
++{
++	if (bl->tail)
++		bl->tail->b_reqnext = bl2->head;
++	else
++		bl->head = bl2->head;
++
++	bl->tail = bl2->tail;
++}
++
++static inline struct buffer_head *bh_list_pop(struct bh_list *bl)
++{
++	struct buffer_head *bh = bl->head;
++
++	if (bh) {
++		bl->head = bl->head->b_reqnext;
++		if (!bl->head)
++			bl->tail = NULL;
++
++		bh->b_reqnext = NULL;
++	}
++
++	return bh;
++}
++
++static inline struct buffer_head *bh_list_get(struct bh_list *bl)
++{
++	struct buffer_head *bh = bl->head;
++
++	bl->head = bl->tail = NULL;
++
++	return bh;
++}
++
++#endif
+diff -Nru linux-2.4.28/drivers/md/dm-bh-record.h linux-2.4.28-hardened/drivers/md/dm-bh-record.h
+--- linux-2.4.28/drivers/md/dm-bh-record.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.4.28-hardened/drivers/md/dm-bh-record.h	2005-01-17 15:34:34.665104696 -0500
+@@ -0,0 +1,38 @@
++/*
++ * Copyright (C) 2004 Red Hat UK Ltd.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_BH_RECORD_H
++#define DM_BH_RECORD_H
++
++#include <linux/fs.h>
++
++/*
++ * There are lots of mutable fields in the buffer-head struct that get
++ * changed by the lower levels of the block layer.  Some targets,
++ * such as multipath, may wish to resubmit a buffer-head on error.  The
++ * functions in this file help the target record and restore the
++ * original buffer-head state.
++ */
++struct dm_bh_details {
++	unsigned long b_rsector;
++	kdev_t b_rdev;
++};
++
++static inline void dm_bh_record(struct dm_bh_details *bd,
++				struct buffer_head *bh)
++{
++	bd->b_rsector = bh->b_rsector;
++	bd->b_rdev = bh->b_rdev;
++}
++
++static inline void dm_bh_restore(struct dm_bh_details *bd,
++				 struct buffer_head *bh)
++{
++	bh->b_rsector = bd->b_rsector;
++	bh->b_rdev = bd->b_rdev;
++}
++
++#endif
+diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md/dm-snapshot.c
+--- linux-2.4.28/drivers/md/dm-snapshot.c	2005-01-17 15:33:26.556458784 -0500
++++ linux-2.4.28-hardened/drivers/md/dm-snapshot.c	2005-01-17 15:36:30.701464488 -0500
+@@ -92,6 +92,9 @@
+ 
+ 	/* List of snapshots for this origin */
+ 	struct list_head snapshots;
++
++	/* Count of snapshots and origins referrencing this structure. */
++	unsigned int count;
+ };
+ 
+ /*
+@@ -155,6 +158,35 @@
+ }
+ 
+ /*
++ * Allocate and initialize an origin structure.
++ */
++static struct origin * __alloc_origin(kdev_t dev)
++{
++	struct origin *o = kmalloc(sizeof(*o), GFP_KERNEL);
++	if (o) {
++		o->dev = dev;
++		INIT_LIST_HEAD(&o->hash_list);
++		INIT_LIST_HEAD(&o->snapshots);
++		__insert_origin(o);
++	}
++	return o;
++}
++
++static void __get_origin(struct origin *o)
++{
++	o->count++;
++}
++
++static void __put_origin(struct origin *o)
++{
++	o->count--;
++	if (o->count == 0) {
++		list_del(&o->hash_list);
++		kfree(o);
++	}
++}
++
++/*
+  * Make a note of the snapshot and its origin so we can look it
+  * up when the origin has a write on it.
+  */
+@@ -168,20 +200,37 @@
+ 
+ 	if (!o) {
+ 		/* New origin */
+-		o = kmalloc(sizeof(*o), GFP_KERNEL);
++		o = __alloc_origin(dev);
+ 		if (!o) {
+ 			up_write(&_origins_lock);
+ 			return -ENOMEM;
+ 		}
++	}
+ 
+-		/* Initialise the struct */
+-		INIT_LIST_HEAD(&o->snapshots);
+-		o->dev = dev;
++	__get_origin(o);
++	list_add_tail(&snap->list, &o->snapshots);
+ 
+-		__insert_origin(o);
++	up_write(&_origins_lock);
++	return 0;
++}
++
++static int register_origin(kdev_t dev)
++{
++	struct origin *o;
++
++	down_write(&_origins_lock);
++	o = __lookup_origin(dev);
++
++	if (!o) {
++		/* New origin */
++		o = __alloc_origin(dev);
++		if (!o) {
++			up_write(&_origins_lock);
++			return -ENOMEM;
++		}
+ 	}
+ 
+-	list_add_tail(&snap->list, &o->snapshots);
++	__get_origin(o);
+ 
+ 	up_write(&_origins_lock);
+ 	return 0;
+@@ -195,11 +244,18 @@
+ 	o = __lookup_origin(s->origin->dev);
+ 
+ 	list_del(&s->list);
+-	if (list_empty(&o->snapshots)) {
+-		list_del(&o->hash_list);
+-		kfree(o);
+-	}
++	__put_origin(o);
++
++	up_write(&_origins_lock);
++}
++
++static void unregister_origin(kdev_t dev)
++{
++	struct origin *o;
+ 
++	down_write(&_origins_lock);
++	o = __lookup_origin(dev);
++	__put_origin(o);
+ 	up_write(&_origins_lock);
+ }
+ 
+@@ -1093,6 +1149,13 @@
+ 		return r;
+ 	}
+ 
++	r = register_origin(dev->dev);
++	if (r) {
++		ti->error = "Cannot register origin";
++		dm_put_device(ti, dev);
++		return r;
++	}
++
+ 	ti->private = dev;
+ 	return 0;
+ }
+@@ -1100,6 +1163,7 @@
+ static void origin_dtr(struct dm_target *ti)
+ {
+ 	struct dm_dev *dev = (struct dm_dev *) ti->private;
++	unregister_origin(dev->dev);
+ 	dm_put_device(ti, dev);
+ }
+ 
+diff -Nru linux-2.4.28/drivers/md/dm.c linux-2.4.28-hardened/drivers/md/dm.c
+--- linux-2.4.28/drivers/md/dm.c	2005-01-17 15:33:26.566457264 -0500
++++ linux-2.4.28-hardened/drivers/md/dm.c	2005-01-17 15:36:30.703464184 -0500
+@@ -951,13 +951,23 @@
+ 	int r = 0;
+ 	DECLARE_WAITQUEUE(wait, current);
+ 
+-	down_write(&md->lock);
++	/* Flush IO to the origin device */
++	down_read(&md->lock);
++	if (test_bit(DMF_BLOCK_IO, &md->flags)) {
++		up_read(&md->lock);
++		return -EINVAL;
++	}
++
++	fsync_dev_lockfs(md->dev);
++	up_read(&md->lock);
++
+ 
+ 	/*
+-	 * First we set the BLOCK_IO flag so no more ios will be
+-	 * mapped.
++	 * Set the BLOCK_IO flag so no more ios will be mapped.
+ 	 */
++	down_write(&md->lock);
+ 	if (test_bit(DMF_BLOCK_IO, &md->flags)) {
++		unlockfs(md->dev);
+ 		up_write(&md->lock);
+ 		return -EINVAL;
+ 	}
+@@ -986,6 +996,7 @@
+ 
+ 	/* did we flush everything ? */
+ 	if (atomic_read(&md->pending)) {
++		unlockfs(md->dev);
+ 		clear_bit(DMF_BLOCK_IO, &md->flags);
+ 		r = -EINTR;
+ 	} else {
+@@ -1017,6 +1028,7 @@
+ 	md->deferred = NULL;
+ 	up_write(&md->lock);
+ 
++	unlockfs(md->dev);
+ 	flush_deferred_io(def);
+ 	run_task_queue(&tq_disk);
+ 
