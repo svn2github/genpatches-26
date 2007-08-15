@@ -36,67 +36,66 @@ FEATURES
 4200-4300	graphics
 4300-4400	filesystem
 4400-4500	other
-4500-4600 grsecurity+pax
-5000-6000 Gentoo patches for bugfixes
 
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch: 4505_grsecurity-2.1.10-2.4.34.4-200706022011_removed_kern_sched_hunk.patch
-From: http://www.grsecurity.net/~spender/ (modded failed kern/sched.h hunk by pappy)
-Desc: modded grsecurity patch for 2.4.34.5
+Patch:	1001_linux-2.4.35.1.patch
+From:	www.kernel.org
+Desc:	Linux 2.4.35.1
 
-Patch: 1001_device-mapper.patch
-from: ftp://sources.redhat.com/pub/dm/
-desc: Device Mapper 1.00.21
+Patch:	1800_sc520-wdt-gp-echo.patch
+From:	Mike Ireton <mike at willitsonline.com>
+Desc:	Port sc520 watchdog timer fix concerning gp echo mode from freebsd, so
+		that timeout is actually set correctly.
 
-Patch: 1002_evms.patch
-from: http://evms.sourceforge.net/
-desc: EVMS 2.5.0
+Patch:	1700_i386-amd-geode-support.patch
+From:	Dave Johnson <dave-soekris-mailinglist at centerclick.org>
+From:	http://centerclick.org/net4801/2.4.27/
+Desc:	Adding support for the AMD Geode / Geode GX processor
 
-Patch: 1004_kconfig-alt.patch
-from: -
-desc: /proc/config
+Patch:	1805_disable-aout.patch
+From:	Peter Mainzinger <psm at gmx.net>
+Desc:	Disable a.out behaviour by default (taken from the owl kernel patch)
 
-Patch: 1005_cryptoloop.patch
-from: http://www.kernel.org/pub/linux/kernel/crypto/
-desc: Cryptoloop Jari, forward ported from 2.4.22
+Patch:	1810_gcc-Os.patch
+From:	uclibc/buildroot
+Desc:	Allows the kernel to be compiled with -Os vs -O2
 
-Patch: 1006_squashfs2.1.patch
-from: http://squashfs.sourceforge.net/
-desc: Squashfs is a compressed read-only filesystem.
+Patch:	1815_gcc-Os-memcpy.patch
+From:	Peter Mainzinger <psm at gmx.net>
+Desc:	gcc fastcall update for the kernel to handle 1012
 
-Patch: 1007_wdt-fix.patch
-from: http://lists.forko.com/pipermail/soekris-tech/2004-February/005228.html
-desc: Fix for the Watchdog Timer (WDT)
+Patch:	4000_natsemi_holdoff.patch
+From:	Dave Johnson <dave-soekris-mailinglist at centerclick.org>
+From:	http://centerclick.org/net4801/2.4.27/
+Desc:	Performance fixes for Natsemi (net8x01).
 
-Patch: 1008_ebtables.patch
-from: http://ebtables.sourceforge.net/
-desc: Filtering tool for a bridging firewall.
+Patch:	4005_natsemi_vlan.patch
+From:	Dave Johnson <dave-soekris-mailinglist at centerclick.org>
+From:	http://centerclick.org/net4801/2.4.27/
+Desc:	VLAN support for Natsemi (net4x01).
 
-Patch: 1009_natsemi_holdoff.patch
-from: http://centerclick.org/net4801/2.4.27/
-desc: Natsemi fixes.
+Patch	4010_netfilter-ebtables.patch
+From:	http://ebtables.sourceforge.net/
+Desc:	Filtering tool for a bridging firewall.
 
-Patch: 1009_natsemi_vlan.patch
-from: http://centerclick.org/net4801/2.4.27/
-desc: Natsemi fixes.
+Patch:	4100_device-mapper-1.00.21.patch
+From:	ftp://sources.redhat.com/pub/dm/
+Desc:	Device Mapper 1.00.21
 
-Patch: 1010_pci_and_cputype.patch
-from: http://centerclick.org/net4801/2.4.27/
-desc: Fixed up version of the pci_and_cpu patch from centerclick
+Patch:	4105_evms-2.5.0.patch
+From:	http://evms.sourceforge.net/
+Desc:	EVMS 2.5.0
 
+Patch:	4110_cryptoloop-2.4.22.patch
+From:	http://www.kernel.org/pub/linux/kernel/crypto/
+Desc:	Cryptoloop API, forward ported from 2.4.22
 
+Patch:	4300_squashfs-2.1.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	Squashfs is a compressed read-only filesystem.
 
-Patch: 1013_optimize-for-size-gcc34-memcpy.patch
-from: psm
-desc: gcc fastcall update for the kernel to handle 1012
-
-Patch: 1014_owl-binfmt.patch
-from: The owl kernel patch broken out by psm
-desc: Disable a.out behaviors by default.
-
-Patch: 1015_optimize-for-size.patch
-from: uclibc/buildroot
-desc: Allows the kernel to be compiled with -Os vs -O2, new Makefile in 2.4.34.5
-
+Patch:	4400_proc_config.patch
+From:	-
+Desc:	Add support for /proc/config

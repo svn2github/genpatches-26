@@ -1,0 +1,260 @@
+diff --git a/Makefile b/Makefile
+index e44ff6b..5dba5a2 100644
+@@ -93,13 +93,14 @@ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+ 
+ CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+ 	  -fno-strict-aliasing -fno-common
+-CFLAGS += -fno-builtin-sprintf
++CFLAGS += -fno-builtin-strpbrk -fno-builtin-sprintf
+ ifndef CONFIG_FRAME_POINTER
+ CFLAGS += -fomit-frame-pointer
+ endif
+ AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
+ 
+ check_gcc = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi)
++if_gcc4 = $(shell if echo __GNUC__ | $(CC) -E -xc - | grep -q '^4$$' > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi)
+ 
+ # disable pointer signedness warnings in gcc 4.0
+ CFLAGS += $(call check_gcc,-Wno-pointer-sign,)
+diff --git a/arch/i386/Makefile b/arch/i386/Makefile
+index 8f93efd..8ba6bd0 100644
+--- a/arch/i386/Makefile
++++ b/arch/i386/Makefile
+@@ -92,9 +92,9 @@ ifdef CONFIG_MVIAC3_2
+ CFLAGS += $(call check_gcc,-march=c3-2,-march=i686)
+ endif
+ 
+-# Disable unit-at-a-time mode, it makes gcc use a lot more stack
+-# due to the lack of sharing of stacklots.
+-CFLAGS += $(call check_gcc,-fno-unit-at-a-time,)
++# Disable unit-at-a-time mode on pre-gcc-4.0 compilers, it makes gcc use
++# a lot more stack due to the lack of sharing of stacklots.
++CFLAGS += $(call if_gcc4,,$(call check_gcc,-fno-unit-at-a-time,))
+ 
+ HEAD := arch/i386/kernel/head.o arch/i386/kernel/init_task.o
+ 
+diff --git a/drivers/char/wdt83627.c b/drivers/char/wdt83627.c
+index 217002a..a69b903 100644
+--- a/drivers/char/wdt83627.c
++++ b/drivers/char/wdt83627.c
+@@ -80,36 +80,6 @@ MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default=" _
+ 
+ /* Non standard proc bits, added by request, wanted some feedback */
+ 
+-static int wdt_readproc(char *page, char **start, off_t off, int count,
+-		int *eof, void *data)
+-{
+-	int len;
+-	unsigned char remaining;
+-	unsigned char fired;
+-	spin_lock(&io_lock);
+-	w83627hf_select_wd_register();
+-	outb_p(0xF6, WDT_EFIR);/* get current timer val */
+-	remaining=inb_p(WDT_EFDR);
+-	outb_p(0xF7, WDT_EFIR);
+-	fired=inb_p(WDT_EFDR);
+-	/* clear that bit (bit 4) */
+-	outb_p(fired&(~0x10),WDT_EFDR);
+-	w83627hf_unselect_wd_register();
+-	spin_unlock(&io_lock);
+-	fired=(fired&0x10)!=0;
+-	len=snprintf(page,PAGE_SIZE,
+-			"W83627HF WDT\n"
+-			"active=%d\n"
+-			"iobase=%04X\n"
+-			"nowayout=%d\n"
+-			"timeout=%d\n"
+-			"remaining=%d\n"
+-			"fired=%d\n",
+-			wdt_is_open,wdt_io,nowayout,timeout,remaining,fired);
+-	*eof=1;
+-	return len;
+-}
+-
+ static void
+ w83627hf_select_wd_register(void)
+ {
+@@ -147,6 +117,36 @@ w83627hf_init(void)
+ 	w83627hf_unselect_wd_register();
+ }
+ 
++static int wdt_readproc(char *page, char **start, off_t off, int count,
++		int *eof, void *data)
++{
++	int len;
++	unsigned char remaining;
++	unsigned char fired;
++	spin_lock(&io_lock);
++	w83627hf_select_wd_register();
++	outb_p(0xF6, WDT_EFIR);/* get current timer val */
++	remaining=inb_p(WDT_EFDR);
++	outb_p(0xF7, WDT_EFIR);
++	fired=inb_p(WDT_EFDR);
++	/* clear that bit (bit 4) */
++	outb_p(fired&(~0x10),WDT_EFDR);
++	w83627hf_unselect_wd_register();
++	spin_unlock(&io_lock);
++	fired=(fired&0x10)!=0;
++	len=snprintf(page,PAGE_SIZE,
++			"W83627HF WDT\n"
++			"active=%d\n"
++			"iobase=%04X\n"
++			"nowayout=%d\n"
++			"timeout=%d\n"
++			"remaining=%d\n"
++			"fired=%d\n",
++			wdt_is_open,wdt_io,nowayout,timeout,remaining,fired);
++	*eof=1;
++	return len;
++}
++
+ static void
+ wdt_ctrl(int timeout)
+ {
+@@ -347,7 +347,7 @@ static struct notifier_block wdt_notifier = {
+ static int __init
+ wdt_init(void)
+ {
+-	int ret;
++	int ret = -EBUSY;
+ 
+ 	spin_lock_init(&io_lock);
+ 
+diff --git a/drivers/md/lvm.c b/drivers/md/lvm.c
+index e84b560..f5e200d 100644
+--- a/drivers/md/lvm.c
++++ b/drivers/md/lvm.c
+@@ -394,7 +394,7 @@ static char pv_name[NAME_LEN];
+ /* static char rootvg[NAME_LEN] = { 0, }; */
+ static int lock = 0;
+ static int _lock_open_count = 0;
+-static uint vg_count = 0;
++uint vg_count = 0;
+ static long lvm_chr_open_count = 0;
+ static DECLARE_WAIT_QUEUE_HEAD(lvm_wait);
+ 
+diff --git a/drivers/net/b44.c b/drivers/net/b44.c
+index 081e506..cb93941 100644
+--- a/drivers/net/b44.c
++++ b/drivers/net/b44.c
+@@ -1829,6 +1829,11 @@ static int __devinit b44_init_one(struct pci_dev *pdev,
+ 
+ 	pci_save_state(bp->pdev, bp->pci_cfg_state);
+ 
++	/* Chip reset provides power to the b44 MAC & PCI cores, which 
++	 * is necessary for MAC register access.
++	 */ 
++	b44_chip_reset(bp);
++
+ 	printk(KERN_INFO "%s: Broadcom 4400 10/100BaseT Ethernet ", dev->name);
+ 	for (i = 0; i < 6; i++)
+ 		printk("%2.2x%c", dev->dev_addr[i],
+diff --git a/drivers/scsi/fdomain.c b/drivers/scsi/fdomain.c
+index 5cdd2f6..eef869d 100644
+--- a/drivers/scsi/fdomain.c
++++ b/drivers/scsi/fdomain.c
+@@ -561,7 +561,8 @@ static void print_banner( struct Scsi_Host *shpnt )
+    printk( "\n" );
+ }
+ 
+-static int __init fdomain_setup( char *str )
++/* no __init, may be called from fdomain_stubs.c */
++int fdomain_setup( char *str )
+ {
+ 	int ints[4];
+ 
+diff --git a/drivers/scsi/pcmcia/fdomain_stub.c b/drivers/scsi/pcmcia/fdomain_stub.c
+index 04fbe03..2998e3b 100644
+--- a/drivers/scsi/pcmcia/fdomain_stub.c
++++ b/drivers/scsi/pcmcia/fdomain_stub.c
+@@ -85,7 +85,7 @@ typedef struct scsi_info_t {
+     dev_node_t		node[8];
+ } scsi_info_t;
+ 
+-extern void fdomain_setup(char *str, int *ints);
++extern int fdomain_setup(char *str);
+ 
+ static void fdomain_release(u_long arg);
+ static int fdomain_event(event_t event, int priority,
+@@ -253,7 +253,7 @@ static void fdomain_config(dev_link_t *link)
+     ints[1] = link->io.BasePort1;
+     ints[2] = link->irq.AssignedIRQ;
+     sprintf(str, "%d,%d", link->io.BasePort1, link->irq.AssignedIRQ);
+-    fdomain_setup(str, ints);
++    fdomain_setup(str);
+     
+     scsi_register_module(MODULE_SCSI_HA, &driver_template);
+ 
+diff --git a/fs/exec.c b/fs/exec.c
+index f196e7e..1d23db6 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -587,6 +587,7 @@ int flush_old_exec(struct linux_binprm * bprm)
+ {
+ 	char * name;
+ 	int i, ch, retval;
++	unsigned new_mm_dumpable;
+ 	struct signal_struct * oldsig;
+ 	struct files_struct * files;
+ 	char tcomm[sizeof(current->comm)];
+@@ -622,10 +623,12 @@ int flush_old_exec(struct linux_binprm * bprm)
+ 
+ 	current->sas_ss_sp = current->sas_ss_size = 0;
+ 
++	new_mm_dumpable = 0; /* no change */
+ 	if (current->euid == current->uid && current->egid == current->gid) {
+-		current->mm->dumpable = 1;
++		new_mm_dumpable = 1;
+ 		current->task_dumpable = 1;
+ 	}
++
+ 	name = bprm->filename;
+ 	for (i=0; (ch = *(name++)) != '\0';) {
+ 		if (ch == '/')
+@@ -641,9 +644,13 @@ int flush_old_exec(struct linux_binprm * bprm)
+ 
+ 	de_thread(current);
+ 
+-	if (bprm->e_uid != current->euid || bprm->e_gid != current->egid || 
+-	    permission(bprm->file->f_dentry->d_inode,MAY_READ))
++	if (bprm->e_uid != current->euid || bprm->e_gid != current->egid) {
+ 		current->mm->dumpable = 0;
++		current->pdeath_signal = 0;
++	} else if (permission(bprm->file->f_dentry->d_inode, MAY_READ)) {
++		current->mm->dumpable = 0;
++	} else if (new_mm_dumpable)
++		current->mm->dumpable = 1;
+ 
+ 	/* An exec changes our domain. We are no longer part of the thread
+ 	   group */
+@@ -768,6 +775,7 @@ void compute_creds(struct linux_binprm *bprm)
+ 	if (bprm->e_uid != current->uid || bprm->e_gid != current->gid ||
+ 	    !cap_issubset(new_permitted, current->cap_permitted)) {
+                 current->mm->dumpable = 0;
++		current->pdeath_signal = 0;
+ 		
+ 		lock_kernel();
+ 		if (must_not_trace_exec(current)
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index d8796bf..eae527c 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -738,15 +738,12 @@ static int proc_base_readdir(struct file * filp,
+ 
+ static int task_dumpable(struct task_struct *task)
+ {
+-	int dumpable = 0;
+-	struct mm_struct *mm;
++	int retval;
+ 
+ 	task_lock(task);
+-	mm = task->mm;
+-	if (mm)
+-		dumpable = mm->dumpable;
++	retval = is_dumpable(task);
+ 	task_unlock(task);
+-	return dumpable;
++	return retval;
+ }
+ 
+ 
