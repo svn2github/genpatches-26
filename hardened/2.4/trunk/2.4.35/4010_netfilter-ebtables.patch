@@ -1,7 +1,6 @@
-diff -urN linux-2.4.29-h6/include/linux/if_bridge.h linux-2.4.29-h7/include/linux/if_bridge.h
---- linux-2.4.29-h6/include/linux/if_bridge.h	2005-03-30 00:06:12.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/if_bridge.h	2005-03-30 00:08:27.000000000 +0000
-@@ -102,7 +102,8 @@
+--- a/include/linux/if_bridge.h
++++ b/include/linux/if_bridge.h
+@@ -102,7 +102,8 @@ struct net_bridge;
  struct net_bridge_port;
  
  extern int (*br_ioctl_hook)(unsigned long arg);
@@ -11,10 +10,9 @@ diff -urN linux-2.4.29-h6/include/linux/if_bridge.h linux-2.4.29-h7/include/linu
  
  #endif
  
-diff -urN linux-2.4.29-h6/include/linux/netfilter.h linux-2.4.29-h7/include/linux/netfilter.h
---- linux-2.4.29-h6/include/linux/netfilter.h	2005-03-30 00:06:11.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter.h	2005-03-30 00:08:27.000000000 +0000
-@@ -118,17 +118,23 @@
+--- a/include/linux/netfilter.h
++++ b/include/linux/netfilter.h
+@@ -118,17 +118,23 @@ extern struct list_head nf_hooks[NPROTO]
  /* This is gross, but inline doesn't cut it for avoiding the function
     call in fast path: gcc doesn't inline (needs value tracking?). --RR */
  #ifdef CONFIG_NETFILTER_DEBUG
@@ -41,9 +39,99 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter.h linux-2.4.29-h7/include/linu
  
  /* Call setsockopt() */
  int nf_setsockopt(struct sock *sk, int pf, int optval, char *opt, 
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_802_3.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_802_3.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_802_3.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_802_3.h	2005-03-30 00:08:27.000000000 +0000
+--- a/include/linux/netfilter_bridge.h
++++ b/include/linux/netfilter_bridge.h
+@@ -6,6 +6,10 @@
+ 
+ #include <linux/config.h>
+ #include <linux/netfilter.h>
++#if defined(__KERNEL__) && defined(CONFIG_NETFILTER)
++#include <asm/atomic.h>
++#include <linux/if_ether.h>
++#endif
+ 
+ /* Bridge Hooks */
+ /* After promisc drops, checksum checks. */
+@@ -18,7 +22,76 @@
+ #define NF_BR_LOCAL_OUT		3
+ /* Packets about to hit the wire. */
+ #define NF_BR_POST_ROUTING	4
+-#define NF_BR_NUMHOOKS		5
++/* Not really a hook, but used for the ebtables broute table */
++#define NF_BR_BROUTING		5
++#define NF_BR_NUMHOOKS		6
++
++#ifdef __KERNEL__
++
++#define BRNF_PKT_TYPE			0x01
++#define BRNF_BRIDGED_DNAT		0x02
++#define BRNF_DONT_TAKE_PARENT		0x04
++#define BRNF_BRIDGED			0x08
++#define BRNF_NF_BRIDGE_PREROUTING	0x10
++
++enum nf_br_hook_priorities {
++	NF_BR_PRI_FIRST = INT_MIN,
++	NF_BR_PRI_NAT_DST_BRIDGED = -300,
++	NF_BR_PRI_FILTER_BRIDGED = -200,
++	NF_BR_PRI_BRNF = 0,
++	NF_BR_PRI_NAT_DST_OTHER = 100,
++	NF_BR_PRI_FILTER_OTHER = 200,
++	NF_BR_PRI_NAT_SRC = 300,
++	NF_BR_PRI_LAST = INT_MAX,
++};
++
++#ifdef CONFIG_NETFILTER
++static inline
++struct nf_bridge_info *nf_bridge_alloc(struct sk_buff *skb)
++{
++	struct nf_bridge_info **nf_bridge = &(skb->nf_bridge);
++
++	if ((*nf_bridge = kmalloc(sizeof(**nf_bridge), GFP_ATOMIC)) != NULL) {
++		atomic_set(&(*nf_bridge)->use, 1);
++		(*nf_bridge)->mask = 0;
++		(*nf_bridge)->physindev = (*nf_bridge)->physoutdev = NULL;
++#if defined(CONFIG_VLAN_8021Q) || defined(CONFIG_VLAN_8021Q_MODULE)
++		(*nf_bridge)->netoutdev = NULL;
++#endif
++	}
++
++	return *nf_bridge;
++}
++
++/* Only used in br_forward.c */
++static inline
++void nf_bridge_maybe_copy_header(struct sk_buff *skb)
++{
++	if (skb->nf_bridge) {
++		if (skb->protocol == __constant_htons(ETH_P_8021Q)) {
++			memcpy(skb->data - 18, skb->nf_bridge->data, 18);
++			skb_push(skb, 4);
++		} else
++			memcpy(skb->data - 16, skb->nf_bridge->data, 16);
++	}
++}
++
++static inline
++void nf_bridge_save_header(struct sk_buff *skb)
++{
++        int header_size = 16;
++
++	if (skb->protocol == __constant_htons(ETH_P_8021Q))
++		header_size = 18;
++	memcpy(skb->nf_bridge->data, skb->data - header_size, header_size);
++}
+ 
++struct bridge_skb_cb {
++	union {
++		__u32 ipv4;
++	} daddr;
++};
++#endif /* CONFIG_NETFILTER */
+ 
++#endif /* __KERNEL__ */
+ #endif
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_802_3.h
 @@ -0,0 +1,60 @@
 +#ifndef __LINUX_BRIDGE_EBT_802_3_H
 +#define __LINUX_BRIDGE_EBT_802_3_H
@@ -105,9 +193,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_802_3.h linux-2.4.2
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_among.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_among.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_among.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_among.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_among.h
 @@ -0,0 +1,65 @@
 +#ifndef __LINUX_BRIDGE_EBT_AMONG_H
 +#define __LINUX_BRIDGE_EBT_AMONG_H
@@ -174,9 +261,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_among.h linux-2.4.2
 +#define EBT_AMONG_MATCH "among"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arp.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_arp.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arp.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_arp.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_arp.h
 @@ -0,0 +1,32 @@
 +#ifndef __LINUX_BRIDGE_EBT_ARP_H
 +#define __LINUX_BRIDGE_EBT_ARP_H
@@ -210,9 +296,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arp.h linux-2.4.29-
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arpreply.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_arpreply.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arpreply.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_arpreply.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_arpreply.h
 @@ -0,0 +1,11 @@
 +#ifndef __LINUX_BRIDGE_EBT_ARPREPLY_H
 +#define __LINUX_BRIDGE_EBT_ARPREPLY_H
@@ -225,9 +310,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_arpreply.h linux-2.
 +#define EBT_ARPREPLY_TARGET "arpreply"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_ip.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_ip.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_ip.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_ip.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_ip.h
 @@ -0,0 +1,43 @@
 +/*
 + *  ebt_ip
@@ -272,9 +356,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_ip.h linux-2.4.29-h
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_limit.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_limit.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_limit.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_limit.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_limit.h
 @@ -0,0 +1,23 @@
 +#ifndef __LINUX_BRIDGE_EBT_LIMIT_H
 +#define __LINUX_BRIDGE_EBT_LIMIT_H
@@ -299,9 +382,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_limit.h linux-2.4.2
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_log.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_log.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_log.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_log.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_log.h
 @@ -0,0 +1,17 @@
 +#ifndef __LINUX_BRIDGE_EBT_LOG_H
 +#define __LINUX_BRIDGE_EBT_LOG_H
@@ -320,9 +402,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_log.h linux-2.4.29-
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_m.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_mark_m.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_m.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_mark_m.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_mark_m.h
 @@ -0,0 +1,15 @@
 +#ifndef __LINUX_BRIDGE_EBT_MARK_M_H
 +#define __LINUX_BRIDGE_EBT_MARK_M_H
@@ -339,9 +420,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_m.h linux-2.4.
 +#define EBT_MARK_MATCH "mark_m"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_t.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_mark_t.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_t.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_mark_t.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_mark_t.h
 @@ -0,0 +1,12 @@
 +#ifndef __LINUX_BRIDGE_EBT_MARK_T_H
 +#define __LINUX_BRIDGE_EBT_MARK_T_H
@@ -355,9 +435,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_mark_t.h linux-2.4.
 +#define EBT_MARK_TARGET "mark"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_nat.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_nat.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_nat.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_nat.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_nat.h
 @@ -0,0 +1,13 @@
 +#ifndef __LINUX_BRIDGE_EBT_NAT_H
 +#define __LINUX_BRIDGE_EBT_NAT_H
@@ -372,9 +451,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_nat.h linux-2.4.29-
 +#define EBT_DNAT_TARGET "dnat"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_pkttype.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_pkttype.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_pkttype.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_pkttype.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_pkttype.h
 @@ -0,0 +1,11 @@
 +#ifndef __LINUX_BRIDGE_EBT_PKTTYPE_H
 +#define __LINUX_BRIDGE_EBT_PKTTYPE_H
@@ -387,9 +465,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_pkttype.h linux-2.4
 +#define EBT_PKTTYPE_MATCH "pkttype"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_redirect.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_redirect.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_redirect.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_redirect.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_redirect.h
 @@ -0,0 +1,11 @@
 +#ifndef __LINUX_BRIDGE_EBT_REDIRECT_H
 +#define __LINUX_BRIDGE_EBT_REDIRECT_H
@@ -402,9 +479,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_redirect.h linux-2.
 +#define EBT_REDIRECT_TARGET "redirect"
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_stp.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_stp.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_stp.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_stp.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_stp.h
 @@ -0,0 +1,46 @@
 +#ifndef __LINUX_BRIDGE_EBT_STP_H
 +#define __LINUX_BRIDGE_EBT_STP_H
@@ -452,9 +528,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_stp.h linux-2.4.29-
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_vlan.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_vlan.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_vlan.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebt_vlan.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebt_vlan.h
 @@ -0,0 +1,20 @@
 +#ifndef __LINUX_BRIDGE_EBT_VLAN_H
 +#define __LINUX_BRIDGE_EBT_VLAN_H
@@ -476,9 +551,8 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebt_vlan.h linux-2.4.29
 +};
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebtables.h linux-2.4.29-h7/include/linux/netfilter_bridge/ebtables.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge/ebtables.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge/ebtables.h	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/include/linux/netfilter_bridge/ebtables.h
 @@ -0,0 +1,361 @@
 +/*
 + *  ebtables
@@ -841,101 +915,21 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge/ebtables.h linux-2.4.29
 +})
 +
 +#endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_bridge.h linux-2.4.29-h7/include/linux/netfilter_bridge.h
---- linux-2.4.29-h6/include/linux/netfilter_bridge.h	2005-03-30 00:06:12.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_bridge.h	2005-03-30 00:08:27.000000000 +0000
-@@ -6,6 +6,10 @@
- 
- #include <linux/config.h>
- #include <linux/netfilter.h>
-+#if defined(__KERNEL__) && defined(CONFIG_NETFILTER)
-+#include <asm/atomic.h>
-+#include <linux/if_ether.h>
-+#endif
- 
- /* Bridge Hooks */
- /* After promisc drops, checksum checks. */
-@@ -18,7 +22,76 @@
- #define NF_BR_LOCAL_OUT		3
- /* Packets about to hit the wire. */
- #define NF_BR_POST_ROUTING	4
--#define NF_BR_NUMHOOKS		5
-+/* Not really a hook, but used for the ebtables broute table */
-+#define NF_BR_BROUTING		5
-+#define NF_BR_NUMHOOKS		6
-+
-+#ifdef __KERNEL__
-+
-+#define BRNF_PKT_TYPE			0x01
-+#define BRNF_BRIDGED_DNAT		0x02
-+#define BRNF_DONT_TAKE_PARENT		0x04
-+#define BRNF_BRIDGED			0x08
-+#define BRNF_NF_BRIDGE_PREROUTING	0x10
-+
-+enum nf_br_hook_priorities {
-+	NF_BR_PRI_FIRST = INT_MIN,
-+	NF_BR_PRI_NAT_DST_BRIDGED = -300,
-+	NF_BR_PRI_FILTER_BRIDGED = -200,
-+	NF_BR_PRI_BRNF = 0,
-+	NF_BR_PRI_NAT_DST_OTHER = 100,
-+	NF_BR_PRI_FILTER_OTHER = 200,
-+	NF_BR_PRI_NAT_SRC = 300,
-+	NF_BR_PRI_LAST = INT_MAX,
-+};
-+
-+#ifdef CONFIG_NETFILTER
-+static inline
-+struct nf_bridge_info *nf_bridge_alloc(struct sk_buff *skb)
-+{
-+	struct nf_bridge_info **nf_bridge = &(skb->nf_bridge);
-+
-+	if ((*nf_bridge = kmalloc(sizeof(**nf_bridge), GFP_ATOMIC)) != NULL) {
-+		atomic_set(&(*nf_bridge)->use, 1);
-+		(*nf_bridge)->mask = 0;
-+		(*nf_bridge)->physindev = (*nf_bridge)->physoutdev = NULL;
-+#if defined(CONFIG_VLAN_8021Q) || defined(CONFIG_VLAN_8021Q_MODULE)
-+		(*nf_bridge)->netoutdev = NULL;
-+#endif
-+	}
-+
-+	return *nf_bridge;
-+}
-+
-+/* Only used in br_forward.c */
-+static inline
-+void nf_bridge_maybe_copy_header(struct sk_buff *skb)
-+{
-+	if (skb->nf_bridge) {
-+		if (skb->protocol == __constant_htons(ETH_P_8021Q)) {
-+			memcpy(skb->data - 18, skb->nf_bridge->data, 18);
-+			skb_push(skb, 4);
-+		} else
-+			memcpy(skb->data - 16, skb->nf_bridge->data, 16);
-+	}
-+}
-+
-+static inline
-+void nf_bridge_save_header(struct sk_buff *skb)
-+{
-+        int header_size = 16;
-+
-+	if (skb->protocol == __constant_htons(ETH_P_8021Q))
-+		header_size = 18;
-+	memcpy(skb->nf_bridge->data, skb->data - header_size, header_size);
-+}
- 
-+struct bridge_skb_cb {
-+	union {
-+		__u32 ipv4;
-+	} daddr;
-+};
-+#endif /* CONFIG_NETFILTER */
- 
-+#endif /* __KERNEL__ */
- #endif
-diff -urN linux-2.4.29-h6/include/linux/netfilter_ipv4/ipt_physdev.h linux-2.4.29-h7/include/linux/netfilter_ipv4/ipt_physdev.h
---- linux-2.4.29-h6/include/linux/netfilter_ipv4/ipt_physdev.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_ipv4/ipt_physdev.h	2005-03-30 00:08:27.000000000 +0000
+--- a/include/linux/netfilter_ipv4.h
++++ b/include/linux/netfilter_ipv4.h
+@@ -52,8 +52,10 @@
+ enum nf_ip_hook_priorities {
+ 	NF_IP_PRI_FIRST = INT_MIN,
+ 	NF_IP_PRI_CONNTRACK = -200,
++	NF_IP_PRI_BRIDGE_SABOTAGE_FORWARD = -175,
+ 	NF_IP_PRI_MANGLE = -150,
+ 	NF_IP_PRI_NAT_DST = -100,
++	NF_IP_PRI_BRIDGE_SABOTAGE_LOCAL_OUT = -50,
+ 	NF_IP_PRI_FILTER = 0,
+ 	NF_IP_PRI_NAT_SRC = 100,
+ 	NF_IP_PRI_LAST = INT_MAX,
+--- /dev/null
++++ b/include/linux/netfilter_ipv4/ipt_physdev.h
 @@ -0,0 +1,24 @@
 +#ifndef _IPT_PHYSDEV_H
 +#define _IPT_PHYSDEV_H
@@ -961,24 +955,9 @@ diff -urN linux-2.4.29-h6/include/linux/netfilter_ipv4/ipt_physdev.h linux-2.4.2
 +};
 +
 +#endif /*_IPT_PHYSDEV_H*/
-diff -urN linux-2.4.29-h6/include/linux/netfilter_ipv4.h linux-2.4.29-h7/include/linux/netfilter_ipv4.h
---- linux-2.4.29-h6/include/linux/netfilter_ipv4.h	2005-03-30 00:06:12.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/netfilter_ipv4.h	2005-03-30 00:08:27.000000000 +0000
-@@ -52,8 +52,10 @@
- enum nf_ip_hook_priorities {
- 	NF_IP_PRI_FIRST = INT_MIN,
- 	NF_IP_PRI_CONNTRACK = -200,
-+	NF_IP_PRI_BRIDGE_SABOTAGE_FORWARD = -175,
- 	NF_IP_PRI_MANGLE = -150,
- 	NF_IP_PRI_NAT_DST = -100,
-+	NF_IP_PRI_BRIDGE_SABOTAGE_LOCAL_OUT = -50,
- 	NF_IP_PRI_FILTER = 0,
- 	NF_IP_PRI_NAT_SRC = 100,
- 	NF_IP_PRI_LAST = INT_MAX,
-diff -urN linux-2.4.29-h6/include/linux/skbuff.h linux-2.4.29-h7/include/linux/skbuff.h
---- linux-2.4.29-h6/include/linux/skbuff.h	2005-03-30 00:06:11.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/skbuff.h	2005-03-30 00:08:27.000000000 +0000
-@@ -92,6 +92,20 @@
+--- a/include/linux/skbuff.h
++++ b/include/linux/skbuff.h
+@@ -92,6 +92,20 @@ struct nf_conntrack {
  struct nf_ct_info {
  	struct nf_conntrack *master;
  };
@@ -999,7 +978,7 @@ diff -urN linux-2.4.29-h6/include/linux/skbuff.h linux-2.4.29-h7/include/linux/s
  #endif
  
  struct sk_buff_head {
-@@ -208,6 +222,9 @@
+@@ -208,6 +222,9 @@ struct sk_buff {
  #ifdef CONFIG_NETFILTER_DEBUG
          unsigned int nf_debug;
  #endif
@@ -1009,7 +988,7 @@ diff -urN linux-2.4.29-h6/include/linux/skbuff.h linux-2.4.29-h7/include/linux/s
  #endif /*CONFIG_NETFILTER*/
  
  #if defined(CONFIG_HIPPI)
-@@ -1166,6 +1183,20 @@
+@@ -1162,6 +1179,20 @@ nf_conntrack_get(struct nf_ct_info *nfct
  	if (nfct)
  		atomic_inc(&nfct->master->use);
  }
@@ -1030,10 +1009,9 @@ diff -urN linux-2.4.29-h6/include/linux/skbuff.h linux-2.4.29-h7/include/linux/s
  static inline void
  nf_reset(struct sk_buff *skb)
  {
-diff -urN linux-2.4.29-h6/include/linux/sysctl.h linux-2.4.29-h7/include/linux/sysctl.h
---- linux-2.4.29-h6/include/linux/sysctl.h	2005-03-30 00:06:11.000000000 +0000
-+++ linux-2.4.29-h7/include/linux/sysctl.h	2005-03-30 00:08:27.000000000 +0000
-@@ -608,6 +608,15 @@
+--- a/include/linux/sysctl.h
++++ b/include/linux/sysctl.h
+@@ -610,6 +610,15 @@ enum {
  	NET_DECNET_CONF_DEV_STATE = 7
  };
  
@@ -1049,10 +1027,9 @@ diff -urN linux-2.4.29-h6/include/linux/sysctl.h linux-2.4.29-h7/include/linux/s
  /* CTL_PROC names: */
  
  /* CTL_FS names: */
-diff -urN linux-2.4.29-h6/net/8021q/vlan_dev.c linux-2.4.29-h7/net/8021q/vlan_dev.c
---- linux-2.4.29-h6/net/8021q/vlan_dev.c	2005-03-30 00:06:21.000000000 +0000
-+++ linux-2.4.29-h7/net/8021q/vlan_dev.c	2005-03-30 00:08:27.000000000 +0000
-@@ -488,6 +488,10 @@
+--- a/net/8021q/vlan_dev.c
++++ b/net/8021q/vlan_dev.c
+@@ -488,6 +488,10 @@ int vlan_dev_hard_start_xmit(struct sk_b
  	stats->tx_packets++; /* for statics only */
  	stats->tx_bytes += skb->len;
  
@@ -1063,10 +1040,9 @@ diff -urN linux-2.4.29-h6/net/8021q/vlan_dev.c linux-2.4.29-h7/net/8021q/vlan_de
  	skb->dev = VLAN_DEV_INFO(dev)->real_dev;
  	dev_queue_xmit(skb);
  
-diff -urN linux-2.4.29-h6/net/Config.in linux-2.4.29-h7/net/Config.in
---- linux-2.4.29-h6/net/Config.in	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/Config.in	2005-03-30 00:08:27.000000000 +0000
-@@ -70,6 +70,9 @@
+--- a/net/Config.in
++++ b/net/Config.in
+@@ -70,6 +70,9 @@ if [ "$CONFIG_DECNET" != "n" ]; then
     source net/decnet/Config.in
  fi
  dep_tristate '802.1d Ethernet Bridging' CONFIG_BRIDGE $CONFIG_INET
@@ -1076,9 +1052,8 @@ diff -urN linux-2.4.29-h6/net/Config.in linux-2.4.29-h7/net/Config.in
  if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
     tristate 'CCITT X.25 Packet Layer (EXPERIMENTAL)' CONFIG_X25
     tristate 'LAPB Data Link Driver (EXPERIMENTAL)' CONFIG_LAPB
-diff -urN linux-2.4.29-h6/net/Makefile linux-2.4.29-h7/net/Makefile
---- linux-2.4.29-h6/net/Makefile	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/Makefile	2005-03-30 00:08:27.000000000 +0000
+--- a/net/Makefile
++++ b/net/Makefile
 @@ -7,7 +7,7 @@
  
  O_TARGET :=	network.o
@@ -1088,7 +1063,7 @@ diff -urN linux-2.4.29-h6/net/Makefile linux-2.4.29-h7/net/Makefile
  export-objs :=	netsyms.o
  
  subdir-y :=	core ethernet
-@@ -27,6 +27,12 @@
+@@ -27,6 +27,12 @@ subdir-$(CONFIG_NETFILTER)	+= ipv6/netfi
  endif
  endif
  
@@ -1101,9 +1076,8 @@ diff -urN linux-2.4.29-h6/net/Makefile linux-2.4.29-h7/net/Makefile
  subdir-$(CONFIG_KHTTPD)		+= khttpd
  subdir-$(CONFIG_PACKET)		+= packet
  subdir-$(CONFIG_NET_SCHED)	+= sched
-diff -urN linux-2.4.29-h6/net/bridge/Makefile linux-2.4.29-h7/net/bridge/Makefile
---- linux-2.4.29-h6/net/bridge/Makefile	2005-03-30 00:06:20.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/Makefile	2005-03-30 00:08:27.000000000 +0000
+--- a/net/bridge/Makefile
++++ b/net/bridge/Makefile
 @@ -7,10 +7,17 @@
  #
  # Note 2! The CFLAGS definition is now in the main makefile...
@@ -1122,9 +1096,8 @@ diff -urN linux-2.4.29-h6/net/bridge/Makefile linux-2.4.29-h7/net/bridge/Makefil
  obj-m		:= $(O_TARGET)
  
  include $(TOPDIR)/Rules.make
-diff -urN linux-2.4.29-h6/net/bridge/br.c linux-2.4.29-h7/net/bridge/br.c
---- linux-2.4.29-h6/net/bridge/br.c	2005-03-30 00:06:20.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/br.c	2005-03-30 00:08:27.000000000 +0000
+--- a/net/bridge/br.c
++++ b/net/bridge/br.c
 @@ -30,6 +30,8 @@
  #include "../atm/lec.h"
  #endif
@@ -1134,7 +1107,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br.c linux-2.4.29-h7/net/bridge/br.c
  void br_dec_use_count()
  {
  	MOD_DEC_USE_COUNT;
-@@ -44,6 +46,10 @@
+@@ -44,6 +46,10 @@ static int __init br_init(void)
  {
  	printk(KERN_INFO "NET4: Ethernet Bridge 008 for NET4.0\n");
  
@@ -1145,7 +1118,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br.c linux-2.4.29-h7/net/bridge/br.c
  	br_handle_frame_hook = br_handle_frame;
  	br_ioctl_hook = br_ioctl_deviceless_stub;
  #if defined(CONFIG_ATM_LANE) || defined(CONFIG_ATM_LANE_MODULE)
-@@ -57,6 +63,9 @@
+@@ -57,6 +63,9 @@ static int __init br_init(void)
  
  static void __exit br_deinit(void)
  {
@@ -1155,7 +1128,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br.c linux-2.4.29-h7/net/bridge/br.c
  	unregister_netdevice_notifier(&br_device_notifier);
  
  	rtnl_lock();
-@@ -73,7 +82,7 @@
+@@ -73,7 +82,7 @@ static void __exit br_deinit(void)
  #endif
  }
  
@@ -1164,10 +1137,9 @@ diff -urN linux-2.4.29-h6/net/bridge/br.c linux-2.4.29-h7/net/bridge/br.c
  
  module_init(br_init)
  module_exit(br_deinit)
-diff -urN linux-2.4.29-h6/net/bridge/br_forward.c linux-2.4.29-h7/net/bridge/br_forward.c
---- linux-2.4.29-h6/net/bridge/br_forward.c	2005-03-30 00:06:20.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/br_forward.c	2005-03-30 00:08:27.000000000 +0000
-@@ -30,18 +30,21 @@
+--- a/net/bridge/br_forward.c
++++ b/net/bridge/br_forward.c
+@@ -30,18 +30,21 @@ static inline int should_deliver(struct 
  	return 1;
  }
  
@@ -1192,7 +1164,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_forward.c linux-2.4.29-h7/net/bridge/br_
  
  	return 0;
  }
-@@ -49,8 +52,11 @@
+@@ -49,8 +52,11 @@ static int __br_forward_finish(struct sk
  static void __br_deliver(struct net_bridge_port *to, struct sk_buff *skb)
  {
  	skb->dev = to->dev;
@@ -1205,7 +1177,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_forward.c linux-2.4.29-h7/net/bridge/br_
  }
  
  static void __br_forward(struct net_bridge_port *to, struct sk_buff *skb)
-@@ -62,7 +68,7 @@
+@@ -62,7 +68,7 @@ static void __br_forward(struct net_brid
  	skb->ip_summed = CHECKSUM_NONE;
  
  	NF_HOOK(PF_BRIDGE, NF_BR_FORWARD, skb, indev, skb->dev,
@@ -1214,10 +1186,9 @@ diff -urN linux-2.4.29-h6/net/bridge/br_forward.c linux-2.4.29-h7/net/bridge/br_
  }
  
  /* called under bridge lock */
-diff -urN linux-2.4.29-h6/net/bridge/br_input.c linux-2.4.29-h7/net/bridge/br_input.c
---- linux-2.4.29-h6/net/bridge/br_input.c	2005-03-30 00:06:20.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/br_input.c	2005-03-30 00:08:27.000000000 +0000
-@@ -24,6 +24,9 @@
+--- a/net/bridge/br_input.c
++++ b/net/bridge/br_input.c
+@@ -24,6 +24,9 @@ unsigned char bridge_ula[6] = { 0x01, 0x
  
  static int br_pass_frame_up_finish(struct sk_buff *skb)
  {
@@ -1227,7 +1198,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_input.c linux-2.4.29-h7/net/bridge/br_in
  	netif_rx(skb);
  
  	return 0;
-@@ -46,7 +49,7 @@
+@@ -46,7 +49,7 @@ static void br_pass_frame_up(struct net_
  			br_pass_frame_up_finish);
  }
  
@@ -1236,7 +1207,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_input.c linux-2.4.29-h7/net/bridge/br_in
  {
  	struct net_bridge *br;
  	unsigned char *dest;
-@@ -112,7 +115,7 @@
+@@ -112,7 +115,7 @@ err_nolock:
  	return 0;
  }
  
@@ -1245,7 +1216,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_input.c linux-2.4.29-h7/net/bridge/br_in
  {
  	struct net_bridge *br;
  	unsigned char *dest;
-@@ -146,26 +149,35 @@
+@@ -146,26 +149,35 @@ void br_handle_frame(struct sk_buff *skb
  		goto handle_special_frame;
  
  	if (p->state == BR_STATE_FORWARDING) {
@@ -1284,9 +1255,8 @@ diff -urN linux-2.4.29-h6/net/bridge/br_input.c linux-2.4.29-h7/net/bridge/br_in
  	kfree_skb(skb);
 +	return 0;
  }
-diff -urN linux-2.4.29-h6/net/bridge/br_netfilter.c linux-2.4.29-h7/net/bridge/br_netfilter.c
---- linux-2.4.29-h6/net/bridge/br_netfilter.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/br_netfilter.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/br_netfilter.c
 @@ -0,0 +1,896 @@
 +/*
 + *	Handle firewalling
@@ -2184,10 +2154,9 @@ diff -urN linux-2.4.29-h6/net/bridge/br_netfilter.c linux-2.4.29-h7/net/bridge/b
 +#endif
 +
 +}
-diff -urN linux-2.4.29-h6/net/bridge/br_private.h linux-2.4.29-h7/net/bridge/br_private.h
---- linux-2.4.29-h6/net/bridge/br_private.h	2005-03-30 00:06:20.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/br_private.h	2005-03-30 00:08:27.000000000 +0000
-@@ -143,8 +143,10 @@
+--- a/net/bridge/br_private.h
++++ b/net/bridge/br_private.h
+@@ -143,8 +143,10 @@ extern void br_fdb_insert(struct net_bri
  /* br_forward.c */
  extern void br_deliver(struct net_bridge_port *to,
  		struct sk_buff *skb);
@@ -2198,7 +2167,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_private.h linux-2.4.29-h7/net/bridge/br_
  extern void br_flood_deliver(struct net_bridge *br,
  		      struct sk_buff *skb,
  		      int clone);
-@@ -165,7 +167,8 @@
+@@ -165,7 +167,8 @@ extern void br_get_port_ifindices(struct
  			   int *ifindices);
  
  /* br_input.c */
@@ -2208,7 +2177,7 @@ diff -urN linux-2.4.29-h6/net/bridge/br_private.h linux-2.4.29-h7/net/bridge/br_
  
  /* br_ioctl.c */
  extern int br_ioctl(struct net_bridge *br,
-@@ -175,6 +178,10 @@
+@@ -175,6 +178,10 @@ extern int br_ioctl(struct net_bridge *b
  	     unsigned long arg2);
  extern int br_ioctl_deviceless_stub(unsigned long arg);
  
@@ -2219,9 +2188,8 @@ diff -urN linux-2.4.29-h6/net/bridge/br_private.h linux-2.4.29-h7/net/bridge/br_
  /* br_stp.c */
  extern int br_is_root_bridge(struct net_bridge *br);
  extern struct net_bridge_port *br_get_port(struct net_bridge *br,
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/Config.in linux-2.4.29-h7/net/bridge/netfilter/Config.in
---- linux-2.4.29-h6/net/bridge/netfilter/Config.in	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/Config.in	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/Config.in
 @@ -0,0 +1,22 @@
 +#
 +# Bridge netfilter configuration
@@ -2245,9 +2213,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/Config.in linux-2.4.29-h7/net/bri
 +dep_tristate '    ebt: dnat target support' CONFIG_BRIDGE_EBT_DNAT $CONFIG_BRIDGE_NF_EBTABLES
 +dep_tristate '    ebt: redirect target support' CONFIG_BRIDGE_EBT_REDIRECT $CONFIG_BRIDGE_NF_EBTABLES
 +dep_tristate '    ebt: mark target support' CONFIG_BRIDGE_EBT_MARK_T $CONFIG_BRIDGE_NF_EBTABLES
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/Makefile linux-2.4.29-h7/net/bridge/netfilter/Makefile
---- linux-2.4.29-h6/net/bridge/netfilter/Makefile	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/Makefile	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/Makefile
 @@ -0,0 +1,33 @@
 +#
 +# Makefile for the netfilter modules on top of bridging.
@@ -2282,9 +2249,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/Makefile linux-2.4.29-h7/net/brid
 +obj-$(CONFIG_BRIDGE_EBT_REDIRECT) += ebt_redirect.o
 +obj-$(CONFIG_BRIDGE_EBT_SNAT) += ebt_snat.o
 +include $(TOPDIR)/Rules.make
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_802_3.c linux-2.4.29-h7/net/bridge/netfilter/ebt_802_3.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_802_3.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_802_3.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_802_3.c
 @@ -0,0 +1,74 @@
 +/*
 + * 802_3
@@ -2360,9 +2326,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_802_3.c linux-2.4.29-h7/net/b
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_among.c linux-2.4.29-h7/net/bridge/netfilter/ebt_among.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_among.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_among.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_among.c
 @@ -0,0 +1,223 @@
 +/*
 + *  ebt_among
@@ -2587,9 +2552,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_among.c linux-2.4.29-h7/net/b
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_arp.c linux-2.4.29-h7/net/bridge/netfilter/ebt_arp.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_arp.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_arp.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_arp.c
 @@ -0,0 +1,149 @@
 +/*
 + *  ebt_arp
@@ -2740,9 +2704,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_arp.c linux-2.4.29-h7/net/bri
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_arpreply.c linux-2.4.29-h7/net/bridge/netfilter/ebt_arpreply.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_arpreply.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_arpreply.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_arpreply.c
 @@ -0,0 +1,86 @@
 +/*
 + *  ebt_arpreply
@@ -2830,9 +2793,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_arpreply.c linux-2.4.29-h7/ne
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_dnat.c linux-2.4.29-h7/net/bridge/netfilter/ebt_dnat.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_dnat.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_dnat.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_dnat.c
 @@ -0,0 +1,65 @@
 +/*
 + *  ebt_dnat
@@ -2899,9 +2861,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_dnat.c linux-2.4.29-h7/net/br
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_ip.c linux-2.4.29-h7/net/bridge/netfilter/ebt_ip.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_ip.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_ip.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_ip.c
 @@ -0,0 +1,121 @@
 +/*
 + *  ebt_ip
@@ -3024,9 +2985,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_ip.c linux-2.4.29-h7/net/brid
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_limit.c linux-2.4.29-h7/net/bridge/netfilter/ebt_limit.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_limit.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_limit.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_limit.c
 @@ -0,0 +1,101 @@
 +/*
 + *  ebt_limit
@@ -3129,9 +3089,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_limit.c linux-2.4.29-h7/net/b
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_log.c linux-2.4.29-h7/net/bridge/netfilter/ebt_log.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_log.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_log.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_log.c
 @@ -0,0 +1,152 @@
 +/*
 + *  ebt_log
@@ -3285,9 +3244,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_log.c linux-2.4.29-h7/net/bri
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_mark.c linux-2.4.29-h7/net/bridge/netfilter/ebt_mark.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_mark.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_mark.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_mark.c
 @@ -0,0 +1,66 @@
 +/*
 + *  ebt_mark
@@ -3355,9 +3313,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_mark.c linux-2.4.29-h7/net/br
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_mark_m.c linux-2.4.29-h7/net/bridge/netfilter/ebt_mark_m.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_mark_m.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_mark_m.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_mark_m.c
 @@ -0,0 +1,61 @@
 +/*
 + *  ebt_mark_m
@@ -3420,9 +3377,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_mark_m.c linux-2.4.29-h7/net/
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_pkttype.c linux-2.4.29-h7/net/bridge/netfilter/ebt_pkttype.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_pkttype.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_pkttype.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_pkttype.c
 @@ -0,0 +1,60 @@
 +/*
 + *  ebt_pkttype
@@ -3484,9 +3440,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_pkttype.c linux-2.4.29-h7/net
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_redirect.c linux-2.4.29-h7/net/bridge/netfilter/ebt_redirect.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_redirect.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_redirect.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_redirect.c
 @@ -0,0 +1,71 @@
 +/*
 + *  ebt_redirect
@@ -3559,9 +3514,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_redirect.c linux-2.4.29-h7/ne
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_snat.c linux-2.4.29-h7/net/bridge/netfilter/ebt_snat.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_snat.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_snat.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_snat.c
 @@ -0,0 +1,64 @@
 +/*
 + *  ebt_snat
@@ -3627,9 +3581,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_snat.c linux-2.4.29-h7/net/br
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_stp.c linux-2.4.29-h7/net/bridge/netfilter/ebt_stp.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_stp.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_stp.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_stp.c
 @@ -0,0 +1,191 @@
 +/*
 + *  ebt_stp
@@ -3822,9 +3775,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_stp.c linux-2.4.29-h7/net/bri
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_vlan.c linux-2.4.29-h7/net/bridge/netfilter/ebt_vlan.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebt_vlan.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebt_vlan.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebt_vlan.c
 @@ -0,0 +1,259 @@
 +/*
 + * Description: EBTables 802.1Q match extension kernelspace module.
@@ -4085,9 +4037,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebt_vlan.c linux-2.4.29-h7/net/br
 +module_exit(fini);
 +
 +EXPORT_NO_SYMBOLS;
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_broute.c linux-2.4.29-h7/net/bridge/netfilter/ebtable_broute.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebtable_broute.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebtable_broute.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebtable_broute.c
 @@ -0,0 +1,79 @@
 +/*
 + *  ebtable_broute
@@ -4168,9 +4119,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_broute.c linux-2.4.29-h7/
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_filter.c linux-2.4.29-h7/net/bridge/netfilter/ebtable_filter.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebtable_filter.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebtable_filter.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebtable_filter.c
 @@ -0,0 +1,90 @@
 +/*
 + *  ebtable_filter
@@ -4262,9 +4212,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_filter.c linux-2.4.29-h7/
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_nat.c linux-2.4.29-h7/net/bridge/netfilter/ebtable_nat.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebtable_nat.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebtable_nat.c	2005-03-30 00:08:27.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebtable_nat.c
 @@ -0,0 +1,96 @@
 +/*
 + *  ebtable_nat
@@ -4362,9 +4311,8 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtable_nat.c linux-2.4.29-h7/net
 +module_exit(fini);
 +EXPORT_NO_SYMBOLS;
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtables.c linux-2.4.29-h7/net/bridge/netfilter/ebtables.c
---- linux-2.4.29-h6/net/bridge/netfilter/ebtables.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/bridge/netfilter/ebtables.c	2005-03-30 00:08:28.000000000 +0000
+--- /dev/null
++++ b/net/bridge/netfilter/ebtables.c
 @@ -0,0 +1,1490 @@
 +/*
 + *  ebtables
@@ -5856,10 +5804,9 @@ diff -urN linux-2.4.29-h6/net/bridge/netfilter/ebtables.c linux-2.4.29-h7/net/br
 +module_init(init);
 +module_exit(fini);
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29-h6/net/core/dev.c linux-2.4.29-h7/net/core/dev.c
---- linux-2.4.29-h6/net/core/dev.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/core/dev.c	2005-03-30 00:08:28.000000000 +0000
-@@ -1426,7 +1426,7 @@
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -1426,7 +1426,7 @@ static void net_tx_action(struct softirq
  
  
  #if defined(CONFIG_BRIDGE) || defined(CONFIG_BRIDGE_MODULE)
@@ -5868,7 +5815,7 @@ diff -urN linux-2.4.29-h6/net/core/dev.c linux-2.4.29-h7/net/core/dev.c
  #endif
  
  static __inline__ int handle_bridge(struct sk_buff *skb,
-@@ -1443,7 +1443,6 @@
+@@ -1443,7 +1443,6 @@ static __inline__ int handle_bridge(stru
  		}
  	}
  
@@ -5876,7 +5823,7 @@ diff -urN linux-2.4.29-h6/net/core/dev.c linux-2.4.29-h7/net/core/dev.c
  	return ret;
  }
  
-@@ -1503,7 +1502,12 @@
+@@ -1503,7 +1502,12 @@ int netif_receive_skb(struct sk_buff *sk
  #if defined(CONFIG_BRIDGE) || defined(CONFIG_BRIDGE_MODULE)
  	if (skb->dev->br_port != NULL && br_handle_frame_hook != NULL &&
  	    skb->pkt_type != PACKET_LOOPBACK) {
@@ -5890,10 +5837,9 @@ diff -urN linux-2.4.29-h6/net/core/dev.c linux-2.4.29-h7/net/core/dev.c
  	}
  #endif
  
-diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilter.c
---- linux-2.4.29-h6/net/core/netfilter.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/core/netfilter.c	2005-03-30 00:08:28.000000000 +0000
-@@ -342,10 +342,15 @@
+--- a/net/core/netfilter.c
++++ b/net/core/netfilter.c
+@@ -342,10 +342,15 @@ static unsigned int nf_iterate(struct li
  			       const struct net_device *indev,
  			       const struct net_device *outdev,
  			       struct list_head **i,
@@ -5910,7 +5856,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  		switch (elem->hook(hook, skb, indev, outdev, okfn)) {
  		case NF_QUEUE:
  			return NF_QUEUE;
-@@ -413,6 +418,10 @@
+@@ -413,6 +418,10 @@ static void nf_queue(struct sk_buff *skb
  {
  	int status;
  	struct nf_info *info;
@@ -5921,7 +5867,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  
  	if (!queue_handler[pf].outfn) {
  		kfree_skb(skb);
-@@ -435,11 +444,24 @@
+@@ -435,11 +444,24 @@ static void nf_queue(struct sk_buff *skb
  	if (indev) dev_hold(indev);
  	if (outdev) dev_hold(outdev);
  
@@ -5946,7 +5892,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  		kfree(info);
  		kfree_skb(skb);
  		return;
-@@ -449,7 +471,8 @@
+@@ -449,7 +471,8 @@ static void nf_queue(struct sk_buff *skb
  int nf_hook_slow(int pf, unsigned int hook, struct sk_buff *skb,
  		 struct net_device *indev,
  		 struct net_device *outdev,
@@ -5956,7 +5902,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  {
  	struct list_head *elem;
  	unsigned int verdict;
-@@ -481,7 +504,7 @@
+@@ -481,7 +504,7 @@ int nf_hook_slow(int pf, unsigned int ho
  
  	elem = &nf_hooks[pf][hook];
  	verdict = nf_iterate(&nf_hooks[pf][hook], &skb, hook, indev,
@@ -5965,7 +5911,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  	if (verdict == NF_QUEUE) {
  		NFDEBUG("nf_hook: Verdict = QUEUE.\n");
  		nf_queue(skb, elem, pf, hook, indev, outdev, okfn);
-@@ -510,6 +533,14 @@
+@@ -510,6 +533,14 @@ void nf_reinject(struct sk_buff *skb, st
  
  	/* We don't have BR_NETPROTO_LOCK here */
  	br_read_lock_bh(BR_NETPROTO_LOCK);
@@ -5980,7 +5926,7 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  	for (i = nf_hooks[info->pf][info->hook].next; i != elem; i = i->next) {
  		if (i == &nf_hooks[info->pf][info->hook]) {
  			/* The module which sent it to userspace is gone. */
-@@ -530,7 +561,7 @@
+@@ -530,7 +561,7 @@ void nf_reinject(struct sk_buff *skb, st
  		verdict = nf_iterate(&nf_hooks[info->pf][info->hook],
  				     &skb, info->hook, 
  				     info->indev, info->outdev, &elem,
@@ -5989,10 +5935,9 @@ diff -urN linux-2.4.29-h6/net/core/netfilter.c linux-2.4.29-h7/net/core/netfilte
  	}
  
  	switch (verdict) {
-diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
---- linux-2.4.29-h6/net/core/skbuff.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/core/skbuff.c	2005-03-30 00:08:28.000000000 +0000
-@@ -246,6 +246,9 @@
+--- a/net/core/skbuff.c
++++ b/net/core/skbuff.c
+@@ -246,6 +246,9 @@ static inline void skb_headerinit(void *
  #ifdef CONFIG_NETFILTER_DEBUG
  	skb->nf_debug = 0;
  #endif
@@ -6002,7 +5947,7 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  #endif
  #ifdef CONFIG_NET_SCHED
  	skb->tc_index = 0;
-@@ -326,6 +329,9 @@
+@@ -326,6 +329,9 @@ void __kfree_skb(struct sk_buff *skb)
  	}
  #ifdef CONFIG_NETFILTER
  	nf_conntrack_put(skb->nfct);
@@ -6012,7 +5957,7 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  #endif
  	skb_headerinit(skb, NULL, 0);  /* clean state */
  	kfree_skbmem(skb);
-@@ -393,6 +399,9 @@
+@@ -393,6 +399,9 @@ struct sk_buff *skb_clone(struct sk_buff
  #ifdef CONFIG_NETFILTER_DEBUG
  	C(nf_debug);
  #endif
@@ -6022,7 +5967,7 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  #endif /*CONFIG_NETFILTER*/
  #if defined(CONFIG_HIPPI)
  	C(private);
-@@ -405,6 +414,9 @@
+@@ -405,6 +414,9 @@ struct sk_buff *skb_clone(struct sk_buff
  	skb->cloned = 1;
  #ifdef CONFIG_NETFILTER
  	nf_conntrack_get(skb->nfct);
@@ -6032,7 +5977,7 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  #endif
  	return n;
  }
-@@ -440,6 +452,10 @@
+@@ -440,6 +452,10 @@ static void copy_skb_header(struct sk_bu
  #ifdef CONFIG_NETFILTER_DEBUG
  	new->nf_debug=old->nf_debug;
  #endif
@@ -6043,7 +5988,7 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  #endif
  #ifdef CONFIG_NET_SCHED
  	new->tc_index = old->tc_index;
-@@ -726,9 +742,9 @@
+@@ -726,9 +742,9 @@ struct sk_buff *skb_copy_expand(const st
  	/* Set the tail pointer and length */
  	skb_put(n,skb->len);
  
@@ -6056,10 +6001,9 @@ diff -urN linux-2.4.29-h6/net/core/skbuff.c linux-2.4.29-h7/net/core/skbuff.c
  
  	copy_skb_header(n, skb);
  	return n;
-diff -urN linux-2.4.29-h6/net/ipv4/ip_output.c linux-2.4.29-h7/net/ipv4/ip_output.c
---- linux-2.4.29-h6/net/ipv4/ip_output.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/ip_output.c	2005-03-30 00:08:28.000000000 +0000
-@@ -890,6 +890,10 @@
+--- a/net/ipv4/ip_output.c
++++ b/net/ipv4/ip_output.c
+@@ -890,6 +890,10 @@ int ip_fragment(struct sk_buff *skb, int
  		/* Connection association is same as pre-frag packet */
  		skb2->nfct = skb->nfct;
  		nf_conntrack_get(skb2->nfct);
@@ -6070,10 +6014,9 @@ diff -urN linux-2.4.29-h6/net/ipv4/ip_output.c linux-2.4.29-h7/net/ipv4/ip_outpu
  #ifdef CONFIG_NETFILTER_DEBUG
  		skb2->nf_debug = skb->nf_debug;
  #endif
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/Config.in linux-2.4.29-h7/net/ipv4/netfilter/Config.in
---- linux-2.4.29-h6/net/ipv4/netfilter/Config.in	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/Config.in	2005-03-30 00:08:28.000000000 +0000
-@@ -44,6 +44,9 @@
+--- a/net/ipv4/netfilter/Config.in
++++ b/net/ipv4/netfilter/Config.in
+@@ -44,6 +44,9 @@ if [ "$CONFIG_IP_NF_IPTABLES" != "n" ]; 
      dep_tristate '  Unclean match support (EXPERIMENTAL)' CONFIG_IP_NF_MATCH_UNCLEAN $CONFIG_IP_NF_IPTABLES
      dep_tristate '  Owner match support (EXPERIMENTAL)' CONFIG_IP_NF_MATCH_OWNER $CONFIG_IP_NF_IPTABLES
    fi
@@ -6083,10 +6026,9 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/Config.in linux-2.4.29-h7/net/ipv4/
  # The targets
    dep_tristate '  Packet filtering' CONFIG_IP_NF_FILTER $CONFIG_IP_NF_IPTABLES 
    if [ "$CONFIG_IP_NF_FILTER" != "n" ]; then
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/Makefile linux-2.4.29-h7/net/ipv4/netfilter/Makefile
---- linux-2.4.29-h6/net/ipv4/netfilter/Makefile	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/Makefile	2005-03-30 00:08:28.000000000 +0000
-@@ -87,6 +87,8 @@
+--- a/net/ipv4/netfilter/Makefile
++++ b/net/ipv4/netfilter/Makefile
+@@ -87,6 +87,8 @@ obj-$(CONFIG_IP_NF_MATCH_CONNTRACK) += i
  obj-$(CONFIG_IP_NF_MATCH_UNCLEAN) += ipt_unclean.o
  obj-$(CONFIG_IP_NF_MATCH_TCPMSS) += ipt_tcpmss.o
  
@@ -6095,10 +6037,9 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/Makefile linux-2.4.29-h7/net/ipv4/n
  # targets
  obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
  obj-$(CONFIG_IP_NF_TARGET_MIRROR) += ipt_MIRROR.o
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv4/netfilter/ip_tables.c
---- linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/ip_tables.c	2005-03-30 00:08:28.000000000 +0000
-@@ -118,12 +118,19 @@
+--- a/net/ipv4/netfilter/ip_tables.c
++++ b/net/ipv4/netfilter/ip_tables.c
+@@ -120,12 +120,19 @@ static LIST_HEAD(ipt_tables);
  static inline int
  ip_packet_match(const struct iphdr *ip,
  		const char *indev,
@@ -6118,7 +6059,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  
  #define FWINV(bool,invflg) ((bool) ^ !!(ipinfo->invflags & invflg))
  
-@@ -153,7 +160,15 @@
+@@ -155,7 +162,15 @@ ip_packet_match(const struct iphdr *ip,
  			& ((const unsigned long *)ipinfo->iniface_mask)[i];
  	}
  
@@ -6135,7 +6076,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  		dprintf("VIA in mismatch (%s vs %s).%s\n",
  			indev, ipinfo->iniface,
  			ipinfo->invflags&IPT_INV_VIA_IN ?" (INV)":"");
-@@ -166,7 +181,15 @@
+@@ -168,7 +183,15 @@ ip_packet_match(const struct iphdr *ip,
  			& ((const unsigned long *)ipinfo->outiface_mask)[i];
  	}
  
@@ -6152,7 +6093,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  		dprintf("VIA out mismatch (%s vs %s).%s\n",
  			outdev, ipinfo->outiface,
  			ipinfo->invflags&IPT_INV_VIA_OUT ?" (INV)":"");
-@@ -265,6 +288,9 @@
+@@ -267,6 +290,9 @@ ipt_do_table(struct sk_buff **pskb,
  	/* Initializing verdict to NF_DROP keeps gcc happy. */
  	unsigned int verdict = NF_DROP;
  	const char *indev, *outdev;
@@ -6162,7 +6103,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  	void *table_base;
  	struct ipt_entry *e, *back;
  
-@@ -274,6 +300,13 @@
+@@ -276,6 +302,13 @@ ipt_do_table(struct sk_buff **pskb,
  	datalen = (*pskb)->len - ip->ihl * 4;
  	indev = in ? in->name : nulldevname;
  	outdev = out ? out->name : nulldevname;
@@ -6176,7 +6117,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  	/* We handle fragments by dealing with the first fragment as
  	 * if it was a normal packet.  All other fragments are treated
  	 * normally, except that they will NEVER match rules that ask
-@@ -309,7 +342,15 @@
+@@ -311,7 +344,15 @@ ipt_do_table(struct sk_buff **pskb,
  		IP_NF_ASSERT(e);
  		IP_NF_ASSERT(back);
  		(*pskb)->nfcache |= e->nfcache;
@@ -6193,10 +6134,9 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ip_tables.c linux-2.4.29-h7/net/ipv
  			struct ipt_entry_target *t;
  
  			if (IPT_MATCH_ITERATE(e, do_match,
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_LOG.c linux-2.4.29-h7/net/ipv4/netfilter/ipt_LOG.c
---- linux-2.4.29-h6/net/ipv4/netfilter/ipt_LOG.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/ipt_LOG.c	2005-03-30 00:08:28.000000000 +0000
-@@ -316,6 +316,18 @@
+--- a/net/ipv4/netfilter/ipt_LOG.c
++++ b/net/ipv4/netfilter/ipt_LOG.c
+@@ -317,6 +317,18 @@ ipt_log_target(struct sk_buff **pskb,
  	       loginfo->prefix,
  	       in ? in->name : "",
  	       out ? out->name : "");
@@ -6215,9 +6155,8 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_LOG.c linux-2.4.29-h7/net/ipv4/
  	if (in && !out) {
  		/* MAC logging for input chain only. */
  		printk("MAC=");
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_REJECT.c linux-2.4.29-h7/net/ipv4/netfilter/ipt_REJECT.c
---- linux-2.4.29-h6/net/ipv4/netfilter/ipt_REJECT.c	2005-03-30 00:06:18.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/ipt_REJECT.c	2005-03-30 00:08:28.000000000 +0000
+--- a/net/ipv4/netfilter/ipt_REJECT.c
++++ b/net/ipv4/netfilter/ipt_REJECT.c
 @@ -15,6 +15,9 @@
  #include <net/route.h>
  #include <linux/netfilter_ipv4/ip_tables.h>
@@ -6228,7 +6167,7 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_REJECT.c linux-2.4.29-h7/net/ip
  
  #if 0
  #define DEBUGP printk
-@@ -29,7 +32,13 @@
+@@ -29,7 +32,13 @@ static inline struct rtable *route_rever
  	struct rt_key key = {};
  	struct rtable *rt;
  
@@ -6243,9 +6182,8 @@ diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_REJECT.c linux-2.4.29-h7/net/ip
  		key.dst = iph->saddr;
  		if (hook == NF_IP_LOCAL_IN)
  			key.src = iph->daddr;
-diff -urN linux-2.4.29-h6/net/ipv4/netfilter/ipt_physdev.c linux-2.4.29-h7/net/ipv4/netfilter/ipt_physdev.c
---- linux-2.4.29-h6/net/ipv4/netfilter/ipt_physdev.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h7/net/ipv4/netfilter/ipt_physdev.c	2005-03-30 00:08:28.000000000 +0000
+--- /dev/null
++++ b/net/ipv4/netfilter/ipt_physdev.c
 @@ -0,0 +1,127 @@
 +/* Kernel module to match the bridge port in and
 + * out device for IP packets coming into contact with a bridge. */

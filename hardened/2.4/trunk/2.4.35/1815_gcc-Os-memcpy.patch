@@ -1,6 +1,6 @@
---- linux-2.4.29-grsec-2.1.1/arch/i386/kernel/i386_ksyms.c.mps	2005-03-03 09:50:31 +0100
-+++ linux-2.4.29-grsec-2.1.1/arch/i386/kernel/i386_ksyms.c	2005-03-03 09:51:56 +0100
-@@ -173,10 +173,13 @@
+--- a/arch/i386/kernel/i386_ksyms.c
++++ b/arch/i386/kernel/i386_ksyms.c
+@@ -170,10 +170,13 @@ EXPORT_SYMBOL(rtc_lock);
  
  #undef memcpy
  #undef memset

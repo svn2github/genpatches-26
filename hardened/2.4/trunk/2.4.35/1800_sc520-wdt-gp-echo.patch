@@ -1,5 +1,5 @@
---- linux-2.4.25/drivers/char/sc520_wdt.c	2002-11-28 15:53:12.000000000 -0800
-+++ /home/users/m/mike/sc520_wdt.c	2004-02-21 16:49:25.000000000 -0800
+--- a/drivers/char/sc520_wdt.c
++++ b/drivers/char/sc520_wdt.c
 @@ -24,6 +24,10 @@
   *	-	Used ioremap/writew/readw
   *	-	Added NOWAYOUT support
@@ -28,7 +28,7 @@
  
  static void wdt_timer_ping(unsigned long);
  static struct timer_list timer;
-@@ -126,17 +133,28 @@
+@@ -126,17 +133,28 @@ static spinlock_t wdt_spinlock;
  
  static void wdt_timer_ping(unsigned long data)
  {
@@ -57,7 +57,7 @@
  		/* Re-set the timer interval */
  		timer.expires = jiffies + WDT_INTERVAL;
  		add_timer(&timer);
-@@ -151,11 +169,15 @@
+@@ -151,11 +169,15 @@ static void wdt_timer_ping(unsigned long
  
  static void wdt_config(int writeval)
  {
@@ -74,7 +74,7 @@
  	dummy=readw(wdtmrctl);  /* ensure write synchronization */
  	writew(0xAAAA, wdtmrctl);
  	writew(0x5555, wdtmrctl);
-@@ -164,6 +186,7 @@
+@@ -164,6 +186,7 @@ static void wdt_config(int writeval)
  	writew(0xCCCC, wdtmrctl);
  	/* write WDT configuration register */
  	writew(writeval, wdtmrctl);
@@ -82,7 +82,7 @@
  	spin_unlock_irqrestore(&wdt_spinlock, flags);
  }
  
-@@ -175,7 +198,11 @@
+@@ -175,7 +198,11 @@ static void wdt_startup(void)
  	timer.expires = jiffies + WDT_INTERVAL;	
  	add_timer(&timer);
  
@@ -94,7 +94,7 @@
  	printk(OUR_NAME ": Watchdog timer is now enabled.\n");  
  }
  
-@@ -332,6 +359,7 @@
+@@ -332,6 +359,7 @@ static void __exit sc520_wdt_unload(void
  	/* Deregister */
  	misc_deregister(&wdt_miscdev);
  	iounmap(wdtmrctl);
@@ -102,7 +102,7 @@
  	unregister_reboot_notifier(&wdt_notifier);
  }
  
-@@ -361,6 +389,7 @@
+@@ -361,6 +389,7 @@ static int __init sc520_wdt_init(void)
  	if (cbar & 0x80000000) {
  		printk(OUR_NAME ": MMCR Aliasing enabled.\n");
  		wdtmrctl = (__u16 *)(cbar & 0x3fffffff);
@@ -110,7 +110,7 @@
  	} else {
  		printk(OUR_NAME "!!! WARNING !!!\n"
  		  "\t MMCR Aliasing found NOT enabled!\n"
-@@ -373,9 +402,15 @@
+@@ -373,9 +402,15 @@ static int __init sc520_wdt_init(void)
  	  wdtmrctl = MMCR_BASE_DEFAULT;
  	}
  
@@ -126,3 +126,4 @@
 +	printk(KERN_INFO OUR_NAME ": WDT driver for SC520 initialised\n");
  
  	return 0;
+ 

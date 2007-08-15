@@ -1,7 +1,6 @@
-diff -urN linux-2.4.29-h9/arch/i386/config.in linux-2.4.29-h10/arch/i386/config.in
---- linux-2.4.29-h9/arch/i386/config.in	2005-03-30 00:13:08.000000000 +0000
-+++ linux-2.4.29-h10/arch/i386/config.in	2005-03-30 00:16:13.000000000 +0000
-@@ -42,6 +42,7 @@
+--- a/arch/i386/config.in
++++ b/arch/i386/config.in
+@@ -42,6 +42,7 @@ choice 'Processor family' \
  	 Winchip-C6				CONFIG_MWINCHIPC6 \
  	 Winchip-2				CONFIG_MWINCHIP2 \
  	 Winchip-2A/Winchip-3			CONFIG_MWINCHIP3D \
@@ -9,7 +8,7 @@ diff -urN linux-2.4.29-h9/arch/i386/config.in linux-2.4.29-h10/arch/i386/config.
  	 CyrixIII/VIA-C3			CONFIG_MCYRIXIII \
  	 VIA-C3-2				CONFIG_MVIAC3_2" Pentium-Pro
  #
-@@ -163,6 +164,14 @@
+@@ -165,6 +166,14 @@ if [ "$CONFIG_MVIAC3_2" = "y" ]; then
     define_bool CONFIG_X86_USE_PPRO_CHECKSUM y
     define_bool CONFIG_X86_F00F_WORKS_OK y
  fi
@@ -24,10 +23,9 @@ diff -urN linux-2.4.29-h9/arch/i386/config.in linux-2.4.29-h10/arch/i386/config.
  if [ "$CONFIG_MCRUSOE" = "y" ]; then
     define_int  CONFIG_X86_L1_CACHE_SHIFT 5
     define_bool CONFIG_X86_HAS_TSC y
-diff -urN linux-2.4.29-h9/drivers/pci/pci.c linux-2.4.29-h10/drivers/pci/pci.c
---- linux-2.4.29-h9/drivers/pci/pci.c	2005-03-30 00:12:58.000000000 +0000
-+++ linux-2.4.29-h10/drivers/pci/pci.c	2005-03-30 00:16:13.000000000 +0000
-@@ -1486,6 +1486,10 @@
+--- a/drivers/pci/pci.c
++++ b/drivers/pci/pci.c
+@@ -1486,6 +1486,10 @@ struct pci_dev * __devinit pci_scan_slot
  	for (func = 0; func < 8; func++, temp->devfn++) {
  		if (pci_read_config_byte(temp, PCI_HEADER_TYPE, &hdr_type))
  			continue;

@@ -1,7 +1,6 @@
-diff --new-file -ur linux-2.4.28/fs/Config.in linux-2.4.28-squashfs2.1/fs/Config.in
---- linux-2.4.28/fs/Config.in	2004-11-17 11:54:21.000000000 +0000
-+++ linux-2.4.28-squashfs2.1/fs/Config.in	2004-12-02 02:14:05.000000000 +0000
-@@ -51,6 +51,7 @@
+--- a/fs/Config.in
++++ b/fs/Config.in
+@@ -51,6 +51,7 @@ if [ "$CONFIG_JFFS2_FS" = "y" -o "$CONFI
     int 'JFFS2 debugging verbosity (0 = quiet, 2 = noisy)' CONFIG_JFFS2_FS_DEBUG 0
  fi
  tristate 'Compressed ROM file system support' CONFIG_CRAMFS
@@ -9,10 +8,9 @@ diff --new-file -ur linux-2.4.28/fs/Config.in linux-2.4.28-squashfs2.1/fs/Config
  bool 'Virtual memory file system support (former shm fs)' CONFIG_TMPFS
  define_bool CONFIG_RAMFS y
  
-diff --new-file -ur linux-2.4.28/fs/Makefile linux-2.4.28-squashfs2.1/fs/Makefile
---- linux-2.4.28/fs/Makefile	2004-02-18 13:36:31.000000000 +0000
-+++ linux-2.4.28-squashfs2.1/fs/Makefile	2004-12-02 02:14:05.000000000 +0000
-@@ -65,6 +65,7 @@
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -65,6 +65,7 @@ subdir-$(CONFIG_REISERFS_FS)	+= reiserfs
  subdir-$(CONFIG_DEVPTS_FS)	+= devpts
  subdir-$(CONFIG_SUN_OPENPROMFS)	+= openpromfs
  subdir-$(CONFIG_BEFS_FS)	+= befs
@@ -20,9 +18,22 @@ diff --new-file -ur linux-2.4.28/fs/Makefile linux-2.4.28-squashfs2.1/fs/Makefil
  subdir-$(CONFIG_JFS_FS)		+= jfs
  subdir-$(CONFIG_XFS_FS)		+= xfs
  
-diff --new-file -ur linux-2.4.28/fs/squashfs/inode.c linux-2.4.28-squashfs2.1/fs/squashfs/inode.c
---- linux-2.4.28/fs/squashfs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.28-squashfs2.1/fs/squashfs/inode.c	2004-12-02 02:50:48.000000000 +0000
+--- /dev/null
++++ b/fs/squashfs/Makefile
+@@ -0,0 +1,11 @@
++#
++# Makefile for the linux squashfs routines.
++#
++
++O_TARGET := squashfs.o
++
++obj-y  := inode.o
++
++obj-m := $(O_TARGET)
++
++include $(TOPDIR)/Rules.make
+--- /dev/null
++++ b/fs/squashfs/inode.c
 @@ -0,0 +1,1677 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
@@ -1701,25 +1712,9 @@ diff --new-file -ur linux-2.4.28/fs/squashfs/inode.c linux-2.4.28-squashfs2.1/fs
 +MODULE_DESCRIPTION("squashfs, a compressed read-only filesystem");
 +MODULE_AUTHOR("Phillip Lougher <plougher@users.sourceforge.net>");
 +MODULE_LICENSE("GPL");
-diff --new-file -ur linux-2.4.28/fs/squashfs/Makefile linux-2.4.28-squashfs2.1/fs/squashfs/Makefile
---- linux-2.4.28/fs/squashfs/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.28-squashfs2.1/fs/squashfs/Makefile	2004-12-02 02:14:05.000000000 +0000
-@@ -0,0 +1,11 @@
-+#
-+# Makefile for the linux squashfs routines.
-+#
-+
-+O_TARGET := squashfs.o
-+
-+obj-y  := inode.o
-+
-+obj-m := $(O_TARGET)
-+
-+include $(TOPDIR)/Rules.make
-diff --new-file -ur linux-2.4.28/include/linux/fs.h linux-2.4.28-squashfs2.1/include/linux/fs.h
---- linux-2.4.28/include/linux/fs.h	2004-11-17 11:54:22.000000000 +0000
-+++ linux-2.4.28-squashfs2.1/include/linux/fs.h	2004-12-02 02:14:05.000000000 +0000
-@@ -324,6 +324,7 @@
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -324,6 +324,7 @@ extern void set_bh_page(struct buffer_he
  #include <linux/usbdev_fs_i.h>
  #include <linux/jffs2_fs_i.h>
  #include <linux/cramfs_fs_sb.h>
@@ -1727,7 +1722,7 @@ diff --new-file -ur linux-2.4.28/include/linux/fs.h linux-2.4.28-squashfs2.1/inc
  
  /*
   * Attribute flags.  These should be or-ed together to figure out what
-@@ -519,6 +520,7 @@
+@@ -519,6 +520,7 @@ struct inode {
  		struct socket			socket_i;
  		struct usbdev_inode_info        usbdev_i;
  		struct jffs2_inode_info		jffs2_i;
@@ -1735,7 +1730,7 @@ diff --new-file -ur linux-2.4.28/include/linux/fs.h linux-2.4.28-squashfs2.1/inc
  		void				*generic_ip;
  	} u;
  };
-@@ -733,6 +735,7 @@
+@@ -734,6 +736,7 @@ struct nameidata {
  #include <linux/usbdev_fs_sb.h>
  #include <linux/cramfs_fs_sb.h>
  #include <linux/jffs2_fs_sb.h>
@@ -1743,7 +1738,7 @@ diff --new-file -ur linux-2.4.28/include/linux/fs.h linux-2.4.28-squashfs2.1/inc
  
  extern struct list_head super_blocks;
  extern spinlock_t sb_lock;
-@@ -792,6 +795,7 @@
+@@ -793,6 +796,7 @@ struct super_block {
  		struct usbdev_sb_info   usbdevfs_sb;
  		struct jffs2_sb_info	jffs2_sb;
  		struct cramfs_sb_info	cramfs_sb;
@@ -1751,9 +1746,8 @@ diff --new-file -ur linux-2.4.28/include/linux/fs.h linux-2.4.28-squashfs2.1/inc
  		void			*generic_sbp;
  	} u;
  	/*
-diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs.h linux-2.4.28-squashfs2.1/include/linux/squashfs_fs.h
---- linux-2.4.28/include/linux/squashfs_fs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.28-squashfs2.1/include/linux/squashfs_fs.h	2004-12-02 02:52:36.000000000 +0000
+--- /dev/null
++++ b/include/linux/squashfs_fs.h
 @@ -0,0 +1,512 @@
 +#ifndef SQUASHFS_FS
 +#define SQUASHFS_FS
@@ -2267,9 +2261,8 @@ diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs.h linux-2.4.28-squash
 +#define SQUASHFS_MEMSET(s, d, n)	memset(s, 0, n);
 +#endif
 +#endif
-diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs_i.h linux-2.4.28-squashfs2.1/include/linux/squashfs_fs_i.h
---- linux-2.4.28/include/linux/squashfs_fs_i.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.28-squashfs2.1/include/linux/squashfs_fs_i.h	2004-12-02 02:52:36.000000000 +0000
+--- /dev/null
++++ b/include/linux/squashfs_fs_i.h
 @@ -0,0 +1,42 @@
 +#ifndef SQUASHFS_FS_I
 +#define SQUASHFS_FS_I
@@ -2313,9 +2306,8 @@ diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs_i.h linux-2.4.28-squa
 +	};
 +	} squashfs_inode_info;
 +#endif
-diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs_sb.h linux-2.4.28-squashfs2.1/include/linux/squashfs_fs_sb.h
---- linux-2.4.28/include/linux/squashfs_fs_sb.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.28-squashfs2.1/include/linux/squashfs_fs_sb.h	2004-12-02 02:52:36.000000000 +0000
+--- /dev/null
++++ b/include/linux/squashfs_fs_sb.h
 @@ -0,0 +1,65 @@
 +#ifndef SQUASHFS_FS_SB
 +#define SQUASHFS_FS_SB
@@ -2382,9 +2374,8 @@ diff --new-file -ur linux-2.4.28/include/linux/squashfs_fs_sb.h linux-2.4.28-squ
 +					char *block_list, unsigned short **block_p, unsigned int *bsize);
 +	} squashfs_sb_info;
 +#endif
-diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/do_mounts.c
---- linux-2.4.28/init/do_mounts.c	2003-11-28 18:26:21.000000000 +0000
-+++ linux-2.4.28-squashfs2.1/init/do_mounts.c	2004-12-02 02:14:06.000000000 +0000
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
 @@ -15,6 +15,7 @@
  #include <linux/minix_fs.h>
  #include <linux/ext2_fs.h>
@@ -2393,7 +2384,7 @@ diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/
  #include <linux/cramfs_fs.h>
  
  #define BUILD_CRAMDISK
-@@ -476,6 +477,7 @@
+@@ -476,6 +477,7 @@ static int __init crd_load(int in_fd, in
   * 	minix
   * 	ext2
   *	romfs
@@ -2401,7 +2392,7 @@ diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/
   *	cramfs
   * 	gzip
   */
-@@ -486,6 +488,7 @@
+@@ -486,6 +488,7 @@ identify_ramdisk_image(int fd, int start
  	struct minix_super_block *minixsb;
  	struct ext2_super_block *ext2sb;
  	struct romfs_super_block *romfsb;
@@ -2409,7 +2400,7 @@ diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/
  	struct cramfs_super *cramfsb;
  	int nblocks = -1;
  	unsigned char *buf;
-@@ -497,6 +500,7 @@
+@@ -497,6 +500,7 @@ identify_ramdisk_image(int fd, int start
  	minixsb = (struct minix_super_block *) buf;
  	ext2sb = (struct ext2_super_block *) buf;
  	romfsb = (struct romfs_super_block *) buf;
@@ -2417,7 +2408,7 @@ diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/
  	cramfsb = (struct cramfs_super *) buf;
  	memset(buf, 0xe5, size);
  
-@@ -535,6 +539,15 @@
+@@ -535,6 +539,15 @@ identify_ramdisk_image(int fd, int start
  		goto done;
  	}
  
@@ -2433,10 +2424,9 @@ diff --new-file -ur linux-2.4.28/init/do_mounts.c linux-2.4.28-squashfs2.1/init/
  	/*
  	 * Read block 1 to test for minix and ext2 superblock
  	 */
-diff --new-file -ur linux-2.4.28/lib/Config.in linux-2.4.28-squashfs2.1/lib/Config.in
---- linux-2.4.28/lib/Config.in	2003-11-28 18:26:21.000000000 +0000
-+++ linux-2.4.28-squashfs2.1/lib/Config.in	2004-12-02 02:14:06.000000000 +0000
-@@ -10,6 +10,7 @@
+--- a/lib/Config.in
++++ b/lib/Config.in
+@@ -11,6 +11,7 @@ tristate 'CRC32 functions' CONFIG_CRC32
  # Do we need the compression support?
  #
  if [ "$CONFIG_CRAMFS" = "y" -o \
@@ -2444,7 +2434,7 @@ diff --new-file -ur linux-2.4.28/lib/Config.in linux-2.4.28-squashfs2.1/lib/Conf
       "$CONFIG_PPP_DEFLATE" = "y" -o \
       "$CONFIG_CRYPTO_DEFLATE" = "y" -o \
       "$CONFIG_JFFS2_FS" = "y" -o \
-@@ -17,6 +18,7 @@
+@@ -18,6 +19,7 @@ if [ "$CONFIG_CRAMFS" = "y" -o \
     define_tristate CONFIG_ZLIB_INFLATE y
  else
    if [ "$CONFIG_CRAMFS" = "m" -o \

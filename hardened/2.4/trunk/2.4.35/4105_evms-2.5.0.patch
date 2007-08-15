@@ -1,7 +1,6 @@
-diff -Nru linux-2.4.28/drivers/md/Config.in linux-2.4.28-hardened/drivers/md/Config.in
---- linux-2.4.28/drivers/md/Config.in	2005-01-17 15:33:26.530462736 -0500
-+++ linux-2.4.28-hardened/drivers/md/Config.in	2005-01-17 15:34:34.657105912 -0500
-@@ -16,5 +16,8 @@
+--- a/drivers/md/Config.in
++++ b/drivers/md/Config.in
+@@ -16,5 +16,8 @@ dep_tristate '  Multipath I/O support' C
  dep_tristate ' Logical volume manager (LVM) support' CONFIG_BLK_DEV_LVM $CONFIG_MD
  dep_tristate ' Device-mapper support' CONFIG_BLK_DEV_DM $CONFIG_MD
  dep_tristate '  Mirror (RAID-1) support' CONFIG_BLK_DEV_DM_MIRROR $CONFIG_BLK_DEV_DM
@@ -10,10 +9,9 @@ diff -Nru linux-2.4.28/drivers/md/Config.in linux-2.4.28-hardened/drivers/md/Con
 +fi
  
  endmenu
-diff -Nru linux-2.4.28/drivers/md/Makefile linux-2.4.28-hardened/drivers/md/Makefile
---- linux-2.4.28/drivers/md/Makefile	2005-01-17 15:33:26.532462432 -0500
-+++ linux-2.4.28-hardened/drivers/md/Makefile	2005-01-17 15:34:34.658105760 -0500
-@@ -30,6 +30,7 @@
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -30,6 +30,7 @@ obj-$(CONFIG_BLK_DEV_LVM)		+= lvm-mod.o
  
  obj-$(CONFIG_BLK_DEV_DM)		+= dm-mod.o
  obj-$(CONFIG_BLK_DEV_DM_MIRROR)		+= dm-mirror.o
@@ -21,9 +19,8 @@ diff -Nru linux-2.4.28/drivers/md/Makefile linux-2.4.28-hardened/drivers/md/Make
  
  include $(TOPDIR)/Rules.make
  
-diff -Nru linux-2.4.28/drivers/md/dm-bbr.c linux-2.4.28-hardened/drivers/md/dm-bbr.c
---- linux-2.4.28/drivers/md/dm-bbr.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm-bbr.c	2005-01-17 15:34:34.662105152 -0500
+--- /dev/null
++++ b/drivers/md/dm-bbr.c
 @@ -0,0 +1,1013 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1038,9 +1035,8 @@ diff -Nru linux-2.4.28/drivers/md/dm-bbr.c linux-2.4.28-hardened/drivers/md/dm-b
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
-diff -Nru linux-2.4.28/drivers/md/dm-bbr.h linux-2.4.28-hardened/drivers/md/dm-bbr.h
---- linux-2.4.28/drivers/md/dm-bbr.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm-bbr.h	2005-01-17 15:34:34.663105000 -0500
+--- /dev/null
++++ b/drivers/md/dm-bbr.h
 @@ -0,0 +1,128 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1170,9 +1166,8 @@ diff -Nru linux-2.4.28/drivers/md/dm-bbr.h linux-2.4.28-hardened/drivers/md/dm-b
 +	atomic_t			in_use_replacement_blks;
 +};
 +
-diff -Nru linux-2.4.28/drivers/md/dm-bh-list.h linux-2.4.28-hardened/drivers/md/dm-bh-list.h
---- linux-2.4.28/drivers/md/dm-bh-list.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm-bh-list.h	2005-01-17 15:34:34.664104848 -0500
+--- /dev/null
++++ b/drivers/md/dm-bh-list.h
 @@ -0,0 +1,68 @@
 +/*
 + * Copyright (C) 2004 Red Hat UK Ltd.
@@ -1242,9 +1237,8 @@ diff -Nru linux-2.4.28/drivers/md/dm-bh-list.h linux-2.4.28-hardened/drivers/md/
 +}
 +
 +#endif
-diff -Nru linux-2.4.28/drivers/md/dm-bh-record.h linux-2.4.28-hardened/drivers/md/dm-bh-record.h
---- linux-2.4.28/drivers/md/dm-bh-record.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm-bh-record.h	2005-01-17 15:34:34.665104696 -0500
+--- /dev/null
++++ b/drivers/md/dm-bh-record.h
 @@ -0,0 +1,38 @@
 +/*
 + * Copyright (C) 2004 Red Hat UK Ltd.
@@ -1284,10 +1278,9 @@ diff -Nru linux-2.4.28/drivers/md/dm-bh-record.h linux-2.4.28-hardened/drivers/m
 +}
 +
 +#endif
-diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md/dm-snapshot.c
---- linux-2.4.28/drivers/md/dm-snapshot.c	2005-01-17 15:33:26.556458784 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm-snapshot.c	2005-01-17 15:36:30.701464488 -0500
-@@ -92,6 +92,9 @@
+--- a/drivers/md/dm-snapshot.c
++++ b/drivers/md/dm-snapshot.c
+@@ -92,6 +92,9 @@ struct origin {
  
  	/* List of snapshots for this origin */
  	struct list_head snapshots;
@@ -1297,7 +1290,7 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
  };
  
  /*
-@@ -155,6 +158,35 @@
+@@ -155,6 +158,35 @@ static void __insert_origin(struct origi
  }
  
  /*
@@ -1333,7 +1326,7 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
   * Make a note of the snapshot and its origin so we can look it
   * up when the origin has a write on it.
   */
-@@ -168,20 +200,37 @@
+@@ -168,20 +200,37 @@ static int register_snapshot(struct dm_s
  
  	if (!o) {
  		/* New origin */
@@ -1377,7 +1370,7 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
  
  	up_write(&_origins_lock);
  	return 0;
-@@ -195,11 +244,18 @@
+@@ -195,11 +244,18 @@ static void unregister_snapshot(struct d
  	o = __lookup_origin(s->origin->dev);
  
  	list_del(&s->list);
@@ -1400,7 +1393,7 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
  	up_write(&_origins_lock);
  }
  
-@@ -1093,6 +1149,13 @@
+@@ -1093,6 +1149,13 @@ static int origin_ctr(struct dm_target *
  		return r;
  	}
  
@@ -1414,7 +1407,7 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
  	ti->private = dev;
  	return 0;
  }
-@@ -1100,6 +1163,7 @@
+@@ -1100,6 +1163,7 @@ static int origin_ctr(struct dm_target *
  static void origin_dtr(struct dm_target *ti)
  {
  	struct dm_dev *dev = (struct dm_dev *) ti->private;
@@ -1422,10 +1415,9 @@ diff -Nru linux-2.4.28/drivers/md/dm-snapshot.c linux-2.4.28-hardened/drivers/md
  	dm_put_device(ti, dev);
  }
  
-diff -Nru linux-2.4.28/drivers/md/dm.c linux-2.4.28-hardened/drivers/md/dm.c
---- linux-2.4.28/drivers/md/dm.c	2005-01-17 15:33:26.566457264 -0500
-+++ linux-2.4.28-hardened/drivers/md/dm.c	2005-01-17 15:36:30.703464184 -0500
-@@ -951,13 +951,23 @@
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -951,13 +951,23 @@ int dm_suspend(struct mapped_device *md)
  	int r = 0;
  	DECLARE_WAITQUEUE(wait, current);
  
@@ -1452,7 +1444,7 @@ diff -Nru linux-2.4.28/drivers/md/dm.c linux-2.4.28-hardened/drivers/md/dm.c
  		up_write(&md->lock);
  		return -EINVAL;
  	}
-@@ -986,6 +996,7 @@
+@@ -986,6 +996,7 @@ int dm_suspend(struct mapped_device *md)
  
  	/* did we flush everything ? */
  	if (atomic_read(&md->pending)) {
@@ -1460,7 +1452,7 @@ diff -Nru linux-2.4.28/drivers/md/dm.c linux-2.4.28-hardened/drivers/md/dm.c
  		clear_bit(DMF_BLOCK_IO, &md->flags);
  		r = -EINTR;
  	} else {
-@@ -1017,6 +1028,7 @@
+@@ -1017,6 +1028,7 @@ int dm_resume(struct mapped_device *md)
  	md->deferred = NULL;
  	up_write(&md->lock);
  

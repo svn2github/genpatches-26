@@ -1,6 +1,8 @@
 diff --git a/Makefile b/Makefile
 index e44ff6b..5dba5a2 100644
-@@ -93,13 +93,14 @@ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+--- a/Makefile
++++ b/Makefile
+@@@ -93,13 +93,14 @@ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
  
  CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
  	  -fno-strict-aliasing -fno-common

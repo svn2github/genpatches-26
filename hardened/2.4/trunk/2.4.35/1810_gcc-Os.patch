@@ -1,26 +1,6 @@
---- orig/arch/arm/Makefile	2005-01-17 20:25:57.000000000 -0700
-+++ linux-2.4.28/arch/arm/Makefile	2005-01-17 20:25:58.000000000 -0700
-@@ -16,8 +16,6 @@
- CFLAGS		:=$(CFLAGS:-fomit-frame-pointer=-mapcs -mno-sched-prolog)
- endif
- 
--CFLAGS		:=$(CFLAGS:-O2=-Os)
--
- ifeq ($(CONFIG_DEBUG_INFO),y)
- CFLAGS		+=-g
- endif
-@@ -28,7 +26,7 @@
- # Note!  For APCS-26 YOU MUST HAVE AN APCS-26 LIBGCC.A
- #
- apcs-y				:=-mapcs-32
--apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3 -Os
-+apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3
- 
- # This selects which instruction set is used.
- # Note that GCC is lame - it doesn't numerically define an
---- orig/Documentation/Configure.help	2005-01-17 20:25:57.000000000 -0700
-+++ linux-2.4.28/Documentation/Configure.help	2005-01-17 20:25:58.000000000 -0700
-@@ -26135,6 +26135,14 @@
+--- a/Documentation/Configure.help
++++ b/Documentation/Configure.help
+@@ -26166,6 +26166,14 @@ CONFIG_FRAME_POINTER
    don't debug the kernel, you can say N, but we may not be able to
    solve problems without frame pointers.
  
@@ -35,19 +15,9 @@
  Verbose user fault messages
  CONFIG_DEBUG_USER
    When a user program crashes due to an exception, the kernel can
---- orig/lib/Config.in	2005-01-17 20:25:57.000000000 -0700
-+++ linux-2.4.28/lib/Config.in	2005-01-17 20:25:58.000000000 -0700
-@@ -4,6 +4,7 @@
- mainmenu_option next_comment
- comment 'Library routines'
- 
-+bool 'Optimize for size' CONFIG_OPTIMIZE_FOR_SIZE
- tristate 'CRC32 functions' CONFIG_CRC32
- 
- #
---- orig/Makefile	2007-06-11 15:46:36.000000000 +0200
-+++ linux-2.4.28/Makefile	2007-06-11 15:48:22.000000000 +0200
-@@ -91,14 +91,19 @@
+--- a/Makefile
++++ b/Makefile
+@@ -91,14 +91,19 @@ export MODLIB
  
  CPPFLAGS := -D__KERNEL__ -I$(HPATH)
  
@@ -70,3 +40,33 @@
  check_gcc = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi)
  
  # disable pointer signedness warnings in gcc 4.0
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -16,8 +16,6 @@ ifeq ($(CONFIG_FRAME_POINTER),y)
+ CFLAGS		:=$(CFLAGS:-fomit-frame-pointer=-mapcs -mno-sched-prolog)
+ endif
+ 
+-CFLAGS		:=$(CFLAGS:-O2=-Os)
+-
+ ifeq ($(CONFIG_DEBUG_INFO),y)
+ CFLAGS		+=-g
+ endif
+@@ -28,7 +26,7 @@ endif
+ # Note!  For APCS-26 YOU MUST HAVE AN APCS-26 LIBGCC.A
+ #
+ apcs-y				:=-mapcs-32
+-apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3 -Os
++apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3
+ 
+ # This selects which instruction set is used.
+ # Note that GCC is lame - it doesn't numerically define an
+--- a/lib/Config.in
++++ b/lib/Config.in
+@@ -4,6 +4,7 @@
+ mainmenu_option next_comment
+ comment 'Library routines'
+ 
++bool 'Optimize for size' CONFIG_OPTIMIZE_FOR_SIZE
+ tristate 'CRC32 functions' CONFIG_CRC32
+ 
+ #

@@ -1,7 +1,6 @@
-diff -urN linux-2.4.29/Documentation/Configure.help linux-2.4.29-h1/Documentation/Configure.help
---- linux-2.4.29/Documentation/Configure.help	2005-01-19 14:09:22.000000000 +0000
-+++ linux-2.4.29-h1/Documentation/Configure.help	2005-03-29 23:50:16.000000000 +0000
-@@ -1965,6 +1965,20 @@
+--- a/Documentation/Configure.help
++++ b/Documentation/Configure.help
+@@ -1965,6 +1965,20 @@ CONFIG_BLK_DEV_LVM
    want), say M here and read <file:Documentation/modules.txt>.  The
    module will be called lvm-mod.o.
  
@@ -22,10 +21,9 @@ diff -urN linux-2.4.29/Documentation/Configure.help linux-2.4.29-h1/Documentatio
  Multiple devices driver support (RAID and LVM)
  CONFIG_MD
    Support multiple physical spindles through a single logical device.
-diff -urN linux-2.4.29/MAINTAINERS linux-2.4.29-h1/MAINTAINERS
---- linux-2.4.29/MAINTAINERS	2005-01-19 14:09:24.000000000 +0000
-+++ linux-2.4.29-h1/MAINTAINERS	2005-03-29 23:50:16.000000000 +0000
-@@ -590,6 +590,13 @@
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -581,6 +581,13 @@ M:	dz@debian.org
  W:	http://www.debian.org/~dz/i8k/
  S:	Maintained
  
@@ -39,9 +37,8 @@ diff -urN linux-2.4.29/MAINTAINERS linux-2.4.29-h1/MAINTAINERS
  DEVICE NUMBER REGISTRY
  P:	H. Peter Anvin
  M:	hpa@zytor.com
-diff -urN linux-2.4.29/arch/mips64/kernel/ioctl32.c linux-2.4.29-h1/arch/mips64/kernel/ioctl32.c
---- linux-2.4.29/arch/mips64/kernel/ioctl32.c	2005-01-19 14:09:31.000000000 +0000
-+++ linux-2.4.29-h1/arch/mips64/kernel/ioctl32.c	2005-03-29 23:50:16.000000000 +0000
+--- a/arch/mips64/kernel/ioctl32.c
++++ b/arch/mips64/kernel/ioctl32.c
 @@ -63,6 +63,7 @@
  
  #include <linux/mtd/mtd.h>
@@ -50,7 +47,7 @@ diff -urN linux-2.4.29/arch/mips64/kernel/ioctl32.c linux-2.4.29-h1/arch/mips64/
  
  #ifdef CONFIG_SIBYTE_TBPROF
  #include <asm/sibyte/trace_prof.h>
-@@ -2327,6 +2328,23 @@
+@@ -2327,6 +2328,23 @@ static struct ioctl32_list ioctl32_handl
  	IOCTL32_DEFAULT(RESTART_ARRAY_RW),
  #endif /* CONFIG_MD */
  
@@ -74,10 +71,9 @@ diff -urN linux-2.4.29/arch/mips64/kernel/ioctl32.c linux-2.4.29-h1/arch/mips64/
  #ifdef CONFIG_SIBYTE_TBPROF
  	IOCTL32_DEFAULT(SBPROF_ZBSTART),
  	IOCTL32_DEFAULT(SBPROF_ZBSTOP),
-diff -urN linux-2.4.29/arch/parisc/kernel/ioctl32.c linux-2.4.29-h1/arch/parisc/kernel/ioctl32.c
---- linux-2.4.29/arch/parisc/kernel/ioctl32.c	2005-01-19 14:09:34.000000000 +0000
-+++ linux-2.4.29-h1/arch/parisc/kernel/ioctl32.c	2005-03-29 23:50:16.000000000 +0000
-@@ -55,6 +55,7 @@
+--- a/arch/parisc/kernel/ioctl32.c
++++ b/arch/parisc/kernel/ioctl32.c
+@@ -56,6 +56,7 @@
  #define max max */
  #include <linux/lvm.h>
  #endif /* LVM */
@@ -85,7 +81,7 @@ diff -urN linux-2.4.29/arch/parisc/kernel/ioctl32.c linux-2.4.29-h1/arch/parisc/
  
  #include <scsi/scsi.h>
  /* Ugly hack. */
-@@ -3429,6 +3430,23 @@
+@@ -3430,6 +3431,23 @@ COMPATIBLE_IOCTL(LE_REMAP)
  COMPATIBLE_IOCTL(LV_BMAP)
  COMPATIBLE_IOCTL(LV_SNAPSHOT_USE_RATE)
  #endif /* LVM */
@@ -109,10 +105,9 @@ diff -urN linux-2.4.29/arch/parisc/kernel/ioctl32.c linux-2.4.29-h1/arch/parisc/
  #if defined(CONFIG_DRM) || defined(CONFIG_DRM_MODULE)
  COMPATIBLE_IOCTL(DRM_IOCTL_GET_MAGIC)
  COMPATIBLE_IOCTL(DRM_IOCTL_IRQ_BUSID)
-diff -urN linux-2.4.29/arch/ppc64/kernel/ioctl32.c linux-2.4.29-h1/arch/ppc64/kernel/ioctl32.c
---- linux-2.4.29/arch/ppc64/kernel/ioctl32.c	2005-01-19 14:09:36.000000000 +0000
-+++ linux-2.4.29-h1/arch/ppc64/kernel/ioctl32.c	2005-03-29 23:50:16.000000000 +0000
-@@ -66,6 +66,7 @@
+--- a/arch/ppc64/kernel/ioctl32.c
++++ b/arch/ppc64/kernel/ioctl32.c
+@@ -67,6 +67,7 @@
  #if defined(CONFIG_BLK_DEV_LVM) || defined(CONFIG_BLK_DEV_LVM_MODULE)
  #include <linux/lvm.h>
  #endif /* LVM */
@@ -120,7 +115,7 @@ diff -urN linux-2.4.29/arch/ppc64/kernel/ioctl32.c linux-2.4.29-h1/arch/ppc64/ke
  
  #include <scsi/scsi.h>
  /* Ugly hack. */
-@@ -4413,6 +4414,23 @@
+@@ -4416,6 +4417,23 @@ COMPATIBLE_IOCTL(NBD_CLEAR_QUE),
  COMPATIBLE_IOCTL(NBD_PRINT_DEBUG),
  COMPATIBLE_IOCTL(NBD_SET_SIZE_BLOCKS),
  COMPATIBLE_IOCTL(NBD_DISCONNECT),
@@ -144,9 +139,8 @@ diff -urN linux-2.4.29/arch/ppc64/kernel/ioctl32.c linux-2.4.29-h1/arch/ppc64/ke
  /* Remove *PRIVATE in 2.5 */
  COMPATIBLE_IOCTL(SIOCDEVPRIVATE),
  COMPATIBLE_IOCTL(SIOCDEVPRIVATE+1),
-diff -urN linux-2.4.29/arch/s390x/kernel/ioctl32.c linux-2.4.29-h1/arch/s390x/kernel/ioctl32.c
---- linux-2.4.29/arch/s390x/kernel/ioctl32.c	2004-11-17 11:54:21.000000000 +0000
-+++ linux-2.4.29-h1/arch/s390x/kernel/ioctl32.c	2005-03-29 23:50:16.000000000 +0000
+--- a/arch/s390x/kernel/ioctl32.c
++++ b/arch/s390x/kernel/ioctl32.c
 @@ -30,6 +30,7 @@
  #include <linux/blk.h>
  #include <linux/elevator.h>
@@ -155,7 +149,7 @@ diff -urN linux-2.4.29/arch/s390x/kernel/ioctl32.c linux-2.4.29-h1/arch/s390x/ke
  #include <asm/types.h>
  #include <asm/uaccess.h>
  #include <asm/dasd.h>
-@@ -634,6 +635,21 @@
+@@ -634,6 +635,21 @@ static struct ioctl32_list ioctl32_handl
  
  	IOCTL32_DEFAULT(SIOCGSTAMP),
  
@@ -177,9 +171,8 @@ diff -urN linux-2.4.29/arch/s390x/kernel/ioctl32.c linux-2.4.29-h1/arch/s390x/ke
  	IOCTL32_DEFAULT(LOOP_SET_FD),
  	IOCTL32_DEFAULT(LOOP_CLR_FD),
  
-diff -urN linux-2.4.29/arch/sparc64/kernel/ioctl32.c linux-2.4.29-h1/arch/sparc64/kernel/ioctl32.c
---- linux-2.4.29/arch/sparc64/kernel/ioctl32.c	2005-01-19 14:09:39.000000000 +0000
-+++ linux-2.4.29-h1/arch/sparc64/kernel/ioctl32.c	2005-03-29 23:50:16.000000000 +0000
+--- a/arch/sparc64/kernel/ioctl32.c
++++ b/arch/sparc64/kernel/ioctl32.c
 @@ -56,6 +56,7 @@
  #if defined(CONFIG_BLK_DEV_LVM) || defined(CONFIG_BLK_DEV_LVM_MODULE)
  #include <linux/lvm.h>
@@ -188,7 +181,7 @@ diff -urN linux-2.4.29/arch/sparc64/kernel/ioctl32.c linux-2.4.29-h1/arch/sparc6
  
  #include <scsi/scsi.h>
  /* Ugly hack. */
-@@ -5095,6 +5096,23 @@
+@@ -5100,6 +5101,23 @@ COMPATIBLE_IOCTL(NBD_CLEAR_QUE)
  COMPATIBLE_IOCTL(NBD_PRINT_DEBUG)
  COMPATIBLE_IOCTL(NBD_SET_SIZE_BLOCKS)
  COMPATIBLE_IOCTL(NBD_DISCONNECT)
@@ -212,9 +205,8 @@ diff -urN linux-2.4.29/arch/sparc64/kernel/ioctl32.c linux-2.4.29-h1/arch/sparc6
  /* Linux-1394 */
  #if defined(CONFIG_IEEE1394) || defined(CONFIG_IEEE1394_MODULE)
  COMPATIBLE_IOCTL(AMDTP_IOC_CHANNEL)
-diff -urN linux-2.4.29/arch/x86_64/ia32/ia32_ioctl.c linux-2.4.29-h1/arch/x86_64/ia32/ia32_ioctl.c
---- linux-2.4.29/arch/x86_64/ia32/ia32_ioctl.c	2005-01-19 14:09:39.000000000 +0000
-+++ linux-2.4.29-h1/arch/x86_64/ia32/ia32_ioctl.c	2005-03-29 23:50:16.000000000 +0000
+--- a/arch/x86_64/ia32/ia32_ioctl.c
++++ b/arch/x86_64/ia32/ia32_ioctl.c
 @@ -68,6 +68,7 @@
  #define max max
  #include <linux/lvm.h>
@@ -223,7 +215,7 @@ diff -urN linux-2.4.29/arch/x86_64/ia32/ia32_ioctl.c linux-2.4.29-h1/arch/x86_64
  
  #include <scsi/scsi.h>
  /* Ugly hack. */
-@@ -4148,6 +4149,23 @@
+@@ -4167,6 +4168,23 @@ COMPATIBLE_IOCTL(LE_REMAP)
  COMPATIBLE_IOCTL(LV_BMAP)
  COMPATIBLE_IOCTL(LV_SNAPSHOT_USE_RATE)
  #endif /* LVM */
@@ -247,10 +239,9 @@ diff -urN linux-2.4.29/arch/x86_64/ia32/ia32_ioctl.c linux-2.4.29-h1/arch/x86_64
  #ifdef CONFIG_AUTOFS_FS
  COMPATIBLE_IOCTL(AUTOFS_IOC_READY)
  COMPATIBLE_IOCTL(AUTOFS_IOC_FAIL)
-diff -urN linux-2.4.29/drivers/md/Config.in linux-2.4.29-h1/drivers/md/Config.in
---- linux-2.4.29/drivers/md/Config.in	2001-09-14 21:22:18.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/Config.in	2005-03-29 23:50:16.000000000 +0000
-@@ -14,5 +14,7 @@
+--- a/drivers/md/Config.in
++++ b/drivers/md/Config.in
+@@ -14,5 +14,7 @@ dep_tristate '  RAID-4/RAID-5 mode' CONF
  dep_tristate '  Multipath I/O support' CONFIG_MD_MULTIPATH $CONFIG_BLK_DEV_MD
  
  dep_tristate ' Logical volume manager (LVM) support' CONFIG_BLK_DEV_LVM $CONFIG_MD
@@ -258,9 +249,8 @@ diff -urN linux-2.4.29/drivers/md/Config.in linux-2.4.29-h1/drivers/md/Config.in
 +dep_tristate '  Mirror (RAID-1) support' CONFIG_BLK_DEV_DM_MIRROR $CONFIG_BLK_DEV_DM
  
  endmenu
-diff -urN linux-2.4.29/drivers/md/Makefile linux-2.4.29-h1/drivers/md/Makefile
---- linux-2.4.29/drivers/md/Makefile	2001-11-11 18:09:32.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/Makefile	2005-03-29 23:50:16.000000000 +0000
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
 @@ -4,24 +4,41 @@
  
  O_TARGET	:= mddev.o
@@ -312,9 +302,8 @@ diff -urN linux-2.4.29/drivers/md/Makefile linux-2.4.29-h1/drivers/md/Makefile
 +dm-mirror.o: $(dm-mirror-mod-objs)
 +	$(LD) -r -o $@ $(dm-mirror-mod-objs)
 +
-diff -urN linux-2.4.29/drivers/md/dm-daemon.c linux-2.4.29-h1/drivers/md/dm-daemon.c
---- linux-2.4.29/drivers/md/dm-daemon.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-daemon.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-daemon.c
 @@ -0,0 +1,113 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -429,9 +418,8 @@ diff -urN linux-2.4.29/drivers/md/dm-daemon.c linux-2.4.29-h1/drivers/md/dm-daem
 +EXPORT_SYMBOL(dm_daemon_start);
 +EXPORT_SYMBOL(dm_daemon_stop);
 +EXPORT_SYMBOL(dm_daemon_wake);
-diff -urN linux-2.4.29/drivers/md/dm-daemon.h linux-2.4.29-h1/drivers/md/dm-daemon.h
---- linux-2.4.29/drivers/md/dm-daemon.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-daemon.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-daemon.h
 @@ -0,0 +1,29 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -462,9 +450,8 @@ diff -urN linux-2.4.29/drivers/md/dm-daemon.h linux-2.4.29-h1/drivers/md/dm-daem
 +int dm_daemon_running(struct dm_daemon *dd);
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/dm-exception-store.c linux-2.4.29-h1/drivers/md/dm-exception-store.c
---- linux-2.4.29/drivers/md/dm-exception-store.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-exception-store.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-exception-store.c
 @@ -0,0 +1,673 @@
 +/*
 + * dm-snapshot.c
@@ -1139,9 +1126,8 @@ diff -urN linux-2.4.29/drivers/md/dm-exception-store.c linux-2.4.29-h1/drivers/m
 +
 +	return 0;
 +}
-diff -urN linux-2.4.29/drivers/md/dm-io.c linux-2.4.29-h1/drivers/md/dm-io.c
---- linux-2.4.29/drivers/md/dm-io.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-io.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-io.c
 @@ -0,0 +1,371 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -1514,9 +1500,8 @@ diff -urN linux-2.4.29/drivers/md/dm-io.c linux-2.4.29-h1/drivers/md/dm-io.c
 +EXPORT_SYMBOL(dm_io_put);
 +EXPORT_SYMBOL(dm_io_sync);
 +EXPORT_SYMBOL(dm_io_async);
-diff -urN linux-2.4.29/drivers/md/dm-io.h linux-2.4.29-h1/drivers/md/dm-io.h
---- linux-2.4.29/drivers/md/dm-io.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-io.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-io.h
 @@ -0,0 +1,86 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -1604,9 +1589,8 @@ diff -urN linux-2.4.29/drivers/md/dm-io.h linux-2.4.29-h1/drivers/md/dm-io.h
 +		io_notify_fn fn, void *context);
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/dm-ioctl.c linux-2.4.29-h1/drivers/md/dm-ioctl.c
---- linux-2.4.29/drivers/md/dm-ioctl.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-ioctl.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-ioctl.c
 @@ -0,0 +1,1366 @@
 +/*
 + * Copyright (C) 2001, 2002 Sistina Software (UK) Limited.
@@ -2974,9 +2958,8 @@ diff -urN linux-2.4.29/drivers/md/dm-ioctl.c linux-2.4.29-h1/drivers/md/dm-ioctl
 +
 +	dm_hash_exit();
 +}
-diff -urN linux-2.4.29/drivers/md/dm-linear.c linux-2.4.29-h1/drivers/md/dm-linear.c
---- linux-2.4.29/drivers/md/dm-linear.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-linear.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-linear.c
 @@ -0,0 +1,124 @@
 +/*
 + * Copyright (C) 2001-2003 Sistina Software (UK) Limited.
@@ -3102,9 +3085,8 @@ diff -urN linux-2.4.29/drivers/md/dm-linear.c linux-2.4.29-h1/drivers/md/dm-line
 +	if (r < 0)
 +		DMERR("linear: unregister failed %d", r);
 +}
-diff -urN linux-2.4.29/drivers/md/dm-log.c linux-2.4.29-h1/drivers/md/dm-log.c
---- linux-2.4.29/drivers/md/dm-log.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-log.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-log.c
 @@ -0,0 +1,310 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -3416,9 +3398,8 @@ diff -urN linux-2.4.29/drivers/md/dm-log.c linux-2.4.29-h1/drivers/md/dm-log.c
 +EXPORT_SYMBOL(dm_dirty_log_exit);
 +EXPORT_SYMBOL(dm_create_dirty_log);
 +EXPORT_SYMBOL(dm_destroy_dirty_log);
-diff -urN linux-2.4.29/drivers/md/dm-log.h linux-2.4.29-h1/drivers/md/dm-log.h
---- linux-2.4.29/drivers/md/dm-log.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-log.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-log.h
 @@ -0,0 +1,112 @@
 +/*
 + * Copyright (C) 2003 Sistina Software
@@ -3532,9 +3513,8 @@ diff -urN linux-2.4.29/drivers/md/dm-log.h linux-2.4.29-h1/drivers/md/dm-log.h
 +void dm_dirty_log_exit(void);
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/dm-raid1.c linux-2.4.29-h1/drivers/md/dm-raid1.c
---- linux-2.4.29/drivers/md/dm-raid1.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-raid1.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-raid1.c
 @@ -0,0 +1,1295 @@
 +/*
 + * Copyright (C) 2003 Sistina Software Limited.
@@ -4831,9 +4811,8 @@ diff -urN linux-2.4.29/drivers/md/dm-raid1.c linux-2.4.29-h1/drivers/md/dm-raid1
 +MODULE_DESCRIPTION(DM_NAME " mirror target");
 +MODULE_AUTHOR("Heinz Mauelshagen <mge@sistina.com>");
 +MODULE_LICENSE("GPL");
-diff -urN linux-2.4.29/drivers/md/dm-snapshot.c linux-2.4.29-h1/drivers/md/dm-snapshot.c
---- linux-2.4.29/drivers/md/dm-snapshot.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-snapshot.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-snapshot.c
 @@ -0,0 +1,1237 @@
 +/*
 + * dm-snapshot.c
@@ -6072,9 +6051,8 @@ diff -urN linux-2.4.29/drivers/md/dm-snapshot.c linux-2.4.29-h1/drivers/md/dm-sn
 +	kmem_cache_destroy(pending_cache);
 +	kmem_cache_destroy(exception_cache);
 +}
-diff -urN linux-2.4.29/drivers/md/dm-snapshot.h linux-2.4.29-h1/drivers/md/dm-snapshot.h
---- linux-2.4.29/drivers/md/dm-snapshot.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-snapshot.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-snapshot.h
 @@ -0,0 +1,158 @@
 +/*
 + * dm-snapshot.c
@@ -6234,9 +6212,8 @@ diff -urN linux-2.4.29/drivers/md/dm-snapshot.h linux-2.4.29-h1/drivers/md/dm-sn
 +}
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/dm-stripe.c linux-2.4.29-h1/drivers/md/dm-stripe.c
---- linux-2.4.29/drivers/md/dm-stripe.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-stripe.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-stripe.c
 @@ -0,0 +1,259 @@
 +/*
 + * Copyright (C) 2001-2003 Sistina Software (UK) Limited.
@@ -6497,9 +6474,8 @@ diff -urN linux-2.4.29/drivers/md/dm-stripe.c linux-2.4.29-h1/drivers/md/dm-stri
 +
 +	return;
 +}
-diff -urN linux-2.4.29/drivers/md/dm-table.c linux-2.4.29-h1/drivers/md/dm-table.c
---- linux-2.4.29/drivers/md/dm-table.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-table.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-table.c
 @@ -0,0 +1,679 @@
 +/*
 + * Copyright (C) 2001 Sistina Software (UK) Limited.
@@ -7180,9 +7156,8 @@ diff -urN linux-2.4.29/drivers/md/dm-table.c linux-2.4.29-h1/drivers/md/dm-table
 +EXPORT_SYMBOL(dm_put_device);
 +EXPORT_SYMBOL(dm_table_event);
 +EXPORT_SYMBOL(dm_table_get_mode);
-diff -urN linux-2.4.29/drivers/md/dm-target.c linux-2.4.29-h1/drivers/md/dm-target.c
---- linux-2.4.29/drivers/md/dm-target.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm-target.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm-target.c
 @@ -0,0 +1,203 @@
 +/*
 + * Copyright (C) 2001 Sistina Software (UK) Limited
@@ -7387,9 +7362,8 @@ diff -urN linux-2.4.29/drivers/md/dm-target.c linux-2.4.29-h1/drivers/md/dm-targ
 +
 +EXPORT_SYMBOL(dm_register_target);
 +EXPORT_SYMBOL(dm_unregister_target);
-diff -urN linux-2.4.29/drivers/md/dm.c linux-2.4.29-h1/drivers/md/dm.c
---- linux-2.4.29/drivers/md/dm.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm.c
 @@ -0,0 +1,1115 @@
 +/*
 + * Copyright (C) 2001, 2002 Sistina Software (UK) Limited.
@@ -8506,9 +8480,8 @@ diff -urN linux-2.4.29/drivers/md/dm.c linux-2.4.29-h1/drivers/md/dm.c
 +MODULE_LICENSE("GPL");
 +
 +EXPORT_SYMBOL(dm_kdevname);
-diff -urN linux-2.4.29/drivers/md/dm.h linux-2.4.29-h1/drivers/md/dm.h
---- linux-2.4.29/drivers/md/dm.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/dm.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/dm.h
 @@ -0,0 +1,177 @@
 +/*
 + * Internal header file for device mapper
@@ -8687,9 +8660,8 @@ diff -urN linux-2.4.29/drivers/md/dm.h linux-2.4.29-h1/drivers/md/dm.h
 +void dm_snapshot_exit(void);
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/kcopyd.c linux-2.4.29-h1/drivers/md/kcopyd.c
---- linux-2.4.29/drivers/md/kcopyd.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/kcopyd.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/kcopyd.c
 @@ -0,0 +1,666 @@
 +/*
 + * Copyright (C) 2002 Sistina Software (UK) Limited.
@@ -9357,9 +9329,8 @@ diff -urN linux-2.4.29/drivers/md/kcopyd.c linux-2.4.29-h1/drivers/md/kcopyd.c
 +EXPORT_SYMBOL(kcopyd_client_destroy);
 +EXPORT_SYMBOL(kcopyd_copy);
 +EXPORT_SYMBOL(kcopyd_cancel);
-diff -urN linux-2.4.29/drivers/md/kcopyd.h linux-2.4.29-h1/drivers/md/kcopyd.h
---- linux-2.4.29/drivers/md/kcopyd.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/kcopyd.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/drivers/md/kcopyd.h
 @@ -0,0 +1,47 @@
 +/*
 + * Copyright (C) 2001 Sistina Software
@@ -9408,9 +9379,8 @@ diff -urN linux-2.4.29/drivers/md/kcopyd.h linux-2.4.29-h1/drivers/md/kcopyd.h
 +		unsigned int flags, kcopyd_notify_fn fn, void *context);
 +
 +#endif
-diff -urN linux-2.4.29/drivers/md/lvm.c linux-2.4.29-h1/drivers/md/lvm.c
---- linux-2.4.29/drivers/md/lvm.c	2004-11-17 11:54:21.000000000 +0000
-+++ linux-2.4.29-h1/drivers/md/lvm.c	2005-03-29 23:50:16.000000000 +0000
+--- a/drivers/md/lvm.c
++++ b/drivers/md/lvm.c
 @@ -236,9 +236,6 @@
  #define DEVICE_OFF(device)
  #define LOCAL_END_REQUEST
@@ -9421,7 +9391,7 @@ diff -urN linux-2.4.29/drivers/md/lvm.c linux-2.4.29-h1/drivers/md/lvm.c
  #include <linux/config.h>
  #include <linux/module.h>
  #include <linux/kernel.h>
-@@ -2250,12 +2247,8 @@
+@@ -2248,12 +2245,8 @@ static int lvm_do_lv_create(int minor, c
  	if (lv_ptr->lv_access & LV_SNAPSHOT) {
  		lv_t *org = lv_ptr->lv_snapshot_org, *last;
  
@@ -9434,7 +9404,7 @@ diff -urN linux-2.4.29/drivers/md/lvm.c linux-2.4.29-h1/drivers/md/lvm.c
  
  		down_write(&org->lv_lock);
  		org->lv_access |= LV_SNAPSHOT_ORG;
-@@ -2281,11 +2274,9 @@
+@@ -2279,11 +2272,9 @@ static int lvm_do_lv_create(int minor, c
  	else
  		set_device_ro(lv_ptr->lv_dev, 1);
  
@@ -9446,10 +9416,9 @@ diff -urN linux-2.4.29/drivers/md/lvm.c linux-2.4.29-h1/drivers/md/lvm.c
  
  	lvm_gendisk.part[MINOR(lv_ptr->lv_dev)].de =
  	    lvm_fs_create_lv(vg_ptr, lv_ptr);
-diff -urN linux-2.4.29/fs/buffer.c linux-2.4.29-h1/fs/buffer.c
---- linux-2.4.29/fs/buffer.c	2004-11-17 11:54:21.000000000 +0000
-+++ linux-2.4.29-h1/fs/buffer.c	2005-03-29 23:50:16.000000000 +0000
-@@ -420,6 +420,34 @@
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -420,6 +420,34 @@ void sync_dev(kdev_t dev)
  	fsync_dev(dev);
  }
  
@@ -9484,7 +9453,7 @@ diff -urN linux-2.4.29/fs/buffer.c linux-2.4.29-h1/fs/buffer.c
  asmlinkage long sys_sync(void)
  {
  	fsync_dev(0);
-@@ -800,6 +828,7 @@
+@@ -800,6 +828,7 @@ void init_buffer(struct buffer_head *bh,
  	bh->b_list = BUF_CLEAN;
  	bh->b_end_io = handler;
  	bh->b_private = private;
@@ -9492,10 +9461,9 @@ diff -urN linux-2.4.29/fs/buffer.c linux-2.4.29-h1/fs/buffer.c
  }
  
  void end_buffer_io_async(struct buffer_head * bh, int uptodate)
-diff -urN linux-2.4.29/fs/jbd/journal.c linux-2.4.29-h1/fs/jbd/journal.c
---- linux-2.4.29/fs/jbd/journal.c	2004-11-17 11:54:21.000000000 +0000
-+++ linux-2.4.29-h1/fs/jbd/journal.c	2005-03-29 23:50:16.000000000 +0000
-@@ -1804,9 +1804,9 @@
+--- a/fs/jbd/journal.c
++++ b/fs/jbd/journal.c
+@@ -1804,9 +1804,9 @@ struct journal_head *journal_add_journal
  
  		if (buffer_jbd(bh)) {
  			/* Someone did it for us! */
@@ -9507,7 +9475,7 @@ diff -urN linux-2.4.29/fs/jbd/journal.c linux-2.4.29-h1/fs/jbd/journal.c
  		} else {
  			/*
  			 * We actually don't need jh_splice_lock when
-@@ -1814,7 +1814,7 @@
+@@ -1814,7 +1814,7 @@ struct journal_head *journal_add_journal
  			 */
  			spin_lock(&jh_splice_lock);
  			set_bit(BH_JBD, &bh->b_state);
@@ -9516,7 +9484,7 @@ diff -urN linux-2.4.29/fs/jbd/journal.c linux-2.4.29-h1/fs/jbd/journal.c
  			jh->b_bh = bh;
  			atomic_inc(&bh->b_count);
  			spin_unlock(&jh_splice_lock);
-@@ -1823,7 +1823,7 @@
+@@ -1823,7 +1823,7 @@ struct journal_head *journal_add_journal
  	}
  	jh->b_jcount++;
  	spin_unlock(&journal_datalist_lock);
@@ -9525,7 +9493,7 @@ diff -urN linux-2.4.29/fs/jbd/journal.c linux-2.4.29-h1/fs/jbd/journal.c
  }
  
  /*
-@@ -1856,7 +1856,7 @@
+@@ -1856,7 +1856,7 @@ void __journal_remove_journal_head(struc
  			J_ASSERT_BH(bh, jh2bh(jh) == bh);
  			BUFFER_TRACE(bh, "remove journal_head");
  			spin_lock(&jh_splice_lock);
@@ -9534,10 +9502,9 @@ diff -urN linux-2.4.29/fs/jbd/journal.c linux-2.4.29-h1/fs/jbd/journal.c
  			jh->b_bh = NULL;	/* debug, really */
  			clear_bit(BH_JBD, &bh->b_state);
  			__brelse(bh);
-diff -urN linux-2.4.29/fs/reiserfs/super.c linux-2.4.29-h1/fs/reiserfs/super.c
---- linux-2.4.29/fs/reiserfs/super.c	2003-08-25 11:44:43.000000000 +0000
-+++ linux-2.4.29-h1/fs/reiserfs/super.c	2005-03-29 23:50:16.000000000 +0000
-@@ -73,7 +73,7 @@
+--- a/fs/reiserfs/super.c
++++ b/fs/reiserfs/super.c
+@@ -73,7 +73,7 @@ static void reiserfs_write_super_lockfs 
      reiserfs_prepare_for_journal(s, SB_BUFFER_WITH_SB(s), 1);
      journal_mark_dirty(&th, s, SB_BUFFER_WITH_SB (s));
      reiserfs_block_writes(&th) ;
@@ -9546,9 +9513,8 @@ diff -urN linux-2.4.29/fs/reiserfs/super.c linux-2.4.29-h1/fs/reiserfs/super.c
    }
    s->s_dirt = dirty;
    unlock_kernel() ;
-diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
---- linux-2.4.29/fs/super.c	2003-08-25 11:44:43.000000000 +0000
-+++ linux-2.4.29-h1/fs/super.c	2005-03-29 23:50:16.000000000 +0000
+--- a/fs/super.c
++++ b/fs/super.c
 @@ -38,6 +38,13 @@
  LIST_HEAD(super_blocks);
  spinlock_t sb_lock = SPIN_LOCK_UNLOCKED;
@@ -9563,7 +9529,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  /*
   * Handling of filesystem drivers list.
   * Rules:
-@@ -436,6 +443,19 @@
+@@ -436,6 +443,19 @@ void drop_super(struct super_block *sb)
  	put_super(sb);
  }
  
@@ -9583,7 +9549,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  static inline void write_super(struct super_block *sb)
  {
  	lock_super(sb);
-@@ -483,6 +503,39 @@
+@@ -483,6 +503,39 @@ restart:
  	spin_unlock(&sb_lock);
  }
  
@@ -9623,7 +9589,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  /**
   *	get_super	-	get the superblock of a device
   *	@dev: device to get the superblock for
-@@ -702,6 +755,7 @@
+@@ -702,6 +755,7 @@ static struct super_block *get_sb_bdev(s
  		goto out1;
  
  	error = -EBUSY;
@@ -9631,7 +9597,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  restart:
  	spin_lock(&sb_lock);
  
-@@ -713,6 +767,7 @@
+@@ -713,6 +767,7 @@ restart:
  		    ((flags ^ old->s_flags) & MS_RDONLY)) {
  			spin_unlock(&sb_lock);
  			destroy_super(s);
@@ -9639,7 +9605,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  			goto out1;
  		}
  		if (!grab_super(old))
-@@ -720,12 +775,14 @@
+@@ -720,12 +775,14 @@ restart:
  		destroy_super(s);
  		blkdev_put(bdev, BDEV_FS);
  		path_release(&nd);
@@ -9654,7 +9620,7 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  	if (!fs_type->read_super(s, data, flags & MS_VERBOSE ? 1 : 0))
  		goto Einval;
  	s->s_flags |= MS_ACTIVE;
-@@ -833,7 +890,10 @@
+@@ -833,7 +890,10 @@ void kill_super(struct super_block *sb)
  	if (!deactivate_super(sb))
  		return;
  
@@ -9665,9 +9631,8 @@ diff -urN linux-2.4.29/fs/super.c linux-2.4.29-h1/fs/super.c
  	sb->s_root = NULL;
  	/* Need to clean after the sucker */
  	if (fs->fs_flags & FS_LITTER)
-diff -urN linux-2.4.29/include/linux/device-mapper.h linux-2.4.29-h1/include/linux/device-mapper.h
---- linux-2.4.29/include/linux/device-mapper.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/device-mapper.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/include/linux/device-mapper.h
 @@ -0,0 +1,105 @@
 +/*
 + * Copyright (C) 2001 Sistina Software (UK) Limited.
@@ -9774,9 +9739,8 @@ diff -urN linux-2.4.29/include/linux/device-mapper.h linux-2.4.29-h1/include/lin
 +int dm_unregister_target(struct target_type *t);
 +
 +#endif				/* _LINUX_DEVICE_MAPPER_H */
-diff -urN linux-2.4.29/include/linux/dm-ioctl.h linux-2.4.29-h1/include/linux/dm-ioctl.h
---- linux-2.4.29/include/linux/dm-ioctl.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/dm-ioctl.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/include/linux/dm-ioctl.h
 @@ -0,0 +1,252 @@
 +/*
 + * Copyright (C) 2001 - 2003 Sistina Software (UK) Limited.
@@ -10030,10 +9994,9 @@ diff -urN linux-2.4.29/include/linux/dm-ioctl.h linux-2.4.29-h1/include/linux/dm
 +#define DM_BUFFER_FULL_FLAG	(1 << 8) /* Out */
 +
 +#endif				/* _LINUX_DM_IOCTL_H */
-diff -urN linux-2.4.29/include/linux/fs.h linux-2.4.29-h1/include/linux/fs.h
---- linux-2.4.29/include/linux/fs.h	2004-11-17 11:54:22.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/fs.h	2005-03-29 23:50:16.000000000 +0000
-@@ -266,7 +266,7 @@
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -266,7 +266,7 @@ struct buffer_head {
  	struct page *b_page;		/* the page this bh is mapped to */
  	void (*b_end_io)(struct buffer_head *bh, int uptodate); /* I/O completion */
   	void *b_private;		/* reserved for b_end_io */
@@ -10042,7 +10005,7 @@ diff -urN linux-2.4.29/include/linux/fs.h linux-2.4.29-h1/include/linux/fs.h
  	unsigned long b_rsector;	/* Real buffer location on disk */
  	wait_queue_head_t b_wait;
  
-@@ -1277,6 +1277,7 @@
+@@ -1271,6 +1271,7 @@ extern void write_inode_now(struct inode
  extern int sync_buffers(kdev_t, int);
  extern void sync_dev(kdev_t);
  extern int fsync_dev(kdev_t);
@@ -10050,7 +10013,7 @@ diff -urN linux-2.4.29/include/linux/fs.h linux-2.4.29-h1/include/linux/fs.h
  extern int fsync_super(struct super_block *);
  extern int fsync_no_super(kdev_t);
  extern void sync_inodes_sb(struct super_block *);
-@@ -1295,6 +1296,8 @@
+@@ -1289,6 +1290,8 @@ extern int filemap_fdatawrite(struct add
  extern int filemap_fdatasync(struct address_space *);
  extern int filemap_fdatawait(struct address_space *);
  extern void sync_supers(kdev_t dev, int wait);
@@ -10059,10 +10022,9 @@ diff -urN linux-2.4.29/include/linux/fs.h linux-2.4.29-h1/include/linux/fs.h
  extern int bmap(struct inode *, int);
  extern int notify_change(struct dentry *, struct iattr *);
  extern int permission(struct inode *, int);
-diff -urN linux-2.4.29/include/linux/jbd.h linux-2.4.29-h1/include/linux/jbd.h
---- linux-2.4.29/include/linux/jbd.h	2004-11-17 11:54:22.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/jbd.h	2005-03-29 23:50:16.000000000 +0000
-@@ -311,7 +311,7 @@
+--- a/include/linux/jbd.h
++++ b/include/linux/jbd.h
+@@ -311,7 +311,7 @@ static inline struct buffer_head *jh2bh(
  
  static inline struct journal_head *bh2jh(struct buffer_head *bh)
  {
@@ -10071,9 +10033,8 @@ diff -urN linux-2.4.29/include/linux/jbd.h linux-2.4.29-h1/include/linux/jbd.h
  }
  
  #define HAVE_JOURNAL_CALLBACK_STATUS
-diff -urN linux-2.4.29/include/linux/mempool.h linux-2.4.29-h1/include/linux/mempool.h
---- linux-2.4.29/include/linux/mempool.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/mempool.h	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/include/linux/mempool.h
 @@ -0,0 +1,31 @@
 +/*
 + * memory buffer pool support
@@ -10106,10 +10067,9 @@ diff -urN linux-2.4.29/include/linux/mempool.h linux-2.4.29-h1/include/linux/mem
 +
 +
 +#endif /* _LINUX_MEMPOOL_H */
-diff -urN linux-2.4.29/include/linux/vmalloc.h linux-2.4.29-h1/include/linux/vmalloc.h
---- linux-2.4.29/include/linux/vmalloc.h	2003-08-25 11:44:44.000000000 +0000
-+++ linux-2.4.29-h1/include/linux/vmalloc.h	2005-03-29 23:50:16.000000000 +0000
-@@ -29,6 +29,7 @@
+--- a/include/linux/vmalloc.h
++++ b/include/linux/vmalloc.h
+@@ -29,6 +29,7 @@ extern long vread(char *buf, char *addr,
  extern void vmfree_area_pages(unsigned long address, unsigned long size);
  extern int vmalloc_area_pages(unsigned long address, unsigned long size,
                                int gfp_mask, pgprot_t prot);
@@ -10117,10 +10077,9 @@ diff -urN linux-2.4.29/include/linux/vmalloc.h linux-2.4.29-h1/include/linux/vma
  
  /*
   *	Allocate any pages
-diff -urN linux-2.4.29/kernel/ksyms.c linux-2.4.29-h1/kernel/ksyms.c
---- linux-2.4.29/kernel/ksyms.c	2004-02-18 13:36:32.000000000 +0000
-+++ linux-2.4.29-h1/kernel/ksyms.c	2005-03-29 23:50:16.000000000 +0000
-@@ -115,6 +115,7 @@
+--- a/kernel/ksyms.c
++++ b/kernel/ksyms.c
+@@ -115,6 +115,7 @@ EXPORT_SYMBOL(vfree);
  EXPORT_SYMBOL(__vmalloc);
  EXPORT_SYMBOL(vmap);
  EXPORT_SYMBOL(vmalloc_to_page);
@@ -10128,7 +10087,7 @@ diff -urN linux-2.4.29/kernel/ksyms.c linux-2.4.29-h1/kernel/ksyms.c
  EXPORT_SYMBOL(mem_map);
  EXPORT_SYMBOL(remap_page_range);
  EXPORT_SYMBOL(max_mapnr);
-@@ -194,6 +195,8 @@
+@@ -194,6 +195,8 @@ EXPORT_SYMBOL(invalidate_device);
  EXPORT_SYMBOL(invalidate_inode_pages);
  EXPORT_SYMBOL(truncate_inode_pages);
  EXPORT_SYMBOL(fsync_dev);
@@ -10137,9 +10096,8 @@ diff -urN linux-2.4.29/kernel/ksyms.c linux-2.4.29-h1/kernel/ksyms.c
  EXPORT_SYMBOL(fsync_no_super);
  EXPORT_SYMBOL(permission);
  EXPORT_SYMBOL(vfs_permission);
-diff -urN linux-2.4.29/mm/Makefile linux-2.4.29-h1/mm/Makefile
---- linux-2.4.29/mm/Makefile	2002-08-03 00:39:46.000000000 +0000
-+++ linux-2.4.29-h1/mm/Makefile	2005-03-29 23:50:16.000000000 +0000
+--- a/mm/Makefile
++++ b/mm/Makefile
 @@ -9,12 +9,12 @@
  
  O_TARGET := mm.o
@@ -10155,10 +10113,9 @@ diff -urN linux-2.4.29/mm/Makefile linux-2.4.29-h1/mm/Makefile
  
  obj-$(CONFIG_HIGHMEM) += highmem.o
  
-diff -urN linux-2.4.29/mm/filemap.c linux-2.4.29-h1/mm/filemap.c
---- linux-2.4.29/mm/filemap.c	2004-11-17 11:54:22.000000000 +0000
-+++ linux-2.4.29-h1/mm/filemap.c	2005-03-29 23:50:16.000000000 +0000
-@@ -1810,7 +1810,8 @@
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1810,7 +1810,8 @@ ssize_t generic_file_read(struct file * 
  			retval = do_generic_direct_read(filp, buf, count, ppos);
  		up(&inode->i_sem);
  		up_read(&inode->i_alloc_sem);
@@ -10168,7 +10125,7 @@ diff -urN linux-2.4.29/mm/filemap.c linux-2.4.29-h1/mm/filemap.c
  		goto out;
  	}
  }
-@@ -3188,8 +3189,12 @@
+@@ -3172,8 +3173,12 @@ do_generic_file_write(struct file *file,
  		goto out;
  
  	remove_suid(inode);
@@ -10183,9 +10140,8 @@ diff -urN linux-2.4.29/mm/filemap.c linux-2.4.29-h1/mm/filemap.c
  
  	do {
  		unsigned long index, offset;
-diff -urN linux-2.4.29/mm/mempool.c linux-2.4.29-h1/mm/mempool.c
---- linux-2.4.29/mm/mempool.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.4.29-h1/mm/mempool.c	2005-03-29 23:50:16.000000000 +0000
+--- /dev/null
++++ b/mm/mempool.c
 @@ -0,0 +1,299 @@
 +/*
 + *  linux/mm/mempool.c
@@ -10486,10 +10442,9 @@ diff -urN linux-2.4.29/mm/mempool.c linux-2.4.29-h1/mm/mempool.c
 +EXPORT_SYMBOL(mempool_free);
 +EXPORT_SYMBOL(mempool_alloc_slab);
 +EXPORT_SYMBOL(mempool_free_slab);
-diff -urN linux-2.4.29/mm/vmalloc.c linux-2.4.29-h1/mm/vmalloc.c
---- linux-2.4.29/mm/vmalloc.c	2004-04-14 13:05:41.000000000 +0000
-+++ linux-2.4.29-h1/mm/vmalloc.c	2005-03-29 23:50:16.000000000 +0000
-@@ -382,3 +382,22 @@
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -382,3 +382,22 @@ finished:
  	read_unlock(&vmlist_lock);
  	return buf - buf_start;
  }
