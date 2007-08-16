@@ -10708,26 +10708,6 @@
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
-@@ -693,8 +705,8 @@ static void xfer_secondary_pool(struct e
- 
- 	if (r->pull && r->entropy_count < nbytes * 8 &&
- 	    r->entropy_count < r->poolinfo->POOLBITS) {
--		int bytes = max_t(int, random_read_wakeup_thresh / 8,
--				min_t(int, nbytes, sizeof(tmp)));
-+		int bytes = min_t(int, max_t(int, random_read_wakeup_thresh / 8,
-+				nbytes), sizeof(tmp));
- 		int rsvd = r->limit ? 0 : random_read_wakeup_thresh/4;
- 
- 		DEBUG_ENT("going to reseed %s with %d bits "
-@@ -1167,7 +1179,7 @@ EXPORT_SYMBOL(generate_random_uuid);
- #include <linux/sysctl.h>
- 
- static int min_read_thresh = 8, min_write_thresh;
--static int max_read_thresh = INPUT_POOL_WORDS * 32;
-+static int max_read_thresh = OUTPUT_POOL_WORDS * 32;
- static int max_write_thresh = INPUT_POOL_WORDS * 32;
- static char sysctl_bootid[16];
- 
 --- a/drivers/char/vt_ioctl.c
 +++ b/drivers/char/vt_ioctl.c
 @@ -95,6 +95,12 @@ do_kdsk_ioctl(int cmd, struct kbentry __
