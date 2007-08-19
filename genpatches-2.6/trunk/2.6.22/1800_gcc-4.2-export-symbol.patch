@@ -1,0 +1,88 @@
+From: Peter Chubb <peterc@gelato.unsw.edu.au>
+Date: Fri, 10 Aug 2007 20:01:10 +0000 (-0700)
+Subject: fix compilation with gcc 4.2
+X-Git-Tag: v2.6.23-rc3~31
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=cd5bfea278987ebfe60f3ff92a01696b17c4f978
+
+fix compilation with gcc 4.2
+
+gcc-4.2 is a lot more picky about its symbol handling.  EXPORT_SYMBOL no
+longer works on symbols that are undefined or defined with static scope.
+
+For example, with CONFIG_PROFILE off, I see:
+
+  kernel/profile.c:206: error: __ksymtab_profile_event_unregister causes a section type conflict
+  kernel/profile.c:205: error: __ksymtab_profile_event_register causes a section type conflict
+
+This patch moves the EXPORTs inside the #ifdef CONFIG_PROFILE, so we
+only try to export symbols that are defined.
+
+Also, in kernel/kprobes.c there's an EXPORT_SYMBOL_GPL() for
+jprobes_return, which if CONFIG_JPROBES is undefined is a static
+inline and gives the same error.
+
+And in drivers/acpi/resources/rsxface.c, there's an
+ACPI_EXPORT_SYMBOPL() for a static symbol. If it's static, it's not
+accessible from outside the compilation unit, so should bot be exported.
+
+These three changes allow building a zx1_defconfig kernel with gcc 4.2
+on IA64.
+
+[akpm@linux-foundation.org: export jpobe_return properly]
+Signed-off-by: Peter Chubb <peterc@gelato.unsw.edu.au>
+Cc: Prasanna S Panchamukhi <prasanna@in.ibm.com>
+Cc: Ananth N Mavinakayanahalli <ananth@in.ibm.com>
+Cc: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
+Cc: "Luck, Tony" <tony.luck@intel.com>
+Cc: Len Brown <lenb@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/drivers/acpi/resources/rsxface.c b/drivers/acpi/resources/rsxface.c
+index f63813a..4c3fd4c 100644
+--- a/drivers/acpi/resources/rsxface.c
++++ b/drivers/acpi/resources/rsxface.c
+@@ -474,8 +474,6 @@ acpi_rs_match_vendor_resource(struct acpi_resource *resource, void *context)
+ 	return (AE_CTRL_TERMINATE);
+ }
+ 
+-ACPI_EXPORT_SYMBOL(acpi_rs_match_vendor_resource)
+-
+ /*******************************************************************************
+  *
+  * FUNCTION:    acpi_walk_resources
+diff --git a/kernel/kprobes.c b/kernel/kprobes.c
+index 3e9f513..4b8a449 100644
+--- a/kernel/kprobes.c
++++ b/kernel/kprobes.c
+@@ -1063,6 +1063,11 @@ EXPORT_SYMBOL_GPL(register_kprobe);
+ EXPORT_SYMBOL_GPL(unregister_kprobe);
+ EXPORT_SYMBOL_GPL(register_jprobe);
+ EXPORT_SYMBOL_GPL(unregister_jprobe);
++#ifdef CONFIG_KPROBES
+ EXPORT_SYMBOL_GPL(jprobe_return);
++#endif
++
++#ifdef CONFIG_KPROBES
+ EXPORT_SYMBOL_GPL(register_kretprobe);
+ EXPORT_SYMBOL_GPL(unregister_kretprobe);
++#endif
+diff --git a/kernel/profile.c b/kernel/profile.c
+index 5b20fe9..cb1e37d 100644
+--- a/kernel/profile.c
++++ b/kernel/profile.c
+@@ -199,11 +199,11 @@ EXPORT_SYMBOL_GPL(register_timer_hook);
+ EXPORT_SYMBOL_GPL(unregister_timer_hook);
+ EXPORT_SYMBOL_GPL(task_handoff_register);
+ EXPORT_SYMBOL_GPL(task_handoff_unregister);
++EXPORT_SYMBOL_GPL(profile_event_register);
++EXPORT_SYMBOL_GPL(profile_event_unregister);
+ 
+ #endif /* CONFIG_PROFILING */
+ 
+-EXPORT_SYMBOL_GPL(profile_event_register);
+-EXPORT_SYMBOL_GPL(profile_event_unregister);
+ 
+ #ifdef CONFIG_SMP
+ /*
