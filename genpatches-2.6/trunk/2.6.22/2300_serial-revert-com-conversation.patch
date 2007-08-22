@@ -42,24 +42,30 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
 ---
 
-diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index d763ebe..efdb42f 100644
+---
+ Documentation/kernel-parameters.txt |    5 --
+ arch/i386/kernel/Makefile           |    1 
+ arch/i386/kernel/legacy_serial.c    |   67 ------------------------------------
+ arch/x86_64/kernel/Makefile         |    2 -
+ drivers/serial/Kconfig              |   14 ++-----
+ include/asm-i386/serial.h           |   16 ++++++++
+ include/asm-x86_64/serial.h         |   16 ++++++++
+ 7 files changed, 37 insertions(+), 84 deletions(-)
+
 --- a/Documentation/kernel-parameters.txt
 +++ b/Documentation/kernel-parameters.txt
-@@ -864,11 +864,6 @@ and is between 256 and 4096 characters. It is defined in the file
+@@ -850,11 +850,6 @@ and is between 256 and 4096 characters. 
  	lasi=		[HW,SCSI] PARISC LASI driver for the 53c700 chip
  			Format: addr:<io>,irq:<irq>
  
--	legacy_serial.force [HW,X86-32,X86-64]
+-	legacy_serial.force [HW,IA-32,X86-64]
 -			Probe for COM ports at legacy addresses even
 -			if PNPBIOS or ACPI should describe them.  This
 -			is for working around firmware defects.
 -
- 	load_ramdisk=	[RAM] List of ramdisks to load from floppy
- 			See Documentation/ramdisk.txt.
+ 	llsc*=		[IA64] See function print_params() in
+ 			arch/ia64/sn/kernel/llsc4.c.
  
-diff --git a/arch/i386/kernel/Makefile b/arch/i386/kernel/Makefile
-index dbe5e87..9d33b00 100644
 --- a/arch/i386/kernel/Makefile
 +++ b/arch/i386/kernel/Makefile
 @@ -35,7 +35,6 @@ obj-y				+= sysenter.o vsyscall.o
@@ -70,9 +76,6 @@ index dbe5e87..9d33b00 100644
  obj-$(CONFIG_VM86)		+= vm86.o
  obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
  obj-$(CONFIG_HPET_TIMER) 	+= hpet.o
-diff --git a/arch/i386/kernel/legacy_serial.c b/arch/i386/kernel/legacy_serial.c
-deleted file mode 100644
-index 2151011..0000000
 --- a/arch/i386/kernel/legacy_serial.c
 +++ /dev/null
 @@ -1,67 +0,0 @@
@@ -143,11 +146,9 @@ index 2151011..0000000
 -MODULE_AUTHOR("Bjorn Helgaas");
 -MODULE_LICENSE("GPL");
 -MODULE_DESCRIPTION("Generic 8250/16x50 legacy probe module");
-diff --git a/arch/x86_64/kernel/Makefile b/arch/x86_64/kernel/Makefile
-index d1d18c1..ff5d8c9 100644
 --- a/arch/x86_64/kernel/Makefile
 +++ b/arch/x86_64/kernel/Makefile
-@@ -32,7 +32,6 @@ obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
+@@ -32,7 +32,6 @@ obj-$(CONFIG_EARLY_PRINTK)	+= early_prin
  obj-$(CONFIG_IOMMU)		+= pci-gart.o aperture.o
  obj-$(CONFIG_CALGARY_IOMMU)	+= pci-calgary.o tce.o
  obj-$(CONFIG_SWIOTLB)		+= pci-swiotlb.o
@@ -155,7 +156,7 @@ index d1d18c1..ff5d8c9 100644
  obj-$(CONFIG_KPROBES)		+= kprobes.o
  obj-$(CONFIG_X86_PM_TIMER)	+= pmtimer.o
  obj-$(CONFIG_X86_VSMP)		+= vsmp.o
-@@ -51,7 +50,6 @@ CFLAGS_vsyscall.o		:= $(PROFILING) -g0
+@@ -50,7 +49,6 @@ CFLAGS_vsyscall.o		:= $(PROFILING) -g0
  
  therm_throt-y                   += ../../i386/kernel/cpu/mcheck/therm_throt.o
  bootflag-y			+= ../../i386/kernel/bootflag.o
@@ -163,11 +164,9 @@ index d1d18c1..ff5d8c9 100644
  cpuid-$(subst m,y,$(CONFIG_X86_CPUID))  += ../../i386/kernel/cpuid.o
  topology-y                     += ../../i386/kernel/topology.o
  microcode-$(subst m,y,$(CONFIG_MICROCODE))  += ../../i386/kernel/microcode.o
-diff --git a/drivers/serial/Kconfig b/drivers/serial/Kconfig
-index 18f6297..819fc3e 100644
 --- a/drivers/serial/Kconfig
 +++ b/drivers/serial/Kconfig
-@@ -88,21 +88,17 @@ config SERIAL_8250_PCI
+@@ -74,21 +74,17 @@ config SERIAL_8250_PCI
  	depends on SERIAL_8250 && PCI
  	default SERIAL_8250
  	help
@@ -194,8 +193,6 @@ index 18f6297..819fc3e 100644
  
  config SERIAL_8250_HP300
  	tristate
-diff --git a/include/asm-i386/serial.h b/include/asm-i386/serial.h
-index 57a4306..bd67480 100644
 --- a/include/asm-i386/serial.h
 +++ b/include/asm-i386/serial.h
 @@ -11,3 +11,19 @@
@@ -218,8 +215,6 @@ index 57a4306..bd67480 100644
 +	{ 0, BASE_BAUD, 0x2F8, 3, STD_COM_FLAGS },	/* ttyS1 */	\
 +	{ 0, BASE_BAUD, 0x3E8, 4, STD_COM_FLAGS },	/* ttyS2 */	\
 +	{ 0, BASE_BAUD, 0x2E8, 3, STD_COM4_FLAGS },	/* ttyS3 */
-diff --git a/include/asm-x86_64/serial.h b/include/asm-x86_64/serial.h
-index 8ebd765..b0496e0 100644
 --- a/include/asm-x86_64/serial.h
 +++ b/include/asm-x86_64/serial.h
 @@ -11,3 +11,19 @@
