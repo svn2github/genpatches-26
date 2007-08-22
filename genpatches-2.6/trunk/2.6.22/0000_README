@@ -63,6 +63,10 @@ Patch:	2000_mac80211-rtnl-deadlock.patch
 From:	http://bugs.gentoo.org/185255
 Desc:	Fix a mac80211 deadlock
 
+Patch:	2300_serial-revert-com-conversation.patch
+From:	http://bugs.gentoo.org/189470
+Desc:	Revert "x86, serial: convert legacy COM ports to platform devices"
+
 Patch:	2500_pata-hpt37x-pll-clock.patch
 From:	http://bugs.gentoo.org/185983
 Desc:	Fix disk detection in pata_hpt37x driver
