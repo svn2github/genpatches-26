@@ -55,6 +55,10 @@ Patch:	1003_linux-2.6.22.4.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.4
 
+Patch:	1004_linux-2.6.22.5.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.22.5
+
 Patch:	1700_sparc64-sun4u-pci-config.patch
 From:	http://bugs.gentoo.org/186788
 Desc:	Fix X on sparc64 Sabre systems
@@ -62,10 +66,6 @@ Desc:	Fix X on sparc64 Sabre systems
 Patch:	2000_mac80211-rtnl-deadlock.patch
 From:	http://bugs.gentoo.org/185255
 Desc:	Fix a mac80211 deadlock
-
-Patch:	2300_serial-legacy.patch
-From:	http://bugs.gentoo.org/189470
-Desc:	Revert "x86, serial: convert legacy COM ports to platform devices"
 
 Patch:	2500_pata-hpt37x-pll-clock.patch
 From:	http://bugs.gentoo.org/185983
