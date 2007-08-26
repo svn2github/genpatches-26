@@ -1,0 +1,97 @@
+--- a/drivers/net/natsemi.c
++++ b/drivers/net/natsemi.c
+@@ -190,8 +190,8 @@
+ static int debug = -1;
+ 
+ /* Maximum events (Rx packets, etc.) to handle at each interrupt. */
+-static int max_interrupt_work = 20;
+-static int mtu;
++static int max_interrupt_work = 40;
++static int mtu = 0;
+ 
+ /* Maximum number of multicast addresses to filter (vs. rx-all-multicast).
+    This chip uses a 512 element hash table based on the Ethernet CRC.  */
+@@ -199,7 +199,10 @@ static int multicast_filter_limit = 100;
+ 
+ /* Set the copy breakpoint for the copy-only-tiny-frames scheme.
+    Setting to > 1518 effectively disables this feature. */
+-static int rx_copybreak;
++static int rx_copybreak = 0;
++
++/* Set the interrupt holdoff value in usec. */
++static int intr_holdoff_value = 500;
+ 
+ /* Used to pass the media type, etc.
+    Both 'options[]' and 'full_duplex[]' should exist for driver
+@@ -217,9 +220,9 @@ static int full_duplex[MAX_UNITS];
+    Making the Tx ring too large decreases the effectiveness of channel
+    bonding and packet priority.
+    There are no ill effects from too-large receive rings. */
+-#define TX_RING_SIZE	16
+-#define TX_QUEUE_LEN	10 /* Limit ring entries actually used, min 4. */
+-#define RX_RING_SIZE	32
++#define TX_RING_SIZE	32
++#define TX_QUEUE_LEN	28 /* Limit ring entries actually used, min 4. */
++#define RX_RING_SIZE	64
+ 
+ /* Operational parameters that usually are not changed. */
+ /* Time in jiffies before concluding the transmitter is hung. */
+@@ -254,6 +257,7 @@ MODULE_PARM(max_interrupt_work, "i");
+ MODULE_PARM(mtu, "i");
+ MODULE_PARM(debug, "i");
+ MODULE_PARM(rx_copybreak, "i");
++MODULE_PARM(intr_holdoff_value, "i");
+ MODULE_PARM(options, "1-" __MODULE_STRING(MAX_UNITS) "i");
+ MODULE_PARM(full_duplex, "1-" __MODULE_STRING(MAX_UNITS) "i");
+ MODULE_PARM_DESC(max_interrupt_work, 
+@@ -262,6 +266,8 @@ MODULE_PARM_DESC(mtu, "DP8381x MTU (all 
+ MODULE_PARM_DESC(debug, "DP8381x default debug level");
+ MODULE_PARM_DESC(rx_copybreak, 
+ 	"DP8381x copy breakpoint for copy-only-tiny-frames");
++MODULE_PARM_DESC(intr_holdoff_value, 
++	"DP83816 interrupt holdoff in usec (DP83816 only)");
+ MODULE_PARM_DESC(options, 
+ 	"DP8381x: Bits 0-3: media type, bit 17: full duplex");
+ MODULE_PARM_DESC(full_duplex, "DP8381x full duplex setting(s) (1)");
+@@ -597,6 +603,11 @@ enum PhyCtrl_bits {
+ 	PhyAddrMask		= 0xf,
+ };
+ 
++enum IntrHoldoff_bits {
++	InteHoldoffTime		= 0xff,
++	InteHoldoffControl	= 0x100,
++};
++
+ /* values we might find in the silicon revision register */
+ #define SRR_DP83815_C	0x0302
+ #define SRR_DP83815_D	0x0403
+@@ -1692,6 +1703,7 @@ static irqreturn_t intr_handler(int irq,
+ 	long ioaddr = dev->base_addr;
+ 	int boguscnt = max_interrupt_work;
+ 	unsigned int handled = 0;
++ 	int was_rx = 0;
+ 
+ 	if (np->hands_off)
+ 		return IRQ_NONE;
+@@ -1712,6 +1724,7 @@ static irqreturn_t intr_handler(int irq,
+ 		if (intr_status &
+ 		   (IntrRxDone | IntrRxIntr | RxStatusFIFOOver |
+ 		    IntrRxErr | IntrRxOverrun)) {
++			was_rx++;
+ 			netdev_rx(dev);
+ 		}
+ 
+@@ -1736,6 +1749,13 @@ static irqreturn_t intr_handler(int irq,
+ 		}
+ 	} while (1);
+ 
++        if (was_rx && (np->srr >= SRR_DP83816_A4))
++          {
++            /* set interrupt hold off. (only in DP83816) */
++            writel(((intr_holdoff_value/100) & InteHoldoffTime),
++                   dev->base_addr + IntrHoldoff);
++          }
++
+ 	if (netif_msg_intr(np))
+ 		printk(KERN_DEBUG "%s: exiting interrupt.\n", dev->name);
+ 
