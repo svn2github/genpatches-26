@@ -8052,14 +8052,6 @@
  #define USE_SHA
  
  /*
-@@ -389,6 +395,7 @@ static struct poolinfo {
- /*
-  * Static global variables
-  */
-+
- static struct entropy_store *random_state; /* The default global store */
- static struct entropy_store *sec_random_state; /* secondary store */
- static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
 --- a/drivers/char/tty_io.c
 +++ b/drivers/char/tty_io.c
 @@ -1775,7 +1775,11 @@ init_dev_done:
@@ -8368,7 +8360,7 @@
  		up_write(&current->mm->mmap_sem);
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
-@@ -34,10 +34,13 @@
+@@ -34,15 +34,23 @@
  #include <linux/smp_lock.h>
  #include <linux/compiler.h>
  #include <linux/highmem.h>
@@ -8382,7 +8374,17 @@
  
  #define DLINFO_ITEMS 13
  
-@@ -90,18 +93,22 @@ static struct linux_binfmt elf_format = 
+ #include <linux/elf.h>
+ 
++#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
++void (*pax_set_flags_func)(struct linux_binprm * bprm);
++EXPORT_SYMBOL(pax_set_flags_func);
++#endif
++
+ static int load_elf_binary(struct linux_binprm * bprm, struct pt_regs * regs);
+ #ifdef CONFIG_BINFMT_ELF_AOUT
+ static int load_elf_library(struct file*);
+@@ -90,18 +98,22 @@ static struct linux_binfmt elf_format = 
  
  static int set_brk(unsigned long start, unsigned long end)
  {
@@ -8413,7 +8415,7 @@
  }
  
  
-@@ -284,7 +291,7 @@ static unsigned long load_elf_interp(str
+@@ -284,7 +296,7 @@ static unsigned long load_elf_interp(str
  	unsigned long load_addr = 0;
  	int load_addr_set = 0;
  	unsigned long last_bss = 0, elf_bss = 0;
@@ -8422,7 +8424,7 @@
  	int retval, i, size;
  
  	/* First of all, some simple consistency checks */
-@@ -406,6 +413,8 @@ static unsigned long load_elf_interp(str
+@@ -406,6 +418,8 @@ static unsigned long load_elf_interp(str
  	 * switch to out-of-band error reporting.
  	 */
  	error = ((unsigned long) interp_elf_ex->e_entry) + load_addr;
@@ -8431,7 +8433,7 @@
  
  out_close:
  	kfree(elf_phdata);
-@@ -417,7 +426,7 @@ out:
+@@ -417,7 +431,7 @@ out:
  static unsigned long load_aout_interp(struct exec * interp_ex,
  			     struct file * interpreter)
  {
@@ -8440,7 +8442,7 @@
  	char * addr;
  	loff_t offset;
  
-@@ -463,6 +472,171 @@ out:
+@@ -463,6 +477,171 @@ out:
  }
  #endif
  
@@ -8612,7 +8614,7 @@
  /*
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
-@@ -499,7 +673,7 @@ static int load_elf_binary(struct linux_
+@@ -499,7 +678,7 @@ static int load_elf_binary(struct linux_
  	char passed_fileno[6];
  #endif
  	struct files_struct *files;
@@ -8621,7 +8623,7 @@
  	/* Get the exec-header */
  	elf_ex = *((struct elfhdr *) bprm->buf);
  
-@@ -707,7 +881,47 @@ static int load_elf_binary(struct linux_
+@@ -707,7 +886,47 @@ static int load_elf_binary(struct linux_
  	current->mm->end_data = 0;
  	current->mm->end_code = 0;
  	current->mm->mmap = NULL;
@@ -8669,7 +8671,7 @@
  	elf_entry = (unsigned long) elf_ex.e_entry;
  
  	/* Do this so that we can load the interpreter, if need be.  We will
-@@ -716,7 +930,7 @@ static int load_elf_binary(struct linux_
+@@ -716,7 +935,7 @@ static int load_elf_binary(struct linux_
  	retval = setup_arg_pages(bprm);
  	if (retval < 0) {
  		send_sig(SIGKILL, current, 0);
@@ -8678,7 +8680,7 @@
  	}
  	
  	current->mm->start_stack = bprm->p;
-@@ -768,6 +982,20 @@ static int load_elf_binary(struct linux_
+@@ -768,6 +987,20 @@ static int load_elf_binary(struct linux_
  			   base, as well as whatever program they might try to exec.  This
  		           is because the brk will follow the loader, and is not movable.  */
  			load_bias = ELF_PAGESTART(ELF_ET_DYN_BASE - vaddr);
@@ -8699,7 +8701,7 @@
  		}
  
  		error = elf_map(bprm->file, load_bias + vaddr, elf_ppnt, elf_prot, elf_flags);
-@@ -824,6 +1052,11 @@ static int load_elf_binary(struct linux_
+@@ -824,6 +1057,11 @@ static int load_elf_binary(struct linux_
  	start_data += load_bias;
  	end_data += load_bias;
  
@@ -8711,7 +8713,7 @@
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -938,6 +1171,10 @@ static int load_elf_binary(struct linux_
+@@ -938,6 +1176,10 @@ static int load_elf_binary(struct linux_
  	ELF_PLAT_INIT(regs, reloc_func_desc);
  #endif
  
@@ -8722,7 +8724,7 @@
  	start_thread(regs, elf_entry, bprm->p);
  	if (current->ptrace & PT_PTRACED)
  		send_sig(SIGTRAP, current, 0);
-@@ -1084,7 +1321,7 @@ static int dump_seek(struct file *file, 
+@@ -1084,7 +1326,7 @@ static int dump_seek(struct file *file, 
   *
   * I think we should skip something. But I am not sure how. H.J.
   */
@@ -8731,7 +8733,7 @@
  {
  	/*
  	 * If we may not read the contents, don't allow us to dump
-@@ -1096,12 +1333,15 @@ static inline int maydump(struct vm_area
+@@ -1096,12 +1338,15 @@ static inline int maydump(struct vm_area
  	/* Do not dump I/O mapped devices! -DaveM */
  	if (vma->vm_flags & VM_IO)
  		return 0;
@@ -8749,7 +8751,7 @@
  	return 1;
  }
  
-@@ -1173,8 +1413,11 @@ static int writenote(struct memelfnote *
+@@ -1173,8 +1418,11 @@ static int writenote(struct memelfnote *
  #undef DUMP_SEEK
  
  #define DUMP_WRITE(addr, nr)	\
@@ -8762,7 +8764,7 @@
  #define DUMP_SEEK(off)	\
  	if (!dump_seek(file, (off))) \
  		goto end_coredump;
-@@ -1373,7 +1616,7 @@ static int elf_core_dump(long signr, str
+@@ -1373,7 +1621,7 @@ static int elf_core_dump(long signr, str
  		phdr.p_offset = offset;
  		phdr.p_vaddr = vma->vm_start;
  		phdr.p_paddr = 0;
@@ -8771,7 +8773,7 @@
  		phdr.p_memsz = sz;
  		offset += phdr.p_filesz;
  		phdr.p_flags = vma->vm_flags & VM_READ ? PF_R : 0;
-@@ -1393,7 +1636,7 @@ static int elf_core_dump(long signr, str
+@@ -1393,7 +1641,7 @@ static int elf_core_dump(long signr, str
  	for(vma = current->mm->mmap; vma != NULL; vma = vma->vm_next) {
  		unsigned long addr;
  
@@ -8819,28 +8821,7 @@
  
  #ifdef CONFIG_KMOD
  #include <linux/kmod.h>
-@@ -56,6 +59,20 @@ int core_setuid_ok = 0;
- static struct linux_binfmt *formats;
- static rwlock_t binfmt_lock = RW_LOCK_UNLOCKED;
- 
-+#ifdef CONFIG_PAX_SOFTMODE
-+
-+#if defined(CONFIG_PAX_RANDMMAP) || defined(CONFIG_PAX_RANDUSTACK) || defined(CONFIG_PAX_RANDKSTACK)
-+unsigned int pax_aslr=1;
-+#endif
-+
-+unsigned int pax_softmode;
-+#endif
-+
-+#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
-+void (*pax_set_flags_func)(struct linux_binprm * bprm);
-+EXPORT_SYMBOL(pax_set_flags_func);
-+#endif
-+
- int register_binfmt(struct linux_binfmt * fmt)
- {
- 	struct linux_binfmt ** tmp = &formats;
-@@ -286,7 +303,7 @@ int copy_strings_kernel(int argc,char **
+@@ -286,7 +289,7 @@ int copy_strings_kernel(int argc,char **
   *
   * tsk->mmap_sem is held for writing.
   */
@@ -8849,16 +8830,17 @@
  {
  	pgd_t * pgd;
  	pmd_t * pmd;
-@@ -319,12 +336,53 @@ void put_dirty_page(struct task_struct *
+@@ -319,12 +322,53 @@ void put_dirty_page(struct task_struct *
  	spin_unlock(&tsk->mm->page_table_lock);
  
  	/* no need for flush_tlb */
 -	return;
 +	return 0;
-+out:
-+	spin_unlock(&tsk->mm->page_table_lock);
-+	__free_page(page);
-+	force_sig(SIGKILL, tsk);
+ out:
+ 	spin_unlock(&tsk->mm->page_table_lock);
+ 	__free_page(page);
+ 	force_sig(SIGKILL, tsk);
+-	return;
 +	return -ENOMEM;
 +}
 +
@@ -8895,17 +8877,16 @@
 +
 +	/* no need for flush_tlb */
 +	return 0;
- out:
- 	spin_unlock(&tsk->mm->page_table_lock);
++out:
++	spin_unlock(&tsk->mm->page_table_lock);
 +	page_cache_release(page);
- 	__free_page(page);
- 	force_sig(SIGKILL, tsk);
--	return;
++	__free_page(page);
++	force_sig(SIGKILL, tsk);
 +	return -ENOMEM;
  }
  
  int setup_arg_pages(struct linux_binprm *bprm)
-@@ -333,6 +391,10 @@ int setup_arg_pages(struct linux_binprm 
+@@ -333,6 +377,10 @@ int setup_arg_pages(struct linux_binprm 
  	struct vm_area_struct *mpnt;
  	int i, ret;
  
@@ -8916,7 +8897,7 @@
  	stack_base = STACK_TOP - MAX_ARG_PAGES*PAGE_SIZE;
  
  	bprm->p += stack_base;
-@@ -343,37 +405,99 @@ int setup_arg_pages(struct linux_binprm 
+@@ -343,37 +391,99 @@ int setup_arg_pages(struct linux_binprm 
  	mpnt = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
  	if (!mpnt) 
  		return -ENOMEM; 
@@ -9025,7 +9006,7 @@
  }
  
  struct file *open_exec(const char *name)
-@@ -810,8 +934,13 @@ void compute_creds(struct linux_binprm *
+@@ -810,8 +920,13 @@ void compute_creds(struct linux_binprm *
  	
          /* AUD: Audit candidate if current->cap_effective is set */
  
@@ -9041,7 +9022,7 @@
  
  	if(do_unlock)
  		unlock_kernel();
-@@ -946,6 +1075,11 @@ int do_execve(char * filename, char ** a
+@@ -946,6 +1061,11 @@ int do_execve(char * filename, char ** a
  	struct file *file;
  	int retval;
  	int i;
@@ -9053,7 +9034,7 @@
  
  	file = open_exec(filename);
  
-@@ -953,12 +1087,37 @@ int do_execve(char * filename, char ** a
+@@ -953,12 +1073,37 @@ int do_execve(char * filename, char ** a
  	if (IS_ERR(file))
  		return retval;
  
@@ -9091,7 +9072,7 @@
  	bprm.loader = 0;
  	bprm.exec = 0;
  	if ((bprm.argc = count(argv, bprm.p / sizeof(void *))) < 0) {
-@@ -977,11 +1136,26 @@ int do_execve(char * filename, char ** a
+@@ -977,11 +1122,26 @@ int do_execve(char * filename, char ** a
  	if (retval < 0) 
  		goto out; 
  
@@ -9118,7 +9099,7 @@
  	retval = copy_strings(bprm.envc, envp, &bprm);
  	if (retval < 0) 
  		goto out; 
-@@ -990,11 +1164,35 @@ int do_execve(char * filename, char ** a
+@@ -990,11 +1150,35 @@ int do_execve(char * filename, char ** a
  	if (retval < 0) 
  		goto out; 
  
@@ -9155,7 +9136,7 @@
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	allow_write_access(bprm.file);
-@@ -1136,6 +1334,114 @@ void format_corename(char *corename, con
+@@ -1136,6 +1320,114 @@ void format_corename(char *corename, con
  	*out_ptr = 0;
  }
  
@@ -9270,7 +9251,7 @@
  int do_coredump(long signr, struct pt_regs * regs)
  {
  	struct linux_binfmt * binfmt;
-@@ -1156,6 +1462,11 @@ int do_coredump(long signr, struct pt_re
+@@ -1156,6 +1448,11 @@ int do_coredump(long signr, struct pt_re
  		current->fsuid = 0;
  	}
  	current->mm->dumpable = 0;
@@ -9282,7 +9263,7 @@
  	if (current->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
  		goto fail;
  
-@@ -1175,7 +1486,7 @@ int do_coredump(long signr, struct pt_re
+@@ -1175,7 +1472,7 @@ int do_coredump(long signr, struct pt_re
  		goto close_fail;
  	if (!file->f_op->write)
  		goto close_fail;
@@ -22007,13 +21988,19 @@
  
  /* External variables not in a header file. */
  extern int panic_timeout;
-@@ -128,6 +135,21 @@ static ctl_table debug_table[];
+@@ -128,6 +135,27 @@ static ctl_table debug_table[];
  static ctl_table dev_table[];
  extern ctl_table random_table[];
  
 +static ctl_table grsecurity_table[];
 +
 +#ifdef CONFIG_PAX_SOFTMODE
++unsigned int pax_softmode;
++
++#if defined(CONFIG_PAX_RANDMMAP) || defined(CONFIG_PAX_RANDUSTACK) || defined(CONFIG_PAX_RANDKSTACK)
++unsigned int pax_aslr=1;
++#endif
++
 +static ctl_table pax_table[] = {
 +
 +#if defined(CONFIG_PAX_RANDMMAP) || defined(CONFIG_PAX_RANDUSTACK) || defined(CONFIG_PAX_RANDKSTACK)
@@ -22029,7 +22016,7 @@
  /* /proc declarations: */
  
  #ifdef CONFIG_PROC_FS
-@@ -278,9 +300,198 @@ static ctl_table kern_table[] = {
+@@ -278,8 +306,197 @@ static ctl_table kern_table[] = {
  	{KERN_EXCEPTION_TRACE,"exception-trace",
  	 &exception_trace,sizeof(int),0644,NULL,&proc_dointvec},
  #endif	
@@ -22041,9 +22028,9 @@
 +	{KERN_PAX,"pax",NULL,0,0500,pax_table},
 +#endif
 +
- 	{0}
- };
- 
++	{0}
++};
++
 +#if defined(CONFIG_GRKERNSEC_SYSCTL) || defined(CONFIG_GRKERNSEC_MODSTOP)
 +enum {GS_LINK=1, GS_FIFO, GS_EXECVE, GS_EXECLOG, GS_SIGNAL, 
 +GS_FORKFAIL, GS_TIME, GS_RESLOG, GS_CHROOT_SHMAT, GS_CHROOT_UNIX, GS_CHROOT_MNT,
@@ -22221,14 +22208,13 @@
 +	{GS_MODSTOP, "disable_modules", &grsec_modstop, sizeof (int), 0600,
 +	NULL, &proc_dointvec},
 +#endif
-+	{0}
-+};
+ 	{0}
+ };
 +#endif
-+
+ 
  static ctl_table vm_table[] = {
  	{VM_GFP_DEBUG, "vm_gfp_debug", 
- 	 &vm_gfp_debug, sizeof(int), 0644, NULL, &proc_dointvec},
-@@ -485,6 +696,11 @@ static int test_perm(int mode, int op)
+@@ -485,6 +702,11 @@ static int test_perm(int mode, int op)
  
  static inline int ctl_perm(ctl_table *table, int op)
  {
@@ -22240,7 +22226,7 @@
  	return test_perm(table->mode, op);
  }
  
-@@ -518,6 +734,10 @@ repeat:
+@@ -518,6 +740,10 @@ repeat:
  				table = table->child;
  				goto repeat;
  			}

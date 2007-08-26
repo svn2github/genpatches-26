@@ -100,6 +100,6 @@ Patch:	4400_proc_config.patch
 From:	-
 Desc:	Add support for /proc/config
 
-Patch:	4450_grsec-2.1.11-2.4.35-200708101800.patch
+Patch:	4450_grsec-2.1.11-2.4.35.1-200708111800.patch
 From:	www.grsecurity.net
-Desc:	GRsecurity patch for Linux 2.4.35
+Desc:	GRsecurity patch for Linux 2.4.35.1
