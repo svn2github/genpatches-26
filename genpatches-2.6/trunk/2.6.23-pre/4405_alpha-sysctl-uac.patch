@@ -160,7 +160,7 @@
  {
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -159,6 +159,9 @@ extern ctl_table pty_table[];
+@@ -158,6 +158,9 @@ extern ctl_table pty_table[];
  #ifdef CONFIG_INOTIFY_USER
  extern ctl_table inotify_table[];
  #endif
@@ -170,7 +170,7 @@
  
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
-@@ -212,6 +215,14 @@ static ctl_table root_table[] = {
+@@ -211,6 +214,14 @@ static ctl_table root_table[] = {
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
   */

@@ -1775,7 +1775,7 @@
  
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -90,6 +90,9 @@ static int ngroups_max = NGROUPS_MAX;
+@@ -89,6 +89,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
  #endif
@@ -1785,7 +1785,7 @@
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -467,6 +470,17 @@ static ctl_table kern_table[] = {
+@@ -477,6 +480,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
