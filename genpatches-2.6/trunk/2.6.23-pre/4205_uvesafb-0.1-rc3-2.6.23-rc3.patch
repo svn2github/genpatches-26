@@ -191,13 +191,14 @@
 +
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -592,6 +592,24 @@ config FB_TGA
+@@ -592,6 +592,25 @@ config FB_TGA
  
  	  Say Y if you have one of those.
  
 +config FB_UVESA
 +	tristate "Userspace VESA VGA graphics support"
-+	depends on FB && CONNECTOR
++	depends on FB
++	select CONNECTOR
 +	select FB_CFB_FILLRECT
 +	select FB_CFB_COPYAREA
 +	select FB_CFB_IMAGEBLIT
