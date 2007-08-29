@@ -83,6 +83,10 @@ Patch:	2510_usb-storage-nikon-d50-quirk.patch
 From:	http://bugs.gentoo.org/186326
 Desc:	usb-storage capacity quirk for Nikon D50 camera
 
+Patch:	2515_usb-storage-nikon-d80-quirk.patch
+From:	http://bugs.gentoo.org/188521
+Desc:	usb-storage capacity quirk for Nikon D80 camera
+
 Patch:	2700_usbaudio-logitech-id.patch
 From:	http://bugs.gentoo.org/184554
 Desc:	Another Logitech QuickCam snd-usb-audio ID
