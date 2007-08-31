@@ -1,0 +1,32 @@
+From: Alan Stern <stern@rowland.harvard.edu>
+Date: Mon, 16 Jul 2007 19:30:20 +0000 (-0400)
+Subject: USB: usb-storage: unusual_devs entry for Nikon D100
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=d8fbba2f59c0c131a1babf5a66f003faee02e01a
+
+USB: usb-storage: unusual_devs entry for Nikon D100
+
+This patch (as938) adds an unusual_devs entry for the Nikon DSC D100.
+
+Signed-off-by: Alan Stern <stern@rowland.harvard.edu>
+Cc: Phil Dibowitz <phil@ipom.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+diff --git a/drivers/usb/storage/unusual_devs.h b/drivers/usb/storage/unusual_devs.h
+index 26fd196..a624e72 100644
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -313,6 +313,13 @@ UNUSUAL_DEV(  0x04b0, 0x0301, 0x0010, 0x0010,
+ 		US_SC_DEVICE, US_PR_DEVICE,NULL,
+ 		US_FL_NOT_LOCKABLE ),
+ 
++/* Reported by Stefan de Konink <skinkie@xs4all.nl> */
++UNUSUAL_DEV(  0x04b0, 0x0401, 0x0200, 0x0200,
++		"NIKON",
++		"NIKON DSC D100",
++		US_SC_DEVICE, US_PR_DEVICE, NULL,
++		US_FL_FIX_CAPACITY),
++
+ /* Reported by Andreas Bockhold <andreas@bockionline.de> */
+ UNUSUAL_DEV(  0x04b0, 0x0405, 0x0100, 0x0100,
+ 		"NIKON",
