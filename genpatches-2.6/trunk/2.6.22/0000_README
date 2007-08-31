@@ -67,6 +67,10 @@ Patch:	1700_access_vsyscall_page_with_compat_vdso.patch
 From:	http://bugs.gentoo.org/190815
 Desc:	Allow gdb access to vsyscall page with COMPAT_VDSO=y
 
+Patch:	1800_gcc-4.2-export-symbol.patch
+From:	http://bugs.gentoo.org/187175
+Desc:	Fix compilation with gcc 4.2
+
 Patch:	2000_mac80211-rtnl-deadlock.patch
 From:	http://bugs.gentoo.org/185255
 Desc:	Fix a mac80211 deadlock
