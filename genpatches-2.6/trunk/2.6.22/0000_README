@@ -59,6 +59,10 @@ Patch:	1004_linux-2.6.22.5.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.5
 
+Patch:	1005_linux-2.6.22.6.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.22.6
+
 Patch:	1700_sparc64-sun4u-pci-config.patch
 From:	http://bugs.gentoo.org/186788
 Desc:	Fix X on sparc64 Sabre systems
