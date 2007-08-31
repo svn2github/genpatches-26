@@ -1,0 +1,13 @@
+--- a/arch/i386/kernel/sysenter.c	2007-08-22 17:24:31.000000000 +0200
++++ b/arch/i386/kernel/sysenter.c	2007-08-31 01:19:45.000000000 +0200
+@@ -336,7 +336,9 @@
+ 
+ int in_gate_area(struct task_struct *task, unsigned long addr)
+ {
+-	return 0;
++	const struct vm_area_struct *vma = get_gate_vma(task);
++
++	return vma && addr >= vma->vm_start && addr < vma->vm_end;
+ }
+ 
+ int in_gate_area_no_task(unsigned long addr)
