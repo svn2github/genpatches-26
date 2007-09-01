@@ -1739,33 +1739,33 @@
 -#define STACK_START (unsigned long)(doublefault_stack+DOUBLEFAULT_STACKSIZE)
 +#define STACK_START (unsigned long)(doublefault_stack+DOUBLEFAULT_STACKSIZE-2)
  
- #define ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + 0x1000000)
+ #define ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + MAXMEM)
  
  static void doublefault_fn(void)
  {
 -	struct Xgt_desc_struct gdt_desc = {0, 0};
-+	struct Xgt_desc_struct gdt_desc = {0, NULL, 0};
++ 	struct Xgt_desc_struct gdt_desc = {0, NULL, 0};
  	unsigned long gdt, tss;
  
  	store_gdt(&gdt_desc);
 -	gdt = gdt_desc.address;
-+	gdt = (unsigned long)gdt_desc.address;
++ 	gdt = (unsigned long)gdt_desc.address;
  
- 	printk("double fault, gdt at %08lx [%d bytes]\n", gdt, gdt_desc.size);
+ 	printk(KERN_EMERG "PANIC: double fault, gdt at %08lx [%d bytes]\n", gdt, gdt_desc.size);
  
 @@ -59,10 +59,10 @@ struct tss_struct doublefault_tss __cach
  		/* 0x2 bit is always set */
  		.eflags		= X86_EFLAGS_SF | 0x2,
  		.esp		= STACK_START,
 -		.es		= __USER_DS,
-+		.es		= __KERNEL_DS,
++ 		.es		= __KERNEL_DS,
  		.cs		= __KERNEL_CS,
  		.ss		= __KERNEL_DS,
 -		.ds		= __USER_DS,
-+		.ds		= __KERNEL_DS,
++ 		.ds		= __KERNEL_DS,
+ 		.fs		= __KERNEL_PERCPU,
  
  		.__cr3		= __pa(swapper_pg_dir)
- 	}
 --- a/arch/i386/kernel/efi.c
 +++ b/arch/i386/kernel/efi.c
 @@ -63,45 +63,23 @@ extern void * boot_ioremap(unsigned long
@@ -6497,7 +6497,7 @@
  static inline pmd_t *vmalloc_sync_one(pgd_t *pgd, unsigned long address)
  {
  	unsigned index = pgd_index(address);
-@@ -301,13 +333,20 @@ fastcall void __kprobes do_page_fault(st
+@@ -302,13 +334,20 @@ fastcall void __kprobes do_page_fault(st
  	struct task_struct *tsk;
  	struct mm_struct *mm;
  	struct vm_area_struct * vma;
@@ -6520,7 +6520,7 @@
  
  	si_code = SEGV_MAPERR;
  
-@@ -344,14 +383,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -345,14 +384,12 @@ fastcall void __kprobes do_page_fault(st
  	if (regs->eflags & (X86_EFLAGS_IF|VM_MASK))
  		local_irq_enable();
  
@@ -6536,7 +6536,7 @@
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -371,10 +408,104 @@ fastcall void __kprobes do_page_fault(st
+@@ -372,10 +409,104 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -6642,7 +6642,7 @@
  	vma = find_vma(mm, address);
  	if (!vma)
  		goto bad_area;
-@@ -392,6 +523,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -393,6 +524,12 @@ fastcall void __kprobes do_page_fault(st
  		if (address + 65536 + 32 * sizeof(unsigned long) < regs->esp)
  			goto bad_area;
  	}
@@ -6655,7 +6655,7 @@
  	if (expand_stack(vma, address))
  		goto bad_area;
  /*
-@@ -401,6 +538,8 @@ fastcall void __kprobes do_page_fault(st
+@@ -402,6 +539,8 @@ fastcall void __kprobes do_page_fault(st
  good_area:
  	si_code = SEGV_ACCERR;
  	write = 0;
@@ -6664,7 +6664,7 @@
  	switch (error_code & 3) {
  		default:	/* 3: write, present */
  				/* fall through */
-@@ -456,6 +595,41 @@ bad_area:
+@@ -457,6 +596,41 @@ bad_area:
  	up_read(&mm->mmap_sem);
  
  bad_area_nosemaphore:
@@ -6706,7 +6706,7 @@
  	/* User mode accesses just cause a SIGSEGV */
  	if (error_code & 4) {
  		/*
-@@ -485,7 +659,7 @@ bad_area_nosemaphore:
+@@ -486,7 +660,7 @@ bad_area_nosemaphore:
  	if (boot_cpu_data.f00f_bug) {
  		unsigned long nr;
  		
@@ -6715,7 +6715,7 @@
  
  		if (nr == 6) {
  			do_invalid_op(regs, 0);
-@@ -518,18 +692,34 @@ no_context:
+@@ -519,18 +693,34 @@ no_context:
  		__typeof__(pte_val(__pte(0))) page;
  
  #ifdef CONFIG_X86_PAE
@@ -6753,7 +6753,7 @@
  		else
  			printk(KERN_ALERT "BUG: unable to handle kernel paging"
  					" request");
-@@ -560,7 +750,7 @@ no_context:
+@@ -561,7 +751,7 @@ no_context:
  		 * it's allocated already.
  		 */
  		if ((page >> PAGE_SHIFT) < max_low_pfn
@@ -6762,7 +6762,7 @@
  			page &= PAGE_MASK;
  			page = ((__typeof__(page) *) __va(page))[(address >> PAGE_SHIFT)
  			                                         & (PTRS_PER_PTE - 1)];
-@@ -645,3 +835,110 @@ void vmalloc_sync_all(void)
+@@ -646,3 +836,110 @@ void vmalloc_sync_all(void)
  			start = address + PGDIR_SIZE;
  	}
  }
@@ -10237,7 +10237,7 @@
  
  #include <asm/page.h>
  #include <asm/pgtable.h>
-@@ -273,6 +277,369 @@ cannot_handle:
+@@ -270,6 +274,369 @@ cannot_handle:
  	unhandled_fault (address, current, regs);
  }
  
@@ -10607,7 +10607,7 @@
  asmlinkage void __kprobes do_sparc64_fault(struct pt_regs *regs)
  {
  	struct mm_struct *mm = current->mm;
-@@ -314,8 +681,10 @@ asmlinkage void __kprobes do_sparc64_fau
+@@ -311,8 +678,10 @@ asmlinkage void __kprobes do_sparc64_fau
  		goto intr_or_no_mm;
  
  	if (test_thread_flag(TIF_32BIT)) {
@@ -10619,7 +10619,7 @@
  		address &= 0xffffffff;
  	}
  
-@@ -332,6 +701,29 @@ asmlinkage void __kprobes do_sparc64_fau
+@@ -329,6 +698,29 @@ asmlinkage void __kprobes do_sparc64_fau
  	if (!vma)
  		goto bad_area;
  
@@ -13950,7 +13950,7 @@
  			file = ERR_PTR(err);
  			if (!err) {
  				file = nameidata_to_filp(&nd, O_RDONLY);
-@@ -1161,6 +1240,11 @@ int do_execve(char * filename,
+@@ -1156,6 +1235,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
  	int i;
@@ -13962,7 +13962,7 @@
  
  	retval = -ENOMEM;
  	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
-@@ -1172,10 +1256,29 @@ int do_execve(char * filename,
+@@ -1167,10 +1251,29 @@ int do_execve(char * filename,
  	if (IS_ERR(file))
  		goto out_kfree;
  
@@ -13992,7 +13992,7 @@
  	bprm->file = file;
  	bprm->filename = filename;
  	bprm->interp = filename;
-@@ -1217,8 +1320,38 @@ int do_execve(char * filename,
+@@ -1212,8 +1315,38 @@ int do_execve(char * filename,
  	if (retval < 0)
  		goto out;
  
@@ -14031,7 +14031,7 @@
  		free_arg_pages(bprm);
  
  		/* execve success */
-@@ -1228,6 +1361,14 @@ int do_execve(char * filename,
+@@ -1223,6 +1356,14 @@ int do_execve(char * filename,
  		return retval;
  	}
  
@@ -14046,7 +14046,7 @@
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1391,6 +1532,114 @@ out:
+@@ -1386,6 +1527,114 @@ out:
  	return ispipe;
  }
  
@@ -14161,7 +14161,7 @@
  static void zap_process(struct task_struct *start)
  {
  	struct task_struct *t;
-@@ -1533,6 +1782,10 @@ int do_coredump(long signr, int exit_cod
+@@ -1528,6 +1777,10 @@ int do_coredump(long signr, int exit_cod
  	 */
  	clear_thread_flag(TIF_SIGPENDING);
  
@@ -30248,15 +30248,15 @@
  	return 0;
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -54,6 +54,7 @@
+@@ -53,6 +53,7 @@
+ #include <linux/kprobes.h>
  #include <linux/delayacct.h>
  #include <linux/reciprocal_div.h>
- #include <linux/slab.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/tlb.h>
  #include <asm/unistd.h>
-@@ -3572,7 +3573,7 @@ asmlinkage void __sched schedule(void)
+@@ -3571,7 +3572,7 @@ asmlinkage void __sched schedule(void)
  	unsigned long long now;
  	unsigned long run_time;
  	int cpu, idx, new_prio;
@@ -30265,7 +30265,7 @@
  	struct rq *rq;
  
  	/*
-@@ -4263,7 +4264,8 @@ asmlinkage long sys_nice(int increment)
+@@ -4262,7 +4263,8 @@ asmlinkage long sys_nice(int increment)
  	if (nice > 19)
  		nice = 19;
  
@@ -33480,17 +33480,6 @@
  };
  
  int ipv6_parse_hopopts(struct sk_buff **skbp)
---- a/net/ipv6/ipv6_sockglue.c
-+++ b/net/ipv6/ipv6_sockglue.c
-@@ -825,7 +825,7 @@ static int ipv6_getsockopt_sticky(struct
- 		return 0;
- 
- 	len = min_t(unsigned int, len, ipv6_optlen(hdr));
--	if (copy_to_user(optval, hdr, len));
-+	if (copy_to_user(optval, hdr, len))
- 		return -EFAULT;
- 	return ipv6_optlen(hdr);
- }
 --- a/net/ipv6/raw.c
 +++ b/net/ipv6/raw.c
 @@ -549,7 +549,7 @@ out:
