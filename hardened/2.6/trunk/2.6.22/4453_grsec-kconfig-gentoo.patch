@@ -1,0 +1,84 @@
+From: Ned Ludd <solar@gentoo.org>
+Description: Add a Hardened Gentoo target to the list of security levels.
+
+This makes it much easier for beginners to just select what _we_ consider a sane
+default.
+
+--- a/grsecurity/Kconfig
++++ b/grsecurity/Kconfig
+@@ -181,6 +181,75 @@ config GRKERNSEC_HIGH
+ 	  - Kernel symbol hiding
+ 	  - Destroy unused shared memory	
+ 	  - Prevention of memory exhaustion-based exploits
++
++config GRKERNSEC_HARDENED
++	bool "Hardened [Gentoo]"
++	select GRKERNSEC_AUDIT_CHDIR
++	select GRKERNSEC_AUDIT_MOUNT
++	select GRKERNSEC_BRUTE
++	select GRKERNSEC_CHROOT
++	select GRKERNSEC_CHROOT_CAPS
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_CHMOD
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_EXECLOG
++	select GRKERNSEC_CHROOT_FCHDIR
++	select GRKERNSEC_CHROOT_FINDTASK
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_NICE
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_SHMAT
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_HIDESYM
++	select GRKERNSEC_KMEM if (!MODULES)
++	select GRKERNSEC_LINK
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_ADD
++	select GRKERNSEC_PROC_IPADDR
++	select GRKERNSEC_PROC_MEMMAP if (X86 || X86_64)
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_RESLOG
++	select GRKERNSEC_SHM if (SYSVIPC)
++	select GRKERNSEC_SIGNAL
++	select GRKERNSEC_SYSCTL
++	select GRKERNSEC_TIME
++	select GRKERNSEC_TPE
++	select GRKERNSEC_TPE_ALL
++	select GRKERNSEC_TPE_INVERT
++	select PAX
++	select PAX_ASLR
++	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
++	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
++	select PAX_EMUSIGRT if (PARISC)
++	select PAX_EMUTRAMP if (PARISC)
++	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
++	select PAX_HAVE_ACL_FLAGS
++	select PAX_KERNEXEC if (!X86_64 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS)
++	select PAX_MPROTECT
++	select PAX_NOEXEC
++	select PAX_PAGEEXEC if (!X86)
++	select PAX_PT_PAX_FLAGS
++	select PAX_RANDKSTACK if (X86_TSC && !X86_64)
++	select PAX_RANDMMAP
++	select PAX_RANDUSTACK
++	select PAX_SEGMEXEC if (X86 && !X86_64)
++	help
++	  If you say Y here, many of the features of grsecurity and PaX will
++	  be enabled, which will protect you against many kinds of attacks
++	  against your system.  The heightened security comes at a cost
++	  of an increased chance of incompatibilities with rare software
++	  on your machine.  Since this security level enables PaX, you should
++	  view <http://pax.grsecurity.net> and read about the PaX
++	  project.
++
+ config GRKERNSEC_CUSTOM
+ 	bool "Custom"
+ 	help
