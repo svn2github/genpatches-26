@@ -63,10 +63,6 @@ Patch:	1005_linux-2.6.22.6.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.6
 
-Patch:	1700_access_vsyscall_page_with_compat_vdso.patch
-From:	http://bugs.gentoo.org/190815
-Desc:	Allow gdb access to vsyscall page with COMPAT_VDSO=y
-
 Patch:	1800_gcc-4.2-export-symbol.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix compilation with gcc 4.2
