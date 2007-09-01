@@ -11,16 +11,15 @@ for i in ${PATCHES} ; do
 		continue
 	fi
 
-	echo ">>> Dry run: ${short}"
-	if ! patch --dry-run -p1 -i ${i} >/dev/null 2>&1 ; then
-		echo ">>> Patch ${short} fails to dry run"
-		exit
+	echo ">>> Import: ${short}"
+	if ! quilt import ${i}; then
+		echo ">>> Failed to import ${short}"
+		exit 1
 	fi
-
-	echo ">>> Apply: ${short}"
-	if ! patch -p1 -i ${i} ; then
-		echo ">>> Patch ${short} failed to apply"
-		exit
+	echo ">>> Push: ${short}"
+	if ! quilt push; then
+		echo ">>> Patch ${short} fails to push"
+		exit 1
 	fi
 done
 echo ">>> Done"
