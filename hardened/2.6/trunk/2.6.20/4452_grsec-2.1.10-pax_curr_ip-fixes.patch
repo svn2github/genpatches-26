@@ -1,7 +1,5 @@
-Index: linux-2.6.20/arch/i386/mm/fault.c
-===================================================================
---- linux-2.6.20.orig/arch/i386/mm/fault.c
-+++ linux-2.6.20/arch/i386/mm/fault.c
+--- a/arch/i386/mm/fault.c
++++ b/arch/i386/mm/fault.c
 @@ -716,10 +716,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code) {
@@ -15,11 +13,9 @@ Index: linux-2.6.20/arch/i386/mm/fault.c
  				printk(KERN_ERR "PAX: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
  					 tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  		}
-Index: linux-2.6.20/fs/exec.c
-===================================================================
---- linux-2.6.20.orig/fs/exec.c
-+++ linux-2.6.20/fs/exec.c
-@@ -1596,9 +1596,11 @@ void pax_report_fault(struct pt_regs *re
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1606,9 +1606,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
  	}
@@ -31,10 +27,8 @@ Index: linux-2.6.20/fs/exec.c
  		printk(KERN_ERR "PAX: execution attempt in: %s, %08lx-%08lx %08lx\n", path_fault, start, end, offset);
  	printk(KERN_ERR "PAX: terminating task: %s(%s):%d, uid/euid: %u/%u, "
  			"PC: %p, SP: %p\n", path_exec, tsk->comm, tsk->pid,
-Index: linux-2.6.20/security/Kconfig
-===================================================================
---- linux-2.6.20.orig/security/Kconfig
-+++ linux-2.6.20/security/Kconfig
+--- a/security/Kconfig
++++ b/security/Kconfig
 @@ -8,7 +8,7 @@ menu "PaX"
  
  config PAX

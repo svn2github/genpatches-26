@@ -1658,7 +1658,7 @@
  }
 --- a/arch/i386/kernel/cpu/cpufreq/acpi-cpufreq.c
 +++ b/arch/i386/kernel/cpu/cpufreq/acpi-cpufreq.c
-@@ -563,7 +563,7 @@ static struct dmi_system_id sw_any_bug_d
+@@ -560,7 +560,7 @@ static struct dmi_system_id sw_any_bug_d
  			DMI_MATCH(DMI_PRODUCT_NAME, "X6DLP"),
  		},
  	},
@@ -2116,7 +2116,7 @@
  .popsection
  
  	# system call handler stub
-@@ -389,6 +439,10 @@ syscall_exit:
+@@ -389,6 +439,10 @@ no_singlestep:
  	testw $_TIF_ALLWORK_MASK, %cx	# current->work
  	jne syscall_exit_work
  
@@ -7883,7 +7883,7 @@
  		regs->link = current->mm->context.vdso_base + vdso32_rt_sigtramp;
 --- a/arch/powerpc/kernel/signal_64.c
 +++ b/arch/powerpc/kernel/signal_64.c
-@@ -397,7 +397,7 @@ static int setup_rt_frame(int signr, str
+@@ -401,7 +401,7 @@ static int setup_rt_frame(int signr, str
  	current->thread.fpscr.val = 0;
  
  	/* Set up to return from userspace. */
@@ -10650,7 +10650,7 @@
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
-@@ -1662,3 +1674,25 @@ randomize_range(unsigned long start, uns
+@@ -1676,3 +1688,25 @@ randomize_range(unsigned long start, uns
  		return 0;
  	return PAGE_ALIGN(get_random_int() % range + start);
  }
@@ -11501,7 +11501,7 @@
  MODULE_DEVICE_TABLE (usb, usblp_ids);
 --- a/drivers/usb/core/hub.c
 +++ b/drivers/usb/core/hub.c
-@@ -2861,7 +2861,7 @@ static struct usb_device_id hub_id_table
+@@ -2863,7 +2863,7 @@ static struct usb_device_id hub_id_table
        .bDeviceClass = USB_CLASS_HUB},
      { .match_flags = USB_DEVICE_ID_MATCH_INT_CLASS,
        .bInterfaceClass = USB_CLASS_HUB},
@@ -13092,7 +13092,7 @@
  		}
  		stack_base += PAGE_SIZE;
  	}
-@@ -1129,6 +1213,11 @@ int do_execve(char * filename,
+@@ -1134,6 +1218,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
  	int i;
@@ -13104,7 +13104,7 @@
  
  	retval = -ENOMEM;
  	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
-@@ -1140,10 +1229,29 @@ int do_execve(char * filename,
+@@ -1145,10 +1234,29 @@ int do_execve(char * filename,
  	if (IS_ERR(file))
  		goto out_kfree;
  
@@ -13134,7 +13134,7 @@
  	bprm->file = file;
  	bprm->filename = filename;
  	bprm->interp = filename;
-@@ -1185,8 +1293,38 @@ int do_execve(char * filename,
+@@ -1190,8 +1298,38 @@ int do_execve(char * filename,
  	if (retval < 0)
  		goto out;
  
@@ -13173,7 +13173,7 @@
  		free_arg_pages(bprm);
  
  		/* execve success */
-@@ -1196,6 +1334,14 @@ int do_execve(char * filename,
+@@ -1201,6 +1339,14 @@ int do_execve(char * filename,
  		return retval;
  	}
  
@@ -13188,7 +13188,7 @@
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1361,6 +1507,114 @@ out:
+@@ -1366,6 +1512,114 @@ out:
  	return ispipe;
  }
  
@@ -13303,7 +13303,7 @@
  static void zap_process(struct task_struct *start)
  {
  	struct task_struct *t;
-@@ -1501,6 +1755,10 @@ int do_coredump(long signr, int exit_cod
+@@ -1506,6 +1760,10 @@ int do_coredump(long signr, int exit_cod
  	 */
  	clear_thread_flag(TIF_SIGPENDING);
  
@@ -27009,7 +27009,7 @@
  	atomic_t fs_excl;	/* holding fs exclusive resources */
  	struct rcu_head rcu;
  
-@@ -1634,6 +1681,12 @@ extern void arch_pick_mmap_layout(struct
+@@ -1635,6 +1682,12 @@ extern void arch_pick_mmap_layout(struct
  static inline void arch_pick_mmap_layout(struct mm_struct *mm)
  {
  	mm->mmap_base = TASK_UNMAPPED_BASE;
@@ -27725,7 +27725,7 @@
  	/*
  	 * If we were started as result of loading a module, close all of the
  	 * user space pages.  We don't need them, and if we didn't close them
-@@ -918,11 +946,15 @@ fastcall NORET_TYPE void do_exit(long co
+@@ -934,11 +962,15 @@ fastcall NORET_TYPE void do_exit(long co
  
  	taskstats_exit(tsk, group_dead);
  
@@ -28531,7 +28531,7 @@
  #include <asm/tlb.h>
  
  #include <asm/unistd.h>
-@@ -4111,7 +4112,8 @@ asmlinkage long sys_nice(int increment)
+@@ -4115,7 +4116,8 @@ asmlinkage long sys_nice(int increment)
  	if (nice > 19)
  		nice = 19;
  
@@ -30506,7 +30506,7 @@
  		unsigned long combined_idx;
 --- a/mm/rmap.c
 +++ b/mm/rmap.c
-@@ -100,6 +100,19 @@ int anon_vma_prepare(struct vm_area_stru
+@@ -82,6 +82,19 @@ int anon_vma_prepare(struct vm_area_stru
  			vma->anon_vma = anon_vma;
  			list_add_tail(&vma->anon_vma_node, &anon_vma->head);
  			allocated = NULL;
@@ -30667,7 +30667,7 @@
  
 --- a/net/core/sock.c
 +++ b/net/core/sock.c
-@@ -808,7 +808,7 @@ lenout:
+@@ -820,7 +820,7 @@ lenout:
   *
   * (We also register the sk_lock with the lock validator.)
   */
@@ -30995,7 +30995,7 @@
  {
   /*
    * 	prefix (longest match)	label
-@@ -3367,7 +3367,7 @@ errout:
+@@ -3370,7 +3370,7 @@ errout:
  		rtnl_set_sk_err(RTNLGRP_IPV6_IFADDR, err);
  }
  
@@ -31006,7 +31006,7 @@
  	BUG_ON(bytes < (DEVCONF_MAX * 4));
 --- a/net/ipv6/exthdrs.c
 +++ b/net/ipv6/exthdrs.c
-@@ -720,7 +720,7 @@ static struct tlvtype_proc tlvprochopopt
+@@ -728,7 +728,7 @@ static struct tlvtype_proc tlvprochopopt
  		.type	= IPV6_TLV_JUMBO,
  		.func	= ipv6_hop_jumbo,
  	},
