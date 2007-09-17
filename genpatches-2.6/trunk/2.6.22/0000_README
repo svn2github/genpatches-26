@@ -95,6 +95,10 @@ Patch:	2700_usbaudio-logitech-id.patch
 From:	http://bugs.gentoo.org/184554
 Desc:	Another Logitech QuickCam snd-usb-audio ID
 
+Patch:	2705_ivtv_must_select_i2c_algobit.patch
+From:	http://bugs.gentoo.org/191263
+Desc:	I2C_ALGOBIT must also be selected when ivtv is selected.
+
 Patch:	2900_powernow-k8-acpi.patch
 From:	http://bugs.gentoo.org/178585
 Desc:	Reduce confusion around powernow-k8 vs ACPI configuration
