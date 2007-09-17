@@ -6,7 +6,7 @@
 
 --- a/arch/i386/mm/fault.c
 +++ b/arch/i386/mm/fault.c
-@@ -712,10 +712,12 @@ no_context:
+@@ -713,10 +713,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code)
  #endif
@@ -21,7 +21,7 @@
  #endif
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -1626,9 +1626,11 @@ void pax_report_fault(struct pt_regs *re
+@@ -1612,9 +1612,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
  	}

@@ -6,7 +6,7 @@ default.
 
 --- a/grsecurity/Kconfig
 +++ b/grsecurity/Kconfig
-@@ -181,6 +181,75 @@ config GRKERNSEC_HIGH
+@@ -182,6 +182,75 @@ config GRKERNSEC_HIGH
  	  - Kernel symbol hiding
  	  - Destroy unused shared memory	
  	  - Prevention of memory exhaustion-based exploits
