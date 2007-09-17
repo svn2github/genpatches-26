@@ -6,7 +6,7 @@ default.
 
 --- a/grsecurity/Kconfig
 +++ b/grsecurity/Kconfig
-@@ -182,6 +182,75 @@ config GRKERNSEC_HIGH
+@@ -182,6 +182,77 @@ config GRKERNSEC_HIGH
  	  - Kernel symbol hiding
  	  - Destroy unused shared memory	
  	  - Prevention of memory exhaustion-based exploits
@@ -14,6 +14,7 @@ default.
 +config GRKERNSEC_HARDENED
 +	bool "Hardened [Gentoo]"
 +	select GRKERNSEC_AUDIT_CHDIR
++	select GRKERNSEC_AUDIT_IPC
 +	select GRKERNSEC_AUDIT_MOUNT
 +	select GRKERNSEC_BRUTE
 +	select GRKERNSEC_CHROOT
@@ -32,6 +33,7 @@ default.
 +	select GRKERNSEC_CHROOT_SYSCTL
 +	select GRKERNSEC_CHROOT_UNIX
 +	select GRKERNSEC_DMESG
++	select GRKERNSEC_EXECLOG
 +	select GRKERNSEC_EXECVE
 +	select GRKERNSEC_FIFO
 +	select GRKERNSEC_FORKFAIL
