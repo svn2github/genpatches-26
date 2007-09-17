@@ -3840,7 +3840,9 @@
 +	LONG(phys_startup_32)
 +	SHORT(__BOOT_CS)
 +	} :initdata
-+
+ 
+-  .text.head : AT(ADDR(.text.head) - LOAD_OFFSET) {
+-  	_text = .;			/* Text and read-only data */
 +  /* might get freed after init */
 +  . = ALIGN(4096);
 +  .smp_locks : AT(ADDR(.smp_locks) - LOAD_OFFSET) {
@@ -3931,9 +3933,7 @@
 +  }
 +
 +  /* freed after init ends here */
- 
--  .text.head : AT(ADDR(.text.head) - LOAD_OFFSET) {
--  	_text = .;			/* Text and read-only data */
++
 +  .text.head : AT(ADDR(.text.head) - LOAD_OFFSET + __KERNEL_TEXT_OFFSET) {
 +	__init_end = . + __KERNEL_TEXT_OFFSET;
 +	_text = .;			/* Text and read-only data */
@@ -3999,8 +3999,8 @@
  	DATA_DATA
  	CONSTRUCTORS
  	} :data
-@@ -91,11 +229,6 @@ SECTIONS
- 	*(.data.idt)
+@@ -86,11 +224,6 @@ SECTIONS
+   	__nosave_end = .;
    }
  
 -  . = ALIGN(4096);
@@ -4011,7 +4011,7 @@
    . = ALIGN(32);
    .data.cacheline_aligned : AT(ADDR(.data.cacheline_aligned) - LOAD_OFFSET) {
  	*(.data.cacheline_aligned)
-@@ -113,85 +246,9 @@ SECTIONS
+@@ -108,85 +241,9 @@ SECTIONS
  	*(.data.init_task)
    }
  
@@ -6531,8 +6531,8 @@
  
  unsigned int __VMALLOC_RESERVE = 128 << 20;
  
-@@ -79,32 +80,6 @@ static pmd_t * __init one_md_table_init(
- }
+@@ -53,32 +54,6 @@ unsigned long highstart_pfn, highend_pfn
+ static int noinline do_test_wp_bit(void);
  
  /*
 - * Creates a middle page table and puts a pointer to it in the
@@ -6564,7 +6564,7 @@
   * Create a page table and place a pointer to it in a middle page
   * directory entry.
   */
-@@ -114,7 +89,11 @@ static pte_t * __init one_page_table_ini
+@@ -88,7 +63,11 @@ static pte_t * __init one_page_table_ini
  		pte_t *page_table = (pte_t *) alloc_bootmem_low_pages(PAGE_SIZE);
  
  		paravirt_alloc_pt(__pa(page_table) >> PAGE_SHIFT);
@@ -6576,7 +6576,7 @@
  		BUG_ON(page_table != pte_offset_kernel(pmd, 0));
  	}
  	
-@@ -135,6 +114,7 @@ static pte_t * __init one_page_table_ini
+@@ -109,6 +88,7 @@ static pte_t * __init one_page_table_ini
  static void __init page_table_range_init (unsigned long start, unsigned long end, pgd_t *pgd_base)
  {
  	pgd_t *pgd;
@@ -6584,7 +6584,7 @@
  	pmd_t *pmd;
  	int pgd_idx, pmd_idx;
  	unsigned long vaddr;
-@@ -145,8 +125,13 @@ static void __init page_table_range_init
+@@ -119,8 +99,13 @@ static void __init page_table_range_init
  	pgd = pgd_base + pgd_idx;
  
  	for ( ; (pgd_idx < PTRS_PER_PGD) && (vaddr != end); pgd++, pgd_idx++) {
@@ -6600,7 +6600,7 @@
  		for (; (pmd_idx < PTRS_PER_PMD) && (vaddr != end); pmd++, pmd_idx++) {
  			one_page_table_init(pmd);
  
-@@ -156,11 +141,23 @@ static void __init page_table_range_init
+@@ -130,11 +115,23 @@ static void __init page_table_range_init
  	}
  }
  
@@ -6628,7 +6628,7 @@
  }
  
  /*
-@@ -172,25 +169,29 @@ static void __init kernel_physical_mappi
+@@ -146,25 +143,29 @@ static void __init kernel_physical_mappi
  {
  	unsigned long pfn;
  	pgd_t *pgd;
@@ -6667,7 +6667,7 @@
  					set_pmd(pmd, pfn_pmd(pfn, PAGE_KERNEL_LARGE_EXEC));
  				else
  					set_pmd(pmd, pfn_pmd(pfn, PAGE_KERNEL_LARGE));
-@@ -202,7 +203,7 @@ static void __init kernel_physical_mappi
+@@ -176,7 +177,7 @@ static void __init kernel_physical_mappi
  				for (pte_ofs = 0;
  				     pte_ofs < PTRS_PER_PTE && pfn < max_low_pfn;
  				     pte++, pfn++, pte_ofs++, address += PAGE_SIZE) {
@@ -6676,7 +6676,7 @@
  						set_pte(pte, pfn_pte(pfn, PAGE_KERNEL_EXEC));
  					else
  						set_pte(pte, pfn_pte(pfn, PAGE_KERNEL));
-@@ -351,9 +352,9 @@ static void __init set_highmem_pages_ini
+@@ -326,9 +327,9 @@ static void __init set_highmem_pages_ini
  #define set_highmem_pages_init(bad_ppro) do { } while (0)
  #endif /* CONFIG_HIGHMEM */
  
@@ -6688,12 +6688,13 @@
  
  #ifdef CONFIG_NUMA
  extern void __init remap_numa_kva(void);
-@@ -364,26 +365,10 @@ extern void __init remap_numa_kva(void);
+@@ -339,26 +340,10 @@ extern void __init remap_numa_kva(void);
  void __init native_pagetable_setup_start(pgd_t *base)
  {
  #ifdef CONFIG_X86_PAE
 -	int i;
--
++	unsigned int i;
+ 
 -	/*
 -	 * Init entries of the first-level page table to the
 -	 * zero page, if they haven't already been set up.
@@ -6707,8 +6708,7 @@
 -	for (i = 0; i < USER_PTRS_PER_PGD; i++)
 -		set_pgd(&base[i],
 -			__pgd(__pa(empty_zero_page) | _PAGE_PRESENT));
-+	unsigned int i;
- 
+-
 -	/* Make sure kernel address space is empty so that a pagetable
 -	   will be allocated for it. */
 -	memset(&base[USER_PTRS_PER_PGD], 0,
@@ -6718,7 +6718,7 @@
  #else
  	paravirt_alloc_pd(__pa(swapper_pg_dir) >> PAGE_SHIFT);
  #endif
-@@ -391,16 +376,6 @@ void __init native_pagetable_setup_start
+@@ -366,16 +351,6 @@ void __init native_pagetable_setup_start
  
  void __init native_pagetable_setup_done(pgd_t *base)
  {
@@ -6735,7 +6735,7 @@
  }
  
  /*
-@@ -462,12 +437,12 @@ static void __init pagetable_init (void)
+@@ -437,12 +412,12 @@ static void __init pagetable_init (void)
   * Swap suspend & friends need this for resume because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
   */
@@ -6750,7 +6750,7 @@
  }
  #else
  static inline void save_pg_dir(void)
-@@ -506,8 +481,7 @@ void zap_low_mappings (void)
+@@ -471,8 +446,7 @@ void zap_low_mappings (void)
  	flush_tlb_all();
  }
  
@@ -6760,7 +6760,7 @@
  
  /*
   * noexec = on|off
-@@ -517,39 +491,34 @@ u64 __supported_pte_mask __read_mostly =
+@@ -482,39 +456,34 @@ u64 __supported_pte_mask __read_mostly =
   * on      Enable
   * off     Disable
   */
@@ -6811,7 +6811,7 @@
  	}
  }
  
-@@ -602,14 +571,6 @@ void __init paging_init(void)
+@@ -567,14 +536,6 @@ void __init paging_init(void)
  
  	load_cr3(swapper_pg_dir);
  
@@ -6826,7 +6826,7 @@
  	__flush_tlb_all();
  
  	kmap_init();
-@@ -680,7 +641,7 @@ void __init mem_init(void)
+@@ -645,7 +606,7 @@ void __init mem_init(void)
  	set_highmem_pages_init(bad_ppro);
  
  	codesize =  (unsigned long) &_etext - (unsigned long) &_text;
@@ -6835,7 +6835,7 @@
  	initsize =  (unsigned long) &__init_end - (unsigned long) &__init_begin;
  
  	kclist_add(&kcore_mem, __va(0), max_low_pfn << PAGE_SHIFT); 
-@@ -725,10 +686,10 @@ void __init mem_init(void)
+@@ -690,10 +651,10 @@ void __init mem_init(void)
  	       (unsigned long)&__init_begin, (unsigned long)&__init_end,
  	       ((unsigned long)&__init_end - (unsigned long)&__init_begin) >> 10,
  
@@ -6849,7 +6849,7 @@
  	       ((unsigned long)&_etext - (unsigned long)&_text) >> 10);
  
  #ifdef CONFIG_HIGHMEM
-@@ -739,10 +700,6 @@ void __init mem_init(void)
+@@ -704,10 +665,6 @@ void __init mem_init(void)
  	BUG_ON((unsigned long)high_memory      > VMALLOC_START);
  #endif /* double-sanity-check paranoia */
  
@@ -6860,7 +6860,7 @@
  	if (boot_cpu_data.wp_works_ok < 0)
  		test_wp_bit();
  
-@@ -878,6 +835,38 @@ void free_init_pages(char *what, unsigne
+@@ -843,6 +800,38 @@ void free_init_pages(char *what, unsigne
  
  void free_initmem(void)
  {
@@ -10327,9 +10327,9 @@
  	return 0;
 --- a/arch/x86_64/kernel/process.c
 +++ b/arch/x86_64/kernel/process.c
-@@ -890,10 +890,3 @@ unsigned long arch_align_stack(unsigned 
- 		sp -= get_random_int() % 8192;
- 	return sp & ~0xf;
+@@ -883,10 +883,3 @@ int dump_task_regs(struct task_struct *t
+  
+ 	return 1;
  }
 -
 -unsigned long arch_align_stack(unsigned long sp)
@@ -12272,9 +12272,9 @@
  
  	if (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
  		return -ENODEV;
-@@ -270,10 +272,6 @@ static int __init vesafb_probe(struct pl
- 	screen_info.vesapm_seg = 0;
- #endif
+@@ -266,10 +268,6 @@ static int __init vesafb_probe(struct pl
+ 		size_remap = size_total;
+ 	vesafb_fix.smem_len = size_remap;
  
 -#ifndef __i386__
 -	screen_info.vesapm_seg = 0;
@@ -12283,7 +12283,7 @@
  	if (!request_mem_region(vesafb_fix.smem_start, size_total, "vesafb")) {
  		printk(KERN_WARNING
  		       "vesafb: cannot reserve video memory at 0x%lx\n",
-@@ -306,9 +304,21 @@ static int __init vesafb_probe(struct pl
+@@ -302,9 +300,21 @@ static int __init vesafb_probe(struct pl
  	printk(KERN_INFO "vesafb: mode is %dx%dx%d, linelength=%d, pages=%d\n",
  	       vesafb_defined.xres, vesafb_defined.yres, vesafb_defined.bits_per_pixel, vesafb_fix.line_length, screen_info.pages);
  
@@ -12307,7 +12307,7 @@
  	}
  
  	if (screen_info.vesapm_seg < 0xc000)
-@@ -316,9 +326,29 @@ static int __init vesafb_probe(struct pl
+@@ -312,9 +322,29 @@ static int __init vesafb_probe(struct pl
  
  	if (ypan || pmi_setpal) {
  		unsigned short *pmi_base;
@@ -12340,7 +12340,7 @@
  		printk(KERN_INFO "vesafb: pmi: set display start = %p, set palette = %p\n",pmi_start,pmi_pal);
  		if (pmi_base[3]) {
  			printk(KERN_INFO "vesafb: pmi: ports = ");
-@@ -460,6 +490,11 @@ static int __init vesafb_probe(struct pl
+@@ -456,6 +486,11 @@ static int __init vesafb_probe(struct pl
  	       info->node, info->fix.id);
  	return 0;
  err:
@@ -15531,9 +15531,9 @@
  	/* We search for the closest matching block to goal. If we find a exact hit,
 --- a/fs/udf/inode.c
 +++ b/fs/udf/inode.c
-@@ -314,9 +314,6 @@ static int udf_get_block(struct inode *i
- 	if (block < 0)
- 		goto abort_negative;
+@@ -311,9 +311,6 @@ static int udf_get_block(struct inode *i
+ 
+ 	lock_kernel();
  
 -	if (block < 0)
 -		goto abort_negative;
@@ -15541,7 +15541,7 @@
  	if (block == UDF_I_NEXT_ALLOC_BLOCK(inode) + 1)
  	{
  		UDF_I_NEXT_ALLOC_BLOCK(inode) ++;
-@@ -337,10 +334,6 @@ static int udf_get_block(struct inode *i
+@@ -334,10 +331,6 @@ static int udf_get_block(struct inode *i
  abort:
  	unlock_kernel();
  	return err;
@@ -15574,9 +15574,9 @@
  	if (fragment >
  	    ((UFS_NDADDR + uspi->s_apb + uspi->s_2apb + uspi->s_3apb)
  	     << uspi->s_fpbshift))
-@@ -507,10 +503,6 @@ abort_negative:
- 	ufs_warning(sb, "ufs_get_block", "block < 0");
- 	goto abort;
+@@ -503,10 +499,6 @@ abort:
+ 	unlock_kernel();
+ 	return err;
  
 -abort_negative:
 -	ufs_warning(sb, "ufs_get_block", "block < 0");
@@ -28059,7 +28059,7 @@
  
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -168,9 +168,21 @@ enum
+@@ -168,10 +168,22 @@ enum
  #ifdef CONFIG_ALPHA_UAC_SYSCTL
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
@@ -28073,15 +28073,16 @@
 +#endif
  
 +};
-+  
+ 
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
 +};
 +#endif
- 
++ 
  /* CTL_VM names: */
  enum
+ {
 --- a/include/linux/uaccess.h
 +++ b/include/linux/uaccess.h
 @@ -76,11 +76,11 @@ static inline unsigned long __copy_from_
@@ -31528,9 +31529,9 @@
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1584,23 +1774,6 @@ find_extend_vma(struct mm_struct *mm, un
- 	}
- 	return prev;
+@@ -1567,23 +1757,6 @@ int expand_stack(struct vm_area_struct *
+ {
+ 	return expand_upwards(vma, address);
  }
 -
 -struct vm_area_struct *
@@ -31552,7 +31553,7 @@
  #else
  /*
   * vma is the first one with address < vma->vm_start.  Have to extend vma.
-@@ -1629,6 +1802,12 @@ int expand_stack(struct vm_area_struct *
+@@ -1612,6 +1785,12 @@ int expand_stack(struct vm_area_struct *
  	if (address < vma->vm_start) {
  		unsigned long size, grow;
  
@@ -31565,7 +31566,7 @@
  		size = vma->vm_end - address;
  		grow = (vma->vm_start - address) >> PAGE_SHIFT;
  
-@@ -1636,34 +1815,20 @@ int expand_stack(struct vm_area_struct *
+@@ -1619,34 +1798,20 @@ int expand_stack(struct vm_area_struct *
  		if (!error) {
  			vma->vm_start = address;
  			vma->vm_pgoff -= grow;
@@ -31609,7 +31610,7 @@
  #endif
  
  /*
-@@ -1679,6 +1844,10 @@ static void remove_vma_list(struct mm_st
+@@ -1662,6 +1827,10 @@ static void remove_vma_list(struct mm_st
  	do {
  		long nrpages = vma_pages(vma);
  
@@ -31620,7 +31621,7 @@
  		mm->total_vm -= nrpages;
  		if (vma->vm_flags & VM_LOCKED)
  			mm->locked_vm -= nrpages;
-@@ -1725,6 +1894,15 @@ detach_vmas_to_be_unmapped(struct mm_str
+@@ -1708,6 +1877,15 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	do {
@@ -31636,7 +31637,7 @@
  		rb_erase(&vma->vm_rb, &mm->mm_rb);
  		mm->map_count--;
  		tail_vma = vma;
-@@ -1744,6 +1922,112 @@ detach_vmas_to_be_unmapped(struct mm_str
+@@ -1727,6 +1905,112 @@ detach_vmas_to_be_unmapped(struct mm_str
   * Split a vma into two pieces at address 'addr', a new vma is allocated
   * either for the first part or the tail.
   */
@@ -31749,7 +31750,7 @@
  int split_vma(struct mm_struct * mm, struct vm_area_struct * vma,
  	      unsigned long addr, int new_below)
  {
-@@ -1791,14 +2075,28 @@ int split_vma(struct mm_struct * mm, str
+@@ -1774,13 +2058,27 @@ int split_vma(struct mm_struct * mm, str
  
  	return 0;
  }
@@ -31761,8 +31762,8 @@
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
 +#ifdef CONFIG_PAX_SEGMEXEC
- int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
- {
++int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
++{
 +	int ret = __do_munmap(mm, start, len);
 +	if (ret || !(mm->pax_flags & MF_PAX_SEGMEXEC))
 +		return ret;
@@ -31772,13 +31773,12 @@
 +
 +int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#else
-+int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
+ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#endif
-+{
+ {
  	unsigned long end;
  	struct vm_area_struct *vma, *prev, *last;
- 
-@@ -1851,6 +2149,8 @@ int do_munmap(struct mm_struct *mm, unsi
+@@ -1834,6 +2132,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
  
@@ -31787,7 +31787,7 @@
  	return 0;
  }
  
-@@ -1863,6 +2163,12 @@ asmlinkage long sys_munmap(unsigned long
+@@ -1846,6 +2146,12 @@ asmlinkage long sys_munmap(unsigned long
  
  	profile_munmap(addr);
  
@@ -31800,7 +31800,7 @@
  	down_write(&mm->mmap_sem);
  	ret = do_munmap(mm, addr, len);
  	up_write(&mm->mmap_sem);
-@@ -1892,6 +2198,11 @@ unsigned long do_brk(unsigned long addr,
+@@ -1875,6 +2181,11 @@ unsigned long do_brk(unsigned long addr,
  	struct rb_node ** rb_link, * rb_parent;
  	pgoff_t pgoff = addr >> PAGE_SHIFT;
  	int error;
@@ -31812,7 +31812,7 @@
  
  	len = PAGE_ALIGN(len);
  	if (!len)
-@@ -1905,19 +2216,34 @@ unsigned long do_brk(unsigned long addr,
+@@ -1888,19 +2199,34 @@ unsigned long do_brk(unsigned long addr,
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -31848,7 +31848,7 @@
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -1931,22 +2257,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -1914,22 +2240,22 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -31875,7 +31875,7 @@
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
-@@ -1959,24 +2285,41 @@ unsigned long do_brk(unsigned long addr,
+@@ -1942,24 +2268,41 @@ unsigned long do_brk(unsigned long addr,
  	 */
  	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
  	if (!vma) {
@@ -31922,7 +31922,7 @@
  	return addr;
  }
  
-@@ -2007,8 +2350,10 @@ void exit_mmap(struct mm_struct *mm)
+@@ -1990,8 +2333,10 @@ void exit_mmap(struct mm_struct *mm)
  	 * Walk the list again, actually closing and freeing it,
  	 * with preemption enabled, without holding any MM locks.
  	 */
@@ -31934,7 +31934,7 @@
  
  	BUG_ON(mm->nr_ptes > (FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
  }
-@@ -2022,6 +2367,10 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2005,6 +2350,10 @@ int insert_vm_struct(struct mm_struct * 
  	struct vm_area_struct * __vma, * prev;
  	struct rb_node ** rb_link, * rb_parent;
  
@@ -31945,7 +31945,7 @@
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2044,7 +2393,22 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2027,7 +2376,22 @@ int insert_vm_struct(struct mm_struct * 
  	if ((vma->vm_flags & VM_ACCOUNT) &&
  	     security_vm_enough_memory(vma_pages(vma)))
  		return -ENOMEM;
@@ -31968,7 +31968,7 @@
  	return 0;
  }
  
-@@ -2102,6 +2466,30 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2085,6 +2449,30 @@ struct vm_area_struct *copy_vma(struct v
  	return new_vma;
  }
  
@@ -31999,7 +31999,7 @@
  /*
   * Return true if the calling process may expand its vm space by the passed
   * number of pages
-@@ -2112,7 +2500,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2095,7 +2483,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -32008,7 +32008,7 @@
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-@@ -2124,7 +2512,7 @@ static struct page *special_mapping_nopa
+@@ -2107,7 +2495,7 @@ static struct page *special_mapping_nopa
  {
  	struct page **pages;
  
@@ -32017,7 +32017,7 @@
  
  	address -= vma->vm_start;
  	for (pages = vma->vm_private_data; address > 0 && *pages; ++pages)
-@@ -2174,8 +2562,17 @@ int install_special_mapping(struct mm_st
+@@ -2157,8 +2545,17 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -32442,8 +32442,8 @@
  	if (ret & ~PAGE_MASK)
 --- a/mm/nommu.c
 +++ b/mm/nommu.c
-@@ -368,15 +368,6 @@ struct vm_area_struct *find_extend_vma(s
- }
+@@ -359,15 +359,6 @@ struct vm_area_struct *find_vma(struct m
+ EXPORT_SYMBOL(find_vma);
  
  /*
 - * find a VMA
