@@ -75,6 +75,10 @@ Patch:	2300_support-for-htc-smartphones.patch
 From:	http://bugs.gentoo.org/187522
 Desc:	Support HTC smartphones wmodem
 
+Patch:	2305_sparc64-fix-booting-on-v100-systems.patch
+From:	http://bugs.gentoo.org/192110
+Desc:	Fix booting on Sun Fire V100
+
 Patch:	2400-atl1-disable-broken-64-bit-DMA.patch
 From:	http://bugs.gentoo.org/192411
 Desc:	atl1: disable broken 64-bit DMA
