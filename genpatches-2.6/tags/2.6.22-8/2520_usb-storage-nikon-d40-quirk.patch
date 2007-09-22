@@ -1,0 +1,42 @@
+From 9374b9fd6cef7f8b75a543d044c5b0925aae08cd Mon Sep 17 00:00:00 2001
+From: =?utf-8?q?Ortwin_Gl=C3=BCck?= <odi@odi.ch>
+Date: Thu, 6 Sep 2007 00:06:26 +0200
+Subject: [PATCH] USB: Nikon D40 Quirks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+The D40 needs the same quirks as the other (semi-)professional Nikon cameras.
+The patch is against 2.6.23-rc5.
+
+Details:
+http://bugs.gentoo.org/show_bug.cgi?id=191431
+
+
+From: Ortwin Glück <odi@odi.ch>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+ drivers/usb/storage/unusual_devs.h |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/usb/storage/unusual_devs.h b/drivers/usb/storage/unusual_devs.h
+index f69f15e..da52d10 100644
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -348,6 +348,13 @@ UNUSUAL_DEV(  0x04b0, 0x0411, 0x0100, 0x0101,
+ 		US_SC_DEVICE, US_PR_DEVICE, NULL,
+ 		US_FL_FIX_CAPACITY),
+ 
++/* Reported by Ortwin Glueck <odi@odi.ch> */
++UNUSUAL_DEV(  0x04b0, 0x0413, 0x0110, 0x0110,
++		"NIKON",
++		"NIKON DSC D40",
++		US_SC_DEVICE, US_PR_DEVICE, NULL,
++		US_FL_FIX_CAPACITY),
++
+ /* BENQ DC5330
+  * Reported by Manuel Fombuena <mfombuena@ya.com> and
+  * Frank Copeland <fjc@thingy.apana.org.au> */
+-- 
+1.5.1.6
+
