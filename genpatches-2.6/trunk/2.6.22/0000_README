@@ -63,6 +63,10 @@ Patch:	1005_linux-2.6.22.6.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.6
 
+Patch:	1006_linux-2.6.22.7.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.22.7: x86_64 security fix
+
 Patch:	1800_gcc-4.2-export-symbol.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix compilation with gcc 4.2
