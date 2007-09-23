@@ -4,11 +4,11 @@
 use gentoo_sources_web;
 
 $tag = shift;
+$kernel_name = shift;
 
 $tag =~ m/(2\.6\.\d+)-(\d+)/;
 $ver = $1;
 $rel = $2;
-$kernel_name = $3;
 $have_history = 0;
 
 # Try and find previous release
