@@ -75,4 +75,4 @@ if [[ ${DO_WEBSITE} == "yes" ]] ; then
 	gpdoweb
 fi
 
-[[ ${DO_EMAIL_ANNOUNCEMENT} == "yes" ]] && gpdoemail $newfullver $KERNEL_NAME
+[[ ${DO_EMAIL_ANNOUNCEMENT} == "yes" ]] && gpdoemail ${BRANCH} ${newrel} $KERNEL_NAME

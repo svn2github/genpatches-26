@@ -7,7 +7,7 @@ email="${ECHANGELOG_USER#*<}"
 email="${email%>}"
 
 cd ${WEB_LOCAL}
-./email-announcement.pl $1 ${KERNEL_NAME} |
+./email-announcement.pl $@ |
 	${SENDMAIL} -F \"${name}\" -f \"${email}\" gentoo-kernel@lists.gentoo.org
 
 
