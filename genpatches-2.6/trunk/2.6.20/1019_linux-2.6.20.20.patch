@@ -1,30 +1,5 @@
-From: Andi Kleen <ak@suse.de>
-Date: Fri, 21 Sep 2007 14:16:18 +0000 (+0200)
-Subject: [PATCH] x86_64: Zero extend all registers after ptrace in 32bit entry path.
-X-Git-Tag: v2.6.22.7~1
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fstable%2Flinux-2.6.22.y.git;a=commitdiff_plain;h=fc370f287729799250e04cb1d880140d14612bf0
-
-[PATCH] x86_64: Zero extend all registers after ptrace in 32bit entry path.
-
-Strictly it's only needed for eax.
-
-It actually does a little more than strictly needed -- the other registers
-are already zero extended.
-
-Also remove the now unnecessary and non functional compat task check
-in ptrace.
-
-This is CVE-2007-4573
-
-Found by Wojciech Purczynski
-
-Signed-off-by: Andi Kleen <ak@suse.de>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Chris Wright <chrisw@sous-sol.org>
----
-
 diff --git a/arch/x86_64/ia32/ia32entry.S b/arch/x86_64/ia32/ia32entry.S
-index 47565c3..0bc623a 100644
+index b4aa875..824fe53 100644
 --- a/arch/x86_64/ia32/ia32entry.S
 +++ b/arch/x86_64/ia32/ia32entry.S
 @@ -38,6 +38,18 @@
@@ -74,10 +49,10 @@ index 47565c3..0bc623a 100644
  	jmp ia32_do_syscall
  END(ia32_syscall)
 diff --git a/arch/x86_64/kernel/ptrace.c b/arch/x86_64/kernel/ptrace.c
-index 9409117..8d89d8c 100644
+index addc14a..e086073 100644
 --- a/arch/x86_64/kernel/ptrace.c
 +++ b/arch/x86_64/kernel/ptrace.c
-@@ -223,10 +223,6 @@ static int putreg(struct task_struct *child,
+@@ -224,10 +224,6 @@ static int putreg(struct task_struct *child,
  {
  	unsigned long tmp; 
  	
@@ -88,3 +63,40 @@ index 9409117..8d89d8c 100644
  	switch (regno) {
  		case offsetof(struct user_regs_struct,fs):
  			if (value && (value & 3) != 3)
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 6e2101d..475ddbb 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1916,6 +1916,16 @@ asmlinkage long sys_setrlimit(unsigned int resource, struct rlimit __user *rlim)
+ 	if (retval)
+ 		return retval;
+ 
++	if (resource == RLIMIT_CPU && new_rlim.rlim_cur == 0) {
++		/*
++		 * The caller is asking for an immediate RLIMIT_CPU
++		 * expiry.  But we use the zero value to mean "it was
++		 * never set".  So let's cheat and make it one second
++		 * instead
++		 */
++		new_rlim.rlim_cur = 1;
++	}
++
+ 	task_lock(current->group_leader);
+ 	*old_rlim = new_rlim;
+ 	task_unlock(current->group_leader);
+@@ -1937,15 +1947,6 @@ asmlinkage long sys_setrlimit(unsigned int resource, struct rlimit __user *rlim)
+ 		unsigned long rlim_cur = new_rlim.rlim_cur;
+ 		cputime_t cputime;
+ 
+-		if (rlim_cur == 0) {
+-			/*
+-			 * The caller is asking for an immediate RLIMIT_CPU
+-			 * expiry.  But we use the zero value to mean "it was
+-			 * never set".  So let's cheat and make it one second
+-			 * instead
+-			 */
+-			rlim_cur = 1;
+-		}
+ 		cputime = secs_to_cputime(rlim_cur);
+ 		read_lock(&tasklist_lock);
+ 		spin_lock_irq(&current->sighand->siglock);

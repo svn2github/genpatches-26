@@ -115,10 +115,9 @@ Patch:	1018_linux-2.6.20.19.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.20.19
 
-Patch:	1500_CVE-2007-4573.patch
-From:	git.kernel.org
-Desc:	Backport "x86_64: Zero extend all registers after ptrace in 32bit entry
-		path" to 2.6.20.
+Patch:	1019_linux-2.6.20.20.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.20
 
 Patch:	1701_netfilter-ulog-alignment.patch
 From:	Patrick McHardy <kaber@trash.net>
