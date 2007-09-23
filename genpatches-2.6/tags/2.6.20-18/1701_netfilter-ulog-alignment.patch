@@ -1,0 +1,39 @@
+From: Patrick McHardy <kaber@trash.net>
+Date: Thu, 12 Apr 2007 21:27:03 +0000 (-0700)
+Subject: [NETFILTER]: ipt_ULOG: use put_unaligned
+X-Git-Tag: v2.6.21-rc7~11^2~5
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=01102e7ca2e71ec0c300d41a1f3e594235b733ee
+
+[NETFILTER]: ipt_ULOG: use put_unaligned
+
+Use put_unaligned to fix warnings about unaligned accesses.
+
+Signed-off-by: Patrick McHardy <kaber@trash.net>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+
+diff --git a/net/ipv4/netfilter/ipt_ULOG.c b/net/ipv4/netfilter/ipt_ULOG.c
+index a26404d..9acc018 100644
+--- a/net/ipv4/netfilter/ipt_ULOG.c
++++ b/net/ipv4/netfilter/ipt_ULOG.c
+@@ -61,6 +61,7 @@
+ #include <linux/netfilter_ipv4/ipt_ULOG.h>
+ #include <net/sock.h>
+ #include <linux/bitops.h>
++#include <asm/unaligned.h>
+ 
+ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Harald Welte <laforge@gnumonks.org>");
+@@ -236,9 +237,9 @@ static void ipt_ulog_packet(unsigned int hooknum,
+ 
+ 	/* copy hook, prefix, timestamp, payload, etc. */
+ 	pm->data_len = copy_len;
+-	pm->timestamp_sec = skb->tstamp.off_sec;
+-	pm->timestamp_usec = skb->tstamp.off_usec;
+-	pm->mark = skb->mark;
++	put_unaligned(skb->tstamp.off_sec, &pm->timestamp_sec);
++	put_unaligned(skb->tstamp.off_usec, &pm->timestamp_usec);
++	put_unaligned(skb->mark, &pm->mark);
+ 	pm->hook = hooknum;
+ 	if (prefix != NULL)
+ 		strncpy(pm->prefix, prefix, sizeof(pm->prefix));
