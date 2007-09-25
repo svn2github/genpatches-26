@@ -139,6 +139,10 @@ Patch:	4300_squashfs-3.2.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
+Patch:	4400_alsa-hda-ad1984.patch
+From:	http://bugs.gentoo.org/184354
+Desc:	Add sound support (HDA) on ThinkPad T61
+
 Patch:	4405_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org>
 Desc:	enable control of the unaligned access control policy from sysctl
