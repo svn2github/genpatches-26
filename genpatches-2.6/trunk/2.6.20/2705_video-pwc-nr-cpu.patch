@@ -1,0 +1,10 @@
+--- a/drivers/media/video/pwc/pwc-uncompress.c
++++ b/drivers/media/video/pwc/pwc-uncompress.c
+@@ -26,6 +26,7 @@
+    vim: set ts=8:
+ */
+ 
++#include <linux/threads.h>
+ #include <asm/current.h>
+ #include <asm/types.h>
+ 

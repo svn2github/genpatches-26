@@ -143,6 +143,10 @@ Patch:	2700_usb-audio-quickcam-quirks.patch
 From:	Linux 2.6.22 / Daniel Drake <dsd@gentoo.org>
 Desc:	Adding another quickcam microphone
 
+Patch:	2705_video-pwc-nr-cpu.patch
+From:	Natanael Copa
+Desc:	Fix compilation of media/video/pwc
+
 Patch:	4000_deprecate-sk98lin.patch
 From:	dsd@gentoo.org
 Desc:	Add a note suggesting users try skge
