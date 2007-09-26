@@ -71,6 +71,10 @@ Patch:	1007_linux-2.6.22.8.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.8: sound security fix
 
+Patch:	1008_linux-2.6.22.9.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.22.9
+
 Patch:	1800_gcc-4.2-export-symbol.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix compilation with gcc 4.2
