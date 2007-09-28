@@ -1088,7 +1088,7 @@ Incomplete changelog:
 + * Use these in place of %Ld, %Lu, and %Lx.
 + **/
 +#if BITS_PER_LONG > 32
-+#define PFU64 "%lu"
++#define PFU64 "%llu"
 +#else
 +#define PFU64 "%Lu"
 +#endif
