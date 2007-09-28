@@ -13,7 +13,7 @@
 
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -1367,6 +1367,71 @@ config CRAMFS
+@@ -1364,6 +1364,71 @@ config CRAMFS
  
  	  If unsure, say N.
  

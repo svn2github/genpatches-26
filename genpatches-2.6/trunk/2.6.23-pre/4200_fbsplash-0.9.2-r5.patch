@@ -1785,7 +1785,7 @@
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -477,6 +480,17 @@ static ctl_table kern_table[] = {
+@@ -485,6 +488,17 @@ static ctl_table kern_table[] = {
  		.strategy	= &sysctl_string,
  	},
  #endif
