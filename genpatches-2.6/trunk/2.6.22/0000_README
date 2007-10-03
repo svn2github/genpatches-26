@@ -91,6 +91,10 @@ Patch:	2400-atl1-disable-broken-64-bit-DMA.patch
 From:	http://bugs.gentoo.org/192411
 Desc:	atl1: disable broken 64-bit DMA
 
+Patch:	2405_hostap-netdev-type.patch
+From:	http://bugs.gentoo.org/159646
+Desc:	Fix hostap AP interface type to prevent udev confusion
+
 Patch:	2500_pata-hpt37x-pll-clock.patch
 From:	http://bugs.gentoo.org/185983
 Desc:	Fix disk detection in pata_hpt37x driver
