@@ -133,7 +133,7 @@
 @@ -166,6 +166,9 @@ enum
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
- 	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
+ 	KERN_FBCON_DECOR=77,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
