@@ -51,9 +51,9 @@ Patch:	4200_fbcondecor-0.9.4-2.6.23-rc7.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
-Patch:	4205_vesafb-tng-1.0-rc2.patch
-From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
-Desc:	Updated vesafb driver for x86.
+Patch:	4205_uvesafb-0.1-rc3-2.6.23-rc3.patch
+From:	http://dev.gentoo.org/~spock/projects/uvesafb/
+Desc:	Successor of vesafb-tng.
 
 Patch:	4300_squashfs-3.2.patch
 From:	http://squashfs.sourceforge.net/
