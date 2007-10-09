@@ -219,7 +219,7 @@
  	depends on (FB = y) && X86
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -116,6 +116,7 @@ obj-$(CONFIG_FB_XILINX)           += xil
+@@ -115,6 +115,7 @@ obj-$(CONFIG_FB_XILINX)           += xil
  obj-$(CONFIG_FB_OMAP)             += omap/
  
  # Platform or fallback drivers go here
