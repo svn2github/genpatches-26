@@ -131,6 +131,10 @@ Patch:	2900_powernow-k8-acpi.patch
 From:	http://bugs.gentoo.org/178585
 Desc:	Reduce confusion around powernow-k8 vs ACPI configuration
 
+Patch:	2905_fix-generating-custom-keymap.patch
+From:	http://bugs.gentoo.org/194903
+Desc:	A fix for users who want to generate a custom keymap
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
