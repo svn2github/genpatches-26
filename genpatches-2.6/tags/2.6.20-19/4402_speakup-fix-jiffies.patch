@@ -1,0 +1,12 @@
+Index: linux-2.6.20/drivers/char/speakup/spk_priv.h
+===================================================================
+--- linux-2.6.20.orig/drivers/char/speakup/spk_priv.h
++++ linux-2.6.20/drivers/char/speakup/spk_priv.h
+@@ -34,6 +34,7 @@
+ #include <linux/wait.h>		/* for wait_queue */
+ #include <linux/init.h> /* for __init */
+ #include <linux/module.h>
++#include <linux/jiffies.h>
+ #ifdef CONFIG_PROC_FS
+ #include <linux/proc_fs.h>
+ #endif

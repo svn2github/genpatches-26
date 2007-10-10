@@ -1,0 +1,196 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_linux-2.6.20.1.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.1
+
+Patch:	1001_linux-2.6.20.2.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.2
+
+Patch:	1002_linux-2.6.20.3.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.3
+
+Patch:	1003_linux-2.6.20.4.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.4
+
+Patch:	1004_linux-2.6.20.5.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.5
+
+Patch:	1005_linux-2.6.20.6.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.6
+
+Patch:	1006_linux-2.6.20.7.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.7
+
+Patch:	1007_linux-2.6.20.8.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.8
+
+Patch:	1008_linux-2.6.20.9.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.9
+
+Patch:	1009_linux-2.6.20.10.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.10
+
+Patch:	1010_linux-2.6.20.11.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.11
+
+Patch:	1011_linux-2.6.20.12.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.12
+
+Patch:	1012_linux-2.6.20.13.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.13
+
+Patch:	1013_linux-2.6.20.14.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.14
+
+Patch:	1014_linux-2.6.20.15.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.15
+
+Patch:	1015_linux-2.6.20.16.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.16
+
+Patch:	1016_linux-2.6.20.17.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.17
+
+Patch:	1017_linux-2.6.20.18.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.18
+
+Patch:	1018_linux-2.6.20.19.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.19
+
+Patch:	1019_linux-2.6.20.20.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.20.20
+
+Patch:	1701_netfilter-ulog-alignment.patch
+From:	Patrick McHardy <kaber@trash.net>
+Desc:	Use put_unaligned to fix warnings about unaligned accesses.
+
+Patch:	1705_alpha-arch-compile-fix.patch
+From:	http://bugs.gentoo.org/175264
+Desc:	Fix alpha gcc-4.1 compile
+
+Patch:	1900_reiserfs-key-decrement.patch
+From:	http://bugs.gentoo.org/179563
+Desc:	Fix possible reiserfs corruption
+
+Patch:	2300_i2c-i801-resume.patch
+From:	http://bugs.gentoo.org/172244
+Desc:	Fix i2c-i801 hang on resume
+
+Patch:	2400_r8169-link-speed.patch
+From:	http://bugs.gentoo.org/166490
+Desc:	Fix link speed negotiation on r8169 ethernet driver
+
+Patch:	2700_usb-audio-quickcam-quirks.patch
+From:	Linux 2.6.22 / Daniel Drake <dsd@gentoo.org>
+Desc:	Adding another quickcam microphone
+
+Patch:	2705_video-pwc-nr-cpu.patch
+From:	Natanael Copa
+Desc:	Fix compilation of media/video/pwc
+
+Patch:	4000_deprecate-sk98lin.patch
+From:	dsd@gentoo.org
+Desc:	Add a note suggesting users try skge
+
+Patch:	4100_sata-promise-ide.patch
+From:	Linux 2.6.21
+Desc:	Enable IDE ports on Promise 2037x controllers
+
+Patch:	4101_sata-promise-ide-cable-detect.patch
+From:	Linux 2.6.21
+Desc:	Fix IDE cable detection
+
+Patch:	4105_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4200_fbsplash-0.9.2-r5.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4205_vesafb-tng-1.0-rc2.patch
+From:	http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Desc:	Updated vesafb driver for x86.
+
+Patch:	4210_cx88-cinergy-1400-support.patch
+From:	http://bugs.gentoo.org/162239
+Desc:	Support s-video/composite input on Terratec Cinergy 1400
+
+Patch:	4300_squashfs-3.2.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4400_speakup-20070204.patch
+From:	dsd@gentoo.org from speakup cvs
+Desc:	Provides console speech to visually-impaired users
+
+Patch:	4401_speakup-fix-module-build.patch
+From:	http://bugs.gentoo.org/166086
+Desc:	Fix speakup modular build
+
+Patch:	4402_speakup-fix-jiffies.patch
+From:	http://bugs.gentoo.org/173131
+Desc:	Fix speakup on non-x86 platforms
+
+Patch:	4405_alpha-sysctl-uac.patch
+From:	
+Desc:	enable control of the unaligned access control policy from sysctl
