@@ -6,22 +6,22 @@
 
 --- a/arch/i386/mm/fault.c
 +++ b/arch/i386/mm/fault.c
-@@ -713,10 +713,12 @@ no_context:
+@@ -722,10 +722,12 @@ no_context:
  #else
  		else if (init_mm.start_code <= address && address < init_mm.end_code)
  #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
  			if (tsk->signal->curr_ip)
  				printk(KERN_ERR "PAX: From %u.%u.%u.%u: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
- 					 NIPQUAD(tsk->signal->curr_ip), tsk->comm, tsk->pid, tsk->uid, tsk->euid);
+ 					NIPQUAD(tsk->signal->curr_ip), tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  			else
 +#endif
  				printk(KERN_ERR "PAX: %s:%d, uid/euid: %u/%u, attempted to modify kernel code",
- 					 tsk->comm, tsk->pid, tsk->uid, tsk->euid);
+ 					tsk->comm, tsk->pid, tsk->uid, tsk->euid);
  #endif
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -1612,9 +1612,11 @@ void pax_report_fault(struct pt_regs *re
+@@ -1733,9 +1733,11 @@ void pax_report_fault(struct pt_regs *re
  		}
  		up_read(&mm->mmap_sem);
  	}

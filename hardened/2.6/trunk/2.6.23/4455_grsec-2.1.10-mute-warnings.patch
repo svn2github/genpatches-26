@@ -12,15 +12,12 @@ Acked-by: Christian Heim <phreak@gentoo.org>
 
 --- a/Makefile
 +++ b/Makefile
-@@ -312,8 +312,9 @@ LINUXINCLUDE    := -Iinclude \
+@@ -312,7 +312,7 @@ LINUXINCLUDE    := -Iinclude \
  
  CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
  
 -CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
--                   -fno-strict-aliasing -fno-common
-+CFLAGS			:= -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-+					-fno-strict-aliasing -fno-common
-+
++CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common \
+ 		   -Werror-implicit-function-declaration
  AFLAGS          := -D__ASSEMBLY__
- 
- # Read KERNELRELEASE from include/config/kernel.release (if it exists)
