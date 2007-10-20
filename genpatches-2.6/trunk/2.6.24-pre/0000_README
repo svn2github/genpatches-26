@@ -39,10 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_linux-2.6.23.1.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.23.1
-
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
@@ -58,10 +54,6 @@ Desc:	Bad block relocation support for LiveCD users
 Patch:	4200_fbcondecor-0.9.4-2.6.23-rc7.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
-
-Patch:	4205_uvesafb-0.1-rc3-2.6.23-rc3.patch
-From:	http://dev.gentoo.org/~spock/projects/uvesafb/
-Desc:	Successor of vesafb-tng.
 
 Patch:	4300_squashfs-3.2.patch
 From:	http://squashfs.sourceforge.net/
