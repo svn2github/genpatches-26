@@ -5,9 +5,9 @@ Incomplete changelog:
 
 --- a/drivers/md/Kconfig
 +++ b/drivers/md/Kconfig
-@@ -276,4 +276,15 @@ config DM_DELAY
- 
- 	If unsure, say N.
+@@ -288,4 +288,15 @@ config DM_UEVENT
+ 	---help---
+ 	Generate udev events for DM events.
  
 +config BLK_DEV_DM_BBR
 +	tristate "Bad Block Relocation Device Target (EXPERIMENTAL)"
@@ -23,7 +23,7 @@ Incomplete changelog:
  endif # MD
 --- a/drivers/md/Makefile
 +++ b/drivers/md/Makefile
-@@ -39,6 +39,7 @@ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rd
+@@ -41,6 +41,7 @@ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rd
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
