@@ -13,7 +13,7 @@
 
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -1364,6 +1364,71 @@ config CRAMFS
+@@ -1396,6 +1396,71 @@ config CRAMFS
  
  	  If unsure, say N.
  
@@ -92,7 +92,7 @@
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/
 +obj-$(CONFIG_SQUASHFS)		+= squashfs/
- obj-$(CONFIG_RAMFS)		+= ramfs/
+ obj-y				+= ramfs/
  obj-$(CONFIG_HUGETLBFS)		+= hugetlbfs/
  obj-$(CONFIG_CODA_FS)		+= coda/
 --- /dev/null
