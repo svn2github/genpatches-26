@@ -140,7 +140,7 @@
  };
  
  
-@@ -259,6 +262,17 @@ enum
+@@ -260,6 +263,17 @@ enum
  	PTY_NR=2
  };
  
@@ -160,17 +160,17 @@
  {
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -158,6 +158,9 @@ extern ctl_table pty_table[];
- #ifdef CONFIG_INOTIFY_USER
- extern ctl_table inotify_table[];
+@@ -157,6 +157,9 @@ static int proc_do_cad_pid(struct ctl_ta
+ static int proc_dointvec_taint(struct ctl_table *table, int write, struct file *filp,
+ 			       void __user *buffer, size_t *lenp, loff_t *ppos);
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +extern ctl_table uac_table[];
 +#endif
  
- #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
- int sysctl_legacy_va_layout;
-@@ -211,6 +214,14 @@ static ctl_table root_table[] = {
+ static struct ctl_table root_table[];
+ static struct ctl_table_header root_table_header =
+@@ -224,6 +227,14 @@ static struct ctl_table root_table[] = {
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
   */
