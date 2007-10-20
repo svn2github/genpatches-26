@@ -39,10 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	2525_usb-storage-nikon-d200-quirk.patch
-From:	http://bugs.gentoo.org/192610
-Desc:	usb-storage capacity quirk for Nikon D200 camera
-
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
