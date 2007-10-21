@@ -1,0 +1,44 @@
+--- a/arch/x86_64/ia32/ia32entry.S
++++ b/arch/x86_64/ia32/ia32entry.S
+@@ -73,7 +73,7 @@ ia32_tracesys:			 
+ 	call syscall_trace
+ 	LOAD_ARGS ARGOFFSET  /* reload args from stack in case ptrace changed it */
+ 	RESTORE_REST
+-	cmpl $(IA32_NR_syscalls),%eax
++	cmpl $(IA32_NR_syscalls),%rax
+ 	jae  1f
+ 	IA32_ARG_FIXUP
+ 	call *ia32_sys_call_table(,%rax,8)
+--- a/net/atm/proc.c
++++ b/net/atm/proc.c
+@@ -257,6 +257,9 @@ static int arp_seq_open(struct inode *in
+ 	struct seq_file *seq;
+ 	int rc = -EAGAIN;
+ 
++	if (!clip_tbl_hook)
++		goto out;
++
+ 	state = kmalloc(sizeof(*state), GFP_KERNEL);
+ 	if (!state) {
+ 		rc = -ENOMEM;
+--- a/net/bridge/br_stp.c
++++ b/net/bridge/br_stp.c
+@@ -141,7 +141,7 @@ void br_become_root_bridge(struct net_br
+ 	br_topology_change_detection(br);
+ 	br_timer_clear(&br->tcn_timer);
+ 
+-	br_timer_set(&br->hello_timer, jiffies - br->hello_time);
++	br_timer_set(&br->hello_timer, jiffies + br->hello_time);
+ }
+ 
+ /* called under bridge lock */
+@@ -193,7 +193,8 @@ static void br_record_config_information
+ 	p->designated_bridge = bpdu->bridge_id;
+ 	p->designated_port = bpdu->port_id;
+ 
+-	br_timer_set(&p->message_age_timer, jiffies - bpdu->message_age);
++	br_timer_set(&p->message_age_timer, jiffies + 
++		     (p->br->max_age - bpdu->message_age));
+ }
+ 
+ /* called under bridge lock */
