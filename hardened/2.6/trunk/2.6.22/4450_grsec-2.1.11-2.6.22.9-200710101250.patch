@@ -79,12 +79,14 @@
  
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-@@ -283,6 +284,9 @@ do_sys_ptrace(long request, long pid, lo
+@@ -283,6 +284,11 @@ do_sys_ptrace(long request, long pid, lo
  		goto out_notsk;
  	}
  
-+	if (gr_handle_ptrace(child, request))
++	if (gr_handle_ptrace(child, request)) {
++		ret = -EPERM;
 +		goto out;
++	}
 +
  	if (request == PTRACE_ATTACH) {
  		ret = ptrace_attach(child);
@@ -2739,15 +2741,7 @@
 +#endif
 --- a/arch/i386/kernel/ptrace.c
 +++ b/arch/i386/kernel/ptrace.c
-@@ -16,6 +16,7 @@
- #include <linux/audit.h>
- #include <linux/seccomp.h>
- #include <linux/signal.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/uaccess.h>
- #include <asm/pgtable.h>
-@@ -161,17 +162,20 @@ static unsigned long convert_eip_to_line
+@@ -161,17 +161,20 @@ static unsigned long convert_eip_to_line
  	 * and APM bios ones we just ignore here.
  	 */
  	if (seg & LDT_SEGMENT) {
@@ -2776,7 +2770,7 @@
  		up(&child->mm->context.sem);
  	}
  	return addr;
-@@ -183,6 +187,9 @@ static inline int is_setting_trap_flag(s
+@@ -183,6 +186,9 @@ static inline int is_setting_trap_flag(s
  	unsigned char opcode[15];
  	unsigned long addr = convert_eip_to_linear(child, regs);
  
@@ -2786,7 +2780,7 @@
  	copied = access_process_vm(child, addr, opcode, sizeof(opcode), 0);
  	for (i = 0; i < copied; i++) {
  		switch (opcode[i]) {
-@@ -334,6 +341,11 @@ ptrace_set_thread_area(struct task_struc
+@@ -334,6 +340,11 @@ ptrace_set_thread_area(struct task_struc
  	if (copy_from_user(&info, user_desc, sizeof(info)))
  		return -EFAULT;
  
@@ -2798,7 +2792,7 @@
  	if (idx < GDT_ENTRY_TLS_MIN || idx > GDT_ENTRY_TLS_MAX)
  		return -EINVAL;
  
-@@ -424,6 +436,17 @@ long arch_ptrace(struct task_struct *chi
+@@ -424,6 +435,17 @@ long arch_ptrace(struct task_struct *chi
  			  if(addr == (long) &dummy->u_debugreg[5]) break;
  			  if(addr < (long) &dummy->u_debugreg[4] &&
  			     ((unsigned long) data) >= TASK_SIZE-3) break;
@@ -2816,7 +2810,7 @@
  			  
  			  /* Sanity-check data. Take one half-byte at once with
  			   * check = (val >> (16 + 4*i)) & 0xf. It contains the
-@@ -640,7 +663,7 @@ void send_sigtrap(struct task_struct *ts
+@@ -640,7 +662,7 @@ void send_sigtrap(struct task_struct *ts
  	info.si_code = TRAP_BRKPT;
  
  	/* User-mode eip? */
@@ -3433,11 +3427,11 @@
  const char *arch_vma_name(struct vm_area_struct *vma)
  {
 -	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
-+	if (vma->vm_start == vma->vm_mm->context.vdso)
++	if (vma->vm_mm && vma->vm_start == vma->vm_mm->context.vdso)
  		return "[vdso]";
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+	if (vma->vm_mirror && vma->vm_mirror->vm_start == vma->vm_mm->context.vdso)
++	if (vma->vm_mm && vma->vm_mirror && vma->vm_mirror->vm_start == vma->vm_mm->context.vdso)
 +		return "[vdso]";
 +#endif
 +
@@ -7541,7 +7535,7 @@
 -					PAGE_COPY_EXEC: PAGE_COPY;
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
-+		if (current-<mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
++		if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
 +			mpnt->vm_flags &= ~VM_EXEC;
 +
 +#ifdef CONFIG_PAX_MPROTECT
@@ -8019,16 +8013,6 @@
  
  	DEBUGP("register_unwind_table(), sect = %d at 0x%p - 0x%p (gp=0x%lx)\n",
  	       me->arch.unwind_section, table, end, gp);
---- a/arch/parisc/kernel/ptrace.c
-+++ b/arch/parisc/kernel/ptrace.c
-@@ -17,6 +17,7 @@
- #include <linux/security.h>
- #include <linux/compat.h>
- #include <linux/signal.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/uaccess.h>
- #include <asm/pgtable.h>
 --- a/arch/parisc/kernel/sys_parisc.c
 +++ b/arch/parisc/kernel/sys_parisc.c
 @@ -111,7 +111,7 @@ unsigned long arch_get_unmapped_area(str
@@ -10353,16 +10337,6 @@
 -		sp -= get_random_int() % 8192;
 -	return sp & ~0xf;
 -}
---- a/arch/x86_64/kernel/ptrace.c
-+++ b/arch/x86_64/kernel/ptrace.c
-@@ -18,6 +18,7 @@
- #include <linux/audit.h>
- #include <linux/seccomp.h>
- #include <linux/signal.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/uaccess.h>
- #include <asm/pgtable.h>
 --- a/arch/x86_64/kernel/setup64.c
 +++ b/arch/x86_64/kernel/setup64.c
 @@ -37,7 +37,7 @@ struct desc_ptr idt_descr = { 256 * 16 -
@@ -10663,8 +10637,8 @@
  };
  
  #define ENOUGH(v,unit)		(((v)-1)/(unit)+1)
-@@ -3805,7 +3805,7 @@ static const struct ata_blacklist_entry 
- 	/* Devices with NCQ limits */
+@@ -3814,7 +3814,7 @@ static const struct ata_blacklist_entry 
+ 	{ "SAMSUNG HD401LJ",	"ZZ100-15",	ATA_HORKAGE_NONCQ, },
  
  	/* End Marker */
 -	{ }
@@ -13732,6 +13706,20 @@
  		sbi->s_resuid != current->fsuid &&
  		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
  		return 0;
+--- a/fs/ext3/namei.c
++++ b/fs/ext3/namei.c
+@@ -1178,9 +1178,9 @@ static struct ext3_dir_entry_2 *do_split
+ 	u32 hash2;
+ 	struct dx_map_entry *map;
+ 	char *data1 = (*bh)->b_data, *data2;
+-	unsigned split, move, size, i;
++	unsigned split, move, size;
+ 	struct ext3_dir_entry_2 *de = NULL, *de2;
+-	int	err = 0;
++	int	i, err = 0;
+ 
+ 	bh2 = ext3_append (handle, dir, &newblock, &err);
+ 	if (!(bh2)) {
 --- a/fs/ext3/xattr.c
 +++ b/fs/ext3/xattr.c
 @@ -89,8 +89,8 @@
@@ -13756,6 +13744,20 @@
  		sbi->s_resuid != current->fsuid &&
  		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
  		return 0;
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -1176,9 +1176,9 @@ static struct ext4_dir_entry_2 *do_split
+ 	u32 hash2;
+ 	struct dx_map_entry *map;
+ 	char *data1 = (*bh)->b_data, *data2;
+-	unsigned split, move, size, i;
++	unsigned split, move, size;
+ 	struct ext4_dir_entry_2 *de = NULL, *de2;
+-	int	err = 0;
++	int	i, err = 0;
+ 
+ 	bh2 = ext4_append (handle, dir, &newblock, &err);
+ 	if (!(bh2)) {
 --- a/fs/fcntl.c
 +++ b/fs/fcntl.c
 @@ -18,6 +18,7 @@
@@ -22704,7 +22706,7 @@
 +}
 --- /dev/null
 +++ b/grsecurity/grsec_init.c
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,230 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/mm.h>
@@ -22780,7 +22782,6 @@
 +	int j;
 +	/* create the per-cpu shared pages */
 +
-+	preempt_disable();
 +	for (j = 0; j < 4; j++) {
 +		gr_shared_page[j] = (char *)__alloc_percpu(PAGE_SIZE);
 +		if (gr_shared_page[j] == NULL) {
@@ -22788,7 +22789,6 @@
 +			return;
 +		}
 +	}
-+	preempt_enable();
 +
 +	/* allocate log buffers */
 +	gr_alert_log_fmt = kmalloc(512, GFP_KERNEL);
@@ -28079,6 +28079,7 @@
  	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
  #endif /* CONFIG_ALPHA_UAC_SYSCTL */
 - };
+-
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
@@ -28086,9 +28087,9 @@
 +#ifdef CONFIG_PAX_SOFTMODE
 +	KERN_PAX=99,		/* PaX control */
 +#endif
- 
++  
 +};
-+
++  
 +#ifdef CONFIG_PAX_SOFTMODE
 +enum {
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
@@ -29864,15 +29865,15 @@
  	clear_bit(TASKLET_STATE_SCHED, &t->state);
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
-@@ -31,6 +31,7 @@
- #include <linux/cn_proc.h>
+@@ -32,6 +32,7 @@
  #include <linux/getcpu.h>
  #include <linux/task_io_accounting_ops.h>
+ #include <linux/cpu.h>
 +#include <linux/grsecurity.h>
  
  #include <linux/compat.h>
  #include <linux/syscalls.h>
-@@ -641,6 +642,12 @@ static int set_one_prio(struct task_stru
+@@ -642,6 +643,12 @@ static int set_one_prio(struct task_stru
  		error = -EACCES;
  		goto out;
  	}
@@ -29885,7 +29886,7 @@
  	no_nice = security_task_setnice(p, niceval);
  	if (no_nice) {
  		error = no_nice;
-@@ -697,10 +704,10 @@ asmlinkage long sys_setpriority(int whic
+@@ -698,10 +705,10 @@ asmlinkage long sys_setpriority(int whic
  				if ((who != current->uid) && !(user = find_user(who)))
  					goto out_unlock;	/* No processes for this user */
  
@@ -29898,7 +29899,7 @@
  			if (who != current->uid)
  				free_uid(user);		/* For find_user() */
  			break;
-@@ -759,13 +766,13 @@ asmlinkage long sys_getpriority(int whic
+@@ -760,13 +767,13 @@ asmlinkage long sys_getpriority(int whic
  				if ((who != current->uid) && !(user = find_user(who)))
  					goto out_unlock;	/* No processes for this user */
  
@@ -29914,7 +29915,7 @@
  			if (who != current->uid)
  				free_uid(user);		/* for find_user() */
  			break;
-@@ -1031,6 +1038,9 @@ asmlinkage long sys_setregid(gid_t rgid,
+@@ -1033,6 +1040,9 @@ asmlinkage long sys_setregid(gid_t rgid,
  	if (rgid != (gid_t) -1 ||
  	    (egid != (gid_t) -1 && egid != old_rgid))
  		current->sgid = new_egid;
@@ -29924,7 +29925,7 @@
  	current->fsgid = new_egid;
  	current->egid = new_egid;
  	current->gid = new_rgid;
-@@ -1058,6 +1068,9 @@ asmlinkage long sys_setgid(gid_t gid)
+@@ -1060,6 +1070,9 @@ asmlinkage long sys_setgid(gid_t gid)
  			current->mm->dumpable = suid_dumpable;
  			smp_wmb();
  		}
@@ -29934,7 +29935,7 @@
  		current->gid = current->egid = current->sgid = current->fsgid = gid;
  	} else if ((gid == current->gid) || (gid == current->sgid)) {
  		if (old_egid != gid) {
-@@ -1095,6 +1108,9 @@ static int set_user(uid_t new_ruid, int 
+@@ -1097,6 +1110,9 @@ static int set_user(uid_t new_ruid, int 
  		current->mm->dumpable = suid_dumpable;
  		smp_wmb();
  	}
@@ -29944,7 +29945,7 @@
  	current->uid = new_ruid;
  	return 0;
  }
-@@ -1197,6 +1213,9 @@ asmlinkage long sys_setuid(uid_t uid)
+@@ -1199,6 +1215,9 @@ asmlinkage long sys_setuid(uid_t uid)
  	} else if ((uid != current->uid) && (uid != new_suid))
  		return -EPERM;
  
@@ -29954,7 +29955,7 @@
  	if (old_euid != uid) {
  		current->mm->dumpable = suid_dumpable;
  		smp_wmb();
-@@ -1299,8 +1318,10 @@ asmlinkage long sys_setresgid(gid_t rgid
+@@ -1301,8 +1320,10 @@ asmlinkage long sys_setresgid(gid_t rgid
  		current->egid = egid;
  	}
  	current->fsgid = current->egid;
@@ -29966,7 +29967,7 @@
  	if (sgid != (gid_t) -1)
  		current->sgid = sgid;
  
-@@ -1447,7 +1468,10 @@ asmlinkage long sys_setpgid(pid_t pid, p
+@@ -1449,7 +1470,10 @@ asmlinkage long sys_setpgid(pid_t pid, p
  	write_lock_irq(&tasklist_lock);
  
  	err = -ESRCH;
@@ -29978,7 +29979,7 @@
  	if (!p)
  		goto out;
  
-@@ -2167,7 +2191,7 @@ asmlinkage long sys_prctl(int option, un
+@@ -2169,7 +2193,7 @@ asmlinkage long sys_prctl(int option, un
  			error = current->mm->dumpable;
  			break;
  		case PR_SET_DUMPABLE:
