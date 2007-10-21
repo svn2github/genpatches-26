@@ -22227,17 +22227,7 @@
  		if (!(psecs % HZ))
 --- a/Makefile
 +++ b/Makefile
-@@ -6,6 +6,9 @@ EXTRAVERSION =
- KERNELRELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
- 
- ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
-+#do this so we don't have to release a new patch for each .x.y unless necessary
-+EXTRAVERSION :=$(EXTRAVERSION)-grsec
-+KERNELRELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
- KERNELPATH=kernel-$(shell echo $(KERNELRELEASE) | sed -e "s/-//g")
- 
- CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
-@@ -137,9 +140,10 @@ export SVGA_MODE = -DSVGA_MODE=NORMAL_VG
+@@ -137,9 +137,10 @@ export SVGA_MODE = -DSVGA_MODE=NORMAL_VG
  
  CORE_FILES	=kernel/kernel.o mm/mm.o fs/fs.o ipc/ipc.o
  NETWORKS	=net/network.o
@@ -22249,7 +22239,7 @@
  
  DRIVERS-n :=
  DRIVERS-y :=
-@@ -284,7 +288,7 @@ export kbuild_2_4_nostdinc
+@@ -284,7 +285,7 @@ export kbuild_2_4_nostdinc
  
  export	CPPFLAGS CFLAGS CFLAGS_KERNEL AFLAGS AFLAGS_KERNEL
  
@@ -22258,7 +22248,7 @@
  
  .S.s:
  	$(CPP) $(AFLAGS) $(AFLAGS_KERNEL) -traditional -o $*.s $<
-@@ -303,6 +307,7 @@ vmlinux: include/linux/version.h $(CONFI
+@@ -303,6 +304,7 @@ vmlinux: include/linux/version.h $(CONFI
  		$(CORE_FILES) \
  		$(DRIVERS) \
  		$(NETWORKS) \
@@ -22266,7 +22256,7 @@
  		$(LIBS) \
  		--end-group \
  		-o vmlinux
-@@ -387,6 +392,11 @@ init/do_mounts.o: init/do_mounts.c inclu
+@@ -387,6 +389,11 @@ init/do_mounts.o: init/do_mounts.c inclu
  fs lib mm ipc kernel drivers net: dummy
  	$(MAKE) CFLAGS="$(CFLAGS) $(CFLAGS_KERNEL)" $(subst $@, _dir_$@, $@)
  
