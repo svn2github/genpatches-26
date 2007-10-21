@@ -1,0 +1,38 @@
+--- a/arch/i386/config.in
++++ b/arch/i386/config.in
+@@ -42,6 +42,7 @@ choice 'Processor family' \
+ 	 Winchip-C6				CONFIG_MWINCHIPC6 \
+ 	 Winchip-2				CONFIG_MWINCHIP2 \
+ 	 Winchip-2A/Winchip-3			CONFIG_MWINCHIP3D \
++	 MediaGX/Geode                          CONFIG_MGEODE \
+ 	 CyrixIII/VIA-C3			CONFIG_MCYRIXIII \
+ 	 VIA-C3-2				CONFIG_MVIAC3_2" Pentium-Pro
+ #
+@@ -165,6 +166,14 @@ if [ "$CONFIG_MVIAC3_2" = "y" ]; then
+    define_bool CONFIG_X86_USE_PPRO_CHECKSUM y
+    define_bool CONFIG_X86_F00F_WORKS_OK y
+ fi
++if [ "$CONFIG_MGEODE" = "y" ]; then
++   define_int  CONFIG_X86_L1_CACHE_SHIFT 5
++   define_bool CONFIG_X86_USE_STRING_486 y
++   define_bool CONFIG_X86_ALIGNMENT_16 y
++   define_bool CONFIG_X86_TSC y
++   define_bool CONFIG_X86_PPRO_FENCE y
++   define_bool CONFIG_X86_OOSTORE y
++fi
+ if [ "$CONFIG_MCRUSOE" = "y" ]; then
+    define_int  CONFIG_X86_L1_CACHE_SHIFT 5
+    define_bool CONFIG_X86_HAS_TSC y
+--- a/drivers/pci/pci.c
++++ b/drivers/pci/pci.c
+@@ -1486,6 +1486,10 @@ struct pci_dev * __devinit pci_scan_slot
+ 	for (func = 0; func < 8; func++, temp->devfn++) {
+ 		if (pci_read_config_byte(temp, PCI_HEADER_TYPE, &hdr_type))
+ 			continue;
++#ifdef CONFIG_MGEODE
++		if (hdr_type & 0x7f > PCI_HEADER_TYPE_CARDBUS)
++			continue;
++#endif
+ 		temp->hdr_type = hdr_type & 0x7f;
+ 
+ 		dev = pci_scan_device(temp);

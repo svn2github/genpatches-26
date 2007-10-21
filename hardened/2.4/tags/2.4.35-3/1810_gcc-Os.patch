@@ -1,0 +1,72 @@
+--- a/Documentation/Configure.help
++++ b/Documentation/Configure.help
+@@ -26166,6 +26166,14 @@ CONFIG_FRAME_POINTER
+   don't debug the kernel, you can say N, but we may not be able to
+   solve problems without frame pointers.
+ 
++Compile kernel with size optimization
++CONFIG_OPTIMIZE_FOR_SIZE
++  If you say Y here, the kernel will be compiled with "-Os" rather
++  than the "-O2" gcc option.  This will cause the kernel to be 
++  optimized for small size, rather than fastest speed.
++
++  If unsure, say N.
++
+ Verbose user fault messages
+ CONFIG_DEBUG_USER
+   When a user program crashes due to an exception, the kernel can
+--- a/Makefile
++++ b/Makefile
+@@ -91,14 +91,19 @@ export MODLIB
+ 
+ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+ 
+-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+-	  -fno-strict-aliasing -fno-common
+-CFLAGS += -fno-builtin-sprintf
++CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs \
++	  -fno-strict-aliasing -fno-common -fno-builtin-sprintf
+ ifndef CONFIG_FRAME_POINTER
+ CFLAGS += -fomit-frame-pointer
+ endif
+ AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
+ 
++ifdef CONFIG_OPTIMIZE_FOR_SIZE
++CFLAGS += -Os -falign-functions=2 -falign-jumps=2 -falign-labels=2 -falign-loops=2
++else
++CFLAGS += -O2
++endif
++
+ check_gcc = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi)
+ 
+ # disable pointer signedness warnings in gcc 4.0
+--- a/arch/arm/Makefile
++++ b/arch/arm/Makefile
+@@ -16,8 +16,6 @@ ifeq ($(CONFIG_FRAME_POINTER),y)
+ CFLAGS		:=$(CFLAGS:-fomit-frame-pointer=-mapcs -mno-sched-prolog)
+ endif
+ 
+-CFLAGS		:=$(CFLAGS:-O2=-Os)
+-
+ ifeq ($(CONFIG_DEBUG_INFO),y)
+ CFLAGS		+=-g
+ endif
+@@ -28,7 +26,7 @@ endif
+ # Note!  For APCS-26 YOU MUST HAVE AN APCS-26 LIBGCC.A
+ #
+ apcs-y				:=-mapcs-32
+-apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3 -Os
++apcs-$(CONFIG_CPU_26)		:=-mapcs-26 -mcpu=arm3
+ 
+ # This selects which instruction set is used.
+ # Note that GCC is lame - it doesn't numerically define an
+--- a/lib/Config.in
++++ b/lib/Config.in
+@@ -4,6 +4,7 @@
+ mainmenu_option next_comment
+ comment 'Library routines'
+ 
++bool 'Optimize for size' CONFIG_OPTIMIZE_FOR_SIZE
+ tristate 'CRC32 functions' CONFIG_CRC32
+ 
+ #

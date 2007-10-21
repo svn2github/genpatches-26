@@ -1,0 +1,487 @@
+--- a/Documentation/Configure.help
++++ b/Documentation/Configure.help
+@@ -17157,6 +17157,36 @@ CONFIG_PROC_FS
+   This option will enlarge your kernel by about 67 KB. Several
+   programs depend on this, so everyone should say Y here.
+ 
++Provide kernel config via /proc
++CONFIG_PROC_CONFIG
++  If you enable this, you can read the configuration of the running
++  kernel from /proc/config. This is very convenient if you are managing
++  a large number of machines.
++
++  The kernel enlargement depends on your kernel configuration and the
++  compression method chosen (see next option). An average configuration
++  with gzip compression should be around 5-7 KB.
++
++  This code is also available as a module ( = code which can be
++  inserted in and removed from the running kernel whenever you want).
++  The module will be called kconfig.o. If you want to compile it as a
++  module, say M here and read Documentation/modules.txt.
++
++  Note that if you compile this as a module, there is always the
++  possibility of an outdated module floating around, so you probably
++  don't want to compile this as a module. 
++
++Compression algorithm for /proc/config.*
++CONFIG_PROC_CONFIG_GZ
++  The compression method used for /proc/config. This reduces the size
++  of the configuration data noticeably. An appropriate extension is
++  added to /proc/config, depending on the compression method (e.g.
++  /proc/config.gz for gzip compression).
++
++  Note that the proc file provides the compressed data, so you have
++  to use the appropriate userspace utility to decompress them (e.g.
++  zcat).
++
+ Support for PReP Residual Data
+ CONFIG_PREP_RESIDUAL
+   Some PReP systems have residual data passed to the kernel by the
+--- a/Makefile
++++ b/Makefile
+@@ -232,6 +232,7 @@ CLEAN_FILES = \
+ 	drivers/scsi/aic7xxx/aicasm/y.tab.h \
+ 	drivers/scsi/53c700_d.h \
+ 	drivers/tc/lk201-map.c \
++	fs/proc/confdata.h \
+ 	net/khttpd/make_times_h \
+ 	net/khttpd/times.h \
+ 	submenu* \
+@@ -256,7 +257,7 @@ MRPROPER_FILES = \
+ 	drivers/atm/fore200e_*_fw.c drivers/atm/.fore200e_*.fw \
+ 	.version .config* config.in config.old \
+ 	scripts/tkparse scripts/kconfig.tk scripts/kconfig.tmp \
+-	scripts/lxdialog/*.o scripts/lxdialog/lxdialog \
++	scripts/lxdialog/*.o scripts/lxdialog/lxdialog scripts/carray \
+ 	.menuconfig.log \
+ 	include/asm \
+ 	.hdepend scripts/mkdep scripts/split-include scripts/docproc \
+--- a/fs/Config.in
++++ b/fs/Config.in
+@@ -72,6 +72,13 @@ dep_mbool '  NTFS write support (DANGERO
+ tristate 'OS/2 HPFS file system support' CONFIG_HPFS_FS
+ 
+ bool '/proc file system support' CONFIG_PROC_FS
++dep_tristate '  Provide kernel config via /proc' CONFIG_PROC_CONFIG $CONFIG_PROC_FS
++if [ "$CONFIG_PROC_CONFIG" = "y" -o "$CONFIG_PROC_CONFIG" = "m" ]; then
++   choice '   Compression algorithm for /proc/config.*' \
++       "GZIP           CONFIG_PROC_CONFIG_GZ            \
++        BZIP2          CONFIG_PROC_CONFIG_BZ2           \
++        NONE           CONFIG_PROC_CONFIG_NONE" GZIP
++fi
+ 
+ # For some reason devfs corrupts memory badly on x86-64. Disable it 
+ # for now.
+--- a/fs/proc/Makefile
++++ b/fs/proc/Makefile
+@@ -18,4 +18,24 @@ ifeq ($(CONFIG_PROC_DEVICETREE),y)
+ obj-y += proc_devtree.o
+ endif
+ 
++obj-$(CONFIG_PROC_CONFIG) += kconfig.o
++
+ include $(TOPDIR)/Rules.make
++
++CONFGEN_FLAGS := -a kconfig_data -q 'static const'
++
++ifeq ($(CONFIG_PROC_CONFIG_GZ),y)
++  CONFGEN_FLAGS += -z gzip
++else
++  ifeq ($(CONFIG_PROC_CONFIG_BZ2),y)
++    CONFGEN_FLAGS += -z bzip2
++  endif
++endif
++
++kconfig.o: confdata.h
++
++confdata.h: $(TOPDIR)/.config $(TOPDIR)/scripts/carray
++	$(TOPDIR)/scripts/carray $(CONFGEN_FLAGS) -o $@ < $(TOPDIR)/.config
++
++$(TOPDIR)/scripts/carray: $(TOPDIR)/scripts/carray.c
++	$(HOSTCC) $(HOSTCFLAGS) -o $@ $<
+--- /dev/null
++++ b/fs/proc/kconfig.c
+@@ -0,0 +1,110 @@
++/*
++ * kconfig.c - provide (compressed) kernel config via /proc/config.gz
++ *
++ * Copyright (c) 2001 Andreas Ferber <af@devcon.net>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++#include <linux/module.h>
++#include <linux/version.h>
++#include <linux/string.h>
++#include <linux/kernel.h>
++#include <linux/proc_fs.h>
++#include <linux/init.h>
++
++#ifndef CONFIG_PROC_FS
++#error /proc filesystem not enabled
++#endif
++
++#include "confdata.h"
++
++#ifdef CONFIG_PROC_CONFIG_GZ
++# define KCONF_PROCNAME "config.gz"
++#else
++# ifdef CONFIG_PROC_CONFIG_BZ2
++#  define KCONF_PROCNAME "config.bz2"
++# else
++#  define KCONF_PROCNAME "config"
++# endif
++#endif
++
++static struct proc_dir_entry *proc_kconfig;
++
++#if 0
++#define DEBUGP(format, args...) printk(KERN_DEBUG format, ## args)
++#else
++#define DEBUGP(format, args...)	/* empty */
++#endif
++
++static int
++proc_kconfig_read(char *buf, char **start, off_t offset,
++		  int len, int *eof, void *unused)
++{
++	DEBUGP("proc_kconfig_read: offset = %i, len = %i\n", offset, len);
++
++	if (offset + len > sizeof(kconfig_data)) {
++		len = sizeof(kconfig_data) - offset;
++		*eof = 1;
++		DEBUGP
++		    ("proc_kconfig_read: eof reached (returning len = %i)\n",
++		     len);
++	}
++
++	memcpy(buf, kconfig_data + offset, len);
++	*start = buf;
++	return len;
++}
++
++static int __init kconfig_init(void)
++{
++	DEBUGP("kconfig: init module\n");
++
++	proc_kconfig = create_proc_entry(KCONF_PROCNAME, 0, NULL);
++
++	if (proc_kconfig == NULL) {
++		printk(KERN_ERR "kconfig: unable to register /proc/"
++		       KCONF_PROCNAME "\n");
++		return -1;
++	}
++
++	proc_kconfig->size = sizeof(kconfig_data);
++	proc_kconfig->read_proc = proc_kconfig_read;
++
++	return 0;
++}
++
++/* for 2.2.x compatibility */
++#if LINUX_KERNEL_VERSION < KERNEL_VERSION(2,3,0)
++#define __exit			/* empty */
++#endif
++
++static void __exit kconfig_exit(void)
++{
++	DEBUGP("kconfig: removing module\n");
++
++	remove_proc_entry(KCONF_PROCNAME, NULL);
++}
++
++module_init(kconfig_init);
++module_exit(kconfig_exit);
++
++MODULE_AUTHOR("Andreas Ferber");
++MODULE_DESCRIPTION
++    ("Provides /proc/config.gz with the (compressed) kernel config");
++
++/*
++ * vi:ts=8 sw=8 expandtab
++ */
+--- a/scripts/Makefile
++++ b/scripts/Makefile
+@@ -40,6 +40,6 @@ docproc: docproc.o
+ 	${HOSTCC} -o docproc docproc.o
+ 
+ clean:
+-	rm -f *~ kconfig.tk *.o tkparse mkdep split-include docproc
++	rm -f *~ kconfig.tk *.o tkparse mkdep split-include docproc carray
+ 
+ include $(TOPDIR)/Rules.make
+--- /dev/null
++++ b/scripts/carray.c
+@@ -0,0 +1,260 @@
++/*
++ * carray.c - encode a file into a C array
++ *
++ * Copyright (c) 2001 Andreas Ferber <af@devcon.net>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++#define _GNU_SOURCE
++
++#include <stdlib.h>
++#include <stdio.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <unistd.h>
++#include <getopt.h>
++#include <string.h>
++
++#define BUFSIZE 4096
++
++char *me;			/* argv[0] */
++
++/* program options */
++char *output_filename = "-";	/* default: STDOUT */
++char *input_filename = "-";	/* default: STDIN */
++char *compress_program = NULL;	/* default: no compression */
++char *array_name = "data";
++char *qualifier = "const";
++
++static void perror_fatal(const char *tag) __attribute__ ((noreturn));
++static void usage(void) __attribute__ ((noreturn));
++static void version(void) __attribute__ ((noreturn));
++
++void perror_fatal(const char *tag)
++{
++	fprintf(stderr, "%s: ", me);
++	perror(tag);
++	exit(1);
++}
++
++FILE *run_compression_child(const char *filename)
++{
++	FILE *tmp;
++	char *cmd;
++
++	cmd = malloc(strlen(compress_program)+strlen(" -c ")+strlen(filename)+1);
++	if (cmd == NULL) {
++		fprintf(stderr, "malloc failed\n");
++		exit(1);
++	}
++
++	/* malloc() above ensures that there is always enough space */
++	strcpy(cmd, compress_program);
++	strcat(cmd, " -c ");
++	strcat(cmd, filename);
++
++	tmp = popen(cmd, "r");
++	if (tmp == NULL) {
++		fprintf(stderr, "could not run gzip\n");
++		exit(1);
++	}
++
++	return tmp;
++}
++
++void write_head(FILE * output)
++{
++	fprintf(output, "/* autogenerated by %s - do not edit */\n\n", me);
++	if (strcmp(qualifier, "") != 0)
++		fprintf(output, "%s ", qualifier);
++	fprintf(output, "char %s[] = {\n", array_name);
++}
++
++void header_encode(FILE * input, FILE * output)
++{
++	size_t lw = 0;
++
++	write_head(output);
++	fprintf(output, "    ");
++
++	while (!feof(input)) {
++		static unsigned char buf[BUFSIZE];
++		size_t r;
++		size_t i;
++
++		r = fread(buf, 1, BUFSIZE, input);
++		for (i = 0; i < r; i++) {
++			fprintf(output, "0x%02x", (int) (buf[i]));
++			if (!(feof(input) && i == r - 1)) {
++				if (lw++ == 7) {
++					fprintf(output, ",\n    ");
++					lw = 0;
++				} else
++					fprintf(output, ", ");
++			}
++		}
++	}
++
++	fprintf(output, "\n};\n");
++}
++
++void usage(void)
++{
++	fprintf(stderr,
++		"Usage: carray [OPTION]... [SOURCE]\n"
++		"Encodes data into a C array, with optional compression.\n"
++		"Data is read from SOURCE or STDIN if SOURCE is omitted.\n"
++		"\n"
++		"  -a, --array-name=STRING      set the name of the generated array\n"
++		"  -q, --qualifier=STRING       type qualifiers for the array\n"
++		"  -o, --output=FILE            write output to FILE\n"
++		"  -z, --compression=PATH       path to a compression program\n"
++		"      --help                   display this help and exit\n"
++		"      --version                output version information and exit\n");
++	exit(0);
++}
++
++void version(void)
++{
++	fprintf(stderr,
++		"carray 0.42\n" "Written by Andreas Ferber.\n");
++	exit(0);
++}
++
++int main(int argc, char **argv)
++{
++
++	FILE *input;
++	FILE *output = stdout;
++
++	me = argv[0];
++
++	/* read options */
++	while (1) {
++		int c;
++
++		static struct option long_options[] = {
++			{"array-name", 1, NULL, 'a'},
++			{"qualifier", 1, NULL, 'q'},
++			{"output", 1, NULL, 'o'},
++			{"compression", 1, NULL, 'z'},
++			{"help", 0, NULL, 'h'},
++			{"version", 0, NULL, 'V'},
++			{NULL, 0, NULL, 0}
++		};
++
++		c =
++		    getopt_long(argc, argv, "a:q:o:z:", long_options,
++				NULL);
++		if (c == -1)	/* no more options */
++			break;
++
++		switch (c) {
++		case 'a':
++			array_name = optarg;
++			break;
++		case 'q':
++			qualifier = optarg;
++			break;
++		case 'o':
++			output_filename = optarg;
++			break;
++		case 'z':
++			if (strcmp(optarg, "none") == 0)
++				compress_program = NULL;
++			else
++				compress_program = optarg;
++			break;
++		case 'h':
++			usage();
++			break;
++		case 'V':
++			version();
++			break;
++		default:
++			/* error message already printed by getopt_long. */
++			fprintf(stderr,
++				"Try `%s --help' for more information.\n",
++				me);
++			exit(1);
++		}
++	}
++
++	/* get input filename if given */
++	if (optind < argc) {
++		if (optind < argc - 1) {
++			fprintf(stderr,
++				"%s: to many arguments\n"
++				"Try `%s --help' for more information.\n",
++				me, me);
++			exit(1);
++		}
++
++		input_filename = argv[optind++];
++	}
++
++	/* check if input file exists before running gzip
++	 * NOTE: this has a race condition, so we have to check gzip exit
++	 *       code also. The check here is only for more graceful
++	 *       "normal" error handling */
++	if (strcmp(input_filename, "-") != 0) {
++		struct stat s;
++		if (stat(input_filename, &s) == -1)
++			perror_fatal(input_filename);
++
++		if (access(input_filename, R_OK) == -1)
++			perror_fatal(input_filename);
++	}
++
++	/* open output file */
++	if (strcmp(output_filename, "-") != 0) {
++		output = fopen(output_filename, "w");
++		if (output == NULL)
++			perror_fatal(output_filename);
++	}
++
++	if (compress_program != NULL)
++		input = run_compression_child(input_filename);
++	else {
++		if (strcmp(input_filename, "-") == 0)
++			input = stdin;
++		else
++			input = fopen(input_filename, "r");
++	}
++
++	/* encode gzip output into a C header file */
++	header_encode(input, output);
++
++	fclose(output);
++
++	if (compress_program != NULL) {
++		if (pclose(input) != 0) {
++			if (strcmp(output_filename, "-") != 0)
++				(void) unlink(output_filename);
++			fprintf(stderr, "%s: gzip returned an error\n", me);
++			exit(1);
++		}
++	}
++	else {
++		fclose(input);
++	}
++
++	return 0;
++}
++
++/*
++ * vi:ts=8 sw=8 noexpandtab
++ */
