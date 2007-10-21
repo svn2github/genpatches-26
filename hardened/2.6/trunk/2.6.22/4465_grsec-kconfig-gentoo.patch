@@ -63,7 +63,7 @@ default.
 +	select PAX_EMUTRAMP if (PARISC)
 +	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
 +	select PAX_HAVE_ACL_FLAGS
-+	select PAX_KERNEXEC if (!X86_64 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS)
++	select PAX_KERNEXEC if ((X86) && (!X86_64 && !PPC && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS))
 +	select PAX_MPROTECT
 +	select PAX_NOEXEC
 +	select PAX_PAGEEXEC if (!X86)
