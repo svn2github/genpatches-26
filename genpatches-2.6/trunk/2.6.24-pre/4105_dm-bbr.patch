@@ -744,7 +744,7 @@ Incomplete changelog:
 +
 +		rc = bbr_io_process_request(bbr_id, bio);
 +
-+		bio_endio(bio, bio->bi_size, rc);
++		bio_endio(bio, rc);
 +
 +		bio = next;
 +	}
