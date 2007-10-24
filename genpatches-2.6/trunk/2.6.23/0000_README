@@ -55,6 +55,10 @@ Patch:	2530_usb-storage-nikon-d40x-quirk.patch
 From:	http://bugs.gentoo.org/191431
 Desc:	usb-storage capacity quirk for Nikon D40X camera
 
+Patch:	2700_alsa-hdsp-dds-offset.patch
+From:	http://bugs.gentoo.org/196612
+Desc:	Fix alsa zero-division bug in the calculation dds offset
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
