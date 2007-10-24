@@ -1,0 +1,35 @@
+From: Ortwin Glück <odi@odi.ch>
+Date: Thu, 11 Oct 2007 15:29:43 +0000 (+0200)
+Subject: USB: Nikon D40X unusual_devs entry
+X-Git-Tag: v2.6.24-rc1~1395^2~2
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=d466a9190ff1ceddfee50686e61d63590fc820d9
+
+USB: Nikon D40X unusual_devs entry
+
+Not surprisingly the Nikon D40X DSC needs the same quirks as the D40,
+but it has a separate ID.
+See http://bugs.gentoo.org/show_bug.cgi?id=191431
+
+From: Ortwin Glück <odi@odi.ch>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+diff --git a/drivers/usb/storage/unusual_devs.h b/drivers/usb/storage/unusual_devs.h
+index edf9291..9b656ec 100644
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -369,6 +369,13 @@ UNUSUAL_DEV(  0x04b0, 0x0415, 0x0100, 0x0100,
+ 		US_SC_DEVICE, US_PR_DEVICE, NULL,
+ 		US_FL_FIX_CAPACITY),
+ 
++/* Reported by Shan Destromp (shansan@gmail.com) */
++UNUSUAL_DEV(  0x04b0, 0x0417, 0x0100, 0x0100,
++		"NIKON",
++		"NIKON DSC D40X",
++		US_SC_DEVICE, US_PR_DEVICE, NULL,
++		US_FL_FIX_CAPACITY),
++
+ /* BENQ DC5330
+  * Reported by Manuel Fombuena <mfombuena@ya.com> and
+  * Frank Copeland <fjc@thingy.apana.org.au> */
+

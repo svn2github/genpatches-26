@@ -123,6 +123,10 @@ Patch:	2525_usb-storage-nikon-d200-quirk.patch
 From:	http://bugs.gentoo.org/192610
 Desc:	usb-storage capacity quirk for Nikon D200 camera
 
+Patch:	2530_usb-storage-nikon-d40x-quirk.patch
+From:	http://bugs.gentoo.org/191431
+Desc:	usb-storage capacity quirk for Nikon D40X camera
+
 Patch:	2700_usbaudio-logitech-id.patch
 From:	http://bugs.gentoo.org/184554
 Desc:	Another Logitech QuickCam snd-usb-audio ID
