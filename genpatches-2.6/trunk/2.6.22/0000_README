@@ -87,6 +87,10 @@ Patch:	2000_mac80211-rtnl-deadlock.patch
 From:	http://bugs.gentoo.org/185255
 Desc:	Fix a mac80211 deadlock
 
+Patch:	2005_GRE-sendto-recvfrom-NBMA-address.patch
+From:	http://bugs.gentoo.org/196904
+Desc:	Implement properly NHRP over GRE tunnel
+
 Patch:	2300_support-for-htc-smartphones.patch
 From:	http://bugs.gentoo.org/187522
 Desc:	Support HTC smartphones wmodem
