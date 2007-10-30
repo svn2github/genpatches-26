@@ -43,6 +43,10 @@ Patch:	1000_linux-2.6.23.1.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.23.1
 
+Patch:	2000_GRE-sendto-recvfrom-NBMA-address.patch
+From:	http://bugs.gentoo.org/196904
+Desc:	Implement properly NHRP over GRE tunnel
+
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
