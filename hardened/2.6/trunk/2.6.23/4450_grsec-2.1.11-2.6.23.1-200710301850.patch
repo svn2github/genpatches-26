@@ -1,44 +1,3 @@
---- a/Documentation/dontdiff
-+++ b/Documentation/dontdiff
-@@ -176,14 +176,18 @@ times.h*
- tkparse
- trix_boot.h
- utsrelease.h*
-+vdso.lds
- version.h*
- vmlinux
- vmlinux-*
- vmlinux.aout
-+vmlinux.bin.all
- vmlinux.lds
-+vmlinux.relocs
- vsyscall.lds
- wanxlfw.inc
- uImage
- unifdef
-+utsrelease.h
- zImage*
- zconf.hash.c
---- a/Makefile
-+++ b/Makefile
-@@ -312,7 +312,7 @@ LINUXINCLUDE    := -Iinclude \
- 
- CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
- 
--CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-+CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
- 		   -fno-strict-aliasing -fno-common \
- 		   -Werror-implicit-function-declaration
- AFLAGS          := -D__ASSEMBLY__
-@@ -560,7 +560,7 @@ export mod_strip_cmd
- 
- 
- ifeq ($(KBUILD_EXTMOD),)
--core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- 
- vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
- 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
 --- a/arch/alpha/kernel/module.c
 +++ b/arch/alpha/kernel/module.c
 @@ -176,7 +176,7 @@ apply_relocate_add(Elf64_Shdr *sechdrs, 
@@ -343,83 +302,6 @@
  		if (exception_trace && printk_ratelimit())
  			printk("%s%s[%d]: segfault at %08lx pc %08lx "
  			       "sp %08lx ecr %lu\n",
---- a/arch/i386/Kconfig
-+++ b/arch/i386/Kconfig
-@@ -592,7 +592,7 @@ config PAGE_OFFSET
- 	hex
- 	default 0xB0000000 if VMSPLIT_3G_OPT
- 	default 0x80000000 if VMSPLIT_2G
--	default 0x78000000 if VMSPLIT_2G_OPT
-+	default 0x70000000 if VMSPLIT_2G_OPT
- 	default 0x40000000 if VMSPLIT_1G
- 	default 0xC0000000
- 
-@@ -831,7 +831,7 @@ config CRASH_DUMP
- config PHYSICAL_START
- 	hex "Physical address where the kernel is loaded" if (EMBEDDED || CRASH_DUMP)
- 	default "0x1000000" if X86_NUMAQ
--	default "0x100000"
-+	default "0x200000"
- 	help
- 	  This gives the physical address where the kernel is loaded.
- 
-@@ -916,7 +916,7 @@ config HOTPLUG_CPU
- 
- config COMPAT_VDSO
- 	bool "Compat VDSO support"
--	default y
-+	default n
- 	help
- 	  Map the VDSO to the predictable old-style address too.
- 	---help---
-@@ -1092,7 +1092,7 @@ config PCI
- choice
- 	prompt "PCI access mode"
- 	depends on PCI && !X86_VISWS
--	default PCI_GOANY
-+	default PCI_GODIRECT
- 	---help---
- 	  On PCI systems, the BIOS can be used to detect the PCI devices and
- 	  determine their configuration. However, some old PCI motherboards
---- a/arch/i386/Kconfig.cpu
-+++ b/arch/i386/Kconfig.cpu
-@@ -274,7 +274,7 @@ config X86_PPRO_FENCE
- 
- config X86_F00F_BUG
- 	bool
--	depends on M586MMX || M586TSC || M586 || M486 || M386
-+	depends on (M586MMX || M586TSC || M586 || M486 || M386) && !PAX_KERNEXEC
- 	default y
- 
- config X86_WP_WORKS_OK
-@@ -299,7 +299,7 @@ config X86_POPAD_OK
- 
- config X86_ALIGNMENT_16
- 	bool
--	depends on MWINCHIP3D || MWINCHIP2 || MWINCHIPC6 || MCYRIXIII || X86_ELAN || MK6 || M586MMX || M586TSC || M586 || M486 || MVIAC3_2 || MGEODEGX1
-+	depends on MWINCHIP3D || MWINCHIP2 || MWINCHIPC6 || MCYRIXIII || X86_ELAN || MK8 || MK7 || MK6 || MPENTIUM4 || MPENTIUMIII || MPENTIUMII || M686 || M586MMX || M586TSC || M586 || M486 || MVIAC3_2 || MGEODEGX1
- 	default y
- 
- config X86_GOOD_APIC
---- a/arch/i386/Kconfig.debug
-+++ b/arch/i386/Kconfig.debug
-@@ -46,16 +46,6 @@ config DEBUG_PAGEALLOC
- 	  This results in a large slowdown, but helps to find certain types
- 	  of memory corruptions.
- 
--config DEBUG_RODATA
--	bool "Write protect kernel read-only data structures"
--	depends on DEBUG_KERNEL
--	help
--	  Mark the kernel read-only data as write-protected in the pagetables,
--	  in order to catch accidental (and incorrect) writes to such const
--	  data. This option may have a slight performance impact because a
--	  portion of the kernel code won't be covered by a 2MB TLB anymore.
--	  If in doubt, say "N".
--
- config 4KSTACKS
- 	bool "Use 4Kb for kernel stacks instead of 8Kb"
- 	depends on DEBUG_KERNEL
 --- a/arch/i386/boot/bitops.h
 +++ b/arch/i386/boot/bitops.h
 @@ -28,7 +28,7 @@ static inline int variable_test_bit(int 
@@ -637,6 +519,26 @@
  
  	boot_params.screen_info.ext_mem_k = ax;
  
+--- a/arch/i386/boot/video.c
++++ b/arch/i386/boot/video.c
+@@ -40,7 +40,7 @@ static void store_cursor_position(void)
+ 
+ 	ax = 0x0300;
+ 	bx = 0;
+-	asm(INT10
++	asm volatile(INT10
+ 	    : "=d" (curpos), "+a" (ax), "+b" (bx)
+ 	    : : "ecx", "esi", "edi");
+ 
+@@ -55,7 +55,7 @@ static void store_video_mode(void)
+ 	/* N.B.: the saving of the video page here is a bit silly,
+ 	   since we pretty much assume page 0 everywhere. */
+ 	ax = 0x0f00;
+-	asm(INT10
++	asm volatile(INT10
+ 	    : "+a" (ax), "=b" (page)
+ 	    : : "ecx", "edx", "esi", "edi");
+ 
 --- a/arch/i386/boot/video-vesa.c
 +++ b/arch/i386/boot/video-vesa.c
 @@ -41,7 +41,7 @@ static int vesa_probe(void)
@@ -730,26 +632,6 @@
  		    : "=a" (vga_flag)
  		    : "a" (0x1a00)
  		    : "ebx", "ecx", "edx", "esi", "edi");
---- a/arch/i386/boot/video.c
-+++ b/arch/i386/boot/video.c
-@@ -40,7 +40,7 @@ static void store_cursor_position(void)
- 
- 	ax = 0x0300;
- 	bx = 0;
--	asm(INT10
-+	asm volatile(INT10
- 	    : "=d" (curpos), "+a" (ax), "+b" (bx)
- 	    : : "ecx", "esi", "edi");
- 
-@@ -55,7 +55,7 @@ static void store_video_mode(void)
- 	/* N.B.: the saving of the video page here is a bit silly,
- 	   since we pretty much assume page 0 everywhere. */
- 	ax = 0x0f00;
--	asm(INT10
-+	asm volatile(INT10
- 	    : "+a" (ax), "=b" (page)
- 	    : : "ecx", "edx", "esi", "edi");
- 
 --- a/arch/i386/boot/voyager.c
 +++ b/arch/i386/boot/voyager.c
 @@ -27,7 +27,7 @@ int query_voyager(void)
@@ -761,6 +643,83 @@
  	    "int $0x15 ; "
  	    "setc %0 ; "
  	    "movw %%es, %1 ; "
+--- a/arch/i386/Kconfig
++++ b/arch/i386/Kconfig
+@@ -592,7 +592,7 @@ config PAGE_OFFSET
+ 	hex
+ 	default 0xB0000000 if VMSPLIT_3G_OPT
+ 	default 0x80000000 if VMSPLIT_2G
+-	default 0x78000000 if VMSPLIT_2G_OPT
++	default 0x70000000 if VMSPLIT_2G_OPT
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0xC0000000
+ 
+@@ -831,7 +831,7 @@ config CRASH_DUMP
+ config PHYSICAL_START
+ 	hex "Physical address where the kernel is loaded" if (EMBEDDED || CRASH_DUMP)
+ 	default "0x1000000" if X86_NUMAQ
+-	default "0x100000"
++	default "0x200000"
+ 	help
+ 	  This gives the physical address where the kernel is loaded.
+ 
+@@ -916,7 +916,7 @@ config HOTPLUG_CPU
+ 
+ config COMPAT_VDSO
+ 	bool "Compat VDSO support"
+-	default y
++	default n
+ 	help
+ 	  Map the VDSO to the predictable old-style address too.
+ 	---help---
+@@ -1092,7 +1092,7 @@ config PCI
+ choice
+ 	prompt "PCI access mode"
+ 	depends on PCI && !X86_VISWS
+-	default PCI_GOANY
++	default PCI_GODIRECT
+ 	---help---
+ 	  On PCI systems, the BIOS can be used to detect the PCI devices and
+ 	  determine their configuration. However, some old PCI motherboards
+--- a/arch/i386/Kconfig.cpu
++++ b/arch/i386/Kconfig.cpu
+@@ -274,7 +274,7 @@ config X86_PPRO_FENCE
+ 
+ config X86_F00F_BUG
+ 	bool
+-	depends on M586MMX || M586TSC || M586 || M486 || M386
++	depends on (M586MMX || M586TSC || M586 || M486 || M386) && !PAX_KERNEXEC
+ 	default y
+ 
+ config X86_WP_WORKS_OK
+@@ -299,7 +299,7 @@ config X86_POPAD_OK
+ 
+ config X86_ALIGNMENT_16
+ 	bool
+-	depends on MWINCHIP3D || MWINCHIP2 || MWINCHIPC6 || MCYRIXIII || X86_ELAN || MK6 || M586MMX || M586TSC || M586 || M486 || MVIAC3_2 || MGEODEGX1
++	depends on MWINCHIP3D || MWINCHIP2 || MWINCHIPC6 || MCYRIXIII || X86_ELAN || MK8 || MK7 || MK6 || MPENTIUM4 || MPENTIUMIII || MPENTIUMII || M686 || M586MMX || M586TSC || M586 || M486 || MVIAC3_2 || MGEODEGX1
+ 	default y
+ 
+ config X86_GOOD_APIC
+--- a/arch/i386/Kconfig.debug
++++ b/arch/i386/Kconfig.debug
+@@ -46,16 +46,6 @@ config DEBUG_PAGEALLOC
+ 	  This results in a large slowdown, but helps to find certain types
+ 	  of memory corruptions.
+ 
+-config DEBUG_RODATA
+-	bool "Write protect kernel read-only data structures"
+-	depends on DEBUG_KERNEL
+-	help
+-	  Mark the kernel read-only data as write-protected in the pagetables,
+-	  in order to catch accidental (and incorrect) writes to such const
+-	  data. This option may have a slight performance impact because a
+-	  portion of the kernel code won't be covered by a 2MB TLB anymore.
+-	  If in doubt, say "N".
+-
+ config 4KSTACKS
+ 	bool "Use 4Kb for kernel stacks instead of 8Kb"
+ 	depends on DEBUG_KERNEL
 --- a/arch/i386/kernel/acpi/boot.c
 +++ b/arch/i386/kernel/acpi/boot.c
 @@ -1123,7 +1123,7 @@ static struct dmi_system_id __initdata a
@@ -852,7 +811,7 @@
  	   that causes hangs on some VIA CPUs. */
 --- a/arch/i386/kernel/apm.c
 +++ b/arch/i386/kernel/apm.c
-@@ -601,9 +601,18 @@ static u8 apm_bios_call(u32 func, u32 eb
+@@ -601,19 +601,42 @@ static u8 apm_bios_call(u32 func, u32 eb
  	struct desc_struct	save_desc_40;
  	struct desc_struct	*gdt;
  
@@ -863,17 +822,29 @@
  	cpus = apm_save_cpus();
  	
  	cpu = get_cpu();
+ 	gdt = get_cpu_gdt_table(cpu);
+ 	save_desc_40 = gdt[0x40 / 8];
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
 +
- 	gdt = get_cpu_gdt_table(cpu);
- 	save_desc_40 = gdt[0x40 / 8];
  	gdt[0x40 / 8] = bad_bios_desc;
-@@ -614,6 +623,11 @@ static u8 apm_bios_call(u32 func, u32 eb
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ 	apm_irq_save(flags);
+ 	APM_DO_SAVE_SEGS;
+ 	apm_bios_call_asm(func, ebx_in, ecx_in, eax, ebx, ecx, edx, esi);
  	APM_DO_RESTORE_SEGS;
  	apm_irq_restore(flags);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
  	gdt[0x40 / 8] = save_desc_40;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -883,7 +854,7 @@
  	put_cpu();
  	apm_restore_cpus(cpus);
  	
-@@ -644,9 +658,18 @@ static u8 apm_bios_call_simple(u32 func,
+@@ -644,19 +667,42 @@ static u8 apm_bios_call_simple(u32 func,
  	struct desc_struct	save_desc_40;
  	struct desc_struct	*gdt;
  
@@ -894,17 +865,29 @@
  	cpus = apm_save_cpus();
  	
  	cpu = get_cpu();
+ 	gdt = get_cpu_gdt_table(cpu);
+ 	save_desc_40 = gdt[0x40 / 8];
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
 +
- 	gdt = get_cpu_gdt_table(cpu);
- 	save_desc_40 = gdt[0x40 / 8];
  	gdt[0x40 / 8] = bad_bios_desc;
-@@ -657,6 +680,11 @@ static u8 apm_bios_call_simple(u32 func,
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ 	apm_irq_save(flags);
+ 	APM_DO_SAVE_SEGS;
+ 	error = apm_bios_call_simple_asm(func, ebx_in, ecx_in, eax);
  	APM_DO_RESTORE_SEGS;
  	apm_irq_restore(flags);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
  	gdt[0x40 / 8] = save_desc_40;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -914,7 +897,7 @@
  	put_cpu();
  	apm_restore_cpus(cpus);
  	return error;
-@@ -924,7 +952,7 @@ recalc:
+@@ -924,7 +970,7 @@ recalc:
   
  static void apm_power_off(void)
  {
@@ -923,7 +906,7 @@
  		0xb8, 0x00, 0x10,	/* movw  $0x1000,ax  */
  		0x8e, 0xd0,		/* movw  ax,ss       */
  		0xbc, 0x00, 0xf0,	/* movw  $0xf000,sp  */
-@@ -1864,7 +1892,10 @@ static const struct file_operations apm_
+@@ -1864,7 +1910,10 @@ static const struct file_operations apm_
  static struct miscdevice apm_device = {
  	APM_MINOR_DEV,
  	"apm_bios",
@@ -935,7 +918,7 @@
  };
  
  
-@@ -1974,210 +2005,210 @@ static struct dmi_system_id __initdata a
+@@ -1974,210 +2023,210 @@ static struct dmi_system_id __initdata a
  		print_if_true,
  		KERN_WARNING "IBM T23 - BIOS 1.03b+ and controller firmware 1.02+ may be needed for Linux APM.",
  		{	DMI_MATCH(DMI_SYS_VENDOR, "IBM"),
@@ -1182,7 +1165,7 @@
  };
  
  /*
-@@ -2196,6 +2227,10 @@ static int __init apm_init(void)
+@@ -2196,6 +2245,10 @@ static int __init apm_init(void)
  	struct desc_struct *gdt;
  	int err;
  
@@ -1193,7 +1176,7 @@
  	dmi_check_system(apm_dmi_table);
  
  	if (apm_info.bios.version == 0 || paravirt_enabled()) {
-@@ -2292,6 +2327,11 @@ static int __init apm_init(void)
+@@ -2292,6 +2345,11 @@ static int __init apm_init(void)
  	 * code to that CPU.
  	 */
  	gdt = get_cpu_gdt_table(0);
@@ -1205,7 +1188,7 @@
  	set_base(gdt[APM_CS >> 3],
  		 __va((unsigned long)apm_info.bios.cseg << 4));
  	set_base(gdt[APM_CS_16 >> 3],
-@@ -2299,6 +2339,10 @@ static int __init apm_init(void)
+@@ -2299,6 +2357,10 @@ static int __init apm_init(void)
  	set_base(gdt[APM_DS >> 3],
  		 __va((unsigned long)apm_info.bios.dseg << 4));
  
@@ -1218,15 +1201,7 @@
  		apm_proc->proc_fops = &apm_file_ops;
 --- a/arch/i386/kernel/asm-offsets.c
 +++ b/arch/i386/kernel/asm-offsets.c
-@@ -62,6 +62,7 @@ void foo(void)
- 	OFFSET(TI_exec_domain, thread_info, exec_domain);
- 	OFFSET(TI_flags, thread_info, flags);
- 	OFFSET(TI_status, thread_info, status);
-+	OFFSET(TI_cpu, thread_info, cpu);
- 	OFFSET(TI_preempt_count, thread_info, preempt_count);
- 	OFFSET(TI_addr_limit, thread_info, addr_limit);
- 	OFFSET(TI_restart_block, thread_info, restart_block);
-@@ -109,6 +110,7 @@ void foo(void)
+@@ -109,6 +109,7 @@ void foo(void)
  	DEFINE(PTRS_PER_PTE, PTRS_PER_PTE);
  	DEFINE(PTRS_PER_PMD, PTRS_PER_PMD);
  	DEFINE(PTRS_PER_PGD, PTRS_PER_PGD);
@@ -1234,7 +1209,7 @@
  
  	DEFINE(VDSO_PRELINK_asm, VDSO_PRELINK);
  
-@@ -122,6 +124,7 @@ void foo(void)
+@@ -122,6 +123,7 @@ void foo(void)
  	OFFSET(PARAVIRT_irq_enable_sysexit, paravirt_ops, irq_enable_sysexit);
  	OFFSET(PARAVIRT_iret, paravirt_ops, iret);
  	OFFSET(PARAVIRT_read_cr0, paravirt_ops, read_cr0);
@@ -1523,7 +1498,7 @@
  
  	gdt_descr.address = __pa(get_cpu_gdt_table(0));
  	gdt_descr.size = GDT_SIZE - 1;
-@@ -110,35 +88,24 @@ static void efi_call_phys_prelog(void) _
+@@ -110,35 +88,23 @@ static void efi_call_phys_prelog(void) _
  
  static void efi_call_phys_epilog(void) __releases(efi_rt_lock)
  {
@@ -1534,7 +1509,7 @@
 +	gdt_descr.address = get_cpu_gdt_table(0);
  	gdt_descr.size = GDT_SIZE - 1;
  	load_gdt(&gdt_descr);
- 
+-
 -	cr4 = read_cr4();
 -
 -	if (cr4 & X86_CR4_PSE) {
@@ -1563,7 +1538,7 @@
  phys_efi_set_virtual_address_map(unsigned long memory_map_size,
  				 unsigned long descriptor_size,
  				 u32 descriptor_version,
-@@ -154,7 +121,7 @@ phys_efi_set_virtual_address_map(unsigne
+@@ -154,7 +120,7 @@ phys_efi_set_virtual_address_map(unsigne
  	return status;
  }
  
@@ -2711,12 +2686,16 @@
  /* We don't need anything special. */
  int module_frob_arch_sections(Elf_Ehdr *hdr,
  			      Elf_Shdr *sechdrs,
-@@ -63,14 +125,16 @@ int apply_relocate(Elf32_Shdr *sechdrs,
+@@ -63,14 +125,20 @@ int apply_relocate(Elf32_Shdr *sechdrs,
  	unsigned int i;
  	Elf32_Rel *rel = (void *)sechdrs[relsec].sh_addr;
  	Elf32_Sym *sym;
 -	uint32_t *location;
 +	uint32_t *plocation, location;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
  
  	DEBUGP("Applying relocate section %u to %u\n", relsec,
  	       sechdrs[relsec].sh_info);
@@ -2731,17 +2710,38 @@
  		/* This is the symbol it is referring to.  Note that all
  		   undefined symbols have been resolved.  */
  		sym = (Elf32_Sym *)sechdrs[symindex].sh_addr
-@@ -79,11 +143,11 @@ int apply_relocate(Elf32_Shdr *sechdrs,
+@@ -78,12 +146,32 @@ int apply_relocate(Elf32_Shdr *sechdrs,
+ 
  		switch (ELF32_R_TYPE(rel[i].r_info)) {
  		case R_386_32:
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_open_kernel(cr0);
++#endif
++
  			/* We add the value into the location given */
 -			*location += sym->st_value;
 +			*plocation += sym->st_value;
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
  			break;
  		case R_386_PC32:
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_open_kernel(cr0);
++#endif
++
  			/* Add the value, subtract its postition */
 -			*location += sym->st_value - (uint32_t)location;
 +			*plocation += sym->st_value - location;
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
  			break;
  		default:
  			printk(KERN_ERR "module %s: Unknown relocation: %u\n",
@@ -3071,26 +3071,19 @@
  	local_irq_disable();
  
  	/* Write zero to CMOS register number 0x0f, which the BIOS POST
-@@ -235,8 +240,16 @@ void machine_real_restart(unsigned char 
+@@ -234,9 +239,8 @@ void machine_real_restart(unsigned char 
+ 	/* Remap the kernel at virtual address zero, as well as offset zero
  	   from the kernel segment.  This assumes the kernel segment starts at
  	   virtual address PAGE_OFFSET. */
- 
+-
 -	memcpy (swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
 -		sizeof (swapper_pg_dir [0]) * KERNEL_PGD_PTRS);
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
-+#endif
-+
 +	clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
 +			min_t(unsigned long, KERNEL_PGD_PTRS, USER_PGD_PTRS));
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
  
  	/*
  	 * Use `swapper_pg_dir' as our page directory.
-@@ -249,7 +262,7 @@ void machine_real_restart(unsigned char 
+@@ -249,7 +253,7 @@ void machine_real_restart(unsigned char 
  	   REBOOT.COM programs, and the previous reset routine did this
  	   too. */
  
@@ -3099,7 +3092,7 @@
  
  	/* For the switch to real mode, copy some code to low memory.  It has
  	   to be in the first 64k because it is running in 16-bit mode, and it
-@@ -257,9 +270,8 @@ void machine_real_restart(unsigned char 
+@@ -257,9 +261,8 @@ void machine_real_restart(unsigned char 
  	   off paging.  Copy it near the end of the first page, out of the way
  	   of BIOS variables. */
  
@@ -3111,7 +3104,7 @@
  
  	/* Set up the IDT for real mode. */
  
-@@ -345,7 +357,7 @@ static void native_machine_emergency_res
+@@ -345,7 +348,7 @@ static void native_machine_emergency_res
  			__asm__ __volatile__("int3");
  		}
  		/* rebooting needs to touch the page at absolute addr 0 */
@@ -3223,17 +3216,6 @@
  		return;
  
  	if (test_thread_flag(TIF_RESTORE_SIGMASK))
---- a/arch/i386/kernel/smp.c
-+++ b/arch/i386/kernel/smp.c
-@@ -104,7 +104,7 @@
-  *	about nothing of note with C stepping upwards.
-  */
- 
--DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, };
-+DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, {0} };
- 
- /*
-  * the following functions deal with sending IPIs between CPUs.
 --- a/arch/i386/kernel/smpboot.c
 +++ b/arch/i386/kernel/smpboot.c
 @@ -118,7 +118,7 @@ DEFINE_PER_CPU(int, cpu_state) = { 0 };
@@ -3274,6 +3256,17 @@
  
  	idle->thread.eip = (unsigned long) start_secondary;
  	/* start_eip had better be page-aligned! */
+--- a/arch/i386/kernel/smp.c
++++ b/arch/i386/kernel/smp.c
+@@ -104,7 +104,7 @@
+  *	about nothing of note with C stepping upwards.
+  */
+ 
+-DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, };
++DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, {0} };
+ 
+ /*
+  * the following functions deal with sending IPIs between CPUs.
 --- a/arch/i386/kernel/smpcommon.c
 +++ b/arch/i386/kernel/smpcommon.c
 @@ -3,6 +3,7 @@
@@ -3318,6 +3311,76 @@
  
  	per_cpu(this_cpu_off, cpu) = __per_cpu_offset[cpu];
  	per_cpu(cpu_number, cpu) = cpu;
+--- a/arch/i386/kernel/syscall_table.S
++++ b/arch/i386/kernel/syscall_table.S
+@@ -1,3 +1,4 @@
++.section .rodata,"a",@progbits
+ ENTRY(sys_call_table)
+ 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
+ 	.long sys_exit
+--- a/arch/i386/kernel/sysenter.c
++++ b/arch/i386/kernel/sysenter.c
+@@ -177,7 +177,7 @@ static __init void relocate_vdso(Elf32_E
+ void enable_sep_cpu(void)
+ {
+ 	int cpu = get_cpu();
+-	struct tss_struct *tss = &per_cpu(init_tss, cpu);
++	struct tss_struct *tss = init_tss + cpu;
+ 
+ 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
+ 		put_cpu();
+@@ -200,7 +200,7 @@ static int __init gate_vma_init(void)
+ 	gate_vma.vm_start = FIXADDR_USER_START;
+ 	gate_vma.vm_end = FIXADDR_USER_END;
+ 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
+-	gate_vma.vm_page_prot = __P101;
++	gate_vma.vm_page_prot = vm_get_page_prot(gate_vma.vm_flags);
+ 	/*
+ 	 * Make sure the vDSO gets into every core dump.
+ 	 * Dumping its contents makes post-mortem fully interpretable later
+@@ -283,7 +283,7 @@ int arch_setup_additional_pages(struct l
+ 	if (compat)
+ 		addr = VDSO_HIGH_BASE;
+ 	else {
+-		addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
++		addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
+ 		if (IS_ERR_VALUE(addr)) {
+ 			ret = addr;
+ 			goto up_fail;
+@@ -308,7 +308,7 @@ int arch_setup_additional_pages(struct l
+ 			goto up_fail;
+ 	}
+ 
+-	current->mm->context.vdso = (void *)addr;
++	current->mm->context.vdso = addr;
+ 	current_thread_info()->sysenter_return =
+ 		(void *)VDSO_SYM(&SYSENTER_RETURN);
+ 
+@@ -320,8 +320,14 @@ int arch_setup_additional_pages(struct l
+ 
+ const char *arch_vma_name(struct vm_area_struct *vma)
+ {
+-	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
++	if (vma->vm_mm && vma->vm_start == vma->vm_mm->context.vdso)
+ 		return "[vdso]";
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (vma->vm_mm && vma->vm_mirror && vma->vm_mirror->vm_start == vma->vm_mm->context.vdso)
++		return "[vdso]";
++#endif
++
+ 	return NULL;
+ }
+ 
+@@ -330,7 +336,7 @@ struct vm_area_struct *get_gate_vma(stru
+ 	struct mm_struct *mm = tsk->mm;
+ 
+ 	/* Check to see if this task was created in compat vdso mode */
+-	if (mm && mm->context.vdso == (void *)VDSO_HIGH_BASE)
++	if (mm && mm->context.vdso == VDSO_HIGH_BASE)
+ 		return &gate_vma;
+ 	return NULL;
+ }
 --- a/arch/i386/kernel/sys_i386.c
 +++ b/arch/i386/kernel/sys_i386.c
 @@ -41,6 +41,21 @@ asmlinkage int sys_pipe(unsigned long __
@@ -3548,76 +3611,6 @@
  
  struct sel_arg_struct {
  	unsigned long n;
---- a/arch/i386/kernel/syscall_table.S
-+++ b/arch/i386/kernel/syscall_table.S
-@@ -1,3 +1,4 @@
-+.section .rodata,"a",@progbits
- ENTRY(sys_call_table)
- 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
- 	.long sys_exit
---- a/arch/i386/kernel/sysenter.c
-+++ b/arch/i386/kernel/sysenter.c
-@@ -177,7 +177,7 @@ static __init void relocate_vdso(Elf32_E
- void enable_sep_cpu(void)
- {
- 	int cpu = get_cpu();
--	struct tss_struct *tss = &per_cpu(init_tss, cpu);
-+	struct tss_struct *tss = init_tss + cpu;
- 
- 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
- 		put_cpu();
-@@ -200,7 +200,7 @@ static int __init gate_vma_init(void)
- 	gate_vma.vm_start = FIXADDR_USER_START;
- 	gate_vma.vm_end = FIXADDR_USER_END;
- 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
--	gate_vma.vm_page_prot = __P101;
-+	gate_vma.vm_page_prot = vm_get_page_prot(gate_vma.vm_flags);
- 	/*
- 	 * Make sure the vDSO gets into every core dump.
- 	 * Dumping its contents makes post-mortem fully interpretable later
-@@ -283,7 +283,7 @@ int arch_setup_additional_pages(struct l
- 	if (compat)
- 		addr = VDSO_HIGH_BASE;
- 	else {
--		addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
-+		addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
- 		if (IS_ERR_VALUE(addr)) {
- 			ret = addr;
- 			goto up_fail;
-@@ -308,7 +308,7 @@ int arch_setup_additional_pages(struct l
- 			goto up_fail;
- 	}
- 
--	current->mm->context.vdso = (void *)addr;
-+	current->mm->context.vdso = addr;
- 	current_thread_info()->sysenter_return =
- 		(void *)VDSO_SYM(&SYSENTER_RETURN);
- 
-@@ -320,8 +320,14 @@ int arch_setup_additional_pages(struct l
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
- {
--	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
-+	if (vma->vm_start == vma->vm_mm->context.vdso)
- 		return "[vdso]";
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (vma->vm_mirror && vma->vm_mirror->vm_start == vma->vm_mm->context.vdso)
-+		return "[vdso]";
-+#endif
-+
- 	return NULL;
- }
- 
-@@ -330,7 +336,7 @@ struct vm_area_struct *get_gate_vma(stru
- 	struct mm_struct *mm = tsk->mm;
- 
- 	/* Check to see if this task was created in compat vdso mode */
--	if (mm && mm->context.vdso == (void *)VDSO_HIGH_BASE)
-+	if (mm && mm->context.vdso == VDSO_HIGH_BASE)
- 		return &gate_vma;
- 	return NULL;
- }
 --- a/arch/i386/kernel/time.c
 +++ b/arch/i386/kernel/time.c
 @@ -132,20 +132,30 @@ unsigned long profile_pc(struct pt_regs 
@@ -4148,12 +4141,14 @@
  
    . = ALIGN(4);
    .tracedata : AT(ADDR(.tracedata) - LOAD_OFFSET) {
-@@ -73,9 +184,39 @@ SECTIONS
+@@ -73,9 +184,40 @@ SECTIONS
  
    RODATA
  
 +  . = ALIGN(4096);
 +  .rodata.page_aligned : AT(ADDR(.rodata.page_aligned) - LOAD_OFFSET) {
++	*(.idt)
++	. = ALIGN(4096);
 +	*(.empty_zero_page)
 +
 +#ifdef CONFIG_X86_PAE
@@ -4161,7 +4156,6 @@
 +#endif
 +
 +	*(.swapper_pg_dir)
-+	*(.idt)
 +	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -4188,7 +4182,7 @@
  	DATA_DATA
  	CONSTRUCTORS
  	} :data
-@@ -91,7 +232,6 @@ SECTIONS
+@@ -91,7 +233,6 @@ SECTIONS
    . = ALIGN(4096);
    .data.page_aligned : AT(ADDR(.data.page_aligned) - LOAD_OFFSET) {
  	*(.data.page_aligned)
@@ -4196,7 +4190,7 @@
    }
  
    . = ALIGN(32);
-@@ -111,86 +251,7 @@ SECTIONS
+@@ -111,86 +252,7 @@ SECTIONS
  	*(.data.init_task)
    }
  
@@ -6019,7 +6013,7 @@
  	if( ((1<<cpu) & voyager_extended_vic_processors) == 0)
 --- a/arch/i386/mm/boot_ioremap.c
 +++ b/arch/i386/mm/boot_ioremap.c
-@@ -7,15 +7,6 @@
+@@ -7,57 +7,37 @@
   * Written by Dave Hansen <haveblue@us.ibm.com>
   */
  
@@ -6035,10 +6029,10 @@
  #undef CONFIG_PARAVIRT
  #include <asm/page.h>
  #include <asm/pgtable.h>
-@@ -23,41 +14,29 @@
+ #include <asm/tlbflush.h>
  #include <linux/init.h>
  #include <linux/stddef.h>
- 
+-
 -/* 
 - * I'm cheating here.  It is known that the two boot PTE pages are 
 - * allocated next to each other.  I'm pretending that they're just
@@ -6057,7 +6051,8 @@
 -	boot_pte_t* boot_pg = (boot_pte_t*)pg0;
 -	return &boot_pg[boot_pte_index((unsigned long)address)];
 -}
--
++#include <linux/sched.h>
+ 
  /*
   * This is only for a caller who is clever enough to page-align
   * phys_addr and virtual_source, and who also has a preference
@@ -6093,7 +6088,63 @@
  
 --- a/arch/i386/mm/extable.c
 +++ b/arch/i386/mm/extable.c
-@@ -11,7 +11,7 @@ int fixup_exception(struct pt_regs *regs
+@@ -4,14 +4,63 @@
+ 
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
++#include <linux/sort.h>
+ #include <asm/uaccess.h>
+ 
++/*
++ * The exception table needs to be sorted so that the binary
++ * search that we use to find entries in it works properly.
++ * This is used both for the kernel exception table and for
++ * the exception tables of modules that get loaded.
++ */
++static int cmp_ex(const void *a, const void *b)
++{
++	const struct exception_table_entry *x = a, *y = b;
++
++	/* avoid overflow */
++	if (x->insn > y->insn)
++		return 1;
++	if (x->insn < y->insn)
++		return -1;
++	return 0;
++}
++
++static void swap_ex(void *a, void *b, int size)
++{
++	struct exception_table_entry t, *x = a, *y = b;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
++
++	t = *x;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
++	*x = *y;
++	*y = t;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
++}
++
++void sort_extable(struct exception_table_entry *start,
++		  struct exception_table_entry *finish)
++{
++	sort(start, finish - start, sizeof(struct exception_table_entry),
++	     cmp_ex, swap_ex);
++}
++
+ int fixup_exception(struct pt_regs *regs)
+ {
  	const struct exception_table_entry *fixup;
  
  #ifdef CONFIG_PNPBIOS
@@ -7318,7 +7369,7 @@
  static int __init pcibios_irq_init(void)
 --- a/arch/i386/pci/pcbios.c
 +++ b/arch/i386/pci/pcbios.c
-@@ -57,50 +57,120 @@ union bios32 {
+@@ -57,50 +57,124 @@ union bios32 {
  static struct {
  	unsigned long address;
  	unsigned short segment;
@@ -7399,12 +7450,15 @@
 -		default: /* Shouldn't happen */
 -			printk(KERN_WARNING "bios32_service(0x%lx): returned 0x%x -- BIOS bug!\n",
 -				service, return_code);
--			return 0;
 +	case 0: {
 +		int cpu;
 +		unsigned char flags;
 +
 +		printk(KERN_INFO "bios32_service: base:%08lx length:%08lx entry:%08lx\n", address, length, entry);
++		if (address >= 0xFFFF0 || length >= 0xFFFF0 - address || length <= entry) {
++			printk(KERN_WARNING "bios32_service: not valid\n");
+ 			return 0;
++		}
 +		address = address + PAGE_OFFSET;
 +		length += 16UL; /* some BIOSs underreport this... */
 +		flags = 4;
@@ -7454,7 +7508,7 @@
  
  static int __devinit check_pcibios(void)
  {
-@@ -109,11 +179,13 @@ static int __devinit check_pcibios(void)
+@@ -109,11 +183,13 @@ static int __devinit check_pcibios(void)
  	unsigned long flags, pcibios_entry;
  
  	if ((pcibios_entry = bios32_service(PCI_SERVICE))) {
@@ -7471,7 +7525,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -122,7 +194,8 @@ static int __devinit check_pcibios(void)
+@@ -122,7 +198,8 @@ static int __devinit check_pcibios(void)
  			  "=b" (ebx),
  			  "=c" (ecx)
  			: "1" (PCIBIOS_PCI_BIOS_PRESENT),
@@ -7481,7 +7535,7 @@
  			: "memory");
  		local_irq_restore(flags);
  
-@@ -158,7 +231,10 @@ static int __devinit pci_bios_find_devic
+@@ -158,7 +235,10 @@ static int __devinit pci_bios_find_devic
  	unsigned short bx;
  	unsigned short ret;
  
@@ -7493,7 +7547,7 @@
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -168,7 +244,8 @@ static int __devinit pci_bios_find_devic
+@@ -168,7 +248,8 @@ static int __devinit pci_bios_find_devic
  		  "c" (device_id),
  		  "d" (vendor),
  		  "S" ((int) index),
@@ -7503,7 +7557,7 @@
  	*bus = (bx >> 8) & 0xff;
  	*device_fn = bx & 0xff;
  	return (int) (ret & 0xff00) >> 8;
-@@ -188,7 +265,10 @@ static int pci_bios_read(unsigned int se
+@@ -188,7 +269,10 @@ static int pci_bios_read(unsigned int se
  
  	switch (len) {
  	case 1:
@@ -7515,7 +7569,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -197,10 +277,14 @@ static int pci_bios_read(unsigned int se
+@@ -197,10 +281,14 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_BYTE),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7532,7 +7586,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -209,10 +293,14 @@ static int pci_bios_read(unsigned int se
+@@ -209,10 +297,14 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_WORD),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7549,7 +7603,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -221,7 +309,8 @@ static int pci_bios_read(unsigned int se
+@@ -221,7 +313,8 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_DWORD),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7559,7 +7613,7 @@
  		break;
  	}
  
-@@ -244,7 +333,10 @@ static int pci_bios_write(unsigned int s
+@@ -244,7 +337,10 @@ static int pci_bios_write(unsigned int s
  
  	switch (len) {
  	case 1:
@@ -7571,7 +7625,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -253,10 +345,14 @@ static int pci_bios_write(unsigned int s
+@@ -253,10 +349,14 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7588,7 +7642,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -265,10 +361,14 @@ static int pci_bios_write(unsigned int s
+@@ -265,10 +365,14 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7605,7 +7659,7 @@
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -277,7 +377,8 @@ static int pci_bios_write(unsigned int s
+@@ -277,7 +381,8 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7615,7 +7669,7 @@
  		break;
  	}
  
-@@ -430,10 +531,13 @@ struct irq_routing_table * pcibios_get_i
+@@ -430,10 +535,13 @@ struct irq_routing_table * pcibios_get_i
  
  	DBG("PCI: Fetching IRQ routing table... ");
  	__asm__("push %%es\n\t"
@@ -7630,7 +7684,7 @@
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -444,7 +548,8 @@ struct irq_routing_table * pcibios_get_i
+@@ -444,7 +552,8 @@ struct irq_routing_table * pcibios_get_i
  		  "1" (0),
  		  "D" ((long) &opt),
  		  "S" (&pci_indirect),
@@ -7640,7 +7694,7 @@
  		: "memory");
  	DBG("OK  ret=%d, size=%d, map=%x\n", ret, opt.size, map);
  	if (ret & 0xff00)
-@@ -468,7 +573,10 @@ int pcibios_set_irq_routing(struct pci_d
+@@ -468,7 +577,10 @@ int pcibios_set_irq_routing(struct pci_d
  {
  	int ret;
  
@@ -7652,7 +7706,7 @@
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -476,7 +584,8 @@ int pcibios_set_irq_routing(struct pci_d
+@@ -476,7 +588,8 @@ int pcibios_set_irq_routing(struct pci_d
  		: "0" (PCIBIOS_SET_PCI_HW_INT),
  		  "b" ((dev->bus->number << 8) | dev->devfn),
  		  "c" ((irq << 8) | (pin + 10)),
@@ -9459,383 +9513,6 @@
  			rela->r_addend - loc;
  		if (r_type == R_390_GOTPC)
  			*(unsigned int *) loc = val;
---- a/arch/sparc/Makefile
-+++ b/arch/sparc/Makefile
-@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
- # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
- INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
- CORE_Y		:= $(core-y)
--CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
- DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
- NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
---- a/arch/sparc/kernel/ptrace.c
-+++ b/arch/sparc/kernel/ptrace.c
-@@ -19,6 +19,7 @@
- #include <linux/smp_lock.h>
- #include <linux/security.h>
- #include <linux/signal.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/pgtable.h>
- #include <asm/system.h>
-@@ -303,6 +304,11 @@ asmlinkage void do_ptrace(struct pt_regs
- 		goto out;
- 	}
- 
-+	if (gr_handle_ptrace(child, request)) {
-+		pt_error_return(regs, EPERM);
-+		goto out_tsk;
-+	}
-+
- 	if ((current->personality == PER_SUNOS && request == PTRACE_SUNATTACH)
- 	    || (current->personality != PER_SUNOS && request == PTRACE_ATTACH)) {
- 		if (ptrace_attach(child)) {
---- a/arch/sparc/kernel/sys_sparc.c
-+++ b/arch/sparc/kernel/sys_sparc.c
-@@ -57,7 +57,7 @@ unsigned long arch_get_unmapped_area(str
- 	if (ARCH_SUN4C_SUN4 && len > 0x20000000)
- 		return -ENOMEM;
- 	if (!addr)
--		addr = TASK_UNMAPPED_BASE;
-+		addr = current->mm->mmap_base;
- 
- 	if (flags & MAP_SHARED)
- 		addr = COLOUR_ALIGN(addr);
---- a/arch/sparc/mm/fault.c
-+++ b/arch/sparc/mm/fault.c
-@@ -21,6 +21,10 @@
- #include <linux/interrupt.h>
- #include <linux/module.h>
- #include <linux/kdebug.h>
-+#include <linux/slab.h>
-+#include <linux/pagemap.h>
-+#include <linux/compiler.h>
-+#include <linux/binfmts.h>
- 
- #include <asm/system.h>
- #include <asm/page.h>
-@@ -216,6 +220,252 @@ static unsigned long compute_si_addr(str
- 	return safe_compute_effective_address(regs, insn);
- }
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+void pax_emuplt_close(struct vm_area_struct *vma)
-+{
-+	vma->vm_mm->call_dl_resolve = 0UL;
-+}
-+
-+static struct page *pax_emuplt_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
-+{
-+	struct page *page;
-+	unsigned int *kaddr;
-+
-+	page = alloc_page(GFP_HIGHUSER);
-+	if (!page)
-+		return NOPAGE_OOM;
-+
-+	kaddr = kmap(page);
-+	memset(kaddr, 0, PAGE_SIZE);
-+	kaddr[0] = 0x9DE3BFA8U; /* save */
-+	flush_dcache_page(page);
-+	kunmap(page);
-+	if (type)
-+		*type = VM_FAULT_MAJOR;
-+
-+	return page;
-+}
-+
-+static struct vm_operations_struct pax_vm_ops = {
-+	.close = pax_emuplt_close,
-+	.nopage = pax_emuplt_nopage,
-+};
-+
-+static int pax_insert_vma(struct vm_area_struct *vma, unsigned long addr)
-+{
-+	int ret;
-+
-+	memset(vma, 0, sizeof(*vma));
-+	vma->vm_mm = current->mm;
-+	vma->vm_start = addr;
-+	vma->vm_end = addr + PAGE_SIZE;
-+	vma->vm_flags = VM_READ | VM_EXEC | VM_MAYREAD | VM_MAYEXEC;
-+	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
-+	vma->vm_ops = &pax_vm_ops;
-+
-+	ret = insert_vm_struct(current->mm, vma);
-+	if (ret)
-+		return ret;
-+
-+	++current->mm->total_vm;
-+	return 0;
-+}
-+
-+/*
-+ * PaX: decide what to do with offenders (regs->pc = fault address)
-+ *
-+ * returns 1 when task should be killed
-+ *         2 when patched PLT trampoline was detected
-+ *         3 when unpatched PLT trampoline was detected
-+ */
-+static int pax_handle_fetch_fault(struct pt_regs *regs)
-+{
-+
-+#ifdef CONFIG_PAX_EMUPLT
-+	int err;
-+
-+	do { /* PaX: patched PLT emulation #1 */
-+		unsigned int sethi1, sethi2, jmpl;
-+
-+		err = get_user(sethi1, (unsigned int *)regs->pc);
-+		err |= get_user(sethi2, (unsigned int *)(regs->pc+4));
-+		err |= get_user(jmpl, (unsigned int *)(regs->pc+8));
-+
-+		if (err)
-+			break;
-+
-+		if ((sethi1 & 0xFFC00000U) == 0x03000000U &&
-+		    (sethi2 & 0xFFC00000U) == 0x03000000U &&
-+		    (jmpl & 0xFFFFE000U) == 0x81C06000U)
-+		{
-+			unsigned int addr;
-+
-+			regs->u_regs[UREG_G1] = (sethi2 & 0x003FFFFFU) << 10;
-+			addr = regs->u_regs[UREG_G1];
-+			addr += (((jmpl | 0xFFFFE000U) ^ 0x00001000U) + 0x00001000U);
-+			regs->pc = addr;
-+			regs->npc = addr+4;
-+			return 2;
-+		}
-+	} while (0);
-+
-+	{ /* PaX: patched PLT emulation #2 */
-+		unsigned int ba;
-+
-+		err = get_user(ba, (unsigned int *)regs->pc);
-+
-+		if (!err && (ba & 0xFFC00000U) == 0x30800000U) {
-+			unsigned int addr;
-+
-+			addr = regs->pc + ((((ba | 0xFFC00000U) ^ 0x00200000U) + 0x00200000U) << 2);
-+			regs->pc = addr;
-+			regs->npc = addr+4;
-+			return 2;
-+		}
-+	}
-+
-+	do { /* PaX: patched PLT emulation #3 */
-+		unsigned int sethi, jmpl, nop;
-+
-+		err = get_user(sethi, (unsigned int *)regs->pc);
-+		err |= get_user(jmpl, (unsigned int *)(regs->pc+4));
-+		err |= get_user(nop, (unsigned int *)(regs->pc+8));
-+
-+		if (err)
-+			break;
-+
-+		if ((sethi & 0xFFC00000U) == 0x03000000U &&
-+		    (jmpl & 0xFFFFE000U) == 0x81C06000U &&
-+		    nop == 0x01000000U)
-+		{
-+			unsigned int addr;
-+
-+			addr = (sethi & 0x003FFFFFU) << 10;
-+			regs->u_regs[UREG_G1] = addr;
-+			addr += (((jmpl | 0xFFFFE000U) ^ 0x00001000U) + 0x00001000U);
-+			regs->pc = addr;
-+			regs->npc = addr+4;
-+			return 2;
-+		}
-+	} while (0);
-+
-+	do { /* PaX: unpatched PLT emulation step 1 */
-+		unsigned int sethi, ba, nop;
-+
-+		err = get_user(sethi, (unsigned int *)regs->pc);
-+		err |= get_user(ba, (unsigned int *)(regs->pc+4));
-+		err |= get_user(nop, (unsigned int *)(regs->pc+8));
-+
-+		if (err)
-+			break;
-+
-+		if ((sethi & 0xFFC00000U) == 0x03000000U &&
-+		    ((ba & 0xFFC00000U) == 0x30800000U || (ba & 0xFFF80000U) == 0x30680000U) &&
-+		    nop == 0x01000000U)
-+		{
-+			unsigned int addr, save, call;
-+
-+			if ((ba & 0xFFC00000U) == 0x30800000U)
-+				addr = regs->pc + 4 + ((((ba | 0xFFC00000U) ^ 0x00200000U) + 0x00200000U) << 2);
-+			else
-+				addr = regs->pc + 4 + ((((ba | 0xFFF80000U) ^ 0x00040000U) + 0x00040000U) << 2);
-+
-+			err = get_user(save, (unsigned int *)addr);
-+			err |= get_user(call, (unsigned int *)(addr+4));
-+			err |= get_user(nop, (unsigned int *)(addr+8));
-+			if (err)
-+				break;
-+
-+			if (save == 0x9DE3BFA8U &&
-+			    (call & 0xC0000000U) == 0x40000000U &&
-+			    nop == 0x01000000U)
-+			{
-+				struct vm_area_struct *vma;
-+				unsigned long call_dl_resolve;
-+
-+				down_read(&current->mm->mmap_sem);
-+				call_dl_resolve = current->mm->call_dl_resolve;
-+				up_read(&current->mm->mmap_sem);
-+				if (likely(call_dl_resolve))
-+					goto emulate;
-+
-+				vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
-+
-+				down_write(&current->mm->mmap_sem);
-+				if (current->mm->call_dl_resolve) {
-+					call_dl_resolve = current->mm->call_dl_resolve;
-+					up_write(&current->mm->mmap_sem);
-+					if (vma) kmem_cache_free(vm_area_cachep, vma);
-+					goto emulate;
-+				}
-+
-+				call_dl_resolve = get_unmapped_area(NULL, 0UL, PAGE_SIZE, 0UL, MAP_PRIVATE);
-+				if (!vma || (call_dl_resolve & ~PAGE_MASK)) {
-+					up_write(&current->mm->mmap_sem);
-+					if (vma) kmem_cache_free(vm_area_cachep, vma);
-+					return 1;
-+				}
-+
-+				if (pax_insert_vma(vma, call_dl_resolve)) {
-+					up_write(&current->mm->mmap_sem);
-+					kmem_cache_free(vm_area_cachep, vma);
-+					return 1;
-+				}
-+
-+				current->mm->call_dl_resolve = call_dl_resolve;
-+				up_write(&current->mm->mmap_sem);
-+
-+emulate:
-+				regs->u_regs[UREG_G1] = (sethi & 0x003FFFFFU) << 10;
-+				regs->pc = call_dl_resolve;
-+				regs->npc = addr+4;
-+				return 3;
-+			}
-+		}
-+	} while (0);
-+
-+	do { /* PaX: unpatched PLT emulation step 2 */
-+		unsigned int save, call, nop;
-+
-+		err = get_user(save, (unsigned int *)(regs->pc-4));
-+		err |= get_user(call, (unsigned int *)regs->pc);
-+		err |= get_user(nop, (unsigned int *)(regs->pc+4));
-+		if (err)
-+			break;
-+
-+		if (save == 0x9DE3BFA8U &&
-+		    (call & 0xC0000000U) == 0x40000000U &&
-+		    nop == 0x01000000U)
-+		{
-+			unsigned int dl_resolve = regs->pc + ((((call | 0xC0000000U) ^ 0x20000000U) + 0x20000000U) << 2);
-+
-+			regs->u_regs[UREG_RETPC] = regs->pc;
-+			regs->pc = dl_resolve;
-+			regs->npc = dl_resolve+4;
-+			return 3;
-+		}
-+	} while (0);
-+#endif
-+
-+	return 1;
-+}
-+
-+void pax_report_insns(void *pc, void *sp)
-+{
-+	unsigned long i;
-+
-+	printk(KERN_ERR "PAX: bytes at PC: ");
-+	for (i = 0; i < 5; i++) {
-+		unsigned int c;
-+		if (get_user(c, (unsigned int *)pc+i))
-+			printk("???????? ");
-+		else
-+			printk("%08x ", c);
-+	}
-+	printk("\n");
-+}
-+#endif
-+
- asmlinkage void do_sparc_fault(struct pt_regs *regs, int text_fault, int write,
- 			       unsigned long address)
- {
-@@ -280,6 +530,24 @@ good_area:
- 		if(!(vma->vm_flags & VM_WRITE))
- 			goto bad_area;
- 	} else {
-+
-+#ifdef CONFIG_PAX_PAGEEXEC
-+		if ((mm->pax_flags & MF_PAX_PAGEEXEC) && text_fault && !(vma->vm_flags & VM_EXEC)) {
-+			up_read(&mm->mmap_sem);
-+			switch (pax_handle_fetch_fault(regs)) {
-+
-+#ifdef CONFIG_PAX_EMUPLT
-+			case 2:
-+			case 3:
-+				return;
-+#endif
-+
-+			}
-+			pax_report_fault(regs, (void *)regs->pc, (void *)regs->u_regs[UREG_FP]);
-+			do_exit(SIGKILL);
-+		}
-+#endif
-+
- 		/* Allow reads even for write-only mappings */
- 		if(!(vma->vm_flags & (VM_READ | VM_EXEC)))
- 			goto bad_area;
---- a/arch/sparc/mm/init.c
-+++ b/arch/sparc/mm/init.c
-@@ -336,17 +336,17 @@ void __init paging_init(void)
- 
- 	/* Initialize the protection map with non-constant, MMU dependent values. */
- 	protection_map[0] = PAGE_NONE;
--	protection_map[1] = PAGE_READONLY;
--	protection_map[2] = PAGE_COPY;
--	protection_map[3] = PAGE_COPY;
-+	protection_map[1] = PAGE_READONLY_NOEXEC;
-+	protection_map[2] = PAGE_COPY_NOEXEC;
-+	protection_map[3] = PAGE_COPY_NOEXEC;
- 	protection_map[4] = PAGE_READONLY;
- 	protection_map[5] = PAGE_READONLY;
- 	protection_map[6] = PAGE_COPY;
- 	protection_map[7] = PAGE_COPY;
- 	protection_map[8] = PAGE_NONE;
--	protection_map[9] = PAGE_READONLY;
--	protection_map[10] = PAGE_SHARED;
--	protection_map[11] = PAGE_SHARED;
-+	protection_map[9] = PAGE_READONLY_NOEXEC;
-+	protection_map[10] = PAGE_SHARED_NOEXEC;
-+	protection_map[11] = PAGE_SHARED_NOEXEC;
- 	protection_map[12] = PAGE_READONLY;
- 	protection_map[13] = PAGE_READONLY;
- 	protection_map[14] = PAGE_SHARED;
---- a/arch/sparc/mm/srmmu.c
-+++ b/arch/sparc/mm/srmmu.c
-@@ -2157,6 +2157,13 @@ void __init ld_mmu_srmmu(void)
- 	PAGE_SHARED = pgprot_val(SRMMU_PAGE_SHARED);
- 	BTFIXUPSET_INT(page_copy, pgprot_val(SRMMU_PAGE_COPY));
- 	BTFIXUPSET_INT(page_readonly, pgprot_val(SRMMU_PAGE_RDONLY));
-+
-+#ifdef CONFIG_PAX_PAGEEXEC
-+	PAGE_SHARED_NOEXEC = pgprot_val(SRMMU_PAGE_SHARED_NOEXEC);
-+	BTFIXUPSET_INT(page_copy_noexec, pgprot_val(SRMMU_PAGE_COPY_NOEXEC));
-+	BTFIXUPSET_INT(page_readonly_noexec, pgprot_val(SRMMU_PAGE_RDONLY_NOEXEC));
-+#endif
-+
- 	BTFIXUPSET_INT(page_kernel, pgprot_val(SRMMU_PAGE_KERNEL));
- 	page_kernel = pgprot_val(SRMMU_PAGE_KERNEL);
- 
 --- a/arch/sparc64/kernel/Makefile
 +++ b/arch/sparc64/kernel/Makefile
 @@ -3,7 +3,7 @@
@@ -9949,17 +9626,6 @@
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
---- a/arch/sparc64/mm/Makefile
-+++ b/arch/sparc64/mm/Makefile
-@@ -3,7 +3,7 @@
- #
- 
- EXTRA_AFLAGS := -ansi
--EXTRA_CFLAGS := -Werror
-+#EXTRA_CFLAGS := -Werror
- 
- obj-y    := ultra.o tlb.o tsb.o fault.o init.o generic.o
- 
 --- a/arch/sparc64/mm/fault.c
 +++ b/arch/sparc64/mm/fault.c
 @@ -20,6 +20,10 @@
@@ -10385,6 +10051,394 @@
  	/* Pure DTLB misses do not tell us whether the fault causing
  	 * load/store/atomic was a write or not, it only says that there
  	 * was no match.  So in such a case we (carefully) read the
+--- a/arch/sparc64/mm/Makefile
++++ b/arch/sparc64/mm/Makefile
+@@ -3,7 +3,7 @@
+ #
+ 
+ EXTRA_AFLAGS := -ansi
+-EXTRA_CFLAGS := -Werror
++#EXTRA_CFLAGS := -Werror
+ 
+ obj-y    := ultra.o tlb.o tsb.o fault.o init.o generic.o
+ 
+--- a/arch/sparc/kernel/ptrace.c
++++ b/arch/sparc/kernel/ptrace.c
+@@ -19,6 +19,7 @@
+ #include <linux/smp_lock.h>
+ #include <linux/security.h>
+ #include <linux/signal.h>
++#include <linux/grsecurity.h>
+ 
+ #include <asm/pgtable.h>
+ #include <asm/system.h>
+@@ -303,6 +304,11 @@ asmlinkage void do_ptrace(struct pt_regs
+ 		goto out;
+ 	}
+ 
++	if (gr_handle_ptrace(child, request)) {
++		pt_error_return(regs, EPERM);
++		goto out_tsk;
++	}
++
+ 	if ((current->personality == PER_SUNOS && request == PTRACE_SUNATTACH)
+ 	    || (current->personality != PER_SUNOS && request == PTRACE_ATTACH)) {
+ 		if (ptrace_attach(child)) {
+--- a/arch/sparc/kernel/sys_sparc.c
++++ b/arch/sparc/kernel/sys_sparc.c
+@@ -57,7 +57,7 @@ unsigned long arch_get_unmapped_area(str
+ 	if (ARCH_SUN4C_SUN4 && len > 0x20000000)
+ 		return -ENOMEM;
+ 	if (!addr)
+-		addr = TASK_UNMAPPED_BASE;
++		addr = current->mm->mmap_base;
+ 
+ 	if (flags & MAP_SHARED)
+ 		addr = COLOUR_ALIGN(addr);
+--- a/arch/sparc/Makefile
++++ b/arch/sparc/Makefile
+@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
+ # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
+ INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
+ CORE_Y		:= $(core-y)
+-CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
+ DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
+ NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
+--- a/arch/sparc/mm/fault.c
++++ b/arch/sparc/mm/fault.c
+@@ -21,6 +21,10 @@
+ #include <linux/interrupt.h>
+ #include <linux/module.h>
+ #include <linux/kdebug.h>
++#include <linux/slab.h>
++#include <linux/pagemap.h>
++#include <linux/compiler.h>
++#include <linux/binfmts.h>
+ 
+ #include <asm/system.h>
+ #include <asm/page.h>
+@@ -216,6 +220,252 @@ static unsigned long compute_si_addr(str
+ 	return safe_compute_effective_address(regs, insn);
+ }
+ 
++#ifdef CONFIG_PAX_PAGEEXEC
++void pax_emuplt_close(struct vm_area_struct *vma)
++{
++	vma->vm_mm->call_dl_resolve = 0UL;
++}
++
++static struct page *pax_emuplt_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
++{
++	struct page *page;
++	unsigned int *kaddr;
++
++	page = alloc_page(GFP_HIGHUSER);
++	if (!page)
++		return NOPAGE_OOM;
++
++	kaddr = kmap(page);
++	memset(kaddr, 0, PAGE_SIZE);
++	kaddr[0] = 0x9DE3BFA8U; /* save */
++	flush_dcache_page(page);
++	kunmap(page);
++	if (type)
++		*type = VM_FAULT_MAJOR;
++
++	return page;
++}
++
++static struct vm_operations_struct pax_vm_ops = {
++	.close = pax_emuplt_close,
++	.nopage = pax_emuplt_nopage,
++};
++
++static int pax_insert_vma(struct vm_area_struct *vma, unsigned long addr)
++{
++	int ret;
++
++	memset(vma, 0, sizeof(*vma));
++	vma->vm_mm = current->mm;
++	vma->vm_start = addr;
++	vma->vm_end = addr + PAGE_SIZE;
++	vma->vm_flags = VM_READ | VM_EXEC | VM_MAYREAD | VM_MAYEXEC;
++	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
++	vma->vm_ops = &pax_vm_ops;
++
++	ret = insert_vm_struct(current->mm, vma);
++	if (ret)
++		return ret;
++
++	++current->mm->total_vm;
++	return 0;
++}
++
++/*
++ * PaX: decide what to do with offenders (regs->pc = fault address)
++ *
++ * returns 1 when task should be killed
++ *         2 when patched PLT trampoline was detected
++ *         3 when unpatched PLT trampoline was detected
++ */
++static int pax_handle_fetch_fault(struct pt_regs *regs)
++{
++
++#ifdef CONFIG_PAX_EMUPLT
++	int err;
++
++	do { /* PaX: patched PLT emulation #1 */
++		unsigned int sethi1, sethi2, jmpl;
++
++		err = get_user(sethi1, (unsigned int *)regs->pc);
++		err |= get_user(sethi2, (unsigned int *)(regs->pc+4));
++		err |= get_user(jmpl, (unsigned int *)(regs->pc+8));
++
++		if (err)
++			break;
++
++		if ((sethi1 & 0xFFC00000U) == 0x03000000U &&
++		    (sethi2 & 0xFFC00000U) == 0x03000000U &&
++		    (jmpl & 0xFFFFE000U) == 0x81C06000U)
++		{
++			unsigned int addr;
++
++			regs->u_regs[UREG_G1] = (sethi2 & 0x003FFFFFU) << 10;
++			addr = regs->u_regs[UREG_G1];
++			addr += (((jmpl | 0xFFFFE000U) ^ 0x00001000U) + 0x00001000U);
++			regs->pc = addr;
++			regs->npc = addr+4;
++			return 2;
++		}
++	} while (0);
++
++	{ /* PaX: patched PLT emulation #2 */
++		unsigned int ba;
++
++		err = get_user(ba, (unsigned int *)regs->pc);
++
++		if (!err && (ba & 0xFFC00000U) == 0x30800000U) {
++			unsigned int addr;
++
++			addr = regs->pc + ((((ba | 0xFFC00000U) ^ 0x00200000U) + 0x00200000U) << 2);
++			regs->pc = addr;
++			regs->npc = addr+4;
++			return 2;
++		}
++	}
++
++	do { /* PaX: patched PLT emulation #3 */
++		unsigned int sethi, jmpl, nop;
++
++		err = get_user(sethi, (unsigned int *)regs->pc);
++		err |= get_user(jmpl, (unsigned int *)(regs->pc+4));
++		err |= get_user(nop, (unsigned int *)(regs->pc+8));
++
++		if (err)
++			break;
++
++		if ((sethi & 0xFFC00000U) == 0x03000000U &&
++		    (jmpl & 0xFFFFE000U) == 0x81C06000U &&
++		    nop == 0x01000000U)
++		{
++			unsigned int addr;
++
++			addr = (sethi & 0x003FFFFFU) << 10;
++			regs->u_regs[UREG_G1] = addr;
++			addr += (((jmpl | 0xFFFFE000U) ^ 0x00001000U) + 0x00001000U);
++			regs->pc = addr;
++			regs->npc = addr+4;
++			return 2;
++		}
++	} while (0);
++
++	do { /* PaX: unpatched PLT emulation step 1 */
++		unsigned int sethi, ba, nop;
++
++		err = get_user(sethi, (unsigned int *)regs->pc);
++		err |= get_user(ba, (unsigned int *)(regs->pc+4));
++		err |= get_user(nop, (unsigned int *)(regs->pc+8));
++
++		if (err)
++			break;
++
++		if ((sethi & 0xFFC00000U) == 0x03000000U &&
++		    ((ba & 0xFFC00000U) == 0x30800000U || (ba & 0xFFF80000U) == 0x30680000U) &&
++		    nop == 0x01000000U)
++		{
++			unsigned int addr, save, call;
++
++			if ((ba & 0xFFC00000U) == 0x30800000U)
++				addr = regs->pc + 4 + ((((ba | 0xFFC00000U) ^ 0x00200000U) + 0x00200000U) << 2);
++			else
++				addr = regs->pc + 4 + ((((ba | 0xFFF80000U) ^ 0x00040000U) + 0x00040000U) << 2);
++
++			err = get_user(save, (unsigned int *)addr);
++			err |= get_user(call, (unsigned int *)(addr+4));
++			err |= get_user(nop, (unsigned int *)(addr+8));
++			if (err)
++				break;
++
++			if (save == 0x9DE3BFA8U &&
++			    (call & 0xC0000000U) == 0x40000000U &&
++			    nop == 0x01000000U)
++			{
++				struct vm_area_struct *vma;
++				unsigned long call_dl_resolve;
++
++				down_read(&current->mm->mmap_sem);
++				call_dl_resolve = current->mm->call_dl_resolve;
++				up_read(&current->mm->mmap_sem);
++				if (likely(call_dl_resolve))
++					goto emulate;
++
++				vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
++
++				down_write(&current->mm->mmap_sem);
++				if (current->mm->call_dl_resolve) {
++					call_dl_resolve = current->mm->call_dl_resolve;
++					up_write(&current->mm->mmap_sem);
++					if (vma) kmem_cache_free(vm_area_cachep, vma);
++					goto emulate;
++				}
++
++				call_dl_resolve = get_unmapped_area(NULL, 0UL, PAGE_SIZE, 0UL, MAP_PRIVATE);
++				if (!vma || (call_dl_resolve & ~PAGE_MASK)) {
++					up_write(&current->mm->mmap_sem);
++					if (vma) kmem_cache_free(vm_area_cachep, vma);
++					return 1;
++				}
++
++				if (pax_insert_vma(vma, call_dl_resolve)) {
++					up_write(&current->mm->mmap_sem);
++					kmem_cache_free(vm_area_cachep, vma);
++					return 1;
++				}
++
++				current->mm->call_dl_resolve = call_dl_resolve;
++				up_write(&current->mm->mmap_sem);
++
++emulate:
++				regs->u_regs[UREG_G1] = (sethi & 0x003FFFFFU) << 10;
++				regs->pc = call_dl_resolve;
++				regs->npc = addr+4;
++				return 3;
++			}
++		}
++	} while (0);
++
++	do { /* PaX: unpatched PLT emulation step 2 */
++		unsigned int save, call, nop;
++
++		err = get_user(save, (unsigned int *)(regs->pc-4));
++		err |= get_user(call, (unsigned int *)regs->pc);
++		err |= get_user(nop, (unsigned int *)(regs->pc+4));
++		if (err)
++			break;
++
++		if (save == 0x9DE3BFA8U &&
++		    (call & 0xC0000000U) == 0x40000000U &&
++		    nop == 0x01000000U)
++		{
++			unsigned int dl_resolve = regs->pc + ((((call | 0xC0000000U) ^ 0x20000000U) + 0x20000000U) << 2);
++
++			regs->u_regs[UREG_RETPC] = regs->pc;
++			regs->pc = dl_resolve;
++			regs->npc = dl_resolve+4;
++			return 3;
++		}
++	} while (0);
++#endif
++
++	return 1;
++}
++
++void pax_report_insns(void *pc, void *sp)
++{
++	unsigned long i;
++
++	printk(KERN_ERR "PAX: bytes at PC: ");
++	for (i = 0; i < 5; i++) {
++		unsigned int c;
++		if (get_user(c, (unsigned int *)pc+i))
++			printk("???????? ");
++		else
++			printk("%08x ", c);
++	}
++	printk("\n");
++}
++#endif
++
+ asmlinkage void do_sparc_fault(struct pt_regs *regs, int text_fault, int write,
+ 			       unsigned long address)
+ {
+@@ -280,6 +530,24 @@ good_area:
+ 		if(!(vma->vm_flags & VM_WRITE))
+ 			goto bad_area;
+ 	} else {
++
++#ifdef CONFIG_PAX_PAGEEXEC
++		if ((mm->pax_flags & MF_PAX_PAGEEXEC) && text_fault && !(vma->vm_flags & VM_EXEC)) {
++			up_read(&mm->mmap_sem);
++			switch (pax_handle_fetch_fault(regs)) {
++
++#ifdef CONFIG_PAX_EMUPLT
++			case 2:
++			case 3:
++				return;
++#endif
++
++			}
++			pax_report_fault(regs, (void *)regs->pc, (void *)regs->u_regs[UREG_FP]);
++			do_exit(SIGKILL);
++		}
++#endif
++
+ 		/* Allow reads even for write-only mappings */
+ 		if(!(vma->vm_flags & (VM_READ | VM_EXEC)))
+ 			goto bad_area;
+--- a/arch/sparc/mm/init.c
++++ b/arch/sparc/mm/init.c
+@@ -336,17 +336,17 @@ void __init paging_init(void)
+ 
+ 	/* Initialize the protection map with non-constant, MMU dependent values. */
+ 	protection_map[0] = PAGE_NONE;
+-	protection_map[1] = PAGE_READONLY;
+-	protection_map[2] = PAGE_COPY;
+-	protection_map[3] = PAGE_COPY;
++	protection_map[1] = PAGE_READONLY_NOEXEC;
++	protection_map[2] = PAGE_COPY_NOEXEC;
++	protection_map[3] = PAGE_COPY_NOEXEC;
+ 	protection_map[4] = PAGE_READONLY;
+ 	protection_map[5] = PAGE_READONLY;
+ 	protection_map[6] = PAGE_COPY;
+ 	protection_map[7] = PAGE_COPY;
+ 	protection_map[8] = PAGE_NONE;
+-	protection_map[9] = PAGE_READONLY;
+-	protection_map[10] = PAGE_SHARED;
+-	protection_map[11] = PAGE_SHARED;
++	protection_map[9] = PAGE_READONLY_NOEXEC;
++	protection_map[10] = PAGE_SHARED_NOEXEC;
++	protection_map[11] = PAGE_SHARED_NOEXEC;
+ 	protection_map[12] = PAGE_READONLY;
+ 	protection_map[13] = PAGE_READONLY;
+ 	protection_map[14] = PAGE_SHARED;
+--- a/arch/sparc/mm/srmmu.c
++++ b/arch/sparc/mm/srmmu.c
+@@ -2157,6 +2157,13 @@ void __init ld_mmu_srmmu(void)
+ 	PAGE_SHARED = pgprot_val(SRMMU_PAGE_SHARED);
+ 	BTFIXUPSET_INT(page_copy, pgprot_val(SRMMU_PAGE_COPY));
+ 	BTFIXUPSET_INT(page_readonly, pgprot_val(SRMMU_PAGE_RDONLY));
++
++#ifdef CONFIG_PAX_PAGEEXEC
++	PAGE_SHARED_NOEXEC = pgprot_val(SRMMU_PAGE_SHARED_NOEXEC);
++	BTFIXUPSET_INT(page_copy_noexec, pgprot_val(SRMMU_PAGE_COPY_NOEXEC));
++	BTFIXUPSET_INT(page_readonly_noexec, pgprot_val(SRMMU_PAGE_RDONLY_NOEXEC));
++#endif
++
+ 	BTFIXUPSET_INT(page_kernel, pgprot_val(SRMMU_PAGE_KERNEL));
+ 	page_kernel = pgprot_val(SRMMU_PAGE_KERNEL);
+ 
 --- a/arch/v850/kernel/module.c
 +++ b/arch/v850/kernel/module.c
 @@ -150,8 +150,8 @@ static uint32_t do_plt_call (void *locat
@@ -10709,7 +10763,7 @@
  
  #include <asm/system.h>
  #include <asm/pgalloc.h>
-@@ -291,6 +292,207 @@ static int vmalloc_fault(unsigned long a
+@@ -291,6 +292,163 @@ static int vmalloc_fault(unsigned long a
  	return 0;
  }
  
@@ -10771,50 +10825,6 @@
 +static int pax_handle_fetch_fault_64(struct pt_regs *regs)
 +{
 +	int err;
-+
-+#if 0
-+14105     {
-+14106       int offset = 0;
-+14107       /* Try to load address using shorter movl instead of movabs.
-+14108          We may want to support movq for kernel mode, but kernel does not use
-+14109          trampolines at the moment.  */
-+14110       if (x86_64_zext_immediate_operand (fnaddr, VOIDmode))
-+14111 »·······{
-+14112 »·······  fnaddr = copy_to_mode_reg (DImode, fnaddr);
-+14113 »·······  emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
-+14114 »·······»·······»·······  gen_int_mode (0xbb41, HImode));
-+14115 »·······  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, offset + 2)),
-+14116 »·······»·······»·······  gen_lowpart (SImode, fnaddr));
-+14117 »·······  offset += 6;
-+14118 »·······}
-+14119       else
-+14120 »·······{
-+14121 »·······  emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
-+14122 »·······»·······»·······  gen_int_mode (0xbb49, HImode));
-+14123 »·······  emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, offset + 2)),
-+14124 »·······»·······»·······  fnaddr);
-+14125 »·······  offset += 10;
-+14126 »·······}
-+14127       /* Load static chain using movabs to r10.  */
-+14128       emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
-+14129 »·······»·······      gen_int_mode (0xba49, HImode));
-+14130       emit_move_insn (gen_rtx_MEM (DImode, plus_constant (tramp, offset + 2)),
-+14131 »·······»·······      cxt);
-+14132       offset += 10;
-+14133       /* Jump to the r11 */
-+14134       emit_move_insn (gen_rtx_MEM (HImode, plus_constant (tramp, offset)),
-+14135 »·······»·······      gen_int_mode (0xff49, HImode));
-+14136       emit_move_insn (gen_rtx_MEM (QImode, plus_constant (tramp, offset+2)),
-+14137 »·······»·······      gen_int_mode (0xe3, QImode));
-+14138       offset += 3;
-+14139       gcc_assert (offset <= TRAMPOLINE_SIZE);
-+14140     }
-+
-++  tramp[1] = 0xbb49;		/* mov <code>, %r11	*/
-++  tramp[6] = 0xba49;		/* mov <data>, %r10	*/
-++  tramp[11] = 0xff49;		/* jmp *%r11	*/
-++  tramp[12] = 0x00e3;
-+#endif
 +
 +	do { /* PaX: gcc trampoline emulation #1 */
 +		unsigned short mov1, mov2, jmp1;
@@ -10917,7 +10927,7 @@
  static int page_fault_trace;
  int show_unhandled_signals = 1;
  
-@@ -427,6 +629,8 @@ asmlinkage void __kprobes do_page_fault(
+@@ -427,6 +585,8 @@ asmlinkage void __kprobes do_page_fault(
  good_area:
  	info.si_code = SEGV_ACCERR;
  	write = 0;
@@ -10926,7 +10936,7 @@
  	switch (error_code & (PF_PROT|PF_WRITE)) {
  		default:	/* 3: write, present */
  			/* fall through */
-@@ -478,6 +682,21 @@ bad_area_nosemaphore:
+@@ -478,6 +638,21 @@ bad_area_nosemaphore:
  		 */
  		local_irq_enable();
  
@@ -10948,7 +10958,7 @@
  		if (is_prefetch(regs, address, error_code))
  			return;
  
-@@ -499,7 +718,7 @@ bad_area_nosemaphore:
+@@ -499,7 +674,7 @@ bad_area_nosemaphore:
  					tsk->comm, tsk->pid, address, regs->rip,
  					regs->rsp, error_code);
  		}
@@ -11038,6 +11048,27 @@
  	int bsize = crypto_cipher_blocksize(child);
  
  	crypto_cipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
+--- a/Documentation/dontdiff
++++ b/Documentation/dontdiff
+@@ -176,14 +176,18 @@ times.h*
+ tkparse
+ trix_boot.h
+ utsrelease.h*
++vdso.lds
+ version.h*
+ vmlinux
+ vmlinux-*
+ vmlinux.aout
++vmlinux.bin.all
+ vmlinux.lds
++vmlinux.relocs
+ vsyscall.lds
+ wanxlfw.inc
+ uImage
+ unifdef
++utsrelease.h
+ zImage*
+ zconf.hash.c
 --- a/drivers/acpi/blacklist.c
 +++ b/drivers/acpi/blacklist.c
 @@ -70,7 +70,7 @@ static struct acpi_blacklist_item acpi_b
@@ -11809,6 +11840,17 @@
  };
  
  MODULE_DEVICE_TABLE(serio, atkbd_serio_ids);
+--- a/drivers/input/mousedev.c
++++ b/drivers/input/mousedev.c
+@@ -847,7 +847,7 @@ static struct input_handler mousedev_han
+ 
+ #ifdef CONFIG_INPUT_MOUSEDEV_PSAUX
+ static struct miscdevice psaux_mouse = {
+-	PSMOUSE_MINOR, "psaux", &mousedev_fops
++	PSMOUSE_MINOR, "psaux", &mousedev_fops, {NULL, NULL}, NULL, NULL
+ };
+ static int psaux_registered;
+ #endif
 --- a/drivers/input/mouse/lifebook.c
 +++ b/drivers/input/mouse/lifebook.c
 @@ -102,7 +102,7 @@ static struct dmi_system_id lifebook_dmi
@@ -11851,17 +11893,6 @@
  };
  #endif
  
---- a/drivers/input/mousedev.c
-+++ b/drivers/input/mousedev.c
-@@ -847,7 +847,7 @@ static struct input_handler mousedev_han
- 
- #ifdef CONFIG_INPUT_MOUSEDEV_PSAUX
- static struct miscdevice psaux_mouse = {
--	PSMOUSE_MINOR, "psaux", &mousedev_fops
-+	PSMOUSE_MINOR, "psaux", &mousedev_fops, {NULL, NULL}, NULL, NULL
- };
- static int psaux_registered;
- #endif
 --- a/drivers/input/serio/i8042-x86ia64io.h
 +++ b/drivers/input/serio/i8042-x86ia64io.h
 @@ -110,7 +110,7 @@ static struct dmi_system_id __initdata i
@@ -12250,34 +12281,42 @@
  	/*
  	 * PnP BIOSes are generally not terribly re-entrant.
  	 * Also, don't rely on them to save everything correctly.
-@@ -102,6 +106,10 @@ static inline u16 call_pnp_bios(u16 func
+@@ -97,8 +101,17 @@ static inline u16 call_pnp_bios(u16 func
+ 
+ 	cpu = get_cpu();
+ 	save_desc_40 = get_cpu_gdt_table(cpu)[0x40 / 8];
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
+ 	get_cpu_gdt_table(cpu)[0x40 / 8] = bad_bios_desc;
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
  	/* On some boxes IRQ's during PnP BIOS calls are deadly.  */
  	spin_lock_irqsave(&pnp_bios_lock, flags);
+ 
+@@ -135,7 +148,16 @@ static inline u16 call_pnp_bios(u16 func
+ 			     :"memory");
+ 	spin_unlock_irqrestore(&pnp_bios_lock, flags);
  
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
 +
- 	/* The lock prevents us bouncing CPU here */
- 	if (ts1_size)
- 		Q2_SET_SEL(smp_processor_id(), PNP_TS1, ts1_base, ts1_size);
-@@ -133,9 +141,14 @@ static inline u16 call_pnp_bios(u16 func
- 			     "d"((arg6) | (((u32) arg7) << 16)),
- 			     "i"(PNP_CS32), "i"(0)
- 			     :"memory");
--	spin_unlock_irqrestore(&pnp_bios_lock, flags);
- 
  	get_cpu_gdt_table(cpu)[0x40 / 8] = save_desc_40;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
 +#endif
 +
-+	spin_unlock_irqrestore(&pnp_bios_lock, flags);
  	put_cpu();
  
  	/* If we get here and this is set then the PnP BIOS faulted on us. */
-@@ -469,16 +482,25 @@ int pnp_bios_read_escd(char *data, u32 n
+@@ -469,16 +491,25 @@ int pnp_bios_read_escd(char *data, u32 n
  	return status;
  }
  
@@ -12304,7 +12343,7 @@
  	for (i = 0; i < NR_CPUS; i++) {
  		struct desc_struct *gdt = get_cpu_gdt_table(i);
  		if (!gdt)
-@@ -489,4 +511,9 @@ void pnpbios_calls_init(union pnp_bios_i
+@@ -489,4 +520,9 @@ void pnpbios_calls_init(union pnp_bios_i
  		set_base(gdt[GDT_ENTRY_PNPBIOS_DS],
  			 __va(header->fields.pm16dseg));
  	}
@@ -12947,17 +12986,6 @@
  	if (info->screen_base)
  		iounmap(info->screen_base);
  	framebuffer_release(info);
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -909,7 +909,7 @@ config PROC_FS
- 
- config PROC_KCORE
- 	bool "/proc/kcore support" if !ARM
--	depends on PROC_FS && MMU
-+	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
- 
- config PROC_VMCORE
-         bool "/proc/vmcore support (EXPERIMENTAL)"
 --- a/fs/binfmt_aout.c
 +++ b/fs/binfmt_aout.c
 @@ -24,6 +24,7 @@
@@ -14633,6 +14661,17 @@
  };
  
  /*
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -909,7 +909,7 @@ config PROC_FS
+ 
+ config PROC_KCORE
+ 	bool "/proc/kcore support" if !ARM
+-	depends on PROC_FS && MMU
++	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
+ 
+ config PROC_VMCORE
+         bool "/proc/vmcore support (EXPERIMENTAL)"
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -31,6 +31,7 @@
@@ -15006,6 +15045,28 @@
  		printk("NFSv4 CALLBACK %s: client sent tag of length %u\n",
  				__FUNCTION__, hdr->taglen);
  		return htonl(NFS4ERR_RESOURCE);
+--- a/fs/nfsd/export.c
++++ b/fs/nfsd/export.c
+@@ -478,7 +478,7 @@ static int secinfo_parse(char **mesg, ch
+ 		 * probably discover the problem when someone fails to
+ 		 * authenticate.
+ 		 */
+-		if (f->pseudoflavor < 0)
++		if ((s32)f->pseudoflavor < 0)
+ 			return -EINVAL;
+ 		err = get_int(mesg, &f->flags);
+ 		if (err)
+--- a/fs/nfsd/nfs4state.c
++++ b/fs/nfsd/nfs4state.c
+@@ -1248,7 +1248,7 @@ static int access_valid(u32 x)
+ 
+ static int deny_valid(u32 x)
+ {
+-	return (x >= 0 && x < 5);
++	return (x < 5);
+ }
+ 
+ static void
 --- a/fs/nfs/nfs4proc.c
 +++ b/fs/nfs/nfs4proc.c
 @@ -657,7 +657,7 @@ static int _nfs4_do_open_reclaim(struct 
@@ -15278,28 +15339,6 @@
  	int err;
  
  	err = nfs4_set_lock_state(state, fl);
---- a/fs/nfsd/export.c
-+++ b/fs/nfsd/export.c
-@@ -478,7 +478,7 @@ static int secinfo_parse(char **mesg, ch
- 		 * probably discover the problem when someone fails to
- 		 * authenticate.
- 		 */
--		if (f->pseudoflavor < 0)
-+		if ((s32)f->pseudoflavor < 0)
- 			return -EINVAL;
- 		err = get_int(mesg, &f->flags);
- 		if (err)
---- a/fs/nfsd/nfs4state.c
-+++ b/fs/nfsd/nfs4state.c
-@@ -1248,7 +1248,7 @@ static int access_valid(u32 x)
- 
- static int deny_valid(u32 x)
- {
--	return (x >= 0 && x < 5);
-+	return (x < 5);
- }
- 
- static void
 --- a/fs/nls/nls_base.c
 +++ b/fs/nls/nls_base.c
 @@ -42,7 +42,7 @@ static struct utf8_table utf8_table[] =
@@ -16485,904 +16524,99 @@
  
  #if defined(XFS_RW_TRACE)
 --- /dev/null
-+++ b/grsecurity/Kconfig
-@@ -0,0 +1,873 @@
-+#
-+# grecurity configuration
-+#
-+
-+menu "Grsecurity"
-+
-+config GRKERNSEC
-+	bool "Grsecurity"
-+	select CRYPTO
-+	select CRYPTO_SHA256
-+	help
-+	  If you say Y here, you will be able to configure many features
-+	  that will enhance the security of your system.  It is highly
-+	  recommended that you say Y here and read through the help
-+	  for each option so that you fully understand the features and
-+	  can evaluate their usefulness for your machine.
-+
-+choice
-+	prompt "Security Level"
-+	depends GRKERNSEC
-+	default GRKERNSEC_CUSTOM
-+
-+config GRKERNSEC_LOW
-+	bool "Low"
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+
-+	help
-+	  If you choose this option, several of the grsecurity options will
-+	  be enabled that will give you greater protection against a number
-+	  of attacks, while assuring that none of your software will have any
-+	  conflicts with the additional security measures.  If you run a lot
-+	  of unusual software, or you are having problems with the higher
-+	  security levels, you should say Y here.  With this option, the
-+	  following features are enabled:
-+
-+	  - Linking restrictions
-+	  - FIFO restrictions
-+	  - Enforcing RLIMIT_NPROC on execve
-+	  - Restricted dmesg
-+	  - Enforced chdir("/") on chroot
-+	  - Runtime module disabling
-+
-+config GRKERNSEC_MEDIUM
-+	bool "Medium"
-+	select PAX
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
-+	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
-+	select GRKERNSEC_CHROOT_SYSCTL
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_FORKFAIL
-+	select GRKERNSEC_TIME
-+	select GRKERNSEC_SIGNAL
-+	select GRKERNSEC_CHROOT
-+	select GRKERNSEC_CHROOT_UNIX
-+	select GRKERNSEC_CHROOT_MOUNT
-+	select GRKERNSEC_CHROOT_PIVOT
-+	select GRKERNSEC_CHROOT_DOUBLE
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_CHROOT_MKNOD
-+	select GRKERNSEC_PROC
-+	select GRKERNSEC_PROC_USERGROUP
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
-+
-+	help
-+	  If you say Y here, several features in addition to those included
-+	  in the low additional security level will be enabled.  These
-+	  features provide even more security to your system, though in rare
-+	  cases they may be incompatible with very old or poorly written
-+	  software.  If you enable this option, make sure that your auth
-+	  service (identd) is running as gid 1001.  With this option, 
-+	  the following features (in addition to those provided in the 
-+	  low additional security level) will be enabled:
-+
-+	  - Randomized TCP source ports
-+	  - Failed fork logging
-+	  - Time change logging
-+	  - Signal logging
-+	  - Deny mounts in chroot
-+	  - Deny double chrooting
-+	  - Deny sysctl writes in chroot
-+	  - Deny mknod in chroot
-+	  - Deny access to abstract AF_UNIX sockets out of chroot
-+	  - Deny pivot_root in chroot
-+	  - Denied writes of /dev/kmem, /dev/mem, and /dev/port
-+	  - /proc restrictions with special GID set to 10 (usually wheel)
-+	  - Address Space Layout Randomization (ASLR)
-+
-+config GRKERNSEC_HIGH
-+	bool "High"
-+	select GRKERNSEC_LINK
-+	select GRKERNSEC_FIFO
-+	select GRKERNSEC_EXECVE
-+	select GRKERNSEC_DMESG
-+	select GRKERNSEC_FORKFAIL
-+	select GRKERNSEC_TIME
-+	select GRKERNSEC_SIGNAL
-+	select GRKERNSEC_CHROOT_SHMAT
-+	select GRKERNSEC_CHROOT_UNIX
-+	select GRKERNSEC_CHROOT_MOUNT
-+	select GRKERNSEC_CHROOT_FCHDIR
-+	select GRKERNSEC_CHROOT_PIVOT
-+	select GRKERNSEC_CHROOT_DOUBLE
-+	select GRKERNSEC_CHROOT_CHDIR
-+	select GRKERNSEC_CHROOT_MKNOD
-+	select GRKERNSEC_CHROOT_CAPS
-+	select GRKERNSEC_CHROOT_SYSCTL
-+	select GRKERNSEC_CHROOT_FINDTASK
-+	select GRKERNSEC_PROC
-+	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
-+	select GRKERNSEC_HIDESYM
-+	select GRKERNSEC_BRUTE
-+	select GRKERNSEC_SHM if (SYSVIPC)
-+	select GRKERNSEC_PROC_USERGROUP
-+	select GRKERNSEC_KMEM
-+	select GRKERNSEC_RESLOG
-+	select GRKERNSEC_RANDNET
-+	select GRKERNSEC_PROC_ADD
-+	select GRKERNSEC_CHROOT_CHMOD
-+	select GRKERNSEC_CHROOT_NICE
-+	select GRKERNSEC_AUDIT_MOUNT
-+	select GRKERNSEC_MODSTOP if (MODULES)
-+	select PAX
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
-+	select PAX_NOEXEC
-+	select PAX_MPROTECT
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
-+	select PAX_KERNEXEC if (!X86_64 && !EFI && !COMPAT_VDSO && !PARAVIRT && X86_WP_WORKS_OK)
-+	select PAX_MEMORY_UDEREF if (!X86_64 && !COMPAT_VDSO)
-+	select PAX_RANDKSTACK if (X86_TSC && !X86_64)
-+	select PAX_SEGMEXEC if (X86 && !X86_64)
-+	select PAX_PAGEEXEC if (!X86)
-+	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
-+	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
-+	select PAX_SYSCALL if (PPC32)
-+	select PAX_EMUTRAMP if (PARISC)
-+	select PAX_EMUSIGRT if (PARISC)
-+	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
-+	help
-+	  If you say Y here, many of the features of grsecurity will be
-+	  enabled, which will protect you against many kinds of attacks
-+	  against your system.  The heightened security comes at a cost
-+	  of an increased chance of incompatibilities with rare software
-+	  on your machine.  Since this security level enables PaX, you should
-+	  view <http://pax.grsecurity.net> and read about the PaX
-+	  project.  While you are there, download chpax and run it on
-+	  binaries that cause problems with PaX.  Also remember that
-+	  since the /proc restrictions are enabled, you must run your
-+	  identd as gid 1001.  This security level enables the following 
-+	  features in addition to those listed in the low and medium 
-+	  security levels:
-+
-+	  - Additional /proc restrictions
-+	  - Chmod restrictions in chroot
-+	  - No signals, ptrace, or viewing of processes outside of chroot
-+	  - Capability restrictions in chroot
-+	  - Deny fchdir out of chroot
-+	  - Priority restrictions in chroot
-+	  - Segmentation-based implementation of PaX
-+	  - Mprotect restrictions
-+	  - Removal of addresses from /proc/<pid>/[smaps|maps|stat]
-+	  - Kernel stack randomization
-+	  - Mount/unmount/remount logging
-+	  - Kernel symbol hiding
-+	  - Destroy unused shared memory	
-+	  - Prevention of memory exhaustion-based exploits
-+config GRKERNSEC_CUSTOM
-+	bool "Custom"
-+	help
-+	  If you say Y here, you will be able to configure every grsecurity
-+	  option, which allows you to enable many more features that aren't
-+	  covered in the basic security levels.  These additional features
-+	  include TPE, socket restrictions, and the sysctl system for
-+	  grsecurity.  It is advised that you read through the help for
-+	  each option to determine its usefulness in your situation.
-+
-+endchoice
-+
-+menu "Address Space Protection"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_KMEM
-+	bool "Deny writing to /dev/kmem, /dev/mem, and /dev/port"
-+	help
-+	  If you say Y here, /dev/kmem and /dev/mem won't be allowed to
-+	  be written to via mmap or otherwise to modify the running kernel.
-+	  /dev/port will also not be allowed to be opened. If you have module
-+	  support disabled, enabling this will close up four ways that are
-+	  currently used  to insert malicious code into the running kernel.
-+	  Even with all these features enabled, we still highly recommend that
-+	  you use the RBAC system, as it is still possible for an attacker to
-+	  modify the running kernel through privileged I/O granted by ioperm/iopl.
-+	  If you are not using XFree86, you may be able to stop this additional
-+	  case by enabling the 'Disable privileged I/O' option. Though nothing
-+	  legitimately writes to /dev/kmem, XFree86 does need to write to /dev/mem,
-+	  but only to video memory, which is the only writing we allow in this
-+	  case.  If /dev/kmem or /dev/mem are mmaped without PROT_WRITE, they will
-+	  not be allowed to mprotect it with PROT_WRITE later.
-+	  It is highly recommended that you say Y here if you meet all the
-+	  conditions above.
-+
-+config GRKERNSEC_IO
-+	bool "Disable privileged I/O"
-+	depends on X86
-+	select RTC
-+	help
-+	  If you say Y here, all ioperm and iopl calls will return an error.
-+	  Ioperm and iopl can be used to modify the running kernel.
-+	  Unfortunately, some programs need this access to operate properly,
-+	  the most notable of which are XFree86 and hwclock.  hwclock can be
-+	  remedied by having RTC support in the kernel, so CONFIG_RTC is
-+	  enabled if this option is enabled, to ensure that hwclock operates
-+	  correctly.  XFree86 still will not operate correctly with this option
-+	  enabled, so DO NOT CHOOSE Y IF YOU USE XFree86.  If you use XFree86
-+	  and you still want to protect your kernel against modification,
-+	  use the RBAC system.
-+
-+config GRKERNSEC_PROC_MEMMAP
-+	bool "Remove addresses from /proc/<pid>/[smaps|maps|stat]"
-+	depends on PAX_NOEXEC || PAX_ASLR
-+	help
-+	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files will
-+	  give no information about the addresses of its mappings if
-+	  PaX features that rely on random addresses are enabled on the task.
-+	  If you use PaX it is greatly recommended that you say Y here as it
-+	  closes up a hole that makes the full ASLR useless for suid
-+	  binaries.
-+
-+config GRKERNSEC_BRUTE
-+	bool "Deter exploit bruteforcing"
-+	help
-+	  If you say Y here, attempts to bruteforce exploits against forking
-+	  daemons such as apache or sshd will be deterred.  When a child of a
-+	  forking daemon is killed by PaX or crashes due to an illegal
-+	  instruction, the parent process will be delayed 30 seconds upon every
-+	  subsequent fork until the administrator is able to assess the
-+	  situation and restart the daemon.  It is recommended that you also
-+	  enable signal logging in the auditing section so that logs are
-+	  generated when a process performs an illegal instruction.
-+
-+config GRKERNSEC_MODSTOP
-+	bool "Runtime module disabling"
-+	depends on MODULES
-+	help
-+	  If you say Y here, you will be able to disable the ability to (un)load
-+	  modules at runtime.  This feature is useful if you need the ability
-+	  to load kernel modules at boot time, but do not want to allow an
-+	  attacker to load a rootkit kernel module into the system, or to remove
-+	  a loaded kernel module important to system functioning.  You should
-+	  enable the /dev/mem protection feature as well, since rootkits can be
-+	  inserted into the kernel via other methods than kernel modules.  Since
-+	  an untrusted module could still be loaded by modifying init scripts and
-+	  rebooting the system, it is also recommended that you enable the RBAC
-+	  system.  If you enable this option, a sysctl option with name
-+	  "disable_modules" will be created.  Setting this option to "1" disables
-+	  module loading.  After this option is set, no further writes to it are
-+	  allowed until the system is rebooted.
-+
-+config GRKERNSEC_HIDESYM
-+	bool "Hide kernel symbols"
-+	help
-+	  If you say Y here, getting information on loaded modules, and
-+	  displaying all kernel symbols through a syscall will be restricted
-+	  to users with CAP_SYS_MODULE.  This option is only effective
-+	  provided the following conditions are met:
-+	  1) The kernel using grsecurity is not precompiled by some distribution
-+	  2) You are using the RBAC system and hiding other files such as your
-+	     kernel image and System.map
-+	  3) You have the additional /proc restrictions enabled, which removes
-+	     /proc/kcore
-+	  If the above conditions are met, this option will aid to provide a
-+	  useful protection against local and remote kernel exploitation of
-+	  overflows and arbitrary read/write vulnerabilities.
-+
-+endmenu
-+menu "Role Based Access Control Options"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_ACL_HIDEKERN
-+	bool "Hide kernel processes"
-+	help
-+	  If you say Y here, all kernel threads will be hidden to all
-+	  processes but those whose subject has the "view hidden processes"
-+	  flag.
-+
-+config GRKERNSEC_ACL_MAXTRIES
-+	int "Maximum tries before password lockout"
-+	default 3
-+	help
-+	  This option enforces the maximum number of times a user can attempt
-+	  to authorize themselves with the grsecurity RBAC system before being
-+	  denied the ability to attempt authorization again for a specified time.
-+	  The lower the number, the harder it will be to brute-force a password.
-+
-+config GRKERNSEC_ACL_TIMEOUT
-+	int "Time to wait after max password tries, in seconds"
-+	default 30
-+	help
-+	  This option specifies the time the user must wait after attempting to
-+	  authorize to the RBAC system with the maximum number of invalid
-+	  passwords.  The higher the number, the harder it will be to brute-force
-+	  a password.
-+
-+endmenu
-+menu "Filesystem Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_PROC
-+	bool "Proc restrictions"
-+	help
-+	  If you say Y here, the permissions of the /proc filesystem
-+	  will be altered to enhance system security and privacy.  You MUST
-+  	  choose either a user only restriction or a user and group restriction.
-+	  Depending upon the option you choose, you can either restrict users to
-+	  see only the processes they themselves run, or choose a group that can
-+	  view all processes and files normally restricted to root if you choose
-+	  the "restrict to user only" option.  NOTE: If you're running identd as
-+	  a non-root user, you will have to run it as the group you specify here.
-+
-+config GRKERNSEC_PROC_USER
-+	bool "Restrict /proc to user only"
-+	depends on GRKERNSEC_PROC
-+	help
-+	  If you say Y here, non-root users will only be able to view their own
-+	  processes, and restricts them from viewing network-related information,
-+	  and viewing kernel symbol and module information.
-+
-+config GRKERNSEC_PROC_USERGROUP
-+	bool "Allow special group"
-+	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
-+	help
-+	  If you say Y here, you will be able to select a group that will be
-+	  able to view all processes, network-related information, and
-+	  kernel and symbol information.  This option is useful if you want
-+	  to run identd as a non-root user.
-+
-+config GRKERNSEC_PROC_GID
-+	int "GID for special group"
-+	depends on GRKERNSEC_PROC_USERGROUP
-+	default 1001
-+
-+config GRKERNSEC_PROC_ADD
-+	bool "Additional restrictions"
-+	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
-+	help
-+	  If you say Y here, additional restrictions will be placed on
-+	  /proc that keep normal users from viewing device information and 
-+	  slabinfo information that could be useful for exploits.
-+
-+config GRKERNSEC_LINK
-+	bool "Linking restrictions"
-+	help
-+	  If you say Y here, /tmp race exploits will be prevented, since users
-+	  will no longer be able to follow symlinks owned by other users in
-+	  world-writable +t directories (i.e. /tmp), unless the owner of the
-+	  symlink is the owner of the directory. users will also not be
-+	  able to hardlink to files they do not own.  If the sysctl option is
-+	  enabled, a sysctl option with name "linking_restrictions" is created.
-+
-+config GRKERNSEC_FIFO
-+	bool "FIFO restrictions"
-+	help
-+	  If you say Y here, users will not be able to write to FIFOs they don't
-+	  own in world-writable +t directories (i.e. /tmp), unless the owner of
-+	  the FIFO is the same owner of the directory it's held in.  If the sysctl
-+	  option is enabled, a sysctl option with name "fifo_restrictions" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT
-+	bool "Chroot jail restrictions"
-+	help
-+	  If you say Y here, you will be able to choose several options that will
-+	  make breaking out of a chrooted jail much more difficult.  If you
-+	  encounter no software incompatibilities with the following options, it
-+	  is recommended that you enable each one.
-+
-+config GRKERNSEC_CHROOT_MOUNT
-+	bool "Deny mounts"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  mount or remount filesystems.  If the sysctl option is enabled, a
-+	  sysctl option with name "chroot_deny_mount" is created.
-+
-+config GRKERNSEC_CHROOT_DOUBLE
-+	bool "Deny double-chroots"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to chroot
-+	  again outside the chroot.  This is a widely used method of breaking
-+	  out of a chroot jail and should not be allowed.  If the sysctl 
-+	  option is enabled, a sysctl option with name 
-+	  "chroot_deny_chroot" is created.
-+
-+config GRKERNSEC_CHROOT_PIVOT
-+	bool "Deny pivot_root in chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to use
-+	  a function called pivot_root() that was introduced in Linux 2.3.41.  It
-+	  works similar to chroot in that it changes the root filesystem.  This
-+	  function could be misused in a chrooted process to attempt to break out
-+	  of the chroot, and therefore should not be allowed.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_deny_pivot" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_CHDIR
-+	bool "Enforce chdir(\"/\") on all chroots"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, the current working directory of all newly-chrooted
-+	  applications will be set to the the root directory of the chroot.
-+	  The man page on chroot(2) states:
-+	  Note that this call does not change  the  current  working
-+	  directory,  so  that `.' can be outside the tree rooted at
-+	  `/'.  In particular, the  super-user  can  escape  from  a
-+	  `chroot jail' by doing `mkdir foo; chroot foo; cd ..'.
-+
-+	  It is recommended that you say Y here, since it's not known to break
-+	  any software.  If the sysctl option is enabled, a sysctl option with
-+	  name "chroot_enforce_chdir" is created.
-+
-+config GRKERNSEC_CHROOT_CHMOD
-+	bool "Deny (f)chmod +s"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to chmod
-+	  or fchmod files to make them have suid or sgid bits.  This protects
-+	  against another published method of breaking a chroot.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_deny_chmod" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_FCHDIR
-+	bool "Deny fchdir out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, a well-known method of breaking chroots by fchdir'ing
-+	  to a file descriptor of the chrooting process that points to a directory
-+	  outside the filesystem will be stopped.  If the sysctl option
-+	  is enabled, a sysctl option with name "chroot_deny_fchdir" is created.
-+
-+config GRKERNSEC_CHROOT_MKNOD
-+	bool "Deny mknod"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be allowed to
-+	  mknod.  The problem with using mknod inside a chroot is that it
-+	  would allow an attacker to create a device entry that is the same
-+	  as one on the physical root of your system, which could range from
-+	  anything from the console device to a device for your harddrive (which
-+	  they could then use to wipe the drive or steal data).  It is recommended
-+	  that you say Y here, unless you run into software incompatibilities.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "chroot_deny_mknod" is created.
-+
-+config GRKERNSEC_CHROOT_SHMAT
-+	bool "Deny shmat() out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to attach
-+	  to shared memory segments that were created outside of the chroot jail.
-+	  It is recommended that you say Y here.  If the sysctl option is enabled,
-+	  a sysctl option with name "chroot_deny_shmat" is created.
-+
-+config GRKERNSEC_CHROOT_UNIX
-+	bool "Deny access to abstract AF_UNIX sockets out of chroot"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  connect to abstract (meaning not belonging to a filesystem) Unix
-+	  domain sockets that were bound outside of a chroot.  It is recommended
-+	  that you say Y here.  If the sysctl option is enabled, a sysctl option
-+	  with name "chroot_deny_unix" is created.
-+
-+config GRKERNSEC_CHROOT_FINDTASK
-+	bool "Protect outside processes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to
-+	  kill, send signals with fcntl, ptrace, capget, getpgid, getsid,
-+	  or view any process outside of the chroot.  If the sysctl
-+	  option is enabled, a sysctl option with name "chroot_findtask" is
-+	  created.
-+
-+config GRKERNSEC_CHROOT_NICE
-+	bool "Restrict priority changes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, processes inside a chroot will not be able to raise
-+	  the priority of processes in the chroot, or alter the priority of
-+	  processes outside the chroot.  This provides more security than simply
-+	  removing CAP_SYS_NICE from the process' capability set.  If the
-+	  sysctl option is enabled, a sysctl option with name "chroot_restrict_nice"
-+	  is created.
-+
-+config GRKERNSEC_CHROOT_SYSCTL
-+	bool "Deny sysctl writes"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, an attacker in a chroot will not be able to
-+	  write to sysctl entries, either by sysctl(2) or through a /proc
-+	  interface.  It is strongly recommended that you say Y here. If the
-+	  sysctl option is enabled, a sysctl option with name
-+	  "chroot_deny_sysctl" is created.
-+
-+config GRKERNSEC_CHROOT_CAPS
-+	bool "Capability restrictions"
-+	depends on GRKERNSEC_CHROOT
-+	help
-+	  If you say Y here, the capabilities on all root processes within a
-+	  chroot jail will be lowered to stop module insertion, raw i/o,
-+	  system and net admin tasks, rebooting the system, modifying immutable
-+	  files, modifying IPC owned by another, and changing the system time.
-+	  This is left an option because it can break some apps.  Disable this
-+	  if your chrooted apps are having problems performing those kinds of
-+	  tasks.  If the sysctl option is enabled, a sysctl option with
-+	  name "chroot_caps" is created.
-+
-+endmenu
-+menu "Kernel Auditing"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_AUDIT_GROUP
-+	bool "Single group for auditing"
-+	help
-+	  If you say Y here, the exec, chdir, (un)mount, and ipc logging features
-+	  will only operate on a group you specify.  This option is recommended
-+	  if you only want to watch certain users instead of having a large
-+	  amount of logs from the entire system.  If the sysctl option is enabled,
-+	  a sysctl option with name "audit_group" is created.
-+
-+config GRKERNSEC_AUDIT_GID
-+	int "GID for auditing"
-+	depends on GRKERNSEC_AUDIT_GROUP
-+	default 1007
-+
-+config GRKERNSEC_EXECLOG
-+	bool "Exec logging"
-+	help
-+	  If you say Y here, all execve() calls will be logged (since the
-+	  other exec*() calls are frontends to execve(), all execution
-+	  will be logged).  Useful for shell-servers that like to keep track
-+	  of their users.  If the sysctl option is enabled, a sysctl option with
-+	  name "exec_logging" is created.
-+	  WARNING: This option when enabled will produce a LOT of logs, especially
-+	  on an active system.
-+
-+config GRKERNSEC_RESLOG
-+	bool "Resource logging"
-+	help
-+	  If you say Y here, all attempts to overstep resource limits will
-+	  be logged with the resource name, the requested size, and the current
-+	  limit.  It is highly recommended that you say Y here.  If the sysctl
-+	  option is enabled, a sysctl option with name "resource_logging" is
-+	  created.  If the RBAC system is enabled, the sysctl value is ignored.
-+
-+config GRKERNSEC_CHROOT_EXECLOG
-+	bool "Log execs within chroot"
-+	help
-+	  If you say Y here, all executions inside a chroot jail will be logged
-+	  to syslog.  This can cause a large amount of logs if certain
-+	  applications (eg. djb's daemontools) are installed on the system, and
-+	  is therefore left as an option.  If the sysctl option is enabled, a
-+	  sysctl option with name "chroot_execlog" is created.
-+
-+config GRKERNSEC_AUDIT_CHDIR
-+	bool "Chdir logging"
-+	help
-+	  If you say Y here, all chdir() calls will be logged.  If the sysctl
-+ 	  option is enabled, a sysctl option with name "audit_chdir" is created.
-+
-+config GRKERNSEC_AUDIT_MOUNT
-+	bool "(Un)Mount logging"
-+	help
-+	  If you say Y here, all mounts and unmounts will be logged.  If the
-+	  sysctl option is enabled, a sysctl option with name "audit_mount" is
-+	  created.
-+
-+config GRKERNSEC_AUDIT_IPC
-+	bool "IPC logging"
-+	help
-+	  If you say Y here, creation and removal of message queues, semaphores,
-+	  and shared memory will be logged.  If the sysctl option is enabled, a
-+	  sysctl option with name "audit_ipc" is created.
-+
-+config GRKERNSEC_SIGNAL
-+	bool "Signal logging"
-+	help
-+	  If you say Y here, certain important signals will be logged, such as
-+	  SIGSEGV, which will as a result inform you of when a error in a program
-+	  occurred, which in some cases could mean a possible exploit attempt.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "signal_logging" is created.
-+
-+config GRKERNSEC_FORKFAIL
-+	bool "Fork failure logging"
-+	help
-+	  If you say Y here, all failed fork() attempts will be logged.
-+	  This could suggest a fork bomb, or someone attempting to overstep
-+	  their process limit.  If the sysctl option is enabled, a sysctl option
-+	  with name "forkfail_logging" is created.
-+
-+config GRKERNSEC_TIME
-+	bool "Time change logging"
-+	help
-+	  If you say Y here, any changes of the system clock will be logged.
-+	  If the sysctl option is enabled, a sysctl option with name
-+	  "timechange_logging" is created.
-+
-+config GRKERNSEC_PROC_IPADDR
-+	bool "/proc/<pid>/ipaddr support"
-+	help
-+	  If you say Y here, a new entry will be added to each /proc/<pid>
-+	  directory that contains the IP address of the person using the task.
-+	  The IP is carried across local TCP and AF_UNIX stream sockets.
-+	  This information can be useful for IDS/IPSes to perform remote response
-+	  to a local attack.  The entry is readable by only the owner of the
-+	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
-+	  the RBAC system), and thus does not create privacy concerns.
-+
-+config GRKERNSEC_AUDIT_TEXTREL
-+	bool 'ELF text relocations logging (READ HELP)'
-+	depends on PAX_MPROTECT
-+	help
-+	  If you say Y here, text relocations will be logged with the filename
-+	  of the offending library or binary.  The purpose of the feature is
-+	  to help Linux distribution developers get rid of libraries and
-+	  binaries that need text relocations which hinder the future progress
-+	  of PaX.  Only Linux distribution developers should say Y here, and
-+	  never on a production machine, as this option creates an information
-+	  leak that could aid an attacker in defeating the randomization of
-+	  a single memory region.  If the sysctl option is enabled, a sysctl
-+	  option with name "audit_textrel" is created.
-+
-+endmenu
-+
-+menu "Executable Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_EXECVE
-+	bool "Enforce RLIMIT_NPROC on execs"
-+	help
-+	  If you say Y here, users with a resource limit on processes will
-+	  have the value checked during execve() calls.  The current system
-+	  only checks the system limit during fork() calls.  If the sysctl option
-+	  is enabled, a sysctl option with name "execve_limiting" is created.
-+
-+config GRKERNSEC_SHM
-+	bool "Destroy unused shared memory"
-+	depends on SYSVIPC
-+	help
-+	  If you say Y here, shared memory will be destroyed when no one is
-+	  attached to it.  Otherwise, resources involved with the shared
-+	  memory can be used up and not be associated with any process (as the
-+	  shared memory still exists, and the creating process has exited).  If
-+	  the sysctl option is enabled, a sysctl option with name
-+	  "destroy_unused_shm" is created.
-+
-+config GRKERNSEC_DMESG
-+	bool "Dmesg(8) restriction"
-+	help
-+	  If you say Y here, non-root users will not be able to use dmesg(8)
-+	  to view up to the last 4kb of messages in the kernel's log buffer.
-+	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
-+	  created.
-+
-+config GRKERNSEC_TPE
-+	bool "Trusted Path Execution (TPE)"
-+	help
-+	  If you say Y here, you will be able to choose a gid to add to the
-+	  supplementary groups of users you want to mark as "untrusted."
-+	  These users will not be able to execute any files that are not in
-+	  root-owned directories writable only by root.  If the sysctl option
-+	  is enabled, a sysctl option with name "tpe" is created.
-+
-+config GRKERNSEC_TPE_ALL
-+	bool "Partially restrict non-root users"
-+	depends on GRKERNSEC_TPE
-+	help
-+	  If you say Y here, All non-root users other than the ones in the
-+	  group specified in the main TPE option will only be allowed to
-+	  execute files in directories they own that are not group or
-+	  world-writable, or in directories owned by root and writable only by
-+	  root.  If the sysctl option is enabled, a sysctl option with name
-+	  "tpe_restrict_all" is created.
-+
-+config GRKERNSEC_TPE_INVERT
-+	bool "Invert GID option"
-+	depends on GRKERNSEC_TPE
-+	help
-+	  If you say Y here, the group you specify in the TPE configuration will
-+	  decide what group TPE restrictions will be *disabled* for.  This
-+	  option is useful if you want TPE restrictions to be applied to most
-+	  users on the system.
-+
-+config GRKERNSEC_TPE_GID
-+	int "GID for untrusted users"
-+	depends on GRKERNSEC_TPE && !GRKERNSEC_TPE_INVERT
-+	default 1005
-+	help
-+	  If you have selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *disabled* for.
-+	  If you have not selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *enabled* for.
-+	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
-+	  is created.
-+
-+config GRKERNSEC_TPE_GID
-+	int "GID for trusted users"
-+	depends on GRKERNSEC_TPE && GRKERNSEC_TPE_INVERT
-+	default 1005
-+	help
-+	  If you have selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *disabled* for.
-+	  If you have not selected the "Invert GID option" above, setting this
-+	  GID determines what group TPE restrictions will be *enabled* for.
-+	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
-+	  is created.
-+
-+endmenu
-+menu "Network Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_RANDNET
-+	bool "Larger entropy pools"
-+	help
-+	  If you say Y here, the entropy pools used for many features of Linux
-+	  and grsecurity will be doubled in size.  Since several grsecurity
-+	  features use additional randomness, it is recommended that you say Y
-+	  here.  Saying Y here has a similar effect as modifying
-+	  /proc/sys/kernel/random/poolsize.
-+
-+config GRKERNSEC_SOCKET
-+	bool "Socket restrictions"
-+	help
-+	  If you say Y here, you will be able to choose from several options.
-+	  If you assign a GID on your system and add it to the supplementary
-+	  groups of users you want to restrict socket access to, this patch
-+	  will perform up to three things, based on the option(s) you choose.
-+
-+config GRKERNSEC_SOCKET_ALL
-+	bool "Deny any sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to connect to other hosts from your machine or run server
-+	  applications from your machine.  If the sysctl option is enabled, a
-+	  sysctl option with name "socket_all" is created.
-+
-+config GRKERNSEC_SOCKET_ALL_GID
-+	int "GID to deny all sockets for"
-+	depends on GRKERNSEC_SOCKET_ALL
-+	default 1004
-+	help
-+	  Here you can choose the GID to disable socket access for. Remember to
-+	  add the users you want socket access disabled for to the GID
-+	  specified here.  If the sysctl option is enabled, a sysctl option
-+	  with name "socket_all_gid" is created.
-+
-+config GRKERNSEC_SOCKET_CLIENT
-+	bool "Deny client sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to connect to other hosts from your machine, but will be
-+	  able to run servers.  If this option is enabled, all users in the group
-+	  you specify will have to use passive mode when initiating ftp transfers
-+	  from the shell on your machine.  If the sysctl option is enabled, a
-+	  sysctl option with name "socket_client" is created.
-+
-+config GRKERNSEC_SOCKET_CLIENT_GID
-+	int "GID to deny client sockets for"
-+	depends on GRKERNSEC_SOCKET_CLIENT
-+	default 1003
-+	help
-+	  Here you can choose the GID to disable client socket access for.
-+	  Remember to add the users you want client socket access disabled for to
-+	  the GID specified here.  If the sysctl option is enabled, a sysctl
-+	  option with name "socket_client_gid" is created.
-+
-+config GRKERNSEC_SOCKET_SERVER
-+	bool "Deny server sockets to group"
-+	depends on GRKERNSEC_SOCKET
-+	help
-+	  If you say Y here, you will be able to choose a GID of whose users will
-+	  be unable to run server applications from your machine.  If the sysctl
-+	  option is enabled, a sysctl option with name "socket_server" is created.
-+
-+config GRKERNSEC_SOCKET_SERVER_GID
-+	int "GID to deny server sockets for"
-+	depends on GRKERNSEC_SOCKET_SERVER
-+	default 1002
-+	help
-+	  Here you can choose the GID to disable server socket access for.
-+	  Remember to add the users you want server socket access disabled for to
-+	  the GID specified here.  If the sysctl option is enabled, a sysctl
-+	  option with name "socket_server_gid" is created.
-+
-+endmenu
-+menu "Sysctl support"
-+depends on GRKERNSEC && SYSCTL
-+
-+config GRKERNSEC_SYSCTL
-+	bool "Sysctl support"
-+	help
-+	  If you say Y here, you will be able to change the options that
-+	  grsecurity runs with at bootup, without having to recompile your
-+	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
-+	  to enable (1) or disable (0) various features.  All the sysctl entries
-+	  are mutable until the "grsec_lock" entry is set to a non-zero value.
-+	  All features enabled in the kernel configuration are disabled at boot
-+	  if you do not say Y to the "Turn on features by default" option.
-+	  All options should be set at startup, and the grsec_lock entry should
-+	  be set to a non-zero value after all the options are set.
-+	  *THIS IS EXTREMELY IMPORTANT*
-+
-+config GRKERNSEC_SYSCTL_ON
-+	bool "Turn on features by default"
-+	depends on GRKERNSEC_SYSCTL
-+	help
-+	  If you say Y here, instead of having all features enabled in the
-+	  kernel configuration disabled at boot time, the features will be
-+	  enabled at boot time.  It is recommended you say Y here unless
-+	  there is some reason you would want all sysctl-tunable features to
-+	  be disabled by default.  As mentioned elsewhere, it is important
-+	  to enable the grsec_lock entry once you have finished modifying
-+	  the sysctl entries.
-+
-+endmenu
-+menu "Logging Options"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_FLOODTIME
-+	int "Seconds in between log messages (minimum)"
-+	default 10
-+	help
-+	  This option allows you to enforce the number of seconds between
-+	  grsecurity log messages.  The default should be suitable for most
-+	  people, however, if you choose to change it, choose a value small enough
-+	  to allow informative logs to be produced, but large enough to
-+	  prevent flooding.
-+
-+config GRKERNSEC_FLOODBURST
-+	int "Number of messages in a burst (maximum)"
-+	default 4
-+	help
-+	  This option allows you to choose the maximum number of messages allowed
-+	  within the flood time interval you chose in a separate option.  The
-+	  default should be suitable for most people, however if you find that
-+	  many of your logs are being interpreted as flooding, you may want to
-+	  raise this value.
-+
-+endmenu
-+
-+endmenu
---- /dev/null
-+++ b/grsecurity/Makefile
-@@ -0,0 +1,20 @@
-+# grsecurity's ACL system was originally written in 2001 by Michael Dalton
-+# during 2001-2005 it has been completely redesigned by Brad Spengler
-+# into an RBAC system
-+#
-+# All code in this directory and various hooks inserted throughout the kernel
-+# are copyright Brad Spengler, and released under the GPL v2 or higher
-+
-+obj-y = grsec_chdir.o grsec_chroot.o grsec_exec.o grsec_fifo.o grsec_fork.o \
-+	grsec_mount.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
-+	grsec_time.o grsec_tpe.o grsec_ipc.o grsec_link.o grsec_textrel.o
-+
-+obj-$(CONFIG_GRKERNSEC) += grsec_init.o grsum.o gracl.o gracl_ip.o gracl_segv.o \
-+	gracl_cap.o gracl_alloc.o gracl_shm.o grsec_mem.o gracl_fs.o \
-+	gracl_learn.o grsec_log.o
-+obj-$(CONFIG_GRKERNSEC_RESLOG) += gracl_res.o
-+
-+ifndef CONFIG_GRKERNSEC
-+obj-y += grsec_disabled.o
-+endif
-+
++++ b/grsecurity/gracl_alloc.c
+@@ -0,0 +1,91 @@
++#include <linux/kernel.h>
++#include <linux/mm.h>
++#include <linux/slab.h>
++#include <linux/vmalloc.h>
++#include <linux/gracl.h>
++#include <linux/grsecurity.h>
++
++static unsigned long alloc_stack_next = 1;
++static unsigned long alloc_stack_size = 1;
++static void **alloc_stack;
++
++static __inline__ int
++alloc_pop(void)
++{
++	if (alloc_stack_next == 1)
++		return 0;
++
++	kfree(alloc_stack[alloc_stack_next - 2]);
++
++	alloc_stack_next--;
++
++	return 1;
++}
++
++static __inline__ void
++alloc_push(void *buf)
++{
++	if (alloc_stack_next >= alloc_stack_size)
++		BUG();
++
++	alloc_stack[alloc_stack_next - 1] = buf;
++
++	alloc_stack_next++;
++
++	return;
++}
++
++void *
++acl_alloc(unsigned long len)
++{
++	void *ret;
++
++	if (len > PAGE_SIZE)
++		BUG();
++
++	ret = kmalloc(len, GFP_KERNEL);
++
++	if (ret)
++		alloc_push(ret);
++
++	return ret;
++}
++
++void
++acl_free_all(void)
++{
++	if (gr_acl_is_enabled() || !alloc_stack)
++		return;
++
++	while (alloc_pop()) ;
++
++	if (alloc_stack) {
++		if ((alloc_stack_size * sizeof (void *)) <= PAGE_SIZE)
++			kfree(alloc_stack);
++		else
++			vfree(alloc_stack);
++	}
++
++	alloc_stack = NULL;
++	alloc_stack_size = 1;
++	alloc_stack_next = 1;
++
++	return;
++}
++
++int
++acl_alloc_stack_init(unsigned long size)
++{
++	if ((size * sizeof (void *)) <= PAGE_SIZE)
++		alloc_stack =
++		    (void **) kmalloc(size * sizeof (void *), GFP_KERNEL);
++	else
++		alloc_stack = (void **) vmalloc(size * sizeof (void *));
++
++	alloc_stack_size = size;
++
++	if (!alloc_stack)
++		return 0;
++	else
++		return 1;
++}
 --- /dev/null
 +++ b/grsecurity/gracl.c
 @@ -0,0 +1,3675 @@
@@ -21061,100 +20295,6 @@
 +EXPORT_SYMBOL(gr_check_group_change);
 +#endif
 +
---- /dev/null
-+++ b/grsecurity/gracl_alloc.c
-@@ -0,0 +1,91 @@
-+#include <linux/kernel.h>
-+#include <linux/mm.h>
-+#include <linux/slab.h>
-+#include <linux/vmalloc.h>
-+#include <linux/gracl.h>
-+#include <linux/grsecurity.h>
-+
-+static unsigned long alloc_stack_next = 1;
-+static unsigned long alloc_stack_size = 1;
-+static void **alloc_stack;
-+
-+static __inline__ int
-+alloc_pop(void)
-+{
-+	if (alloc_stack_next == 1)
-+		return 0;
-+
-+	kfree(alloc_stack[alloc_stack_next - 2]);
-+
-+	alloc_stack_next--;
-+
-+	return 1;
-+}
-+
-+static __inline__ void
-+alloc_push(void *buf)
-+{
-+	if (alloc_stack_next >= alloc_stack_size)
-+		BUG();
-+
-+	alloc_stack[alloc_stack_next - 1] = buf;
-+
-+	alloc_stack_next++;
-+
-+	return;
-+}
-+
-+void *
-+acl_alloc(unsigned long len)
-+{
-+	void *ret;
-+
-+	if (len > PAGE_SIZE)
-+		BUG();
-+
-+	ret = kmalloc(len, GFP_KERNEL);
-+
-+	if (ret)
-+		alloc_push(ret);
-+
-+	return ret;
-+}
-+
-+void
-+acl_free_all(void)
-+{
-+	if (gr_acl_is_enabled() || !alloc_stack)
-+		return;
-+
-+	while (alloc_pop()) ;
-+
-+	if (alloc_stack) {
-+		if ((alloc_stack_size * sizeof (void *)) <= PAGE_SIZE)
-+			kfree(alloc_stack);
-+		else
-+			vfree(alloc_stack);
-+	}
-+
-+	alloc_stack = NULL;
-+	alloc_stack_size = 1;
-+	alloc_stack_next = 1;
-+
-+	return;
-+}
-+
-+int
-+acl_alloc_stack_init(unsigned long size)
-+{
-+	if ((size * sizeof (void *)) <= PAGE_SIZE)
-+		alloc_stack =
-+		    (void **) kmalloc(size * sizeof (void *), GFP_KERNEL);
-+	else
-+		alloc_stack = (void **) vmalloc(size * sizeof (void *));
-+
-+	alloc_stack_size = size;
-+
-+	if (!alloc_stack)
-+		return 0;
-+	else
-+		return 1;
-+}
 --- /dev/null
 +++ b/grsecurity/gracl_cap.c
 @@ -0,0 +1,112 @@
@@ -25195,6 +24335,905 @@
 +
 +	return retval;
 +}
+--- /dev/null
++++ b/grsecurity/Kconfig
+@@ -0,0 +1,873 @@
++#
++# grecurity configuration
++#
++
++menu "Grsecurity"
++
++config GRKERNSEC
++	bool "Grsecurity"
++	select CRYPTO
++	select CRYPTO_SHA256
++	help
++	  If you say Y here, you will be able to configure many features
++	  that will enhance the security of your system.  It is highly
++	  recommended that you say Y here and read through the help
++	  for each option so that you fully understand the features and
++	  can evaluate their usefulness for your machine.
++
++choice
++	prompt "Security Level"
++	depends GRKERNSEC
++	default GRKERNSEC_CUSTOM
++
++config GRKERNSEC_LOW
++	bool "Low"
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_MODSTOP if (MODULES)
++
++	help
++	  If you choose this option, several of the grsecurity options will
++	  be enabled that will give you greater protection against a number
++	  of attacks, while assuring that none of your software will have any
++	  conflicts with the additional security measures.  If you run a lot
++	  of unusual software, or you are having problems with the higher
++	  security levels, you should say Y here.  With this option, the
++	  following features are enabled:
++
++	  - Linking restrictions
++	  - FIFO restrictions
++	  - Enforcing RLIMIT_NPROC on execve
++	  - Restricted dmesg
++	  - Enforced chdir("/") on chroot
++	  - Runtime module disabling
++
++config GRKERNSEC_MEDIUM
++	bool "Medium"
++	select PAX
++	select PAX_EI_PAX
++	select PAX_PT_PAX_FLAGS
++	select PAX_HAVE_ACL_FLAGS
++	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_TIME
++	select GRKERNSEC_SIGNAL
++	select GRKERNSEC_CHROOT
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select PAX_RANDUSTACK
++	select PAX_ASLR
++	select PAX_RANDMMAP
++
++	help
++	  If you say Y here, several features in addition to those included
++	  in the low additional security level will be enabled.  These
++	  features provide even more security to your system, though in rare
++	  cases they may be incompatible with very old or poorly written
++	  software.  If you enable this option, make sure that your auth
++	  service (identd) is running as gid 1001.  With this option, 
++	  the following features (in addition to those provided in the 
++	  low additional security level) will be enabled:
++
++	  - Randomized TCP source ports
++	  - Failed fork logging
++	  - Time change logging
++	  - Signal logging
++	  - Deny mounts in chroot
++	  - Deny double chrooting
++	  - Deny sysctl writes in chroot
++	  - Deny mknod in chroot
++	  - Deny access to abstract AF_UNIX sockets out of chroot
++	  - Deny pivot_root in chroot
++	  - Denied writes of /dev/kmem, /dev/mem, and /dev/port
++	  - /proc restrictions with special GID set to 10 (usually wheel)
++	  - Address Space Layout Randomization (ASLR)
++
++config GRKERNSEC_HIGH
++	bool "High"
++	select GRKERNSEC_LINK
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_TIME
++	select GRKERNSEC_SIGNAL
++	select GRKERNSEC_CHROOT_SHMAT
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_FCHDIR
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_CHROOT_CAPS
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_CHROOT_FINDTASK
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_MEMMAP if (PAX_NOEXEC || PAX_ASLR)
++	select GRKERNSEC_HIDESYM
++	select GRKERNSEC_BRUTE
++	select GRKERNSEC_SHM if (SYSVIPC)
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_KMEM
++	select GRKERNSEC_RESLOG
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_PROC_ADD
++	select GRKERNSEC_CHROOT_CHMOD
++	select GRKERNSEC_CHROOT_NICE
++	select GRKERNSEC_AUDIT_MOUNT
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select PAX
++	select PAX_RANDUSTACK
++	select PAX_ASLR
++	select PAX_RANDMMAP
++	select PAX_NOEXEC
++	select PAX_MPROTECT
++	select PAX_EI_PAX
++	select PAX_PT_PAX_FLAGS
++	select PAX_HAVE_ACL_FLAGS
++	select PAX_KERNEXEC if (!X86_64 && !EFI && !COMPAT_VDSO && !PARAVIRT && X86_WP_WORKS_OK)
++	select PAX_MEMORY_UDEREF if (!X86_64 && !COMPAT_VDSO)
++	select PAX_RANDKSTACK if (X86_TSC && !X86_64)
++	select PAX_SEGMEXEC if (X86 && !X86_64)
++	select PAX_PAGEEXEC if (!X86)
++	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
++	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
++	select PAX_SYSCALL if (PPC32)
++	select PAX_EMUTRAMP if (PARISC)
++	select PAX_EMUSIGRT if (PARISC)
++	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
++	help
++	  If you say Y here, many of the features of grsecurity will be
++	  enabled, which will protect you against many kinds of attacks
++	  against your system.  The heightened security comes at a cost
++	  of an increased chance of incompatibilities with rare software
++	  on your machine.  Since this security level enables PaX, you should
++	  view <http://pax.grsecurity.net> and read about the PaX
++	  project.  While you are there, download chpax and run it on
++	  binaries that cause problems with PaX.  Also remember that
++	  since the /proc restrictions are enabled, you must run your
++	  identd as gid 1001.  This security level enables the following 
++	  features in addition to those listed in the low and medium 
++	  security levels:
++
++	  - Additional /proc restrictions
++	  - Chmod restrictions in chroot
++	  - No signals, ptrace, or viewing of processes outside of chroot
++	  - Capability restrictions in chroot
++	  - Deny fchdir out of chroot
++	  - Priority restrictions in chroot
++	  - Segmentation-based implementation of PaX
++	  - Mprotect restrictions
++	  - Removal of addresses from /proc/<pid>/[smaps|maps|stat]
++	  - Kernel stack randomization
++	  - Mount/unmount/remount logging
++	  - Kernel symbol hiding
++	  - Destroy unused shared memory	
++	  - Prevention of memory exhaustion-based exploits
++config GRKERNSEC_CUSTOM
++	bool "Custom"
++	help
++	  If you say Y here, you will be able to configure every grsecurity
++	  option, which allows you to enable many more features that aren't
++	  covered in the basic security levels.  These additional features
++	  include TPE, socket restrictions, and the sysctl system for
++	  grsecurity.  It is advised that you read through the help for
++	  each option to determine its usefulness in your situation.
++
++endchoice
++
++menu "Address Space Protection"
++depends on GRKERNSEC
++
++config GRKERNSEC_KMEM
++	bool "Deny writing to /dev/kmem, /dev/mem, and /dev/port"
++	help
++	  If you say Y here, /dev/kmem and /dev/mem won't be allowed to
++	  be written to via mmap or otherwise to modify the running kernel.
++	  /dev/port will also not be allowed to be opened. If you have module
++	  support disabled, enabling this will close up four ways that are
++	  currently used  to insert malicious code into the running kernel.
++	  Even with all these features enabled, we still highly recommend that
++	  you use the RBAC system, as it is still possible for an attacker to
++	  modify the running kernel through privileged I/O granted by ioperm/iopl.
++	  If you are not using XFree86, you may be able to stop this additional
++	  case by enabling the 'Disable privileged I/O' option. Though nothing
++	  legitimately writes to /dev/kmem, XFree86 does need to write to /dev/mem,
++	  but only to video memory, which is the only writing we allow in this
++	  case.  If /dev/kmem or /dev/mem are mmaped without PROT_WRITE, they will
++	  not be allowed to mprotect it with PROT_WRITE later.
++	  It is highly recommended that you say Y here if you meet all the
++	  conditions above.
++
++config GRKERNSEC_IO
++	bool "Disable privileged I/O"
++	depends on X86
++	select RTC
++	help
++	  If you say Y here, all ioperm and iopl calls will return an error.
++	  Ioperm and iopl can be used to modify the running kernel.
++	  Unfortunately, some programs need this access to operate properly,
++	  the most notable of which are XFree86 and hwclock.  hwclock can be
++	  remedied by having RTC support in the kernel, so CONFIG_RTC is
++	  enabled if this option is enabled, to ensure that hwclock operates
++	  correctly.  XFree86 still will not operate correctly with this option
++	  enabled, so DO NOT CHOOSE Y IF YOU USE XFree86.  If you use XFree86
++	  and you still want to protect your kernel against modification,
++	  use the RBAC system.
++
++config GRKERNSEC_PROC_MEMMAP
++	bool "Remove addresses from /proc/<pid>/[smaps|maps|stat]"
++	depends on PAX_NOEXEC || PAX_ASLR
++	help
++	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files will
++	  give no information about the addresses of its mappings if
++	  PaX features that rely on random addresses are enabled on the task.
++	  If you use PaX it is greatly recommended that you say Y here as it
++	  closes up a hole that makes the full ASLR useless for suid
++	  binaries.
++
++config GRKERNSEC_BRUTE
++	bool "Deter exploit bruteforcing"
++	help
++	  If you say Y here, attempts to bruteforce exploits against forking
++	  daemons such as apache or sshd will be deterred.  When a child of a
++	  forking daemon is killed by PaX or crashes due to an illegal
++	  instruction, the parent process will be delayed 30 seconds upon every
++	  subsequent fork until the administrator is able to assess the
++	  situation and restart the daemon.  It is recommended that you also
++	  enable signal logging in the auditing section so that logs are
++	  generated when a process performs an illegal instruction.
++
++config GRKERNSEC_MODSTOP
++	bool "Runtime module disabling"
++	depends on MODULES
++	help
++	  If you say Y here, you will be able to disable the ability to (un)load
++	  modules at runtime.  This feature is useful if you need the ability
++	  to load kernel modules at boot time, but do not want to allow an
++	  attacker to load a rootkit kernel module into the system, or to remove
++	  a loaded kernel module important to system functioning.  You should
++	  enable the /dev/mem protection feature as well, since rootkits can be
++	  inserted into the kernel via other methods than kernel modules.  Since
++	  an untrusted module could still be loaded by modifying init scripts and
++	  rebooting the system, it is also recommended that you enable the RBAC
++	  system.  If you enable this option, a sysctl option with name
++	  "disable_modules" will be created.  Setting this option to "1" disables
++	  module loading.  After this option is set, no further writes to it are
++	  allowed until the system is rebooted.
++
++config GRKERNSEC_HIDESYM
++	bool "Hide kernel symbols"
++	help
++	  If you say Y here, getting information on loaded modules, and
++	  displaying all kernel symbols through a syscall will be restricted
++	  to users with CAP_SYS_MODULE.  This option is only effective
++	  provided the following conditions are met:
++	  1) The kernel using grsecurity is not precompiled by some distribution
++	  2) You are using the RBAC system and hiding other files such as your
++	     kernel image and System.map
++	  3) You have the additional /proc restrictions enabled, which removes
++	     /proc/kcore
++	  If the above conditions are met, this option will aid to provide a
++	  useful protection against local and remote kernel exploitation of
++	  overflows and arbitrary read/write vulnerabilities.
++
++endmenu
++menu "Role Based Access Control Options"
++depends on GRKERNSEC
++
++config GRKERNSEC_ACL_HIDEKERN
++	bool "Hide kernel processes"
++	help
++	  If you say Y here, all kernel threads will be hidden to all
++	  processes but those whose subject has the "view hidden processes"
++	  flag.
++
++config GRKERNSEC_ACL_MAXTRIES
++	int "Maximum tries before password lockout"
++	default 3
++	help
++	  This option enforces the maximum number of times a user can attempt
++	  to authorize themselves with the grsecurity RBAC system before being
++	  denied the ability to attempt authorization again for a specified time.
++	  The lower the number, the harder it will be to brute-force a password.
++
++config GRKERNSEC_ACL_TIMEOUT
++	int "Time to wait after max password tries, in seconds"
++	default 30
++	help
++	  This option specifies the time the user must wait after attempting to
++	  authorize to the RBAC system with the maximum number of invalid
++	  passwords.  The higher the number, the harder it will be to brute-force
++	  a password.
++
++endmenu
++menu "Filesystem Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_PROC
++	bool "Proc restrictions"
++	help
++	  If you say Y here, the permissions of the /proc filesystem
++	  will be altered to enhance system security and privacy.  You MUST
++  	  choose either a user only restriction or a user and group restriction.
++	  Depending upon the option you choose, you can either restrict users to
++	  see only the processes they themselves run, or choose a group that can
++	  view all processes and files normally restricted to root if you choose
++	  the "restrict to user only" option.  NOTE: If you're running identd as
++	  a non-root user, you will have to run it as the group you specify here.
++
++config GRKERNSEC_PROC_USER
++	bool "Restrict /proc to user only"
++	depends on GRKERNSEC_PROC
++	help
++	  If you say Y here, non-root users will only be able to view their own
++	  processes, and restricts them from viewing network-related information,
++	  and viewing kernel symbol and module information.
++
++config GRKERNSEC_PROC_USERGROUP
++	bool "Allow special group"
++	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
++	help
++	  If you say Y here, you will be able to select a group that will be
++	  able to view all processes, network-related information, and
++	  kernel and symbol information.  This option is useful if you want
++	  to run identd as a non-root user.
++
++config GRKERNSEC_PROC_GID
++	int "GID for special group"
++	depends on GRKERNSEC_PROC_USERGROUP
++	default 1001
++
++config GRKERNSEC_PROC_ADD
++	bool "Additional restrictions"
++	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
++	help
++	  If you say Y here, additional restrictions will be placed on
++	  /proc that keep normal users from viewing device information and 
++	  slabinfo information that could be useful for exploits.
++
++config GRKERNSEC_LINK
++	bool "Linking restrictions"
++	help
++	  If you say Y here, /tmp race exploits will be prevented, since users
++	  will no longer be able to follow symlinks owned by other users in
++	  world-writable +t directories (i.e. /tmp), unless the owner of the
++	  symlink is the owner of the directory. users will also not be
++	  able to hardlink to files they do not own.  If the sysctl option is
++	  enabled, a sysctl option with name "linking_restrictions" is created.
++
++config GRKERNSEC_FIFO
++	bool "FIFO restrictions"
++	help
++	  If you say Y here, users will not be able to write to FIFOs they don't
++	  own in world-writable +t directories (i.e. /tmp), unless the owner of
++	  the FIFO is the same owner of the directory it's held in.  If the sysctl
++	  option is enabled, a sysctl option with name "fifo_restrictions" is
++	  created.
++
++config GRKERNSEC_CHROOT
++	bool "Chroot jail restrictions"
++	help
++	  If you say Y here, you will be able to choose several options that will
++	  make breaking out of a chrooted jail much more difficult.  If you
++	  encounter no software incompatibilities with the following options, it
++	  is recommended that you enable each one.
++
++config GRKERNSEC_CHROOT_MOUNT
++	bool "Deny mounts"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  mount or remount filesystems.  If the sysctl option is enabled, a
++	  sysctl option with name "chroot_deny_mount" is created.
++
++config GRKERNSEC_CHROOT_DOUBLE
++	bool "Deny double-chroots"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to chroot
++	  again outside the chroot.  This is a widely used method of breaking
++	  out of a chroot jail and should not be allowed.  If the sysctl 
++	  option is enabled, a sysctl option with name 
++	  "chroot_deny_chroot" is created.
++
++config GRKERNSEC_CHROOT_PIVOT
++	bool "Deny pivot_root in chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to use
++	  a function called pivot_root() that was introduced in Linux 2.3.41.  It
++	  works similar to chroot in that it changes the root filesystem.  This
++	  function could be misused in a chrooted process to attempt to break out
++	  of the chroot, and therefore should not be allowed.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_deny_pivot" is
++	  created.
++
++config GRKERNSEC_CHROOT_CHDIR
++	bool "Enforce chdir(\"/\") on all chroots"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, the current working directory of all newly-chrooted
++	  applications will be set to the the root directory of the chroot.
++	  The man page on chroot(2) states:
++	  Note that this call does not change  the  current  working
++	  directory,  so  that `.' can be outside the tree rooted at
++	  `/'.  In particular, the  super-user  can  escape  from  a
++	  `chroot jail' by doing `mkdir foo; chroot foo; cd ..'.
++
++	  It is recommended that you say Y here, since it's not known to break
++	  any software.  If the sysctl option is enabled, a sysctl option with
++	  name "chroot_enforce_chdir" is created.
++
++config GRKERNSEC_CHROOT_CHMOD
++	bool "Deny (f)chmod +s"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to chmod
++	  or fchmod files to make them have suid or sgid bits.  This protects
++	  against another published method of breaking a chroot.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_deny_chmod" is
++	  created.
++
++config GRKERNSEC_CHROOT_FCHDIR
++	bool "Deny fchdir out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, a well-known method of breaking chroots by fchdir'ing
++	  to a file descriptor of the chrooting process that points to a directory
++	  outside the filesystem will be stopped.  If the sysctl option
++	  is enabled, a sysctl option with name "chroot_deny_fchdir" is created.
++
++config GRKERNSEC_CHROOT_MKNOD
++	bool "Deny mknod"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be allowed to
++	  mknod.  The problem with using mknod inside a chroot is that it
++	  would allow an attacker to create a device entry that is the same
++	  as one on the physical root of your system, which could range from
++	  anything from the console device to a device for your harddrive (which
++	  they could then use to wipe the drive or steal data).  It is recommended
++	  that you say Y here, unless you run into software incompatibilities.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "chroot_deny_mknod" is created.
++
++config GRKERNSEC_CHROOT_SHMAT
++	bool "Deny shmat() out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to attach
++	  to shared memory segments that were created outside of the chroot jail.
++	  It is recommended that you say Y here.  If the sysctl option is enabled,
++	  a sysctl option with name "chroot_deny_shmat" is created.
++
++config GRKERNSEC_CHROOT_UNIX
++	bool "Deny access to abstract AF_UNIX sockets out of chroot"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  connect to abstract (meaning not belonging to a filesystem) Unix
++	  domain sockets that were bound outside of a chroot.  It is recommended
++	  that you say Y here.  If the sysctl option is enabled, a sysctl option
++	  with name "chroot_deny_unix" is created.
++
++config GRKERNSEC_CHROOT_FINDTASK
++	bool "Protect outside processes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to
++	  kill, send signals with fcntl, ptrace, capget, getpgid, getsid,
++	  or view any process outside of the chroot.  If the sysctl
++	  option is enabled, a sysctl option with name "chroot_findtask" is
++	  created.
++
++config GRKERNSEC_CHROOT_NICE
++	bool "Restrict priority changes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, processes inside a chroot will not be able to raise
++	  the priority of processes in the chroot, or alter the priority of
++	  processes outside the chroot.  This provides more security than simply
++	  removing CAP_SYS_NICE from the process' capability set.  If the
++	  sysctl option is enabled, a sysctl option with name "chroot_restrict_nice"
++	  is created.
++
++config GRKERNSEC_CHROOT_SYSCTL
++	bool "Deny sysctl writes"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, an attacker in a chroot will not be able to
++	  write to sysctl entries, either by sysctl(2) or through a /proc
++	  interface.  It is strongly recommended that you say Y here. If the
++	  sysctl option is enabled, a sysctl option with name
++	  "chroot_deny_sysctl" is created.
++
++config GRKERNSEC_CHROOT_CAPS
++	bool "Capability restrictions"
++	depends on GRKERNSEC_CHROOT
++	help
++	  If you say Y here, the capabilities on all root processes within a
++	  chroot jail will be lowered to stop module insertion, raw i/o,
++	  system and net admin tasks, rebooting the system, modifying immutable
++	  files, modifying IPC owned by another, and changing the system time.
++	  This is left an option because it can break some apps.  Disable this
++	  if your chrooted apps are having problems performing those kinds of
++	  tasks.  If the sysctl option is enabled, a sysctl option with
++	  name "chroot_caps" is created.
++
++endmenu
++menu "Kernel Auditing"
++depends on GRKERNSEC
++
++config GRKERNSEC_AUDIT_GROUP
++	bool "Single group for auditing"
++	help
++	  If you say Y here, the exec, chdir, (un)mount, and ipc logging features
++	  will only operate on a group you specify.  This option is recommended
++	  if you only want to watch certain users instead of having a large
++	  amount of logs from the entire system.  If the sysctl option is enabled,
++	  a sysctl option with name "audit_group" is created.
++
++config GRKERNSEC_AUDIT_GID
++	int "GID for auditing"
++	depends on GRKERNSEC_AUDIT_GROUP
++	default 1007
++
++config GRKERNSEC_EXECLOG
++	bool "Exec logging"
++	help
++	  If you say Y here, all execve() calls will be logged (since the
++	  other exec*() calls are frontends to execve(), all execution
++	  will be logged).  Useful for shell-servers that like to keep track
++	  of their users.  If the sysctl option is enabled, a sysctl option with
++	  name "exec_logging" is created.
++	  WARNING: This option when enabled will produce a LOT of logs, especially
++	  on an active system.
++
++config GRKERNSEC_RESLOG
++	bool "Resource logging"
++	help
++	  If you say Y here, all attempts to overstep resource limits will
++	  be logged with the resource name, the requested size, and the current
++	  limit.  It is highly recommended that you say Y here.  If the sysctl
++	  option is enabled, a sysctl option with name "resource_logging" is
++	  created.  If the RBAC system is enabled, the sysctl value is ignored.
++
++config GRKERNSEC_CHROOT_EXECLOG
++	bool "Log execs within chroot"
++	help
++	  If you say Y here, all executions inside a chroot jail will be logged
++	  to syslog.  This can cause a large amount of logs if certain
++	  applications (eg. djb's daemontools) are installed on the system, and
++	  is therefore left as an option.  If the sysctl option is enabled, a
++	  sysctl option with name "chroot_execlog" is created.
++
++config GRKERNSEC_AUDIT_CHDIR
++	bool "Chdir logging"
++	help
++	  If you say Y here, all chdir() calls will be logged.  If the sysctl
++ 	  option is enabled, a sysctl option with name "audit_chdir" is created.
++
++config GRKERNSEC_AUDIT_MOUNT
++	bool "(Un)Mount logging"
++	help
++	  If you say Y here, all mounts and unmounts will be logged.  If the
++	  sysctl option is enabled, a sysctl option with name "audit_mount" is
++	  created.
++
++config GRKERNSEC_AUDIT_IPC
++	bool "IPC logging"
++	help
++	  If you say Y here, creation and removal of message queues, semaphores,
++	  and shared memory will be logged.  If the sysctl option is enabled, a
++	  sysctl option with name "audit_ipc" is created.
++
++config GRKERNSEC_SIGNAL
++	bool "Signal logging"
++	help
++	  If you say Y here, certain important signals will be logged, such as
++	  SIGSEGV, which will as a result inform you of when a error in a program
++	  occurred, which in some cases could mean a possible exploit attempt.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "signal_logging" is created.
++
++config GRKERNSEC_FORKFAIL
++	bool "Fork failure logging"
++	help
++	  If you say Y here, all failed fork() attempts will be logged.
++	  This could suggest a fork bomb, or someone attempting to overstep
++	  their process limit.  If the sysctl option is enabled, a sysctl option
++	  with name "forkfail_logging" is created.
++
++config GRKERNSEC_TIME
++	bool "Time change logging"
++	help
++	  If you say Y here, any changes of the system clock will be logged.
++	  If the sysctl option is enabled, a sysctl option with name
++	  "timechange_logging" is created.
++
++config GRKERNSEC_PROC_IPADDR
++	bool "/proc/<pid>/ipaddr support"
++	help
++	  If you say Y here, a new entry will be added to each /proc/<pid>
++	  directory that contains the IP address of the person using the task.
++	  The IP is carried across local TCP and AF_UNIX stream sockets.
++	  This information can be useful for IDS/IPSes to perform remote response
++	  to a local attack.  The entry is readable by only the owner of the
++	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
++	  the RBAC system), and thus does not create privacy concerns.
++
++config GRKERNSEC_AUDIT_TEXTREL
++	bool 'ELF text relocations logging (READ HELP)'
++	depends on PAX_MPROTECT
++	help
++	  If you say Y here, text relocations will be logged with the filename
++	  of the offending library or binary.  The purpose of the feature is
++	  to help Linux distribution developers get rid of libraries and
++	  binaries that need text relocations which hinder the future progress
++	  of PaX.  Only Linux distribution developers should say Y here, and
++	  never on a production machine, as this option creates an information
++	  leak that could aid an attacker in defeating the randomization of
++	  a single memory region.  If the sysctl option is enabled, a sysctl
++	  option with name "audit_textrel" is created.
++
++endmenu
++
++menu "Executable Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_EXECVE
++	bool "Enforce RLIMIT_NPROC on execs"
++	help
++	  If you say Y here, users with a resource limit on processes will
++	  have the value checked during execve() calls.  The current system
++	  only checks the system limit during fork() calls.  If the sysctl option
++	  is enabled, a sysctl option with name "execve_limiting" is created.
++
++config GRKERNSEC_SHM
++	bool "Destroy unused shared memory"
++	depends on SYSVIPC
++	help
++	  If you say Y here, shared memory will be destroyed when no one is
++	  attached to it.  Otherwise, resources involved with the shared
++	  memory can be used up and not be associated with any process (as the
++	  shared memory still exists, and the creating process has exited).  If
++	  the sysctl option is enabled, a sysctl option with name
++	  "destroy_unused_shm" is created.
++
++config GRKERNSEC_DMESG
++	bool "Dmesg(8) restriction"
++	help
++	  If you say Y here, non-root users will not be able to use dmesg(8)
++	  to view up to the last 4kb of messages in the kernel's log buffer.
++	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
++	  created.
++
++config GRKERNSEC_TPE
++	bool "Trusted Path Execution (TPE)"
++	help
++	  If you say Y here, you will be able to choose a gid to add to the
++	  supplementary groups of users you want to mark as "untrusted."
++	  These users will not be able to execute any files that are not in
++	  root-owned directories writable only by root.  If the sysctl option
++	  is enabled, a sysctl option with name "tpe" is created.
++
++config GRKERNSEC_TPE_ALL
++	bool "Partially restrict non-root users"
++	depends on GRKERNSEC_TPE
++	help
++	  If you say Y here, All non-root users other than the ones in the
++	  group specified in the main TPE option will only be allowed to
++	  execute files in directories they own that are not group or
++	  world-writable, or in directories owned by root and writable only by
++	  root.  If the sysctl option is enabled, a sysctl option with name
++	  "tpe_restrict_all" is created.
++
++config GRKERNSEC_TPE_INVERT
++	bool "Invert GID option"
++	depends on GRKERNSEC_TPE
++	help
++	  If you say Y here, the group you specify in the TPE configuration will
++	  decide what group TPE restrictions will be *disabled* for.  This
++	  option is useful if you want TPE restrictions to be applied to most
++	  users on the system.
++
++config GRKERNSEC_TPE_GID
++	int "GID for untrusted users"
++	depends on GRKERNSEC_TPE && !GRKERNSEC_TPE_INVERT
++	default 1005
++	help
++	  If you have selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *disabled* for.
++	  If you have not selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *enabled* for.
++	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
++	  is created.
++
++config GRKERNSEC_TPE_GID
++	int "GID for trusted users"
++	depends on GRKERNSEC_TPE && GRKERNSEC_TPE_INVERT
++	default 1005
++	help
++	  If you have selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *disabled* for.
++	  If you have not selected the "Invert GID option" above, setting this
++	  GID determines what group TPE restrictions will be *enabled* for.
++	  If the sysctl option is enabled, a sysctl option with name "tpe_gid"
++	  is created.
++
++endmenu
++menu "Network Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_RANDNET
++	bool "Larger entropy pools"
++	help
++	  If you say Y here, the entropy pools used for many features of Linux
++	  and grsecurity will be doubled in size.  Since several grsecurity
++	  features use additional randomness, it is recommended that you say Y
++	  here.  Saying Y here has a similar effect as modifying
++	  /proc/sys/kernel/random/poolsize.
++
++config GRKERNSEC_SOCKET
++	bool "Socket restrictions"
++	help
++	  If you say Y here, you will be able to choose from several options.
++	  If you assign a GID on your system and add it to the supplementary
++	  groups of users you want to restrict socket access to, this patch
++	  will perform up to three things, based on the option(s) you choose.
++
++config GRKERNSEC_SOCKET_ALL
++	bool "Deny any sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to connect to other hosts from your machine or run server
++	  applications from your machine.  If the sysctl option is enabled, a
++	  sysctl option with name "socket_all" is created.
++
++config GRKERNSEC_SOCKET_ALL_GID
++	int "GID to deny all sockets for"
++	depends on GRKERNSEC_SOCKET_ALL
++	default 1004
++	help
++	  Here you can choose the GID to disable socket access for. Remember to
++	  add the users you want socket access disabled for to the GID
++	  specified here.  If the sysctl option is enabled, a sysctl option
++	  with name "socket_all_gid" is created.
++
++config GRKERNSEC_SOCKET_CLIENT
++	bool "Deny client sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to connect to other hosts from your machine, but will be
++	  able to run servers.  If this option is enabled, all users in the group
++	  you specify will have to use passive mode when initiating ftp transfers
++	  from the shell on your machine.  If the sysctl option is enabled, a
++	  sysctl option with name "socket_client" is created.
++
++config GRKERNSEC_SOCKET_CLIENT_GID
++	int "GID to deny client sockets for"
++	depends on GRKERNSEC_SOCKET_CLIENT
++	default 1003
++	help
++	  Here you can choose the GID to disable client socket access for.
++	  Remember to add the users you want client socket access disabled for to
++	  the GID specified here.  If the sysctl option is enabled, a sysctl
++	  option with name "socket_client_gid" is created.
++
++config GRKERNSEC_SOCKET_SERVER
++	bool "Deny server sockets to group"
++	depends on GRKERNSEC_SOCKET
++	help
++	  If you say Y here, you will be able to choose a GID of whose users will
++	  be unable to run server applications from your machine.  If the sysctl
++	  option is enabled, a sysctl option with name "socket_server" is created.
++
++config GRKERNSEC_SOCKET_SERVER_GID
++	int "GID to deny server sockets for"
++	depends on GRKERNSEC_SOCKET_SERVER
++	default 1002
++	help
++	  Here you can choose the GID to disable server socket access for.
++	  Remember to add the users you want server socket access disabled for to
++	  the GID specified here.  If the sysctl option is enabled, a sysctl
++	  option with name "socket_server_gid" is created.
++
++endmenu
++menu "Sysctl support"
++depends on GRKERNSEC && SYSCTL
++
++config GRKERNSEC_SYSCTL
++	bool "Sysctl support"
++	help
++	  If you say Y here, you will be able to change the options that
++	  grsecurity runs with at bootup, without having to recompile your
++	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
++	  to enable (1) or disable (0) various features.  All the sysctl entries
++	  are mutable until the "grsec_lock" entry is set to a non-zero value.
++	  All features enabled in the kernel configuration are disabled at boot
++	  if you do not say Y to the "Turn on features by default" option.
++	  All options should be set at startup, and the grsec_lock entry should
++	  be set to a non-zero value after all the options are set.
++	  *THIS IS EXTREMELY IMPORTANT*
++
++config GRKERNSEC_SYSCTL_ON
++	bool "Turn on features by default"
++	depends on GRKERNSEC_SYSCTL
++	help
++	  If you say Y here, instead of having all features enabled in the
++	  kernel configuration disabled at boot time, the features will be
++	  enabled at boot time.  It is recommended you say Y here unless
++	  there is some reason you would want all sysctl-tunable features to
++	  be disabled by default.  As mentioned elsewhere, it is important
++	  to enable the grsec_lock entry once you have finished modifying
++	  the sysctl entries.
++
++endmenu
++menu "Logging Options"
++depends on GRKERNSEC
++
++config GRKERNSEC_FLOODTIME
++	int "Seconds in between log messages (minimum)"
++	default 10
++	help
++	  This option allows you to enforce the number of seconds between
++	  grsecurity log messages.  The default should be suitable for most
++	  people, however, if you choose to change it, choose a value small enough
++	  to allow informative logs to be produced, but large enough to
++	  prevent flooding.
++
++config GRKERNSEC_FLOODBURST
++	int "Number of messages in a burst (maximum)"
++	default 4
++	help
++	  This option allows you to choose the maximum number of messages allowed
++	  within the flood time interval you chose in a separate option.  The
++	  default should be suitable for most people, however if you find that
++	  many of your logs are being interpreted as flooding, you may want to
++	  raise this value.
++
++endmenu
++
++endmenu
+--- /dev/null
++++ b/grsecurity/Makefile
+@@ -0,0 +1,20 @@
++# grsecurity's ACL system was originally written in 2001 by Michael Dalton
++# during 2001-2005 it has been completely redesigned by Brad Spengler
++# into an RBAC system
++#
++# All code in this directory and various hooks inserted throughout the kernel
++# are copyright Brad Spengler, and released under the GPL v2 or higher
++
++obj-y = grsec_chdir.o grsec_chroot.o grsec_exec.o grsec_fifo.o grsec_fork.o \
++	grsec_mount.o grsec_sig.o grsec_sock.o grsec_sysctl.o \
++	grsec_time.o grsec_tpe.o grsec_ipc.o grsec_link.o grsec_textrel.o
++
++obj-$(CONFIG_GRKERNSEC) += grsec_init.o grsum.o gracl.o gracl_ip.o gracl_segv.o \
++	gracl_cap.o gracl_alloc.o gracl_shm.o grsec_mem.o gracl_fs.o \
++	gracl_learn.o grsec_log.o
++obj-$(CONFIG_GRKERNSEC_RESLOG) += gracl_res.o
++
++ifndef CONFIG_GRKERNSEC
++obj-y += grsec_disabled.o
++endif
++
 --- a/include/asm-alpha/a.out.h
 +++ b/include/asm-alpha/a.out.h
 @@ -98,7 +98,7 @@ struct exec
@@ -25404,24 +25443,6 @@
  	KM_TYPE_NR
  };
  
---- a/include/asm-i386/a.out.h
-+++ b/include/asm-i386/a.out.h
-@@ -19,8 +19,13 @@ struct exec
- 
- #ifdef __KERNEL__
- 
--#define STACK_TOP	TASK_SIZE
--#define STACK_TOP_MAX	STACK_TOP
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
-+#else
-+#define __STACK_TOP TASK_SIZE
-+#endif
-+
-+#define STACK_TOP_MAX	TASK_SIZE
- 
- #endif
- 
 --- a/include/asm-i386/alternative.h
 +++ b/include/asm-i386/alternative.h
 @@ -54,7 +54,7 @@ static inline void alternatives_smp_swit
@@ -25441,6 +25462,24 @@
 +		      ".section .altinstr_replacement,\"a\"\n"		\
  		      "663:\n\t" newinstr "\n664:\n"   /* replacement */\
  		      ".previous" :: "i" (feature), ##input)
+ 
+--- a/include/asm-i386/a.out.h
++++ b/include/asm-i386/a.out.h
+@@ -19,8 +19,13 @@ struct exec
+ 
+ #ifdef __KERNEL__
+ 
+-#define STACK_TOP	TASK_SIZE
+-#define STACK_TOP_MAX	STACK_TOP
++#ifdef CONFIG_PAX_SEGMEXEC
++#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
++#else
++#define __STACK_TOP TASK_SIZE
++#endif
++
++#define STACK_TOP_MAX	TASK_SIZE
+ 
+ #endif
  
 --- a/include/asm-i386/apic.h
 +++ b/include/asm-i386/apic.h
@@ -25816,30 +25855,6 @@
 +#endif
 +
  #endif /* __I386_MMAN_H__ */
---- a/include/asm-i386/mmu.h
-+++ b/include/asm-i386/mmu.h
-@@ -11,8 +11,19 @@
- typedef struct { 
- 	int size;
- 	struct semaphore sem;
--	void *ldt;
--	void *vdso;
-+	struct desc_struct *ldt;
-+	unsigned long vdso;
-+
-+#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
-+	unsigned long user_cs_base;
-+	unsigned long user_cs_limit;
-+
-+#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
-+	cpumask_t cpu_user_cs_mask;
-+#endif
-+
-+#endif
-+
- } mm_context_t;
- 
- #endif
 --- a/include/asm-i386/mmu_context.h
 +++ b/include/asm-i386/mmu_context.h
 @@ -57,6 +57,22 @@ static inline void switch_mm(struct mm_s
@@ -25884,6 +25899,30 @@
 +
  		}
  	}
+ #endif
+--- a/include/asm-i386/mmu.h
++++ b/include/asm-i386/mmu.h
+@@ -11,8 +11,19 @@
+ typedef struct { 
+ 	int size;
+ 	struct semaphore sem;
+-	void *ldt;
+-	void *vdso;
++	struct desc_struct *ldt;
++	unsigned long vdso;
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++	unsigned long user_cs_base;
++	unsigned long user_cs_limit;
++
++#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
++	cpumask_t cpu_user_cs_mask;
++#endif
++
++#endif
++
+ } mm_context_t;
+ 
  #endif
 --- a/include/asm-i386/module.h
 +++ b/include/asm-i386/module.h
@@ -26071,10 +26110,11 @@
  #define set_pte(pteptr, pteval)		native_set_pte(pteptr, pteval)
 --- a/include/asm-i386/pgtable-3level.h
 +++ b/include/asm-i386/pgtable-3level.h
-@@ -67,11 +67,34 @@ static inline void native_set_pte_atomic
+@@ -67,11 +67,35 @@ static inline void native_set_pte_atomic
  }
  static inline void native_set_pmd(pmd_t *pmdp, pmd_t pmd)
  {
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
 +
@@ -26220,7 +26260,28 @@
  #ifndef CONFIG_PARAVIRT
  /*
   * Rules for using pte_update - it must be called after any PTE update which
-@@ -500,6 +531,9 @@ static inline void paravirt_pagetable_se
+@@ -353,7 +384,19 @@ static inline void ptep_set_wrprotect(st
+  */
+ static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
+ {
+-       memcpy(dst, src, count * sizeof(pgd_t));
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++
++	pax_open_kernel(cr0);
++#endif
++
++	memcpy(dst, src, count * sizeof(pgd_t));
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ }
+ 
+ /*
+@@ -500,6 +543,9 @@ static inline void paravirt_pagetable_se
  
  #endif /* !__ASSEMBLY__ */
  
@@ -26446,7 +26507,15 @@
  
  #define segment_eq(a,b)	((a).seg == (b).seg)
  
-@@ -280,9 +282,12 @@ extern void __put_user_8(void);
+@@ -101,6 +103,7 @@ struct exception_table_entry
+ };
+ 
+ extern int fixup_exception(struct pt_regs *regs);
++#define ARCH_HAS_SORT_EXTABLE
+ 
+ /*
+  * These are the main single-value transfer routines.  They automatically
+@@ -280,9 +283,12 @@ extern void __put_user_8(void);
  
  #define __put_user_u64(x, addr, err)				\
  	__asm__ __volatile__(					\
@@ -26461,7 +26530,7 @@
  		".section .fixup,\"ax\"\n"			\
  		"4:	movl %3,%0\n"				\
  		"	jmp 3b\n"				\
-@@ -293,7 +298,8 @@ extern void __put_user_8(void);
+@@ -293,7 +299,8 @@ extern void __put_user_8(void);
  		"	.long 2b,4b\n"				\
  		".previous"					\
  		: "=r"(err)					\
@@ -26471,7 +26540,7 @@
  
  #ifdef CONFIG_X86_WP_WORKS_OK
  
-@@ -332,8 +338,11 @@ struct __large_struct { unsigned long bu
+@@ -332,8 +339,11 @@ struct __large_struct { unsigned long bu
   */
  #define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
  	__asm__ __volatile__(						\
@@ -26484,7 +26553,7 @@
  		".section .fixup,\"ax\"\n"				\
  		"3:	movl %3,%0\n"					\
  		"	jmp 2b\n"					\
-@@ -343,7 +352,8 @@ struct __large_struct { unsigned long bu
+@@ -343,7 +353,8 @@ struct __large_struct { unsigned long bu
  		"	.long 1b,3b\n"					\
  		".previous"						\
  		: "=r"(err)						\
@@ -26494,7 +26563,7 @@
  
  
  #define __get_user_nocheck(x,ptr,size)				\
-@@ -371,8 +381,11 @@ do {									\
+@@ -371,8 +382,11 @@ do {									\
  
  #define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
  	__asm__ __volatile__(						\
@@ -26507,7 +26576,7 @@
  		".section .fixup,\"ax\"\n"				\
  		"3:	movl %3,%0\n"					\
  		"	xor"itype" %"rtype"1,%"rtype"1\n"		\
-@@ -383,7 +396,7 @@ do {									\
+@@ -383,7 +397,7 @@ do {									\
  		"	.long 1b,3b\n"					\
  		".previous"						\
  		: "=r"(err), ltype (x)					\
@@ -26792,20 +26861,6 @@
  	KM_TYPE_NR
  };
  
---- a/include/asm-powerpc/page.h
-+++ b/include/asm-powerpc/page.h
-@@ -71,8 +71,9 @@
-  * and needs to be executable.  This means the whole heap ends
-  * up being executable.
-  */
--#define VM_DATA_DEFAULT_FLAGS32	(VM_READ | VM_WRITE | VM_EXEC | \
--				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
-+#define VM_DATA_DEFAULT_FLAGS32 \
-+	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
-+	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
- #define VM_DATA_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
- 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
 --- a/include/asm-powerpc/page_64.h
 +++ b/include/asm-powerpc/page_64.h
 @@ -158,15 +158,18 @@ extern int is_hugepage_only_range(struct
@@ -26829,6 +26884,20 @@
  
  #include <asm-generic/page.h>
  
+--- a/include/asm-powerpc/page.h
++++ b/include/asm-powerpc/page.h
+@@ -71,8 +71,9 @@
+  * and needs to be executable.  This means the whole heap ends
+  * up being executable.
+  */
+-#define VM_DATA_DEFAULT_FLAGS32	(VM_READ | VM_WRITE | VM_EXEC | \
+-				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
++#define VM_DATA_DEFAULT_FLAGS32 \
++	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
++	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
+ 
+ #define VM_DATA_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
+ 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
 --- a/include/asm-ppc/mmu_context.h
 +++ b/include/asm-ppc/mmu_context.h
 @@ -145,7 +145,8 @@ static inline void get_mmu_context(struc
@@ -26922,6 +26991,42 @@
  };
  
  #undef D
+--- a/include/asm-sparc64/a.out.h
++++ b/include/asm-sparc64/a.out.h
+@@ -98,7 +98,7 @@ struct relocation_info /* used when head
+ #define STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
+ #define STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
+ 
+-#define STACK_TOP (test_thread_flag(TIF_32BIT) ? \
++#define __STACK_TOP (test_thread_flag(TIF_32BIT) ? \
+ 		   STACK_TOP32 : STACK_TOP64)
+ 
+ #define STACK_TOP_MAX STACK_TOP64
+--- a/include/asm-sparc64/elf.h
++++ b/include/asm-sparc64/elf.h
+@@ -143,6 +143,12 @@ typedef struct {
+ #define ELF_ET_DYN_BASE         0x0000010000000000UL
+ #endif
+ 
++#ifdef CONFIG_PAX_ASLR
++#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT) ? 0x10000UL : 0x100000UL)
++
++#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT) ? 14 : 28 )
++#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT) ? 15 : 29 )
++#endif
+ 
+ /* This yields a mask that user programs can use to figure out what
+    instruction set this cpu supports.  */
+--- a/include/asm-sparc64/kmap_types.h
++++ b/include/asm-sparc64/kmap_types.h
+@@ -19,6 +19,7 @@ enum km_type {
+ 	KM_IRQ1,
+ 	KM_SOFTIRQ0,
+ 	KM_SOFTIRQ1,
++	KM_CLEARPAGE,
+ 	KM_TYPE_NR
+ };
+ 
 --- a/include/asm-sparc/a.out.h
 +++ b/include/asm-sparc/a.out.h
 @@ -91,8 +91,8 @@ struct relocation_info /* used when head
@@ -27010,42 +27115,6 @@
  #define __kernel_ok (segment_eq(get_fs(), KERNEL_DS))
  #define __access_ok(addr,size) (__user_ok((addr) & get_fs().seg,(size)))
  #define access_ok(type, addr, size)					\
---- a/include/asm-sparc64/a.out.h
-+++ b/include/asm-sparc64/a.out.h
-@@ -98,7 +98,7 @@ struct relocation_info /* used when head
- #define STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
- #define STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
- 
--#define STACK_TOP (test_thread_flag(TIF_32BIT) ? \
-+#define __STACK_TOP (test_thread_flag(TIF_32BIT) ? \
- 		   STACK_TOP32 : STACK_TOP64)
- 
- #define STACK_TOP_MAX STACK_TOP64
---- a/include/asm-sparc64/elf.h
-+++ b/include/asm-sparc64/elf.h
-@@ -143,6 +143,12 @@ typedef struct {
- #define ELF_ET_DYN_BASE         0x0000010000000000UL
- #endif
- 
-+#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT) ? 0x10000UL : 0x100000UL)
-+
-+#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT) ? 14 : 28 )
-+#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT) ? 15 : 29 )
-+#endif
- 
- /* This yields a mask that user programs can use to figure out what
-    instruction set this cpu supports.  */
---- a/include/asm-sparc64/kmap_types.h
-+++ b/include/asm-sparc64/kmap_types.h
-@@ -19,6 +19,7 @@ enum km_type {
- 	KM_IRQ1,
- 	KM_SOFTIRQ0,
- 	KM_SOFTIRQ1,
-+	KM_CLEARPAGE,
- 	KM_TYPE_NR
- };
- 
 --- a/include/asm-um/kmap_types.h
 +++ b/include/asm-um/kmap_types.h
 @@ -23,6 +23,7 @@ enum km_type {
@@ -27206,6 +27275,17 @@
  #define __PAGE_KERNEL \
  	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_NX)
  #define __PAGE_KERNEL_EXEC \
+--- a/include/asm-x86_64/processor.h
++++ b/include/asm-x86_64/processor.h
+@@ -140,7 +140,7 @@ static inline void clear_in_cr4 (unsigne
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
+  */
+-#define IA32_PAGE_OFFSET ((current->personality & ADDR_LIMIT_3GB) ? 0xc0000000 : 0xFFFFe000)
++#define IA32_PAGE_OFFSET ((current->personality & ADDR_LIMIT_3GB) ? 0xc0000000 : 0xFFFFf000)
+ 
+ #define TASK_SIZE 		(test_thread_flag(TIF_IA32) ? IA32_PAGE_OFFSET : TASK_SIZE64)
+ #define TASK_SIZE_OF(child) 	((test_tsk_thread_flag(child, TIF_IA32)) ? IA32_PAGE_OFFSET : TASK_SIZE64)
 --- a/include/asm-x86_64/system.h
 +++ b/include/asm-x86_64/system.h
 @@ -174,7 +174,7 @@ static inline void write_cr8(unsigned lo
@@ -28433,17 +28513,6 @@
  })
  
  #define irqs_disabled_flags(flags)	raw_irqs_disabled_flags(flags)
---- a/include/linux/jbd.h
-+++ b/include/linux/jbd.h
-@@ -68,7 +68,7 @@ extern int journal_enable_debug;
- 		}							\
- 	} while (0)
- #else
--#define jbd_debug(f, a...)	/**/
-+#define jbd_debug(f, a...)	do {} while (0)
- #endif
- 
- extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
 --- a/include/linux/jbd2.h
 +++ b/include/linux/jbd2.h
 @@ -68,7 +68,7 @@ extern u8 jbd2_journal_enable_debug;
@@ -28455,6 +28524,17 @@
  #endif
  
  extern void * __jbd2_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+--- a/include/linux/jbd.h
++++ b/include/linux/jbd.h
+@@ -68,7 +68,7 @@ extern int journal_enable_debug;
+ 		}							\
+ 	} while (0)
+ #else
+-#define jbd_debug(f, a...)	/**/
++#define jbd_debug(f, a...)	do {} while (0)
+ #endif
+ 
+ extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
 --- a/include/linux/libata.h
 +++ b/include/linux/libata.h
 @@ -63,11 +63,11 @@
@@ -28902,16 +28982,6 @@
  #endif
  
  
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -384,6 +384,7 @@ config SYSCTL_SYSCALL
- config KALLSYMS
- 	 bool "Load all symbols for debugging/ksymoops" if EMBEDDED
- 	 default y
-+	 depends on !GRKERNSEC_HIDESYM
- 	 help
- 	   Say Y here to let the kernel print out symbolic crash information and
- 	   symbolic stack backtraces. This increases the size of the kernel
 --- a/init/do_mounts.c
 +++ b/init/do_mounts.c
 @@ -68,11 +68,12 @@ static dev_t try_name(char *name, int pa
@@ -29151,6 +29221,16 @@
  	state = SkipIt;
  	next_state = Reset;
  	return 0;
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -384,6 +384,7 @@ config SYSCTL_SYSCALL
+ config KALLSYMS
+ 	 bool "Load all symbols for debugging/ksymoops" if EMBEDDED
+ 	 default y
++	 depends on !GRKERNSEC_HIDESYM
+ 	 help
+ 	   Say Y here to let the kernel print out symbolic crash information and
+ 	   symbolic stack backtraces. This increases the size of the kernel
 --- a/init/main.c
 +++ b/init/main.c
 @@ -107,6 +107,7 @@ static inline void mark_rodata_ro(void) 
@@ -29893,7 +29973,12 @@
  }
  
  void *__symbol_get(const char *symbol)
-@@ -1283,6 +1296,10 @@ static int simplify_symbols(Elf_Shdr *se
+@@ -1279,10 +1292,14 @@ static int simplify_symbols(Elf_Shdr *se
+ 			    struct module *mod)
+ {
+ 	Elf_Sym *sym = (void *)sechdrs[symindex].sh_addr;
+-	unsigned long secbase;
++	unsigned long secbase, symbol;
  	unsigned int i, n = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
  	int ret = 0;
  
@@ -29908,15 +29993,17 @@
  			break;
  
  		case SHN_UNDEF:
-+
+-			sym[i].st_value
+-			  = resolve_symbol(sechdrs, versindex,
++			symbol = resolve_symbol(sechdrs, versindex,
+ 					   strtab + sym[i].st_name, mod);
+ 
 +#ifdef CONFIG_PAX_KERNEXEC
 +			pax_open_kernel(cr0);
 +#endif
 +
- 			sym[i].st_value
- 			  = resolve_symbol(sechdrs, versindex,
- 					   strtab + sym[i].st_name, mod);
- 
++			sym[i].st_value = symbol;
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +			pax_close_kernel(cr0);
 +#endif
@@ -29990,7 +30077,7 @@
  	}
  }
  
-@@ -1525,14 +1573,28 @@ static void add_kallsyms(struct module *
+@@ -1525,14 +1573,31 @@ static void add_kallsyms(struct module *
  {
  	unsigned int i;
  
@@ -30003,23 +30090,29 @@
  	mod->strtab = (void *)sechdrs[strindex].sh_addr;
  
  	/* Set types up while we still have access to sections. */
+-	for (i = 0; i < mod->num_symtab; i++)
+-		mod->symtab[i].st_info
+-			= elf_type(&mod->symtab[i], sechdrs, secstrings, mod);
++
++	for (i = 0; i < mod->num_symtab; i++) {
++		char type = elf_type(&mod->symtab[i], sechdrs, secstrings, mod);
 +
 +#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
++		pax_open_kernel(cr0);
 +#endif
 +
- 	for (i = 0; i < mod->num_symtab; i++)
- 		mod->symtab[i].st_info
- 			= elf_type(&mod->symtab[i], sechdrs, secstrings, mod);
++		mod->symtab[i].st_info = type;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
++		pax_close_kernel(cr0);
 +#endif
++
++	}
 +
  }
  #else
  static inline void add_kallsyms(struct module *mod,
-@@ -1580,6 +1642,10 @@ static struct module *load_module(void _
+@@ -1580,6 +1645,10 @@ static struct module *load_module(void _
  	struct exception_table_entry *extable;
  	mm_segment_t old_fs;
  
@@ -30030,7 +30123,7 @@
  	DEBUGP("load_module: umod=%p, len=%lu, uargs=%p\n",
  	       umod, len, uargs);
  	if (len < sizeof(*hdr))
-@@ -1738,21 +1804,57 @@ static struct module *load_module(void _
+@@ -1738,21 +1807,57 @@ static struct module *load_module(void _
  	layout_sections(mod, hdr, sechdrs, secstrings);
  
  	/* Do the allocs. */
@@ -30062,11 +30155,11 @@
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
-+
-+	memset(ptr, 0, mod->core_size_rx);
  
 -	ptr = module_alloc(mod->init_size);
 -	if (!ptr && mod->init_size) {
++	memset(ptr, 0, mod->core_size_rx);
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
 +#endif
@@ -30096,7 +30189,7 @@
  
  	/* Transfer each section which specifies SHF_ALLOC */
  	DEBUGP("final section addresses:\n");
-@@ -1762,17 +1864,44 @@ static struct module *load_module(void _
+@@ -1762,17 +1867,41 @@ static struct module *load_module(void _
  		if (!(sechdrs[i].sh_flags & SHF_ALLOC))
  			continue;
  
@@ -30120,22 +30213,19 @@
 +		}
 +
 +		if (sechdrs[i].sh_type != SHT_NOBITS) {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
-+				pax_open_kernel(cr0);
-+#endif
  
 -		if (sechdrs[i].sh_type != SHT_NOBITS)
 -			memcpy(dest, (void *)sechdrs[i].sh_addr,
 -			       sechdrs[i].sh_size);
-+			memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
-+
 +#ifdef CONFIG_PAX_KERNEXEC
-+			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC))
++			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC)) {
++				pax_open_kernel(cr0);
++				memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
 +				pax_close_kernel(cr0);
++			} else
 +#endif
 +
++			memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
 +		}
  		/* Update sh_addr to point to copy in image. */
 -		sechdrs[i].sh_addr = (unsigned long)dest;
@@ -30150,28 +30240,7 @@
  		DEBUGP("\t0x%lx %s\n", sechdrs[i].sh_addr, secstrings + sechdrs[i].sh_name);
  	}
  	/* Module has been moved. */
-@@ -1853,11 +1982,20 @@ static struct module *load_module(void _
- 		if (!(sechdrs[info].sh_flags & SHF_ALLOC))
- 			continue;
- 
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_open_kernel(cr0);
-+#endif
-+
- 		if (sechdrs[i].sh_type == SHT_REL)
- 			err = apply_relocate(sechdrs, strtab, symindex, i,mod);
- 		else if (sechdrs[i].sh_type == SHT_RELA)
- 			err = apply_relocate_add(sechdrs, strtab, symindex, i,
- 						 mod);
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
-+
- 		if (err < 0)
- 			goto cleanup;
- 	}
-@@ -1892,12 +2030,12 @@ static struct module *load_module(void _
+@@ -1892,12 +2021,12 @@ static struct module *load_module(void _
  	 * Do it before processing of module parameters, so the module
  	 * can provide parameter accessor functions of its own.
  	 */
@@ -30190,7 +30259,7 @@
  
  	set_fs(old_fs);
  
-@@ -1940,9 +2078,13 @@ static struct module *load_module(void _
+@@ -1940,9 +2069,13 @@ static struct module *load_module(void _
  	module_arch_cleanup(mod);
   cleanup:
  	module_unload_free(mod);
@@ -30207,7 +30276,7 @@
   free_percpu:
  	if (percpu)
  		percpu_modfree(percpu);
-@@ -1978,6 +2120,9 @@ sys_init_module(void __user *umod,
+@@ -1978,6 +2111,9 @@ sys_init_module(void __user *umod,
  	struct module *mod;
  	int ret = 0;
  
@@ -30217,7 +30286,7 @@
  	/* Must have permission */
  	if (!capable(CAP_SYS_MODULE))
  		return -EPERM;
-@@ -2029,10 +2174,12 @@ sys_init_module(void __user *umod,
+@@ -2029,10 +2165,12 @@ sys_init_module(void __user *umod,
  	/* Drop initial reference. */
  	module_put(mod);
  	unwind_remove_table(mod->unwind_info, 1);
@@ -30234,7 +30303,7 @@
  	mutex_unlock(&module_mutex);
  
  	return 0;
-@@ -2040,6 +2187,13 @@ sys_init_module(void __user *umod,
+@@ -2040,6 +2178,13 @@ sys_init_module(void __user *umod,
  
  static inline int within(unsigned long addr, void *start, unsigned long size)
  {
@@ -30248,7 +30317,7 @@
  	return ((void *)addr >= start && (void *)addr < start + size);
  }
  
-@@ -2063,10 +2217,14 @@ static const char *get_ksymbol(struct mo
+@@ -2063,10 +2208,14 @@ static const char *get_ksymbol(struct mo
  	unsigned long nextval;
  
  	/* At worse, next value is at end of module */
@@ -30267,7 +30336,7 @@
  
  	/* Scan for closest preceeding symbol, and next symbol. (ELF
             starts real symbols at 1). */
-@@ -2109,8 +2267,10 @@ const char *module_address_lookup(unsign
+@@ -2109,8 +2258,10 @@ const char *module_address_lookup(unsign
  	struct module *mod;
  
  	list_for_each_entry(mod, &modules, list) {
@@ -30280,7 +30349,7 @@
  			if (modname)
  				*modname = mod->name;
  			return get_ksymbol(mod, addr, size, offset);
-@@ -2125,8 +2285,10 @@ int lookup_module_symbol_name(unsigned l
+@@ -2125,8 +2276,10 @@ int lookup_module_symbol_name(unsigned l
  
  	mutex_lock(&module_mutex);
  	list_for_each_entry(mod, &modules, list) {
@@ -30293,7 +30362,7 @@
  			const char *sym;
  
  			sym = get_ksymbol(mod, addr, NULL, NULL);
-@@ -2149,8 +2311,10 @@ int lookup_module_symbol_attrs(unsigned 
+@@ -2149,8 +2302,10 @@ int lookup_module_symbol_attrs(unsigned 
  
  	mutex_lock(&module_mutex);
  	list_for_each_entry(mod, &modules, list) {
@@ -30306,7 +30375,7 @@
  			const char *sym;
  
  			sym = get_ksymbol(mod, addr, size, offset);
-@@ -2270,7 +2434,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2270,7 +2425,7 @@ static int m_show(struct seq_file *m, vo
  	char buf[8];
  
  	seq_printf(m, "%s %lu",
@@ -30315,7 +30384,7 @@
  	print_unload_info(m, mod);
  
  	/* Informative for users. */
-@@ -2279,7 +2443,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2279,7 +2434,7 @@ static int m_show(struct seq_file *m, vo
  		   mod->state == MODULE_STATE_COMING ? "Loading":
  		   "Live");
  	/* Used by oprofile and other similar tools. */
@@ -30324,7 +30393,7 @@
  
  	/* Taints info */
  	if (mod->taints)
-@@ -2335,7 +2499,8 @@ int is_module_address(unsigned long addr
+@@ -2335,7 +2490,8 @@ int is_module_address(unsigned long addr
  	preempt_disable();
  
  	list_for_each_entry(mod, &modules, list) {
@@ -30334,7 +30403,7 @@
  			preempt_enable();
  			return 1;
  		}
-@@ -2353,8 +2518,8 @@ struct module *__module_text_address(uns
+@@ -2353,8 +2509,8 @@ struct module *__module_text_address(uns
  	struct module *mod;
  
  	list_for_each_entry(mod, &modules, list)
@@ -30969,29 +31038,6 @@
  };
  
  static int __init utsname_sysctl_init(void)
---- a/lib/extable.c
-+++ b/lib/extable.c
-@@ -36,8 +36,20 @@ static int cmp_ex(const void *a, const v
- void sort_extable(struct exception_table_entry *start,
- 		  struct exception_table_entry *finish)
- {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	unsigned long cr0;
-+
-+	pax_open_kernel(cr0);
-+#endif
-+
- 	sort(start, finish - start, sizeof(struct exception_table_entry),
- 	     cmp_ex, NULL);
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
-+#endif
-+
- }
- #endif
- 
 --- a/lib/radix-tree.c
 +++ b/lib/radix-tree.c
 @@ -76,7 +76,7 @@ struct radix_tree_preload {
@@ -31003,6 +31049,26 @@
  
  static inline gfp_t root_gfp_mask(struct radix_tree_root *root)
  {
+--- a/Makefile
++++ b/Makefile
+@@ -312,7 +312,7 @@ LINUXINCLUDE    := -Iinclude \
+ 
+ CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
+ 
+-CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
++CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common \
+ 		   -Werror-implicit-function-declaration
+ AFLAGS          := -D__ASSEMBLY__
+@@ -560,7 +560,7 @@ export mod_strip_cmd
+ 
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -30,6 +30,7 @@
@@ -31198,40 +31264,7 @@
  
  #include <asm/pgalloc.h>
  #include <asm/uaccess.h>
-@@ -320,6 +321,11 @@ int __pte_alloc(struct mm_struct *mm, pm
- 
- int __pte_alloc_kernel(pmd_t *pmd, unsigned long address)
- {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	unsigned long cr0;
-+#endif
-+
- 	pte_t *new = pte_alloc_one_kernel(&init_mm, address);
- 	if (!new)
- 		return -ENOMEM;
-@@ -327,8 +333,19 @@ int __pte_alloc_kernel(pmd_t *pmd, unsig
- 	spin_lock(&init_mm.page_table_lock);
- 	if (pmd_present(*pmd))		/* Another has populated it */
- 		pte_free_kernel(new);
--	else
-+	else {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+		pax_open_kernel(cr0);
-+#endif
-+
- 		pmd_populate_kernel(&init_mm, pmd, new);
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+		pax_close_kernel(cr0);
-+#endif
-+
-+	}
- 	spin_unlock(&init_mm.page_table_lock);
- 	return 0;
- }
-@@ -993,7 +1010,7 @@ int get_user_pages(struct task_struct *t
+@@ -993,7 +994,7 @@ int get_user_pages(struct task_struct *t
  		struct vm_area_struct *vma;
  		unsigned int foll_flags;
  
@@ -31240,7 +31273,7 @@
  		if (!vma && in_gate_area(tsk, start)) {
  			unsigned long pg = start & PAGE_MASK;
  			struct vm_area_struct *gate_vma = get_gate_vma(tsk);
-@@ -1033,7 +1050,7 @@ int get_user_pages(struct task_struct *t
+@@ -1033,7 +1034,7 @@ int get_user_pages(struct task_struct *t
  			continue;
  		}
  
@@ -31249,7 +31282,7 @@
  				|| !(vm_flags & vma->vm_flags))
  			return i ? : -EFAULT;
  
-@@ -1614,6 +1631,193 @@ static inline void cow_user_page(struct 
+@@ -1614,6 +1615,193 @@ static inline void cow_user_page(struct 
  	copy_user_highpage(dst, src, va, vma);
  }
  
@@ -31443,7 +31476,7 @@
  /*
   * This routine handles present pages, when users try to write
   * to a shared page. It is done by copying the page to a new address
-@@ -1733,6 +1937,12 @@ gotten:
+@@ -1733,6 +1921,12 @@ gotten:
  	 */
  	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
  	if (likely(pte_same(*page_table, orig_pte))) {
@@ -31456,7 +31489,7 @@
  		if (old_page) {
  			page_remove_rmap(old_page, vma);
  			if (!PageAnon(old_page)) {
-@@ -1757,6 +1967,10 @@ gotten:
+@@ -1757,6 +1951,10 @@ gotten:
  		lru_cache_add_active(new_page);
  		page_add_new_anon_rmap(new_page, vma, address);
  
@@ -31467,7 +31500,7 @@
  		/* Free the old page.. */
  		new_page = old_page;
  		ret |= VM_FAULT_WRITE;
-@@ -2034,6 +2248,7 @@ int vmtruncate(struct inode * inode, lof
+@@ -2034,6 +2232,7 @@ int vmtruncate(struct inode * inode, lof
  
  do_expand:
  	limit = current->signal->rlim[RLIMIT_FSIZE].rlim_cur;
@@ -31475,7 +31508,7 @@
  	if (limit != RLIM_INFINITY && offset > limit)
  		goto out_sig;
  	if (offset > inode->i_sb->s_maxbytes)
-@@ -2216,6 +2431,11 @@ static int do_swap_page(struct mm_struct
+@@ -2216,6 +2415,11 @@ static int do_swap_page(struct mm_struct
  	swap_free(entry);
  	if (vm_swap_full())
  		remove_exclusive_swap_page(page);
@@ -31487,7 +31520,7 @@
  	unlock_page(page);
  
  	if (write_access) {
-@@ -2228,6 +2448,11 @@ static int do_swap_page(struct mm_struct
+@@ -2228,6 +2432,11 @@ static int do_swap_page(struct mm_struct
  
  	/* No need to invalidate - it was non-present before */
  	update_mmu_cache(vma, address, pte);
@@ -31499,7 +31532,7 @@
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  out:
-@@ -2268,6 +2493,12 @@ static int do_anonymous_page(struct mm_s
+@@ -2268,6 +2477,12 @@ static int do_anonymous_page(struct mm_s
  		page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
  		if (!pte_none(*page_table))
  			goto release;
@@ -31512,7 +31545,7 @@
  		inc_mm_counter(mm, anon_rss);
  		lru_cache_add_active(page);
  		page_add_new_anon_rmap(page, vma, address);
-@@ -2290,6 +2521,14 @@ static int do_anonymous_page(struct mm_s
+@@ -2290,6 +2505,14 @@ static int do_anonymous_page(struct mm_s
  	/* No need to invalidate - it was non-present before */
  	update_mmu_cache(vma, address, entry);
  	lazy_mmu_prot_update(entry);
@@ -31527,7 +31560,7 @@
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  	return 0;
-@@ -2422,6 +2661,12 @@ static int __do_fault(struct mm_struct *
+@@ -2422,6 +2645,12 @@ static int __do_fault(struct mm_struct *
  	 */
  	/* Only go through if we didn't race with anybody else... */
  	if (likely(pte_same(*page_table, orig_pte))) {
@@ -31540,7 +31573,7 @@
  		flush_icache_page(vma, page);
  		entry = mk_pte(page, vma->vm_page_prot);
  		if (flags & FAULT_FLAG_WRITE)
-@@ -2443,6 +2688,14 @@ static int __do_fault(struct mm_struct *
+@@ -2443,6 +2672,14 @@ static int __do_fault(struct mm_struct *
  		/* no need to invalidate: a not-present page won't be cached */
  		update_mmu_cache(vma, address, entry);
  		lazy_mmu_prot_update(entry);
@@ -31555,7 +31588,7 @@
  	} else {
  		if (anon)
  			page_cache_release(page);
-@@ -2522,6 +2775,11 @@ static noinline int do_no_pfn(struct mm_
+@@ -2522,6 +2759,11 @@ static noinline int do_no_pfn(struct mm_
  		if (write_access)
  			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
  		set_pte_at(mm, address, page_table, entry);
@@ -31567,7 +31600,7 @@
  	}
  	pte_unmap_unlock(page_table, ptl);
  	return 0;
-@@ -2625,6 +2883,11 @@ static inline int handle_pte_fault(struc
+@@ -2625,6 +2867,11 @@ static inline int handle_pte_fault(struc
  		if (write_access)
  			flush_tlb_page(vma, address);
  	}
@@ -31579,7 +31612,7 @@
  unlock:
  	pte_unmap_unlock(pte, ptl);
  	return 0;
-@@ -2641,6 +2904,10 @@ int handle_mm_fault(struct mm_struct *mm
+@@ -2641,6 +2888,10 @@ int handle_mm_fault(struct mm_struct *mm
  	pmd_t *pmd;
  	pte_t *pte;
  
@@ -31590,7 +31623,7 @@
  	__set_current_state(TASK_RUNNING);
  
  	count_vm_event(PGFAULT);
-@@ -2648,6 +2915,34 @@ int handle_mm_fault(struct mm_struct *mm
+@@ -2648,6 +2899,34 @@ int handle_mm_fault(struct mm_struct *mm
  	if (unlikely(is_vm_hugetlb_page(vma)))
  		return hugetlb_fault(mm, vma, address, write_access);
  
@@ -31625,7 +31658,7 @@
  	pgd = pgd_offset(mm, address);
  	pud = pud_alloc(mm, pgd, address);
  	if (!pud)
-@@ -2781,7 +3076,7 @@ static int __init gate_vma_init(void)
+@@ -2781,7 +3060,7 @@ static int __init gate_vma_init(void)
  	gate_vma.vm_start = FIXADDR_USER_START;
  	gate_vma.vm_end = FIXADDR_USER_END;
  	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
@@ -33482,45 +33515,6 @@
  		if (tw) {
  			inet_twsk_deschedule(tw, death_row);
  			inet_twsk_put(tw);
---- a/net/ipv4/netfilter/Kconfig
-+++ b/net/ipv4/netfilter/Kconfig
-@@ -130,6 +130,21 @@ config IP_NF_MATCH_ADDRTYPE
- 	  If you want to compile it as a module, say M here and read
- 	  <file:Documentation/modules.txt>.  If unsure, say `N'.
- 
-+config IP_NF_MATCH_STEALTH
-+	tristate "stealth match support"
-+	depends on IP_NF_IPTABLES
-+	help
-+	  Enabling this option will drop all syn packets coming to unserved tcp
-+	  ports as well as all packets coming to unserved udp ports.  If you
-+	  are using your system to route any type of packets (ie. via NAT)
-+	  you should put this module at the end of your ruleset, since it will
-+	  drop packets that aren't going to ports that are listening on your
-+	  machine itself, it doesn't take into account that the packet might be
-+	  destined for someone on your internal network if you're using NAT for
-+	  instance.
-+
-+	  To compile it as a module, choose M here.  If unsure, say N.
-+
- # `filter', generic and specific targets
- config IP_NF_FILTER
- 	tristate "Packet filtering"
-@@ -403,4 +418,3 @@ config IP_NF_ARP_MANGLE
- 	  hardware and network addresses.
- 
- endmenu
--
---- a/net/ipv4/netfilter/Makefile
-+++ b/net/ipv4/netfilter/Makefile
-@@ -49,6 +49,7 @@ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn
- obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
- obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
- obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ipt_addrtype.o
-+obj-$(CONFIG_IP_NF_MATCH_STEALTH) += ipt_stealth.o
- 
- # targets
- obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
 --- /dev/null
 +++ b/net/ipv4/netfilter/ipt_stealth.c
 @@ -0,0 +1,114 @@
@@ -33638,6 +33632,45 @@
 +
 +module_init(init);
 +module_exit(fini);
+--- a/net/ipv4/netfilter/Kconfig
++++ b/net/ipv4/netfilter/Kconfig
+@@ -130,6 +130,21 @@ config IP_NF_MATCH_ADDRTYPE
+ 	  If you want to compile it as a module, say M here and read
+ 	  <file:Documentation/modules.txt>.  If unsure, say `N'.
+ 
++config IP_NF_MATCH_STEALTH
++	tristate "stealth match support"
++	depends on IP_NF_IPTABLES
++	help
++	  Enabling this option will drop all syn packets coming to unserved tcp
++	  ports as well as all packets coming to unserved udp ports.  If you
++	  are using your system to route any type of packets (ie. via NAT)
++	  you should put this module at the end of your ruleset, since it will
++	  drop packets that aren't going to ports that are listening on your
++	  machine itself, it doesn't take into account that the packet might be
++	  destined for someone on your internal network if you're using NAT for
++	  instance.
++
++	  To compile it as a module, choose M here.  If unsure, say N.
++
+ # `filter', generic and specific targets
+ config IP_NF_FILTER
+ 	tristate "Packet filtering"
+@@ -403,4 +418,3 @@ config IP_NF_ARP_MANGLE
+ 	  hardware and network addresses.
+ 
+ endmenu
+-
+--- a/net/ipv4/netfilter/Makefile
++++ b/net/ipv4/netfilter/Makefile
+@@ -49,6 +49,7 @@ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn
+ obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
+ obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
+ obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ipt_addrtype.o
++obj-$(CONFIG_IP_NF_MATCH_STEALTH) += ipt_stealth.o
+ 
+ # targets
+ obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
 --- a/net/ipv4/tcp.c
 +++ b/net/ipv4/tcp.c
 @@ -1053,7 +1053,8 @@ int tcp_read_sock(struct sock *sk, read_
@@ -34060,6 +34093,100 @@
  	    logoname);
      write_hex_cnt = 0;
      for (i = 0; i < logo_clutsize; i++) {
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -22,10 +22,11 @@
+ #include <linux/ptrace.h>
+ #include <linux/xattr.h>
+ #include <linux/hugetlb.h>
++#include <linux/grsecurity.h>
+ 
+ int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
+ {
+-	NETLINK_CB(skb).eff_cap = current->cap_effective;
++	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
+ 	return 0;
+ }
+ 
+@@ -43,7 +44,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
+ int cap_capable (struct task_struct *tsk, int cap)
+ {
+ 	/* Derived from include/linux/sched.h:capable. */
+-	if (cap_raised(tsk->cap_effective, cap))
++	if (cap_raised (tsk->cap_effective, cap))
++		return 0;
++	return -EPERM;
++}
++
++int cap_capable_nolog (struct task_struct *tsk, int cap)
++{
++	/* tsk = current for all callers */
++	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
+ 		return 0;
+ 	return -EPERM;
+ }
+@@ -162,8 +171,11 @@ void cap_bprm_apply_creds (struct linux_
+ 		}
+ 	}
+ 
+-	current->suid = current->euid = current->fsuid = bprm->e_uid;
+-	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
++		current->suid = current->euid = current->fsuid = bprm->e_uid;
++
++	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
++		current->sgid = current->egid = current->fsgid = bprm->e_gid;
+ 
+ 	/* For init, we want to retain the capabilities set
+ 	 * in the init_task struct. Thus we skip the usual
+@@ -174,6 +186,8 @@ void cap_bprm_apply_creds (struct linux_
+ 		    cap_intersect (new_permitted, bprm->cap_effective);
+ 	}
+ 
++	gr_handle_chroot_caps(current);
++
+ 	/* AUD: Audit candidate if current->cap_effective is set */
+ 
+ 	current->keep_capabilities = 0;
+@@ -319,12 +333,13 @@ int cap_vm_enough_memory(struct mm_struc
+ {
+ 	int cap_sys_admin = 0;
+ 
+-	if (cap_capable(current, CAP_SYS_ADMIN) == 0)
++	if (cap_capable_nolog(current, CAP_SYS_ADMIN) == 0)
+ 		cap_sys_admin = 1;
+ 	return __vm_enough_memory(mm, pages, cap_sys_admin);
+ }
+ 
+ EXPORT_SYMBOL(cap_capable);
++EXPORT_SYMBOL(cap_capable_nolog);
+ EXPORT_SYMBOL(cap_settime);
+ EXPORT_SYMBOL(cap_ptrace);
+ EXPORT_SYMBOL(cap_capget);
+--- a/security/dummy.c
++++ b/security/dummy.c
+@@ -28,6 +28,7 @@
+ #include <linux/hugetlb.h>
+ #include <linux/ptrace.h>
+ #include <linux/file.h>
++#include <linux/grsecurity.h>
+ 
+ static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
+ {
+@@ -138,8 +139,11 @@ static void dummy_bprm_apply_creds (stru
+ 		}
+ 	}
+ 
+-	current->suid = current->euid = current->fsuid = bprm->e_uid;
+-	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
++		current->suid = current->euid = current->fsuid = bprm->e_uid;
++
++	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
++		current->sgid = current->egid = current->fsgid = bprm->e_gid;
+ 
+ 	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ }
 --- a/security/Kconfig
 +++ b/security/Kconfig
 @@ -4,6 +4,429 @@
@@ -34492,100 +34619,6 @@
  config KEYS
  	bool "Enable access key retention support"
  	help
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -22,10 +22,11 @@
- #include <linux/ptrace.h>
- #include <linux/xattr.h>
- #include <linux/hugetlb.h>
-+#include <linux/grsecurity.h>
- 
- int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
- {
--	NETLINK_CB(skb).eff_cap = current->cap_effective;
-+	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
- 	return 0;
- }
- 
-@@ -43,7 +44,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
- int cap_capable (struct task_struct *tsk, int cap)
- {
- 	/* Derived from include/linux/sched.h:capable. */
--	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap))
-+		return 0;
-+	return -EPERM;
-+}
-+
-+int cap_capable_nolog (struct task_struct *tsk, int cap)
-+{
-+	/* tsk = current for all callers */
-+	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
- 		return 0;
- 	return -EPERM;
- }
-@@ -162,8 +171,11 @@ void cap_bprm_apply_creds (struct linux_
- 		}
- 	}
- 
--	current->suid = current->euid = current->fsuid = bprm->e_uid;
--	current->sgid = current->egid = current->fsgid = bprm->e_gid;
-+	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
-+		current->suid = current->euid = current->fsuid = bprm->e_uid;
-+
-+	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
-+		current->sgid = current->egid = current->fsgid = bprm->e_gid;
- 
- 	/* For init, we want to retain the capabilities set
- 	 * in the init_task struct. Thus we skip the usual
-@@ -174,6 +186,8 @@ void cap_bprm_apply_creds (struct linux_
- 		    cap_intersect (new_permitted, bprm->cap_effective);
- 	}
- 
-+	gr_handle_chroot_caps(current);
-+
- 	/* AUD: Audit candidate if current->cap_effective is set */
- 
- 	current->keep_capabilities = 0;
-@@ -319,12 +333,13 @@ int cap_vm_enough_memory(struct mm_struc
- {
- 	int cap_sys_admin = 0;
- 
--	if (cap_capable(current, CAP_SYS_ADMIN) == 0)
-+	if (cap_capable_nolog(current, CAP_SYS_ADMIN) == 0)
- 		cap_sys_admin = 1;
- 	return __vm_enough_memory(mm, pages, cap_sys_admin);
- }
- 
- EXPORT_SYMBOL(cap_capable);
-+EXPORT_SYMBOL(cap_capable_nolog);
- EXPORT_SYMBOL(cap_settime);
- EXPORT_SYMBOL(cap_ptrace);
- EXPORT_SYMBOL(cap_capget);
---- a/security/dummy.c
-+++ b/security/dummy.c
-@@ -28,6 +28,7 @@
- #include <linux/hugetlb.h>
- #include <linux/ptrace.h>
- #include <linux/file.h>
-+#include <linux/grsecurity.h>
- 
- static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
- {
-@@ -138,8 +139,11 @@ static void dummy_bprm_apply_creds (stru
- 		}
- 	}
- 
--	current->suid = current->euid = current->fsuid = bprm->e_uid;
--	current->sgid = current->egid = current->fsgid = bprm->e_gid;
-+	if (!gr_check_user_change(-1, bprm->e_uid, bprm->e_uid))
-+		current->suid = current->euid = current->fsuid = bprm->e_uid;
-+
-+	if (!gr_check_group_change(-1, bprm->e_gid, bprm->e_gid))
-+		current->sgid = current->egid = current->fsgid = bprm->e_gid;
- 
- 	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
- }
 --- a/sound/core/oss/pcm_oss.c
 +++ b/sound/core/oss/pcm_oss.c
 @@ -2880,8 +2880,8 @@ static void snd_pcm_oss_proc_done(struct
