@@ -47,10 +47,6 @@ Patch:	1900_nfs-writeback-race.patch
 From:	http://bugs.gentoo.org/197264
 Desc:	Fix NFS data corruption regression
 
-Patch:	2000_GRE-sendto-recvfrom-NBMA-address.patch
-From:	http://bugs.gentoo.org/196904
-Desc:	Implement properly NHRP over GRE tunnel
-
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
@@ -70,6 +66,10 @@ Desc:	Fix alsa zero-division bug in the calculation dds offset
 Patch:	4000_e1000e.patch
 From:	http://bugs.gentoo.org/196053
 Desc:	Add Intel ICH9 PCI-Express ethernet support
+
+Patch:	4005_GRE-sendto-recvfrom-NBMA-address.patch
+From:	http://bugs.gentoo.org/196904
+Desc:	Implement properly NHRP over GRE tunnel
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
