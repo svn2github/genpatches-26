@@ -95,6 +95,10 @@ Patch:	2005_GRE-sendto-recvfrom-NBMA-address.patch
 From:	http://bugs.gentoo.org/196904
 Desc:	Implement properly NHRP over GRE tunnel
 
+Patch:	2200_acpi-concurrent-thermal-checks.patch
+From:	http://bugs.gentoo.org/176615
+Desc:	Fix stack overflow due to recursive ACPI thermal checks
+
 Patch:	2300_support-for-htc-smartphones.patch
 From:	http://bugs.gentoo.org/187522
 Desc:	Support HTC smartphones wmodem
