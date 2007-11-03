@@ -51,6 +51,10 @@ Patch:	1900_nfs-writeback-race.patch
 From:	http://bugs.gentoo.org/197264
 Desc:	Fix NFS data corruption regression
 
+Patch:	2200_acpi-concurrent-thermal-checks.patch
+From:	http://bugs.gentoo.org/176615
+Desc:	Fix stack overflow due to recursive ACPI thermal checks
+
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
