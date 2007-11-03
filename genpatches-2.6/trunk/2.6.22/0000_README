@@ -79,6 +79,10 @@ Patch:	1009_linux-2.6.22.10.patch
 From:	www.kernel.org
 Desc:	Linux 2.6.22.10
 
+Patch:	1010_linux-2.6.22.11.patch
+From:	www.kernel.org
+Desc:	Linux 2.6.22.11
+
 Patch:	1800_gcc-4.2-export-symbol.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix compilation with gcc 4.2
