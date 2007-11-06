@@ -1,0 +1,57 @@
+From: Michael Wu <flamingice@sourmilk.net>
+Date: Fri, 29 Jun 2007 06:14:35 +0000 (-0700)
+Subject: [PATCH] mac80211: remove rtnl locking in ieee80211_sta.c
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=cfb7267aaba2b59374d7bc765f038698711b09d8
+
+[PATCH] mac80211: remove rtnl locking in ieee80211_sta.c
+
+The rtnl is held in ieee80211_sta.c to prevent some potential
+configuration races with userspace. Unfortunately, it also has the
+potential for deadlocks on interface down. This patch removes the
+rtnl locking to eliminate the deadlocks.
+
+Signed-off-by: Michael Wu <flamingice@sourmilk.net>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+---
+
+diff --git a/net/mac80211/ieee80211_sta.c b/net/mac80211/ieee80211_sta.c
+index ba2bf8f..952d8dd 100644
+--- a/net/mac80211/ieee80211_sta.c
++++ b/net/mac80211/ieee80211_sta.c
+@@ -25,7 +25,6 @@
+ #include <linux/wireless.h>
+ #include <linux/random.h>
+ #include <linux/etherdevice.h>
+-#include <linux/rtnetlink.h>
+ #include <net/iw_handler.h>
+ #include <asm/types.h>
+ 
+@@ -2107,12 +2106,9 @@ static int ieee80211_sta_config_auth(struct net_device *dev,
+ 	struct ieee80211_sta_bss *bss, *selected = NULL;
+ 	int top_rssi = 0, freq;
+ 
+-	rtnl_lock();
+-
+ 	if (!ifsta->auto_channel_sel && !ifsta->auto_bssid_sel &&
+ 	    !ifsta->auto_ssid_sel) {
+ 		ifsta->state = IEEE80211_AUTHENTICATE;
+-		rtnl_unlock();
+ 		ieee80211_sta_reset_auth(dev, ifsta);
+ 		return 0;
+ 	}
+@@ -2155,7 +2151,6 @@ static int ieee80211_sta_config_auth(struct net_device *dev,
+ 		ieee80211_sta_set_bssid(dev, selected->bssid);
+ 		ieee80211_rx_bss_put(dev, selected);
+ 		ifsta->state = IEEE80211_AUTHENTICATE;
+-		rtnl_unlock();
+ 		ieee80211_sta_reset_auth(dev, ifsta);
+ 		return 0;
+ 	} else {
+@@ -2166,7 +2161,6 @@ static int ieee80211_sta_config_auth(struct net_device *dev,
+ 		} else
+ 			ifsta->state = IEEE80211_DISABLED;
+ 	}
+-	rtnl_unlock();
+ 	return -1;
+ }
+ 

@@ -1,0 +1,27 @@
+From: Hans Verkuil <hverkuil@xs4all.nl>
+Date: Tue, 17 Jul 2007 09:45:42 +0000 (-0300)
+Subject: V4L/DVB (5851): ivtv: fix missing I2C_ALGOBIT config option
+X-Git-Tag: v2.6.23-rc1~193^2~16
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=c9b9a5817afc8f969b1ae834f88af6929f70de41
+
+V4L/DVB (5851): ivtv: fix missing I2C_ALGOBIT config option
+
+I2C_ALGOBIT must also be selected when ivtv is selected.
+
+Signed-off-by: Hans Verkuil <hverkuil@xs4all.nl>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@infradead.org>
+---
+
+diff --git a/drivers/media/video/ivtv/Kconfig b/drivers/media/video/ivtv/Kconfig
+index 1aaeaa0..2284bd0 100644
+--- a/drivers/media/video/ivtv/Kconfig
++++ b/drivers/media/video/ivtv/Kconfig
+@@ -1,6 +1,7 @@
+ config VIDEO_IVTV
+ 	tristate "Conexant cx23416/cx23415 MPEG encoder/decoder support"
+ 	depends on VIDEO_V4L1 && VIDEO_V4L2 && PCI && I2C && EXPERIMENTAL
++	select I2C_ALGOBIT
+ 	select FW_LOADER
+ 	select VIDEO_TUNER
+ 	select VIDEO_TVEEPROM
+

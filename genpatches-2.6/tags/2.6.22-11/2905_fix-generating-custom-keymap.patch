@@ -1,0 +1,39 @@
+commit e2a57a815933b2d2e375f9de6be223098024ab90
+Author: Maarten Bressers <mbres@gentoo.org>
+Date:   Mon Oct 8 15:59:13 2007 -0700
+
+    Correct Makefile rule for generating custom keymap
+    
+    When building a custom keymap, after setting GENERATE_KEYMAP := 1 in
+    drivers/char/Makefile, the kernel build fails like this:
+    
+        CC      drivers/char/vt.o
+      make[2]: *** No rule to make target `drivers/char/%.map', needed by `drivers/char/defkeymap.c'.  Stop.
+      make[1]: *** [drivers/char] Error 2
+      make: *** [drivers] Error 2
+    
+    This was caused by commit af8b128719f5248e542036ea994610a29d0642a6, which
+    deleted a necessary colon from the Makefile rule that generates the keymap,
+    since that rule contains both a target and a target-pattern.  The following
+    patch puts the colon back:
+    
+    Signed-off-by: Maarten Bressers <mbres@gentoo.org>
+    Cc: Yoichi Yuasa <yoichi_yuasa@tripeaks.co.jp>
+    Cc: Ralf Baechle <ralf@linux-mips.org>
+    Cc: Sam Ravnborg <sam@ravnborg.org>
+    Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/drivers/char/Makefile b/drivers/char/Makefile
+index d68ddbe..c78ff26 100644
+--- a/drivers/char/Makefile
++++ b/drivers/char/Makefile
+@@ -129,7 +129,7 @@ $(obj)/defkeymap.o:  $(obj)/defkeymap.c
+ 
+ ifdef GENERATE_KEYMAP
+ 
+-$(obj)/defkeymap.c $(obj)/%.c: $(src)/%.map
++$(obj)/defkeymap.c: $(obj)/%.c: $(src)/%.map
+ 	loadkeys --mktable $< > $@.tmp
+ 	sed -e 's/^static *//' $@.tmp > $@
+ 	rm $@.tmp

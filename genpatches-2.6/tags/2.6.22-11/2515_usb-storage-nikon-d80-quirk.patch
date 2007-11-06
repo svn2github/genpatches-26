@@ -1,0 +1,28 @@
+From: Mike Pagano <mpagano-kernel@mpagano.com>
+Date: Wed, 15 Aug 2007 14:13:28 +0000 (-0400)
+Subject: USB: resubmission unusual_devs modification for Nikon D80
+X-Git-Tag: v2.6.23-rc4~29^2~1
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=83fc8a151beda2d63e196a7ab2e12316c37a1e91
+
+USB: resubmission unusual_devs modification for Nikon D80
+
+Upgrade the unusual_devs.h file to support the new 1.01 firmware for the Nikon D80.
+
+Signed-off-by: Mike Pagano <mpagano-kernel@mpagano.com>
+Signed-off-by: Phil Dibowitz <phil@ipom.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
+
+diff --git a/drivers/usb/storage/unusual_devs.h b/drivers/usb/storage/unusual_devs.h
+index d8d008d..2d92ce3 100644
+--- a/drivers/usb/storage/unusual_devs.h
++++ b/drivers/usb/storage/unusual_devs.h
+@@ -342,7 +342,7 @@ UNUSUAL_DEV(  0x04b0, 0x040d, 0x0100, 0x0100,
+ 		US_FL_FIX_CAPACITY),
+ 
+ /* Reported by Emil Larsson <emil@swip.net> */
+-UNUSUAL_DEV(  0x04b0, 0x0411, 0x0100, 0x0100,
++UNUSUAL_DEV(  0x04b0, 0x0411, 0x0100, 0x0101,
+ 		"NIKON",
+ 		"NIKON DSC D80",
+ 		US_SC_DEVICE, US_PR_DEVICE, NULL,
