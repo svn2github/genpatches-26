@@ -1,0 +1,26 @@
+
+Provides support for a new field ipaddr within the SELinux
+AVC audit log, relying in task_struct->curr_ip (ipv4 only)
+provided by grSecurity patch to be applied before.
+
+Signed-off-by: Lorenzo Hernandez Garcia-Hierro <lorenzo@gnu.org>
+---
+
+ security/selinux/avc.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/security/selinux/avc.c
++++ b/security/selinux/avc.c
+@@ -202,6 +202,12 @@ static void avc_dump_query(struct audit_
+ 	char *scontext;
+ 	u32 scontext_len;
+ 
++/* CONFIG_PROC_IPADDR if task-signal-curr_ip patch from lorenzo@gnu.org is present */
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	if (current->signal->curr_ip)
++		audit_log_format(ab, "ipaddr=%u.%u.%u.%u ", NIPQUAD(current->signal->curr_ip));
++#endif /* CONFIG_GRKERNSEC_PROC_IPADDR */
++
+  	rc = security_sid_to_context(ssid, &scontext, &scontext_len);
+ 	if (rc)
+ 		audit_log_format(ab, "ssid=%d", ssid);
