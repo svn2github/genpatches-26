@@ -83,6 +83,10 @@ Patch:	2300_usb-sysfs-power-nodes.patch
 From:	http://bugs.gentoo.org/195384
 Desc:	Fix missing USB attributes in sysfs
 
+Patch:	2400_forcedeth-boot-delay.patch
+From:	http://bugs.gentoo.org/197561
+Desc:	Fix 7 hour boot delay for buggy forcedeth hardware
+
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
