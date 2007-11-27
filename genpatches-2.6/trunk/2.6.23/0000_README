@@ -71,6 +71,10 @@ Patch:	1007_linux-2.6.23.8.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.23.8
 
+Patch:	1008_linux-2.6.23.9.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.23.9
+
 Patch:	2200_acpi-concurrent-thermal-checks.patch
 From:	http://bugs.gentoo.org/176615
 Desc:	Fix stack overflow due to recursive ACPI thermal checks
@@ -78,14 +82,6 @@ Desc:	Fix stack overflow due to recursive ACPI thermal checks
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
-
-Patch:	2525_usb-storage-nikon-d200-quirk.patch
-From:	http://bugs.gentoo.org/192610
-Desc:	usb-storage capacity quirk for Nikon D200 camera
-
-Patch:	2530_usb-storage-nikon-d40x-quirk.patch
-From:	http://bugs.gentoo.org/191431
-Desc:	usb-storage capacity quirk for Nikon D40X camera
 
 Patch:	4000_e1000e.patch
 From:	http://bugs.gentoo.org/196053
