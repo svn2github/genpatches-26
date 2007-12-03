@@ -79,6 +79,10 @@ Patch:	2200_acpi-concurrent-thermal-checks.patch
 From:	http://bugs.gentoo.org/176615
 Desc:	Fix stack overflow due to recursive ACPI thermal checks
 
+Patch:	2205_acpi-processor-event-flood.patch
+From:	http://bugs.gentoo.org/171860
+Desc:	Fix flood of ACPI processor events
+
 Patch:	2300_usb-sysfs-power-nodes.patch
 From:	http://bugs.gentoo.org/195384
 Desc:	Fix missing USB attributes in sysfs
