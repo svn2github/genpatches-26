@@ -95,6 +95,10 @@ Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
 
+Patch:  2500_usb-storage-nikon-d200-old-firmware.patch
+From:   http://bugs.gentoo.org/192610
+Desc:   Add support for older firmware versions for the Nikon D200 camera
+
 Patch:	2600_uevent-platform-devices-fix.patch
 From:	http://bugs.gentoo.org/201157
 Desc:	Fix to send uevents for all platform devices
