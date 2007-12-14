@@ -1,0 +1,45 @@
+From: Alexey Starikovskiy <astarikovskiy@suse.de>
+Date: Wed, 21 Nov 2007 00:23:32 +0000 (+0300)
+Subject: ACPI: EC: Workaround for optimized controllers (version 3)
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=e790cc8bbb990df900eabdda18a5a480d22a60c8
+
+ACPI: EC: Workaround for optimized controllers (version 3)
+
+Some controllers fail to send confirmation GPE after address or data write.
+Detect this and don't expect such confirmation in future.
+This is a generalization of previous workaround
+(66c5f4e7367b0085652931b2f3366de29e7ff5ec), which did only read address.
+
+Reference: http://bugzilla.kernel.org/show_bug.cgi?id=9327
+
+Signed-off-by: Alexey Starikovskiy <astarikovskiy@suse.de>
+Tested-by: Romano Giannetti <romano.giannetti@gmail.com>
+Tested-by: Mats Johannesson
+Signed-off-by: Len Brown <len.brown@intel.com>
+[dsd@gentoo.org: removed changes to drivers/acpi/ec.c]
+---
+
+diff --git a/drivers/acpi/processor_core.c b/drivers/acpi/processor_core.c
+index 235a51e..692b2a0 100644
+--- a/drivers/acpi/processor_core.c
++++ b/drivers/acpi/processor_core.c
+@@ -684,7 +684,7 @@ static void acpi_processor_notify(acpi_handle handle, u32 event, void *data)
+ {
+ 	struct acpi_processor *pr = data;
+ 	struct acpi_device *device = NULL;
+-
++	int saved;
+ 
+ 	if (!pr)
+ 		return;
+@@ -694,7 +694,10 @@ static void acpi_processor_notify(acpi_handle handle, u32 event, void *data)
+ 
+ 	switch (event) {
+ 	case ACPI_PROCESSOR_NOTIFY_PERFORMANCE:
++		saved = pr->performance_platform_limit;
+ 		acpi_processor_ppc_has_changed(pr);
++		if (saved == pr->performance_platform_limit)
++			break;
+ 		acpi_bus_generate_proc_event(device, event,
+ 					pr->performance_platform_limit);
+ 		acpi_bus_generate_netlink_event(device->pnp.device_class,
