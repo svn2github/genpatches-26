@@ -75,6 +75,10 @@ Patch:	1008_linux-2.6.23.9.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.23.9
 
+Patch:	1009_linux-2.6.23.10.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.23.10
+
 Patch:	2200_acpi-concurrent-thermal-checks.patch
 From:	http://bugs.gentoo.org/176615
 Desc:	Fix stack overflow due to recursive ACPI thermal checks
@@ -82,14 +86,6 @@ Desc:	Fix stack overflow due to recursive ACPI thermal checks
 Patch:	2205_acpi-processor-event-flood.patch
 From:	http://bugs.gentoo.org/171860
 Desc:	Fix flood of ACPI processor events
-
-Patch:	2300_usb-sysfs-power-nodes.patch
-From:	http://bugs.gentoo.org/195384
-Desc:	Fix missing USB attributes in sysfs
-
-Patch:	2400_forcedeth-boot-delay.patch
-From:	http://bugs.gentoo.org/197561
-Desc:	Fix 7 hour boot delay for buggy forcedeth hardware
 
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
