@@ -940,6 +940,15 @@
  	   that causes hangs on some VIA CPUs. */
 --- a/arch/i386/kernel/apm.c
 +++ b/arch/i386/kernel/apm.c
+@@ -407,7 +407,7 @@ static DECLARE_WAIT_QUEUE_HEAD(apm_waitq
+ static DECLARE_WAIT_QUEUE_HEAD(apm_suspend_waitqueue);
+ static struct apm_user *	user_list;
+ static DEFINE_SPINLOCK(user_list_lock);
+-static const struct desc_struct	bad_bios_desc = { 0, 0x00409200 };
++static const struct desc_struct	bad_bios_desc = { 0, 0x00409300 };
+ 
+ static const char		driver_version[] = "1.16ac";	/* no spaces */
+ 
 @@ -601,19 +601,42 @@ static u8 apm_bios_call(u32 func, u32 eb
  	struct desc_struct	save_desc_40;
  	struct desc_struct	*gdt;
@@ -1305,7 +1314,26 @@
  	dmi_check_system(apm_dmi_table);
  
  	if (apm_info.bios.version == 0 || paravirt_enabled()) {
-@@ -2292,6 +2345,11 @@ static int __init apm_init(void)
+@@ -2271,9 +2324,18 @@ static int __init apm_init(void)
+ 	 * This is for buggy BIOS's that refer to (real mode) segment 0x40
+ 	 * even though they are called in protected mode.
+ 	 */
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
+ 	set_base(bad_bios_desc, __va((unsigned long)0x40 << 4));
+ 	_set_limit((char *)&bad_bios_desc, 4095 - (0x40 << 4));
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ 	/*
+ 	 * Set up the long jump entry point to the APM BIOS, which is called
+ 	 * from inline assembly.
+@@ -2292,6 +2354,11 @@ static int __init apm_init(void)
  	 * code to that CPU.
  	 */
  	gdt = get_cpu_gdt_table(0);
@@ -1317,7 +1345,7 @@
  	set_base(gdt[APM_CS >> 3],
  		 __va((unsigned long)apm_info.bios.cseg << 4));
  	set_base(gdt[APM_CS_16 >> 3],
-@@ -2299,6 +2357,10 @@ static int __init apm_init(void)
+@@ -2299,6 +2366,10 @@ static int __init apm_init(void)
  	set_base(gdt[APM_DS >> 3],
  		 __va((unsigned long)apm_info.bios.dseg << 4));
  
@@ -1734,24 +1762,19 @@
  	/*
  	 * 6. After EFI runtime service returns, control will return to
  	 * following instruction. We'd better readjust stack pointer first.
-@@ -85,37 +77,29 @@ ENTRY(efi_call_phys)
- 	/*
- 	 * 7. Restore PG bit
- 	 */
--	movl	%cr0, %edx
--	orl	$0x80000000, %edx
--	movl	%edx, %cr0
+@@ -88,34 +80,27 @@ ENTRY(efi_call_phys)
+ 	movl	%cr0, %edx
+ 	orl	$0x80000000, %edx
+ 	movl	%edx, %cr0
 -	jmp	1f
 -1:
++
  	/*
  	 * 8. Now restore the virtual mode from flat mode by
  	 * adding EIP with PAGE_OFFSET.
  	 */
 -	movl	$1f, %edx
 -	jmp	*%edx
-+	movl	%cr0, %edx
-+	orl	$0x80000000, %edx
-+	movl	%edx, %cr0
 +	jmp	1f+__PAGE_OFFSET
  1:
  
@@ -2135,7 +2158,7 @@
  	movl $(swapper_pg_dir - __PAGE_OFFSET), %edx
 -	movl $0x007, %eax			/* 0x007 = PRESENT+RW+USER */
 +#endif
-+	movl $0x063, %eax			/* 0x063 = DIRTY+ACCESSED+PRESENT+RW */
++	movl $0x063, %eax			/* 0x063 = PRESENT+RW+ACCESSED+DIRTY */
  10:
 -	leal 0x007(%edi),%ecx			/* Create PDE entry */
 +	leal 0x063(%edi),%ecx			/* Create PDE entry */
@@ -2166,7 +2189,24 @@
  	cmpl %ebp,%eax
  	jb 10b
  	movl %edi,(init_pg_tables_end - __PAGE_OFFSET)
-@@ -181,6 +248,11 @@ ENTRY(startup_32_smp)
+@@ -167,10 +234,12 @@ page_pde_offset = (__PAGE_OFFSET >> 20);
+ #endif
+ 
+ 	/* Do an early initialization of the fixmap area */
+-	movl $(swapper_pg_dir - __PAGE_OFFSET), %edx
+-	movl $(swapper_pg_pmd - __PAGE_OFFSET), %eax
+-	addl $0x007, %eax			/* 0x007 = PRESENT+RW+USER */
+-	movl %eax, 4092(%edx)
++	/* 0x067 = PRESENT+RW+USER+ACCESSED+DIRTY */
++#ifdef CONFIG_X86_PAE
++	movl $(swapper_pg_pmd - __PAGE_OFFSET + 0x067), (swapper_pm_dir - __PAGE_OFFSET + 4096 - 8)
++#else
++	movl $(swapper_pg_pmd - __PAGE_OFFSET + 0x067), (swapper_pg_dir - __PAGE_OFFSET + 4096 - 4)
++#endif
+ 
+ #ifdef CONFIG_SMP
+ ENTRY(startup_32_smp)
+@@ -181,6 +250,11 @@ ENTRY(startup_32_smp)
  	movl %eax,%fs
  	movl %eax,%gs
  
@@ -2178,7 +2218,7 @@
  /*
   *	New page tables may be in 4Mbyte page mode and may
   *	be using the global pages. 
-@@ -196,42 +268,47 @@ ENTRY(startup_32_smp)
+@@ -196,42 +270,47 @@ ENTRY(startup_32_smp)
   *	not yet offset PAGE_OFFSET..
   */
  #define cr4_bits mmu_cr4_features-__PAGE_OFFSET
@@ -2238,7 +2278,7 @@
  
  /*
   * Enable paging
-@@ -256,9 +333,7 @@ ENTRY(startup_32_smp)
+@@ -256,9 +335,7 @@ ENTRY(startup_32_smp)
  
  #ifdef CONFIG_SMP
  	andl %ebx,%ebx
@@ -2249,7 +2289,7 @@
  #endif /* CONFIG_SMP */
  
  /*
-@@ -335,12 +410,12 @@ is386:	movl $2,%ecx		# set MP
+@@ -335,12 +412,12 @@ is386:	movl $2,%ecx		# set MP
  	ljmp $(__KERNEL_CS),$1f
  1:	movl $(__KERNEL_DS),%eax	# reload all the segment registers
  	movl %eax,%ss			# after changing gdt.
@@ -2265,7 +2305,7 @@
  	xorl %eax,%eax			# Clear GS and LDT
  	movl %eax,%gs
  	lldt %ax
-@@ -351,11 +426,7 @@ is386:	movl $2,%ecx		# set MP
+@@ -351,11 +428,7 @@ is386:	movl $2,%ecx		# set MP
  	movb ready, %cl
  	movb $1, ready
  	cmpb $0,%cl		# the first CPU calls start_kernel
@@ -2278,7 +2318,17 @@
  #endif /* CONFIG_SMP */
  	jmp start_kernel
  
-@@ -466,8 +537,8 @@ hlt_loop:
+@@ -441,8 +514,8 @@ early_page_fault:
+ 	jmp early_fault
+ 
+ early_fault:
+-	cld
+ #ifdef CONFIG_PRINTK
++	cld
+ 	movl $(__KERNEL_DS),%eax
+ 	movl %eax,%ds
+ 	movl %eax,%es
+@@ -466,8 +539,8 @@ hlt_loop:
  /* This is the default interrupt "handler" :-) */
  	ALIGN
  ignore_int:
@@ -2288,7 +2338,7 @@
  	pushl %eax
  	pushl %ecx
  	pushl %edx
-@@ -498,31 +569,58 @@ ignore_int:
+@@ -498,31 +571,58 @@ ignore_int:
  #endif
  	iret
  
@@ -2319,8 +2369,8 @@
  	.fill 1024,4,0
 +#endif
 +
-+#ifdef CONFIG_X86_PAE
 +.section .swapper_pm_dir,"a",@progbits
++#ifdef CONFIG_X86_PAE
 +ENTRY(swapper_pm_dir)
 +	.fill 512,8,0
 +	.fill 512,8,0
@@ -2356,7 +2406,7 @@
  	.long __BOOT_DS
  
  ready:	.byte 0
-@@ -565,7 +663,7 @@ idt_descr:
+@@ -565,7 +665,7 @@ idt_descr:
  	.word 0				# 32 bit align gdt_desc.address
  ENTRY(early_gdt_descr)
  	.word GDT_ENTRIES*8-1
@@ -2365,7 +2415,7 @@
  
  /*
   * The boot_gdt must mirror the equivalent in setup.S and is
-@@ -574,5 +672,61 @@ ENTRY(early_gdt_descr)
+@@ -574,5 +674,61 @@ ENTRY(early_gdt_descr)
  	.align L1_CACHE_BYTES
  ENTRY(boot_gdt)
  	.fill GDT_ENTRY_BOOT_CS,8,0
@@ -3197,22 +3247,16 @@
  {
  	0xea, 0x00, 0x00, 0xff, 0xff		/*    ljmp  $0xffff,$0x0000  */
  };
-@@ -213,8 +213,13 @@ static unsigned char jump_to_bios [] =
+@@ -213,7 +213,7 @@ static unsigned char jump_to_bios [] =
   * specified by the code and length parameters.
   * We assume that length will aways be less that 100!
   */
 -void machine_real_restart(unsigned char *code, int length)
 +void machine_real_restart(const unsigned char *code, unsigned int length)
  {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	unsigned long cr0;
-+#endif
-+
  	local_irq_disable();
  
- 	/* Write zero to CMOS register number 0x0f, which the BIOS POST
-@@ -234,9 +239,8 @@ void machine_real_restart(unsigned char 
+@@ -234,9 +234,8 @@ void machine_real_restart(unsigned char 
  	/* Remap the kernel at virtual address zero, as well as offset zero
  	   from the kernel segment.  This assumes the kernel segment starts at
  	   virtual address PAGE_OFFSET. */
@@ -3224,7 +3268,7 @@
  
  	/*
  	 * Use `swapper_pg_dir' as our page directory.
-@@ -249,7 +253,7 @@ void machine_real_restart(unsigned char 
+@@ -249,7 +248,7 @@ void machine_real_restart(unsigned char 
  	   REBOOT.COM programs, and the previous reset routine did this
  	   too. */
  
@@ -3233,7 +3277,7 @@
  
  	/* For the switch to real mode, copy some code to low memory.  It has
  	   to be in the first 64k because it is running in 16-bit mode, and it
-@@ -257,9 +261,8 @@ void machine_real_restart(unsigned char 
+@@ -257,9 +256,8 @@ void machine_real_restart(unsigned char 
  	   off paging.  Copy it near the end of the first page, out of the way
  	   of BIOS variables. */
  
@@ -3245,7 +3289,7 @@
  
  	/* Set up the IDT for real mode. */
  
-@@ -345,7 +348,7 @@ static void native_machine_emergency_res
+@@ -345,7 +343,7 @@ static void native_machine_emergency_res
  			__asm__ __volatile__("int3");
  		}
  		/* rebooting needs to touch the page at absolute addr 0 */
@@ -4282,7 +4326,7 @@
  
    . = ALIGN(4);
    .tracedata : AT(ADDR(.tracedata) - LOAD_OFFSET) {
-@@ -73,9 +183,40 @@ SECTIONS
+@@ -73,9 +183,36 @@ SECTIONS
  
    RODATA
  
@@ -4291,11 +4335,7 @@
 +	*(.idt)
 +	. = ALIGN(4096);
 +	*(.empty_zero_page)
-+
-+#ifdef CONFIG_X86_PAE
 +	*(.swapper_pm_dir)
-+#endif
-+
 +	*(.swapper_pg_dir)
 +	}
 +
@@ -4323,7 +4363,7 @@
  	DATA_DATA
  	CONSTRUCTORS
  	} :data
-@@ -91,7 +232,6 @@ SECTIONS
+@@ -91,7 +228,6 @@ SECTIONS
    . = ALIGN(4096);
    .data.page_aligned : AT(ADDR(.data.page_aligned) - LOAD_OFFSET) {
  	*(.data.page_aligned)
@@ -4331,7 +4371,7 @@
    }
  
    . = ALIGN(32);
-@@ -111,86 +251,7 @@ SECTIONS
+@@ -111,86 +247,7 @@ SECTIONS
  	*(.data.init_task)
    }
  
@@ -11345,7 +11385,7 @@
  };
  
  #define ENOUGH(v,unit)		(((v)-1)/(unit)+1)
-@@ -3814,7 +3814,7 @@ static const struct ata_blacklist_entry 
+@@ -3799,7 +3799,7 @@ static const struct ata_blacklist_entry 
  	{ "MAXTOR 6L080L4",	"A93.0500",	ATA_HORKAGE_BROKEN_HPA },
  
  	/* End Marker */
@@ -12104,7 +12144,7 @@
  };
  
  static struct dentry *debugfs_dir;
-@@ -2251,7 +2251,7 @@ static int kvm_vcpu_ioctl_translate(stru
+@@ -2255,7 +2255,7 @@ static int kvm_vcpu_ioctl_translate(stru
  static int kvm_vcpu_ioctl_interrupt(struct kvm_vcpu *vcpu,
  				    struct kvm_interrupt *irq)
  {
@@ -12113,7 +12153,7 @@
  		return -EINVAL;
  	vcpu_load(vcpu);
  
-@@ -2891,6 +2891,9 @@ static struct miscdevice kvm_dev = {
+@@ -2895,6 +2895,9 @@ static struct miscdevice kvm_dev = {
  	KVM_MINOR,
  	"kvm",
  	&kvm_chardev_ops,
@@ -12125,7 +12165,7 @@
  static int kvm_reboot(struct notifier_block *notifier, unsigned long val,
 --- a/drivers/kvm/vmx.c
 +++ b/drivers/kvm/vmx.c
-@@ -2145,7 +2145,7 @@ again:
+@@ -2148,7 +2148,7 @@ again:
  
  	vcpu->interrupt_window_open = (vmcs_read32(GUEST_INTERRUPTIBILITY_INFO) & 3) == 0;
  
@@ -15931,15 +15971,10 @@
  		}
  	}
  	rcu_read_unlock();
-@@ -1104,11 +1139,26 @@ static int pid_revalidate(struct dentry 
+@@ -1104,11 +1139,21 @@ static int pid_revalidate(struct dentry 
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task = get_proc_task(inode);
-+
-+	if (task && (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))) {
-+		put_task_struct(task);
-+		goto out;
-+	}
 +
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
@@ -15958,7 +15993,7 @@
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1118,6 +1168,7 @@ static int pid_revalidate(struct dentry 
+@@ -1118,6 +1163,7 @@ static int pid_revalidate(struct dentry 
  		put_task_struct(task);
  		return 1;
  	}
@@ -15966,7 +16001,7 @@
  	d_drop(dentry);
  	return 0;
  }
-@@ -1374,6 +1425,9 @@ static struct dentry *proc_lookupfd_comm
+@@ -1374,6 +1420,9 @@ static struct dentry *proc_lookupfd_comm
  	if (fd == ~0U)
  		goto out;
  
@@ -15976,7 +16011,7 @@
  	result = instantiate(dir, dentry, task, &fd);
  out:
  	put_task_struct(task);
-@@ -1410,6 +1464,8 @@ static int proc_readfd_common(struct fil
+@@ -1410,6 +1459,8 @@ static int proc_readfd_common(struct fil
  				goto out;
  			filp->f_pos++;
  		default:
@@ -15985,7 +16020,7 @@
  			files = get_files_struct(p);
  			if (!files)
  				goto out;
-@@ -1598,6 +1654,9 @@ static struct dentry *proc_pident_lookup
+@@ -1598,6 +1649,9 @@ static struct dentry *proc_pident_lookup
  	if (!task)
  		goto out_no_task;
  
@@ -15995,7 +16030,7 @@
  	/*
  	 * Yes, it does not scale. And it should not. Don't add
  	 * new entries into /proc/<tgid>/ without very good reasons.
-@@ -1643,6 +1702,9 @@ static int proc_pident_readdir(struct fi
+@@ -1643,6 +1697,9 @@ static int proc_pident_readdir(struct fi
  	if (!task)
  		goto out_no_task;
  
@@ -16005,7 +16040,7 @@
  	ret = 0;
  	pid = task->pid;
  	i = filp->f_pos;
-@@ -1998,6 +2060,9 @@ static struct dentry *proc_base_lookup(s
+@@ -1998,6 +2055,9 @@ static struct dentry *proc_base_lookup(s
  	if (p > last)
  		goto out;
  
@@ -16015,7 +16050,7 @@
  	error = proc_base_instantiate(dir, dentry, task, p);
  
  out:
-@@ -2097,6 +2162,9 @@ static const struct pid_entry tgid_base_
+@@ -2097,6 +2157,9 @@ static const struct pid_entry tgid_base_
  #ifdef CONFIG_TASK_IO_ACCOUNTING
  	INF("io",	S_IRUGO, pid_io_accounting),
  #endif
@@ -16025,7 +16060,7 @@
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2200,7 +2268,14 @@ static struct dentry *proc_pid_instantia
+@@ -2200,7 +2263,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -16040,7 +16075,7 @@
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2241,7 +2316,11 @@ struct dentry *proc_pid_lookup(struct in
+@@ -2241,7 +2311,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -16052,7 +16087,7 @@
  	put_task_struct(task);
  out:
  	return result;
-@@ -2299,6 +2378,9 @@ int proc_pid_readdir(struct file * filp,
+@@ -2299,6 +2373,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
  	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
@@ -16062,7 +16097,7 @@
  	struct task_struct *task;
  	int tgid;
  
-@@ -2316,6 +2398,18 @@ int proc_pid_readdir(struct file * filp,
+@@ -2316,6 +2393,18 @@ int proc_pid_readdir(struct file * filp,
  	     task;
  	     put_task_struct(task), task = next_tgid(tgid + 1)) {
  		tgid = task->pid;
@@ -16760,7 +16795,7 @@
 +}
 --- /dev/null
 +++ b/grsecurity/gracl.c
-@@ -0,0 +1,3682 @@
+@@ -0,0 +1,3722 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17092,7 +17127,7 @@
 +	/* masks off auditable permission flags, then shifts them to create
 +	   auditing flags, and adds the special case of append auditing if
 +	   we're requesting write */
-+	return (((reqmode & GR_AUDIT_READ) << 10) | ((reqmode & GR_WRITE) ? GR_AUDIT_APPEND : 0));
++	return (((reqmode & ~GR_AUDITS) << 10) | ((reqmode & GR_WRITE) ? GR_AUDIT_APPEND : 0));
 +}
 +
 +struct acl_subject_label *
@@ -17282,6 +17317,35 @@
 +	return match;
 +}
 +
++static struct name_entry *
++lookup_name_entry_create(const char *name)
++{
++	unsigned int len = strlen(name);
++	unsigned int key = full_name_hash(name, len);
++	unsigned int index = key % name_set.n_size;
++	struct name_entry *match;
++
++	match = name_set.n_hash[index];
++
++	while (match && (match->key != key || !gr_streq(match->name, name, match->len, len) ||
++			 !match->deleted))
++		match = match->next;
++
++	if (match && match->deleted)
++		return match;
++
++	match = name_set.n_hash[index];
++
++	while (match && (match->key != key || !gr_streq(match->name, name, match->len, len) ||
++			 match->deleted))
++		match = match->next;
++
++	if (match && !match->deleted)
++		return match;
++	else
++		return NULL;
++}
++
 +static struct inodev_entry *
 +lookup_inodev_entry(const ino_t ino, const dev_t dev)
 +{
@@ -17347,7 +17411,7 @@
 +}
 +					
 +static int
-+insert_name_entry(char *name, const ino_t inode, const dev_t device)
++insert_name_entry(char *name, const ino_t inode, const dev_t device, __u8 deleted)
 +{
 +	struct name_entry **curr, *nentry;
 +	struct inodev_entry *ientry;
@@ -17376,6 +17440,7 @@
 +	nentry->inode = inode;
 +	nentry->device = device;
 +	nentry->len = len;
++	nentry->deleted = deleted;
 +
 +	nentry->prev = NULL;
 +	curr = &name_set.n_hash[index];
@@ -17738,7 +17803,7 @@
 +
 +		insert_acl_obj_label(o_tmp, subj);
 +		if (!insert_name_entry(o_tmp->filename, o_tmp->inode,
-+				       o_tmp->device))
++				       o_tmp->device, (o_tmp->mode & GR_DELETED) ? 1 : 0))
 +			return -ENOMEM;
 +
 +		ret = copy_user_glob(o_tmp);
@@ -18033,7 +18098,7 @@
 +
 +insert:
 +	if (!insert_name_entry(s_tmp->filename, s_tmp->inode,
-+			       s_tmp->device))
++			       s_tmp->device, (s_tmp->mode & GR_DELETED) ? 1 : 0))
 +		return ERR_PTR(-ENOMEM);
 +
 +	return s_tmp;
@@ -18732,7 +18797,7 @@
 +
 +	preempt_disable();
 +	path = gr_to_filename_rbac(new_dentry, mnt);
-+	match = lookup_name_entry(path);
++	match = lookup_name_entry_create(path);
 +
 +	if (!match)
 +		goto check_parent;
@@ -19096,8 +19161,9 @@
 +	return 0;
 +}
 +
++/* always called with valid inodev ptr */
 +static void
-+do_handle_delete(const ino_t ino, const dev_t dev)
++do_handle_delete(struct inodev_entry *inodev, const ino_t ino, const dev_t dev)
 +{
 +	struct acl_object_label *matchpo;
 +	struct acl_subject_label *matchps;
@@ -19118,18 +19184,23 @@
 +			matchps->mode |= GR_DELETED;
 +	FOR_EACH_ROLE_END(role,i)
 +
++	inodev->nentry->deleted = 1;
++
 +	return;
 +}
 +
 +void
 +gr_handle_delete(const ino_t ino, const dev_t dev)
 +{
++	struct inodev_entry *inodev;
++
 +	if (unlikely(!(gr_status & GR_READY)))
 +		return;
 +
 +	write_lock(&gr_inode_lock);
-+	if (unlikely((unsigned long)lookup_inodev_entry(ino, dev)))
-+		do_handle_delete(ino, dev);
++	inodev = lookup_inodev_entry(ino, dev);
++	if (inodev != NULL)
++		do_handle_delete(inodev, ino, dev);
 +	write_unlock(&gr_inode_lock);
 +
 +	return;
@@ -19223,11 +19294,12 @@
 +	match = inodev_set.i_hash[index];
 +
 +	while (match && (match->nentry->inode != oldinode ||
-+	       match->nentry->device != olddevice))
++	       match->nentry->device != olddevice || !match->nentry->deleted))
 +		match = match->next;
 +
 +	if (match && (match->nentry->inode == oldinode)
-+	    && (match->nentry->device == olddevice)) {
++	    && (match->nentry->device == olddevice) &&
++	    match->nentry->deleted) {
 +		if (match->prev == NULL) {
 +			inodev_set.i_hash[index] = match->next;
 +			if (match->next != NULL)
@@ -19241,6 +19313,7 @@
 +		match->next = NULL;
 +		match->nentry->inode = newinode;
 +		match->nentry->device = newdevice;
++		match->nentry->deleted = 0;
 +
 +		insert_inodev_entry(match);
 +	}
@@ -19309,6 +19382,8 @@
 +		 struct vfsmount *mnt, const __u8 replace)
 +{
 +	struct name_entry *matchn;
++	struct inodev_entry *inodev;
++
 +	/* vfs_rename swaps the name and parent link for old_dentry and
 +	   new_dentry
 +	   at this point, old_dentry has the new name, parent link, and inode
@@ -19329,17 +19404,17 @@
 +
 +	write_lock(&gr_inode_lock);
 +	if (unlikely(replace && new_dentry->d_inode)) {
-+		if (unlikely(lookup_inodev_entry(new_dentry->d_inode->i_ino,
-+					new_dentry->d_inode->i_sb->s_dev) &&
-+		    (old_dentry->d_inode->i_nlink <= 1)))
-+			do_handle_delete(new_dentry->d_inode->i_ino,
++		inodev = lookup_inodev_entry(new_dentry->d_inode->i_ino,
++					     new_dentry->d_inode->i_sb->s_dev);
++		if (inodev != NULL && (new_dentry->d_inode->i_nlink <= 1))
++			do_handle_delete(inodev, new_dentry->d_inode->i_ino,
 +					 new_dentry->d_inode->i_sb->s_dev);
 +	}
 +
-+	if (unlikely(lookup_inodev_entry(old_dentry->d_inode->i_ino,
-+				old_dentry->d_inode->i_sb->s_dev) &&
-+	    (old_dentry->d_inode->i_nlink <= 1)))
-+		do_handle_delete(old_dentry->d_inode->i_ino,
++	inodev = lookup_inodev_entry(old_dentry->d_inode->i_ino,
++				     old_dentry->d_inode->i_sb->s_dev);
++	if (inodev != NULL && (old_dentry->d_inode->i_nlink <= 1))
++		do_handle_delete(inodev, old_dentry->d_inode->i_ino,
 +				 old_dentry->d_inode->i_sb->s_dev);
 +
 +	if (unlikely((unsigned long)matchn))
@@ -25611,6 +25686,15 @@
  		      "663:\n\t" newinstr "\n664:\n"   /* replacement */\
  		      ".previous" :: "i" (feature), ##input)
  
+@@ -93,7 +93,7 @@ static inline void alternatives_smp_swit
+ 		      "  .byte 662b-661b\n"       /* sourcelen */	\
+ 		      "  .byte 664f-663f\n"       /* replacementlen */	\
+ 		      ".previous\n"					\
+-		      ".section .altinstr_replacement,\"ax\"\n"		\
++		      ".section .altinstr_replacement,\"a\"\n"		\
+ 		      "663:\n\t" newinstr "\n664:\n"   /* replacement */ \
+ 		      ".previous" : output : [feat] "i" (feature), ##input)
+ 
 --- a/include/asm-i386/a.out.h
 +++ b/include/asm-i386/a.out.h
 @@ -19,8 +19,13 @@ struct exec
@@ -25655,10 +25739,10 @@
  asmlinkage __wsum csum_partial_copy_generic(const void *src, void *dst,
  						  int len, __wsum sum, int *src_err_ptr, int *dst_err_ptr);
  
-+asmlinkage __wsum csum_partial_copy_generic_to_user(const unsigned char *src, unsigned char *dst,
++asmlinkage __wsum csum_partial_copy_generic_to_user(const void *src, void *dst,
 +						  int len, __wsum sum, int *src_err_ptr, int *dst_err_ptr);
 +
-+asmlinkage __wsum csum_partial_copy_generic_from_user(const unsigned char *src, unsigned char *dst,
++asmlinkage __wsum csum_partial_copy_generic_from_user(const void *src, void *dst,
 +						  int len, __wsum sum, int *src_err_ptr, int *dst_err_ptr);
 +
  /*
@@ -27631,7 +27715,7 @@
  /*
 --- /dev/null
 +++ b/include/linux/gracl.h
-@@ -0,0 +1,316 @@
+@@ -0,0 +1,317 @@
 +#ifndef GR_ACL_H
 +#define GR_ACL_H
 +
@@ -27686,6 +27770,7 @@
 +	dev_t device;
 +	char *name;
 +	__u16 len;
++	__u8 deleted;
 +	struct name_entry *prev;
 +	struct name_entry *next;
 +};
@@ -29944,7 +30029,7 @@
  	int err;
  
 +#ifdef CONFIG_PAX_SEGMEXEC
-+	if ((mm->pax_flags & MF_PAX_SEGMEXEC) && ((unsigned long)uaddr >= SEGMEXEC_TASK_SIZE))
++	if ((mm->pax_flags & MF_PAX_SEGMEXEC) && address >= SEGMEXEC_TASK_SIZE)
 +		return -EFAULT;
 +#endif
 +
@@ -29962,7 +30047,7 @@
  		return -EFAULT;
  
  	/*
-@@ -1921,7 +1926,7 @@ retry:
+@@ -1922,7 +1927,7 @@ retry:
   */
  static inline int fetch_robust_entry(struct robust_list __user **entry,
  				     struct robust_list __user * __user *head,
@@ -31526,7 +31611,7 @@
 +void pax_mirror_file_pte(struct vm_area_struct *vma, unsigned long address, struct page *page_m, spinlock_t *ptl)
 +{
 +	struct mm_struct *mm = vma->vm_mm;
-+	unsigned long address_m, pfn_m;
++	unsigned long address_m;
 +	spinlock_t *ptl_m;
 +	struct vm_area_struct *vma_m;
 +	pmd_t *pmd_m;
@@ -33614,7 +33699,7 @@
  			allocated = NULL;
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -2451,7 +2451,7 @@ static struct file_system_type tmpfs_fs_
+@@ -2452,7 +2452,7 @@ static struct file_system_type tmpfs_fs_
  	.get_sb		= shmem_get_sb,
  	.kill_sb	= kill_litter_super,
  };
