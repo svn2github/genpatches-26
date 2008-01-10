@@ -47,7 +47,7 @@ Patch:	4200_fbcondecor-0.9.4-2.6.23-rc7.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
-Patch:	4300_squashfs-3.2.patch
+Patch:	4300_squashfs-3.3.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
