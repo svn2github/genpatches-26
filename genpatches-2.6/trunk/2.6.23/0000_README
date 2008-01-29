@@ -103,6 +103,10 @@ Patch:	2205_acpi-processor-event-flood.patch
 From:	http://bugs.gentoo.org/171860
 Desc:	Fix flood of ACPI processor events
 
+Patch:	2300_pci-disable-crs.patch
+From:	http://bugs.gentoo.org/192658
+Desc:	Workaround buggy behaviour from some PCI-E bridges
+
 Patch:	2405_hostap-netdev-type.patch
 From:	http://bugs.gentoo.org/159646
 Desc:	Fix hostap AP interface type to prevent udev confusion
