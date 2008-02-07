@@ -39,6 +39,18 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	2100_sd-sr-medium-detection.patch
+From:	http://bugs.gentoo.org/196879
+Desc:	Add early medium-not-present detection in sr/sd drivers
+
+Patch:	2101_sr-follow-tray-status.patch
+From:	http://bugs.gentoo.org/196879
+Desc:	Fix CDROM_DRIVE_STATUS ioctl implementation
+
+Patch:	2102_sr-test-unit-ready.patch
+From:	http://bugs.gentoo.org/196879
+Desc:	Fix TEST_UNIT_READY for medium detection
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
