@@ -119,6 +119,10 @@ Patch:	2600_uevent-platform-devices-fix.patch
 From:	http://bugs.gentoo.org/201157
 Desc:	Fix to send uevents for all platform devices
 
+Patch:	2900_sony-laptop-old-vaio.patch
+From:	http://bugs.gentoo.org/207357
+Desc:	Fix sonypi/meye functionality on old Vaio laptops
+
 Patch:	4000_e1000e.patch
 From:	http://bugs.gentoo.org/196053
 Desc:	Add Intel ICH9 PCI-Express ethernet support
