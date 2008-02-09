@@ -5,8 +5,10 @@
  kernel/sysctl.c           |   12 ++++++++++-
  4 files changed, 100 insertions(+), 1 deletion(-)
 
---- a/arch/alpha/Kconfig
-+++ b/arch/alpha/Kconfig
+Index: linux-2.6.24-gentoo-r1/arch/alpha/Kconfig
+===================================================================
+--- linux-2.6.24-gentoo-r1.orig/arch/alpha/Kconfig
++++ linux-2.6.24-gentoo-r1/arch/alpha/Kconfig
 @@ -616,6 +616,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
@@ -40,8 +42,10 @@
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
---- a/arch/alpha/kernel/traps.c
-+++ b/arch/alpha/kernel/traps.c
+Index: linux-2.6.24-gentoo-r1/arch/alpha/kernel/traps.c
+===================================================================
+--- linux-2.6.24-gentoo-r1.orig/arch/alpha/kernel/traps.c
++++ linux-2.6.24-gentoo-r1/arch/alpha/kernel/traps.c
 @@ -14,6 +14,7 @@
  #include <linux/delay.h>
  #include <linux/smp_lock.h>
@@ -128,19 +132,21 @@
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +__initcall(init_uac_sysctl);
 +#endif
---- a/include/linux/sysctl.h
-+++ b/include/linux/sysctl.h
-@@ -166,6 +166,9 @@ enum
+Index: linux-2.6.24-gentoo-r1/include/linux/sysctl.h
+===================================================================
+--- linux-2.6.24-gentoo-r1.orig/include/linux/sysctl.h
++++ linux-2.6.24-gentoo-r1/include/linux/sysctl.h
+@@ -164,6 +164,9 @@ enum
+ 	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
- 	KERN_FBCON_DECOR=77,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=78,	/* int: Alpha unaligned access control policy flags */
++	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  };
  
  
-@@ -260,6 +263,17 @@ enum
+@@ -253,6 +256,17 @@ enum
  	PTY_NR=2
  };
  
@@ -158,8 +164,10 @@
  /* /proc/sys/bus/isa */
  enum
  {
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
+Index: linux-2.6.24-gentoo-r1/kernel/sysctl.c
+===================================================================
+--- linux-2.6.24-gentoo-r1.orig/kernel/sysctl.c
++++ linux-2.6.24-gentoo-r1/kernel/sysctl.c
 @@ -157,6 +157,9 @@ static int proc_do_cad_pid(struct ctl_ta
  static int proc_dointvec_taint(struct ctl_table *table, int write, struct file *filp,
  			       void __user *buffer, size_t *lenp, loff_t *ppos);
