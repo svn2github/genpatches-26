@@ -1,0 +1,35 @@
+[PATCH] Possible fix for 2.6.24 xfs_file_readdir crash
+
+From: David Chinner <dgc@sgi.com>
+
+It looks like we're deferencing a pointer beyond the end of a buffer
+if the buffer is filled exactly. This bug does not crash ia64 (even
+with memory poisoning enabled), which is why the targeted corner
+case testing I did a while back did not pick this up when fixing a
+similar bug a month ago.
+
+http://oss.sgi.com/archives/xfs/2008-02/msg00027.html
+[dsd@gentoo.org: David says on LKML that this is heading upstream fast]
+
+Index: linux-2.6.24-gentoo/fs/xfs/linux-2.6/xfs_file.c
+===================================================================
+--- linux-2.6.24-gentoo.orig/fs/xfs/linux-2.6/xfs_file.c
++++ linux-2.6.24-gentoo/fs/xfs/linux-2.6/xfs_file.c
+@@ -350,8 +350,8 @@ xfs_file_readdir(
+ 
+ 		size = buf.used;
+ 		de = (struct hack_dirent *)buf.dirent;
+-		curr_offset = de->offset /* & 0x7fffffff */;
+ 		while (size > 0) {
++			curr_offset = de->offset /* & 0x7fffffff */;
+ 			if (filldir(dirent, de->name, de->namlen,
+ 					curr_offset & 0x7fffffff,
+ 					de->ino, de->d_type)) {
+@@ -362,7 +362,6 @@ xfs_file_readdir(
+ 				       sizeof(u64));
+ 			size -= reclen;
+ 			de = (struct hack_dirent *)((char *)de + reclen);
+-			curr_offset = de->offset /* & 0x7fffffff */;
+ 		}
+ 	}
+ 
