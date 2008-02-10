@@ -59,6 +59,10 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
+Patch:	1400_vmsplice-user-pointer.patch
+From:	http://bugs.gentoo.org/209460
+Desc:	Fix another vmsplice() security issue
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
