@@ -63,6 +63,10 @@ Patch:	1400_vmsplice-user-pointer.patch
 From:	http://bugs.gentoo.org/209460
 Desc:	Fix another vmsplice() security issue
 
+Patch:	1500_get-zero-user-pages.patch
+From:	http://bugs.gentoo.org/209460
+Desc:	Preventative measure against future vmsplice-like security issues
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
