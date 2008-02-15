@@ -71,6 +71,10 @@ Patch:	1500_get-zero-user-pages.patch
 From:	http://bugs.gentoo.org/209460
 Desc:	Preventative measure against future vmsplice-like security issues
 
+Patch:	2500_arcmsr-dma-coherent-warnings.patch
+From:	http://bugs.gentoo.org/208493
+Desc:	Fix warning flood when arcmsr is ran with archttp
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
