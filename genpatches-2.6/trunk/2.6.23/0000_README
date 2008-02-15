@@ -139,6 +139,10 @@ Patch:	4000_e1000e.patch
 From:	http://bugs.gentoo.org/196053
 Desc:	Add Intel ICH9 PCI-Express ethernet support
 
+Patch:	4001_e1000e-crc-stripping.patch
+From:	http://bugs.gentoo.org/209235
+Desc:	Fix e1000e bridging issue
+
 Patch:	4005_GRE-sendto-recvfrom-NBMA-address.patch
 From:	http://bugs.gentoo.org/196904
 Desc:	Implement properly NHRP over GRE tunnel
