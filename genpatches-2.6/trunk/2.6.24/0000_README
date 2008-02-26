@@ -47,21 +47,13 @@ Patch:	1001_linux-2.6.24.2.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.2
 
-Patch:	1500_get-zero-user-pages.patch
-From:	http://bugs.gentoo.org/209460
-Desc:	Preventative measure against future vmsplice-like security issues
+Patch:	1002_linux-2.6.24.2.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.24.3
 
 Patch:	1700_moduleparam.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix GCC 4.2 compile failure on alpha/ia64/ppc64
-
-Patch:	1705_pegasos-vt8231-quirk.patch
-From:	http://bugs.gentoo.org/210455
-Desc:	Fix 2.6.24 libata regression on Pegasos
-
-Patch:	1900_xfs-file-readdir-oops.patch
-From:	http://bugs.gentoo.org/208404
-Desc:	Fix XFS crash condition
 
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
