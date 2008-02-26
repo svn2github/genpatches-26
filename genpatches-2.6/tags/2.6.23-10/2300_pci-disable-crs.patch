@@ -1,0 +1,69 @@
+From: Linus Torvalds <torvalds@woody.linux-foundation.org>
+Date: Fri, 28 Dec 2007 05:21:36 +0000 (-0800)
+Subject: [PCI] Do not enable CRS Software Visibility by default
+X-Git-Tag: v2.6.24-rc7~31
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=ad7edfe0490877864dc0312e5f3315ea37fc4b3a
+
+[PCI] Do not enable CRS Software Visibility by default
+
+It appears that some PCI-E bridges do the wrong thing in the presense of
+CRS Software Visibility and MMCONFIG.  In particular, it looks like an
+ATI bridge (device ID 7936) will return 0001 in the vendor ID field of
+any bridged devices indefinitely.
+
+Not enabling CRS SV avoids the problem, and as we currently do not
+really make good use of the feature anyway (we just time out rather than
+do any threaded discovery as suggested by the CRS specs), we're better
+off just not enabling it.
+
+This should fix a slew of problem reports with random devices (generally
+graphics adapters or fairly high-performance networking cards, since it
+only affected PCI-E) not getting properly recognized on these AMD systems.
+
+If we really want to use CRS-SV, we may end up eventually needing a
+whitelist of systems where this should be enabled, along with some kind
+of "pcibios_enable_crs()" query to call the system-specific code.
+
+Suggested-by: Loic Prylli <loic@myri.com>
+Tested-by: Kai Ruhnau <kai@tragetaschen.dyndns.org>
+Cc: Matthew Wilcox <matthew@wil.cx>
+Cc: Greg Kroah-Hartman <greg@kroah.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/drivers/pci/probe.c b/drivers/pci/probe.c
+index 2f75d69..c5ca313 100644
+--- a/drivers/pci/probe.c
++++ b/drivers/pci/probe.c
+@@ -455,22 +455,6 @@ struct pci_bus *pci_add_new_bus(struct pci_bus *parent, struct pci_dev *dev, int
+ 	return child;
+ }
+ 
+-static void pci_enable_crs(struct pci_dev *dev)
+-{
+-	u16 cap, rpctl;
+-	int rpcap = pci_find_capability(dev, PCI_CAP_ID_EXP);
+-	if (!rpcap)
+-		return;
+-
+-	pci_read_config_word(dev, rpcap + PCI_CAP_FLAGS, &cap);
+-	if (((cap & PCI_EXP_FLAGS_TYPE) >> 4) != PCI_EXP_TYPE_ROOT_PORT)
+-		return;
+-
+-	pci_read_config_word(dev, rpcap + PCI_EXP_RTCTL, &rpctl);
+-	rpctl |= PCI_EXP_RTCTL_CRSSVE;
+-	pci_write_config_word(dev, rpcap + PCI_EXP_RTCTL, rpctl);
+-}
+-
+ static void pci_fixup_parent_subordinate_busnr(struct pci_bus *child, int max)
+ {
+ 	struct pci_bus *parent = child->parent;
+@@ -517,8 +501,6 @@ int pci_scan_bridge(struct pci_bus *bus, struct pci_dev * dev, int max, int pass
+ 	pci_write_config_word(dev, PCI_BRIDGE_CONTROL,
+ 			      bctl & ~PCI_BRIDGE_CTL_MASTER_ABORT);
+ 
+-	pci_enable_crs(dev);
+-
+ 	if ((buses & 0xffff00) && !pcibios_assign_all_busses() && !is_cardbus) {
+ 		unsigned int cmax, busnr;
+ 		/*

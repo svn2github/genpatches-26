@@ -1,0 +1,41 @@
+From: Auke Kok <auke-jan.h.kok@intel.com>
+Date: Tue, 12 Feb 2008 23:20:24 +0000 (-0800)
+Subject: e1000e: Fix CRC stripping in hardware context bug
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fjgarzik%2Fnetdev-2.6.git;a=commitdiff_plain;h=5918bd88effd0233a048983570ec5803f5f753dc
+
+e1000e: Fix CRC stripping in hardware context bug
+
+CRC stripping was only correctly enabled for packet split recieves
+which is used when receiving jumbo frames. Correctly enable SECRC
+also for normal buffer packet receives.
+
+Tested by Andy Gospodarek and Johan Andersson, see bugzilla #9940.
+
+Signed-off-by: Auke Kok <auke-jan.h.kok@intel.com>
+Signed-off-by: Jeff Garzik <jeff@garzik.org>
+---
+
+diff --git a/drivers/net/e1000e/netdev.c b/drivers/net/e1000e/netdev.c
+index b9b0d32..ea4ecc3 100644
+--- a/drivers/net/e1000e/netdev.c
++++ b/drivers/net/e1000e/netdev.c
+@@ -1690,6 +1690,9 @@ static void e1000_setup_rctl(struct e1000_adapter *adapter)
+ 	else
+ 		rctl |= E1000_RCTL_LPE;
+ 
++	/* Enable hardware CRC frame stripping */
++	rctl |= E1000_RCTL_SECRC;
++
+ 	/* Setup buffer sizes */
+ 	rctl &= ~E1000_RCTL_SZ_4096;
+ 	rctl |= E1000_RCTL_BSEX;
+@@ -1755,9 +1758,6 @@ static void e1000_setup_rctl(struct e1000_adapter *adapter)
+ 
+ 		/* Enable Packet split descriptors */
+ 		rctl |= E1000_RCTL_DTYP_PS;
+-		
+-		/* Enable hardware CRC frame stripping */
+-		rctl |= E1000_RCTL_SECRC;
+ 
+ 		psrctl |= adapter->rx_ps_bsize0 >>
+ 			E1000_PSRCTL_BSIZE0_SHIFT;
