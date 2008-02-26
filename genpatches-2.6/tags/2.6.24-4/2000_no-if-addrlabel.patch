@@ -1,0 +1,18 @@
+
+From: Daniel Drake <dsd@gentoo.org>
+
+2.6.24.3 added an unifdef entry for a header file that does not exist
+in the 2.6.24 tree. Remove it.
+
+Index: linux-2.6.24-gentoo-r3/include/linux/Kbuild
+===================================================================
+--- linux-2.6.24-gentoo-r3.orig/include/linux/Kbuild
++++ linux-2.6.24-gentoo-r3/include/linux/Kbuild
+@@ -217,7 +217,6 @@ unifdef-y += i2o-dev.h
+ unifdef-y += icmp.h
+ unifdef-y += icmpv6.h
+ unifdef-y += if_addr.h
+-unifdef-y += if_addrlabel.h
+ unifdef-y += if_arp.h
+ unifdef-y += if_bridge.h
+ unifdef-y += if_ec.h
