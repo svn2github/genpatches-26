@@ -99,13 +99,13 @@ Patch:	1014_linux-2.6.23.15.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.23.15
 
-Patch:	1400_vmsplice-user-pointer.patch
-From:	http://bugs.gentoo.org/209460
-Desc:	Fix another vmsplice() security issue
+Patch:	1015_linux-2.6.23.16.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.23.16
 
-Patch:	1500_get-zero-user-pages.patch
-From:	http://bugs.gentoo.org/209460
-Desc:	Preventative measure against future vmsplice-like security issues
+Patch:	1016_linux-2.6.23.17.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.23.17
 
 Patch:	1700_moduleparam.patch
 From:	http://bugs.gentoo.org/187175
