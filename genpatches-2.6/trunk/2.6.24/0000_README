@@ -43,6 +43,14 @@ Patch:	1000_linux-2.6.24.1.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.1
 
+Patch:	1001_linux-2.6.24.2.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.24.2
+
+Patch:	1500_get-zero-user-pages.patch
+From:	http://bugs.gentoo.org/209460
+Desc:	Preventative measure against future vmsplice-like security issues
+
 Patch:	1700_moduleparam.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix GCC 4.2 compile failure on alpha/ia64/ppc64
@@ -67,6 +75,10 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
+Patch:	2300_pci-use-conf1.patch
+From:	http://bugs.gentoo.org/198810
+Desc:	Fix boot hang on Intel Q35 chipset
+
 Patch:	2400_e1000e-crc-stripping.patch
 From:	http://bugs.gentoo.org/209235
 Desc:	Fix e1000e bridging issue
@@ -74,18 +86,6 @@ Desc:	Fix e1000e bridging issue
 Patch:	2405_sis190-eeprom-mac.patch
 From:	http://bugs.gentoo.org/207706
 Desc:	Fix reading of MAC address in sis190 driver
-
-Patch:	1400_vmsplice-user-pointer.patch
-From:	http://bugs.gentoo.org/209460
-Desc:	Fix another vmsplice() security issue
-
-Patch:	1500_get-zero-user-pages.patch
-From:	http://bugs.gentoo.org/209460
-Desc:	Preventative measure against future vmsplice-like security issues
-
-Patch:	2300_pci-use-conf1.patch
-From:	http://bugs.gentoo.org/198810
-Desc:	Fix boot hang on Intel Q35 chipset
 
 Patch:	2500_arcmsr-dma-coherent-warnings.patch
 From:	http://bugs.gentoo.org/208493
