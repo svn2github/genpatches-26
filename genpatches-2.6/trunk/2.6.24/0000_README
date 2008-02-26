@@ -47,6 +47,10 @@ Patch:	1700_moduleparam.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix GCC 4.2 compile failure on alpha/ia64/ppc64
 
+Patch:	1705_pegasos-vt8231-quirk.patch
+From:	http://bugs.gentoo.org/210455
+Desc:	Fix 2.6.24 libata regression on Pegasos
+
 Patch:	1900_xfs-file-readdir-oops.patch
 From:	http://bugs.gentoo.org/208404
 Desc:	Fix XFS crash condition
