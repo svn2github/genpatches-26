@@ -75,6 +75,10 @@ Patch:	2300_pci-use-conf1.patch
 From:	http://bugs.gentoo.org/198810
 Desc:	Fix boot hang on Intel Q35 chipset
 
+Patch:	2305_bluetooth-suspend-oops.patch
+From:	http://bugs.gentoo.org/211179
+Desc:	Fix bluetooth rfcomm crash on suspend
+
 Patch:	2400_e1000e-crc-stripping.patch
 From:	http://bugs.gentoo.org/209235
 Desc:	Fix e1000e bridging issue
