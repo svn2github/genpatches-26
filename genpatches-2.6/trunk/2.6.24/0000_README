@@ -103,6 +103,14 @@ Patch:	2900_bluetooth-usb-conwise-sco.patch
 From:	http://bugs.gentoo.org/203196
 Desc:	Fix bluetooth log spam with a buggy conwise USB adapter
 
+Patch:	4000_xfrm-speedup.patch
+From:	http://bugs.gentoo.org/212381
+Desc:	Allow more IPSEC connections
+
+Patch:	4005_afkey-large-databases.patch
+From:	http://bugs.gentoo.org/212381
+Desc:	Allow more IPSEC connections
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
