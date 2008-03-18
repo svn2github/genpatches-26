@@ -55,6 +55,10 @@ Patch:	1700_moduleparam.patch
 From:	http://bugs.gentoo.org/187175
 Desc:	Fix GCC 4.2 compile failure on alpha/ia64/ppc64
 
+Patch:	1705_x86-clear-df.patch
+From:	http://bugs.gentoo.org/213811
+Desc:	Fix clearing of direction flag in signal handlers
+
 Patch:	2000_no-if-addrlabel.patch
 From:	Linux kernel mailing list
 Desc:	Remove bogus unifdef entry added in 2.6.24.3
