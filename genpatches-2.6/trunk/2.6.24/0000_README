@@ -47,21 +47,13 @@ Patch:	1001_linux-2.6.24.2.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.2
 
-Patch:	1002_linux-2.6.24.2.patch
+Patch:	1002_linux-2.6.24.3.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.3
 
-Patch:	1700_moduleparam.patch
-From:	http://bugs.gentoo.org/187175
-Desc:	Fix GCC 4.2 compile failure on alpha/ia64/ppc64
-
-Patch:	1705_x86-clear-df.patch
-From:	http://bugs.gentoo.org/213811
-Desc:	Fix clearing of direction flag in signal handlers
-
-Patch:	2000_no-if-addrlabel.patch
-From:	Linux kernel mailing list
-Desc:	Remove bogus unifdef entry added in 2.6.24.3
+Patch:	1002_linux-2.6.24.4.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.24.4
 
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
@@ -75,25 +67,13 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
-Patch:	2300_pci-use-conf1.patch
-From:	http://bugs.gentoo.org/198810
-Desc:	Fix boot hang on Intel Q35 chipset
-
 Patch:	2305_bluetooth-suspend-oops.patch
 From:	http://bugs.gentoo.org/211179
 Desc:	Fix bluetooth rfcomm crash on suspend
 
-Patch:	2400_e1000e-crc-stripping.patch
-From:	http://bugs.gentoo.org/209235
-Desc:	Fix e1000e bridging issue
-
 Patch:	2405_sis190-eeprom-mac.patch
 From:	http://bugs.gentoo.org/207706
 Desc:	Fix reading of MAC address in sis190 driver
-
-Patch:	2500_arcmsr-dma-coherent-warnings.patch
-From:	http://bugs.gentoo.org/208493
-Desc:	Fix warning flood when arcmsr is ran with archttp
 
 Patch:	2505_usb-storage-motorola-rokr.patch
 From:	http://bugs.gentoo.org/212729
