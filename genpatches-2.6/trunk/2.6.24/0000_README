@@ -79,6 +79,14 @@ Patch:	2505_usb-storage-motorola-rokr.patch
 From:	http://bugs.gentoo.org/212729
 Desc:	Fix usb-storage access to Motorola ROKR phone
 
+Patch:	2510_ricoh-handle-susp-resum-disab.patch
+From:	http://bugs.gentoo.org/185581
+Desc:	Handle suspend/resume in Ricoh MMC disabler
+
+Patch:	2515_ricoh-mmc-RL5c476.patch
+From:	http://bugs.gentoo.org/185581
+Desc:	Extend ricoh_mmc to support Ricoh RL5c476
+
 Patch:	2700_alsa-hda-lifebook-e8410.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix mixer controls for Fujitsu Lifebook E8410 sound chip
