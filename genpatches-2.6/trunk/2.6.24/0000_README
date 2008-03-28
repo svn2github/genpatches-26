@@ -51,9 +51,13 @@ Patch:	1002_linux-2.6.24.3.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.3
 
-Patch:	1002_linux-2.6.24.4.patch
+Patch:	1003_linux-2.6.24.4.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.4
+
+Patch:	1400_prevent-gcc43-optimization-udivdi3.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=214654
+Desc:	Prevent gcc udivdi3 optimizations due to some unsupported archs.
 
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
