@@ -71,6 +71,10 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
+Patch:	2103_ata-assume-no-device-attached.patch
+From:	http://bugs.gentoo.org/211369
+Desc:	Fix for device attached to pata_sis as secondary master
+
 Patch:	2305_bluetooth-suspend-oops.patch
 From:	http://bugs.gentoo.org/211179
 Desc:	Fix bluetooth rfcomm crash on suspend
