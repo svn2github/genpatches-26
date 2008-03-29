@@ -1,0 +1,57 @@
+From: Joe Peterson <joe@skyrush.com>
+Date: Wed, 6 Feb 2008 09:37:59 +0000 (-0800)
+Subject: Fix IXANY and restart after signal (e.g. ctrl-C) in n_tty line discipline
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=54d2a37eda3211d3b14c162238e9ccee43e023a9
+
+Fix IXANY and restart after signal (e.g. ctrl-C) in n_tty line discipline
+
+Fix two N_TTY line discipline issues related to resuming a stopped TTY
+(typically done with ctrl-S):
+
+1) Fix handling of character that resumes a stopped TTY (with IXANY)
+
+With "stty ixany", the TTY line discipline would lose the first character
+after the stop, so typing, for example, "hi^Sthere" resulted in "hihere"
+(the 't' would cause the resume after ^S, but it would then be thrown away
+rather than processed as an input character).  This was inconsistent with
+the behavior of other Unix systems.
+
+2) Fix interrupt signal (e.g. ctrl-C) behavior in stopped TTYs
+
+With "stty -ixany" (often the default), interrupt signals were ignored
+in a stopped TTY until the TTY was resumed with the start char (typically
+ctrl-Q), which was inconsistent with the behavior of other Unix systems.
+
+Signed-off-by: Joe Peterson <joe@skyrush.com>
+Cc: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/drivers/char/n_tty.c b/drivers/char/n_tty.c
+index e0e3815..90c3969 100644
+--- a/drivers/char/n_tty.c
++++ b/drivers/char/n_tty.c
+@@ -695,17 +695,16 @@ static inline void n_tty_receive_char(struct tty_struct *tty, unsigned char c)
+ 		return;
+ 	}
+ 	
+-	if (tty->stopped && !tty->flow_stopped &&
+-	    I_IXON(tty) && I_IXANY(tty)) {
+-		start_tty(tty);
+-		return;
+-	}
+-	
+ 	if (I_ISTRIP(tty))
+ 		c &= 0x7f;
+ 	if (I_IUCLC(tty) && L_IEXTEN(tty))
+ 		c=tolower(c);
+ 
++	if (tty->stopped && !tty->flow_stopped && I_IXON(tty) &&
++	    ((I_IXANY(tty) && c != START_CHAR(tty) && c != STOP_CHAR(tty)) ||
++	     c == INTR_CHAR(tty) || c == QUIT_CHAR(tty)))
++		start_tty(tty);
++
+ 	if (tty->closing) {
+ 		if (I_IXON(tty)) {
+ 			if (c == START_CHAR(tty))
