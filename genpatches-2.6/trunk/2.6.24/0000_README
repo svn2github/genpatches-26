@@ -134,3 +134,8 @@ Desc:	Bugfix for patch 4400
 Patch:	4405_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org>
 Desc:	enable control of the unaligned access control policy from sysctl
+
+Patch:	4410_coretemp-penryn.patch
+From:	Jan Taimr
+Desc:	Support temperature monitoring of new Intel CPUs
+
