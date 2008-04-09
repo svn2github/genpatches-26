@@ -95,6 +95,10 @@ Patch:	2515_ricoh-mmc-RL5c476.patch
 From:	http://bugs.gentoo.org/185581
 Desc:	Extend ricoh_mmc to support Ricoh RL5c476
 
+Patch:	2525_cciss-missing-scatterlist-include.patch
+From:	http://bugs.gentoo.org/217012
+Desc:	Add missing include for Compaq Smart Array 5xxx Controller
+
 Patch:	2700_alsa-hda-lifebook-e8410.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix mixer controls for Fujitsu Lifebook E8410 sound chip
