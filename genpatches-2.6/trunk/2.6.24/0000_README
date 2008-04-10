@@ -79,6 +79,10 @@ Patch:	2305_bluetooth-suspend-oops.patch
 From:	http://bugs.gentoo.org/211179
 Desc:	Fix bluetooth rfcomm crash on suspend
 
+Patch:	2400_ipw2200-radiotap-addr.patch
+From:	http://bugs.gentoo.org/215714
+Desc:	Fix IPW2200 radiotap interface
+
 Patch:	2405_sis190-eeprom-mac.patch
 From:	http://bugs.gentoo.org/207706
 Desc:	Fix reading of MAC address in sis190 driver
