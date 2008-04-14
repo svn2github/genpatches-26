@@ -75,6 +75,10 @@ Patch:	2103_ata-assume-no-device-attached.patch
 From:	http://bugs.gentoo.org/211369
 Desc:	Fix for device attached to pata_sis as secondary master
 
+Patch:	2200_ppc32-apm-export-fix.patch
+From:	http://bugs.gentoo.org/217629
+Desc:	Fix build of modular drivers/macintosh/apm_emu.c
+
 Patch:	2305_bluetooth-suspend-oops.patch
 From:	http://bugs.gentoo.org/211179
 Desc:	Fix bluetooth rfcomm crash on suspend
