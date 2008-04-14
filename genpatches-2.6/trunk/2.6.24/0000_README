@@ -144,7 +144,7 @@ From:	Joe Peterson <lavajoe@gentoo.org>
 Desc:	Bugfix for patch 4400
 
 Patch:	4405_alpha-sysctl-uac.patch
-From:	Tavis Ormandy <taviso@gentoo.org>
+From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	enable control of the unaligned access control policy from sysctl
 
 Patch:	4410_coretemp-penryn.patch

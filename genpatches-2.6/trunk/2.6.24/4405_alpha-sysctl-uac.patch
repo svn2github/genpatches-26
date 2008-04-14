@@ -1,14 +1,5 @@
----
- arch/alpha/Kconfig        |   26 ++++++++++++++++++++++++
- arch/alpha/kernel/traps.c |   49 ++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/sysctl.h    |   14 +++++++++++++
- kernel/sysctl.c           |   12 ++++++++++-
- 4 files changed, 100 insertions(+), 1 deletion(-)
-
-Index: linux-2.6.24-gentoo-r1/arch/alpha/Kconfig
-===================================================================
---- linux-2.6.24-gentoo-r1.orig/arch/alpha/Kconfig
-+++ linux-2.6.24-gentoo-r1/arch/alpha/Kconfig
+--- src/arch/alpha/Kconfig.orig	2008-04-11 19:24:19.000000000 -0400
++++ src/arch/alpha/Kconfig	2008-04-11 19:28:07.000000000 -0400
 @@ -616,6 +616,32 @@ config VERBOSE_MCHECK_ON
  
  	  Take the default (1) unless you want more control or more info.
@@ -42,154 +33,125 @@ Index: linux-2.6.24-gentoo-r1/arch/alpha/Kconfig
  source "drivers/pci/Kconfig"
  source "drivers/eisa/Kconfig"
  
-Index: linux-2.6.24-gentoo-r1/arch/alpha/kernel/traps.c
-===================================================================
---- linux-2.6.24-gentoo-r1.orig/arch/alpha/kernel/traps.c
-+++ linux-2.6.24-gentoo-r1/arch/alpha/kernel/traps.c
-@@ -14,6 +14,7 @@
- #include <linux/delay.h>
- #include <linux/smp_lock.h>
- #include <linux/module.h>
-+#include <linux/sysctl.h>
- #include <linux/init.h>
- #include <linux/kallsyms.h>
- 
-@@ -102,6 +103,38 @@ static char * ireg_name[] = {"v0", "t0",
+--- src/arch/alpha/kernel/traps.c.orig	2008-04-11 19:24:50.000000000 -0400
++++ src/arch/alpha/kernel/traps.c	2008-04-13 17:07:10.000000000 -0400
+@@ -102,6 +102,52 @@ static char * ireg_name[] = {"v0", "t0",
  			   "t10", "t11", "ra", "pv", "at", "gp", "sp", "zero"};
  #endif
  
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+static struct ctl_table_header *uac_sysctl_header;
++
++#include <linux/sysctl.h>
 +
 +static int enabled_noprint = 0;
 +static int enabled_sigbus = 0;
 +static int enabled_nofix = 0;
 +
 +ctl_table uac_table[] = {
-+	{KERN_UAC_NOPRINT, "noprint", &enabled_noprint, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
-+	{KERN_UAC_SIGBUS, "sigbus", &enabled_sigbus, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
-+	{KERN_UAC_NOFIX, "nofix", &enabled_nofix, sizeof (int), 0644, NULL, NULL, &proc_dointvec},
-+        {0}
++   	{
++		.ctl_name 	= CTL_UNNUMBERED,
++		.procname 	= "noprint", 
++		.data 		= &enabled_noprint, 
++		.maxlen 	= sizeof (int), 
++		.mode 		= 0644, 
++		.proc_handler = &proc_dointvec,
++	},
++   	{
++		.ctl_name 	= CTL_UNNUMBERED,
++		.procname 	= "sigbus", 
++		.data 		= &enabled_sigbus, 
++		.maxlen 	= sizeof (int), 
++		.mode 		= 0644, 
++		.proc_handler = &proc_dointvec,
++	},
++   	{
++		.ctl_name 	= CTL_UNNUMBERED,
++		.procname 	= "nofix", 
++		.data 		= &enabled_nofix, 
++		.maxlen 	= sizeof (int), 
++		.mode 		= 0644, 
++		.proc_handler = &proc_dointvec,
++	},
++	{ .ctl_name = 0 }
 +};
 +
 +static int __init init_uac_sysctl(void)
 +{
-+	/* Initialize sysctls with the #defined UAC policy */
-+	enabled_noprint = (test_thread_flag (TIF_UAC_NOPRINT)) ? 1 : 0;
-+	enabled_sigbus = (test_thread_flag (TIF_UAC_SIGBUS)) ? 1 : 0;
-+	enabled_nofix = (test_thread_flag (TIF_UAC_NOFIX)) ? 1 : 0;
-+
-+	/* save this for later so we can clean up */
-+	uac_sysctl_header = register_sysctl_table(uac_table);
-+	return 0;
-+}
-+
-+static void __exit exit_uac_sysctl(void)
-+{
-+	unregister_sysctl_table(uac_sysctl_header);
++   /* Initialize sysctls with the #defined UAC policy */
++   enabled_noprint = (test_thread_flag (TIF_UAC_NOPRINT)) ? 1 : 0;
++   enabled_sigbus = (test_thread_flag (TIF_UAC_SIGBUS)) ? 1 : 0;
++   enabled_nofix = (test_thread_flag (TIF_UAC_NOFIX)) ? 1 : 0;
++   return 0;
 +}
 +#endif
 +
  static void
  dik_show_code(unsigned int *pc)
  {
-@@ -780,7 +813,11 @@ do_entUnaUser(void __user * va, unsigned
+@@ -780,7 +826,11 @@ do_entUnaUser(void __user * va, unsigned
  	/* Check the UAC bits to decide what the user wants us to do
  	   with the unaliged access.  */
  
 +#ifndef CONFIG_ALPHA_UAC_SYSCTL
  	if (!test_thread_flag (TIF_UAC_NOPRINT)) {
 +#else  /* CONFIG_ALPHA_UAC_SYSCTL */
-+	if (!(enabled_noprint)) {
++   if (!(enabled_noprint)) {
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  		if (cnt >= 5 && jiffies - last_time > 5*HZ) {
  			cnt = 0;
  		}
-@@ -791,10 +828,18 @@ do_entUnaUser(void __user * va, unsigned
+@@ -791,10 +841,18 @@ do_entUnaUser(void __user * va, unsigned
  		}
  		last_time = jiffies;
  	}
 +#ifndef CONFIG_ALPHA_UAC_SYSCTL
  	if (test_thread_flag (TIF_UAC_SIGBUS))
 +#else  /* CONFIG_ALPHA_UAC_SYSCTL */
-+	if (enabled_sigbus)
++   if (enabled_sigbus)
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  		goto give_sigbus;
  	/* Not sure why you'd want to use this, but... */
 +#ifndef CONFIG_ALPHA_UAC_SYSCTL
  	if (test_thread_flag (TIF_UAC_NOFIX))
 +#else  /* CONFIG_ALPHA_UAC_SYSCTL */
-+	if (enabled_nofix)
++   if (enabled_nofix)
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  		return;
  
  	/* Don't bother reading ds in the access check since we already
-@@ -1089,3 +1134,7 @@ trap_init(void)
+@@ -1089,3 +1147,7 @@ trap_init(void)
  	wrent(entSys, 5);
  	wrent(entDbg, 6);
  }
 +
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+__initcall(init_uac_sysctl);
++	__initcall(init_uac_sysctl);
 +#endif
-Index: linux-2.6.24-gentoo-r1/include/linux/sysctl.h
-===================================================================
---- linux-2.6.24-gentoo-r1.orig/include/linux/sysctl.h
-+++ linux-2.6.24-gentoo-r1/include/linux/sysctl.h
-@@ -164,6 +164,9 @@ enum
- 	KERN_MAX_LOCK_DEPTH=74,
- 	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
- 	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
-+#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	KERN_UAC_POLICY=77,	/* int: Alpha unaligned access control policy flags */
-+#endif /* CONFIG_ALPHA_UAC_SYSCTL */
- };
- 
- 
-@@ -253,6 +256,17 @@ enum
- 	PTY_NR=2
- };
- 
-+#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+/* /proc/sys/kernel/uac */
-+enum
-+{
-+	/* UAC policy on Alpha */
-+	KERN_UAC_NOPRINT=1,	/* int: printk() on unaligned access */
-+	KERN_UAC_SIGBUS=2,	/* int: send SIGBUS on unaligned access */
-+	KERN_UAC_NOFIX=3,	/* int: don't fix the unaligned access */
-+};
-+#endif /* CONFIG_ALPHA_UAC_SYSCTL */
-+
- /* /proc/sys/bus/isa */
- enum
- {
-Index: linux-2.6.24-gentoo-r1/kernel/sysctl.c
-===================================================================
---- linux-2.6.24-gentoo-r1.orig/kernel/sysctl.c
-+++ linux-2.6.24-gentoo-r1/kernel/sysctl.c
-@@ -157,6 +157,9 @@ static int proc_do_cad_pid(struct ctl_ta
- static int proc_dointvec_taint(struct ctl_table *table, int write, struct file *filp,
- 			       void __user *buffer, size_t *lenp, loff_t *ppos);
+--- src/kernel/sysctl.c.orig	2008-04-11 19:26:51.000000000 -0400
++++ src/kernel/sysctl.c	2008-04-13 16:35:12.000000000 -0400
+@@ -168,6 +168,9 @@ extern struct ctl_table random_table[];
+ #ifdef CONFIG_INOTIFY_USER
+ extern struct ctl_table inotify_table[];
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+extern ctl_table uac_table[];
++extern struct ctl_table uac_table[];
 +#endif
  
- static struct ctl_table root_table[];
- static struct ctl_table_header root_table_header =
-@@ -224,6 +227,14 @@ static struct ctl_table root_table[] = {
+ #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
+ int sysctl_legacy_va_layout;
+@@ -779,6 +782,14 @@ static struct ctl_table kern_table[] = {
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
   */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+	{
-+		.ctl_name	= KERN_UAC_POLICY,
-+		.procname	= "uac",
-+		.mode		= 0555,
-+		.child		= uac_table,
-+	},
++    {
++        .ctl_name   = CTL_UNNUMBERED,
++        .procname   = "uac",
++        .mode       = 0555,
++        .child      = uac_table,
++    },
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
  	{ .ctl_name = 0 }
  };
  
+
