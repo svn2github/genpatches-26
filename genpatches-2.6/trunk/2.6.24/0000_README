@@ -107,6 +107,10 @@ Patch:	2700_alsa-hda-lifebook-e8410.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix mixer controls for Fujitsu Lifebook E8410 sound chip
 
+Patch:	2705_alsa-hda-fujitsu.patch
+From:	Tony Vroon <chainsaw@gentoo.org>
+Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
+
 Patch:	2900_bluetooth-usb-conwise-sco.patch
 From:	http://bugs.gentoo.org/203196
 Desc:	Fix bluetooth log spam with a buggy conwise USB adapter
