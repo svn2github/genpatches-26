@@ -59,6 +59,10 @@ Patch:	1400_prevent-gcc43-optimization-udivdi3.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=214654
 Desc:	Prevent gcc udivdi3 optimizations due to some unsupported archs.
 
+Patch:	1700_futex-cmpxchg-inatomic-impl-check.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=217030
+Desc:	Detect whether futex_atomic_cmpxchg_inatomic was implemented at run time
+
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Add early medium-not-present detection in sr/sd drivers
