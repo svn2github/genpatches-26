@@ -39,97 +39,9 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_linux-2.6.24.1.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.24.1
-
-Patch:	1001_linux-2.6.24.2.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.24.2
-
-Patch:	1002_linux-2.6.24.3.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.24.3
-
-Patch:	1003_linux-2.6.24.4.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.24.4
-
-Patch:	1400_prevent-gcc43-optimization-udivdi3.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=214654
-Desc:	Prevent gcc udivdi3 optimizations due to some unsupported archs.
-
-Patch:	1700_futex-cmpxchg-inatomic-impl-check.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=217030
-Desc:	Detect whether futex_atomic_cmpxchg_inatomic was implemented at run time
-
-Patch:	2100_sd-sr-medium-detection.patch
-From:	http://bugs.gentoo.org/196879
-Desc:	Add early medium-not-present detection in sr/sd drivers
-
-Patch:	2101_sr-follow-tray-status.patch
-From:	http://bugs.gentoo.org/196879
-Desc:	Fix CDROM_DRIVE_STATUS ioctl implementation
-
-Patch:	2102_sr-test-unit-ready.patch
-From:	http://bugs.gentoo.org/196879
-Desc:	Fix TEST_UNIT_READY for medium detection
-
-Patch:	2103_ata-assume-no-device-attached.patch
-From:	http://bugs.gentoo.org/211369
-Desc:	Fix for device attached to pata_sis as secondary master
-
-Patch:	2200_ppc32-apm-export-fix.patch
-From:	http://bugs.gentoo.org/217629
-Desc:	Fix build of modular drivers/macintosh/apm_emu.c
-
-Patch:	2305_bluetooth-suspend-oops.patch
-From:	http://bugs.gentoo.org/211179
-Desc:	Fix bluetooth rfcomm crash on suspend
-
-Patch:	2400_ipw2200-radiotap-addr.patch
-From:	http://bugs.gentoo.org/215714
-Desc:	Fix IPW2200 radiotap interface
-
-Patch:	2405_sis190-eeprom-mac.patch
-From:	http://bugs.gentoo.org/207706
-Desc:	Fix reading of MAC address in sis190 driver
-
-Patch:	2505_usb-storage-motorola-rokr.patch
-From:	http://bugs.gentoo.org/212729
-Desc:	Fix usb-storage access to Motorola ROKR phone
-
-Patch:	2510_ricoh-handle-susp-resum-disab.patch
-From:	http://bugs.gentoo.org/185581
-Desc:	Handle suspend/resume in Ricoh MMC disabler
-
-Patch:	2515_ricoh-mmc-RL5c476.patch
-From:	http://bugs.gentoo.org/185581
-Desc:	Extend ricoh_mmc to support Ricoh RL5c476
-
-Patch:	2525_cciss-missing-scatterlist-include.patch
-From:	http://bugs.gentoo.org/217012
-Desc:	Add missing include for Compaq Smart Array 5xxx Controller
-
-Patch:	2700_alsa-hda-lifebook-e8410.patch
-From:	Tony Vroon <chainsaw@gentoo.org>
-Desc:	Fix mixer controls for Fujitsu Lifebook E8410 sound chip
-
 Patch:	2705_alsa-hda-fujitsu.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
-
-Patch:	2900_bluetooth-usb-conwise-sco.patch
-From:	http://bugs.gentoo.org/203196
-Desc:	Fix bluetooth log spam with a buggy conwise USB adapter
-
-Patch:	4000_xfrm-speedup.patch
-From:	http://bugs.gentoo.org/212381
-Desc:	Allow more IPSEC connections
-
-Patch:	4005_afkey-large-databases.patch
-From:	http://bugs.gentoo.org/212381
-Desc:	Allow more IPSEC connections
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
@@ -143,19 +55,7 @@ Patch:	4300_squashfs-3.3.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
-Patch:	4400_echo-ctrl-c.patch
-From:	Joe Peterson <lavajoe@gentoo.org>
-Desc:	Echo ^C on Ctrl-C events to match other unixes
-
-Patch:	4401_ixany-interrupt-signal.patch
-From:	Joe Peterson <lavajoe@gentoo.org>
-Desc:	Bugfix for patch 4400
-
 Patch:	4405_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	enable control of the unaligned access control policy from sysctl
-
-Patch:	4410_coretemp-penryn.patch
-From:	Jan Taimr
-Desc:	Support temperature monitoring of new Intel CPUs
 
