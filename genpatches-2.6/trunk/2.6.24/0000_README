@@ -55,13 +55,9 @@ Patch:	1003_linux-2.6.24.4.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.4
 
-Patch:	1400_prevent-gcc43-optimization-udivdi3.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=214654
-Desc:	Prevent gcc udivdi3 optimizations due to some unsupported archs.
-
-Patch:	1700_futex-cmpxchg-inatomic-impl-check.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=217030
-Desc:	Detect whether futex_atomic_cmpxchg_inatomic was implemented at run time
+Patch:	1004_linux-2.6.24.5.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.24.5
 
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
@@ -75,29 +71,9 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
-Patch:	2103_ata-assume-no-device-attached.patch
-From:	http://bugs.gentoo.org/211369
-Desc:	Fix for device attached to pata_sis as secondary master
-
-Patch:	2200_ppc32-apm-export-fix.patch
-From:	http://bugs.gentoo.org/217629
-Desc:	Fix build of modular drivers/macintosh/apm_emu.c
-
-Patch:	2305_bluetooth-suspend-oops.patch
-From:	http://bugs.gentoo.org/211179
-Desc:	Fix bluetooth rfcomm crash on suspend
-
 Patch:	2400_ipw2200-radiotap-addr.patch
 From:	http://bugs.gentoo.org/215714
 Desc:	Fix IPW2200 radiotap interface
-
-Patch:	2405_sis190-eeprom-mac.patch
-From:	http://bugs.gentoo.org/207706
-Desc:	Fix reading of MAC address in sis190 driver
-
-Patch:	2505_usb-storage-motorola-rokr.patch
-From:	http://bugs.gentoo.org/212729
-Desc:	Fix usb-storage access to Motorola ROKR phone
 
 Patch:	2510_ricoh-handle-susp-resum-disab.patch
 From:	http://bugs.gentoo.org/185581
