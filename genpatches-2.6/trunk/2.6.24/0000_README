@@ -59,6 +59,10 @@ Patch:	1004_linux-2.6.24.5.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.5
 
+Patch:	1005_linux-2.6.24.6.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.24.6
+
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Add early medium-not-present detection in sr/sd drivers
