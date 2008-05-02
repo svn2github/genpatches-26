@@ -79,10 +79,6 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
-Patch:	2300_delorme-cypress-m8-fix.patch
-From:	http://bugs.gentoo.org/219152
-Desc:	Fix for Delorme Earthmate LT-40
-
 Patch:	2400_ipw2200-radiotap-addr.patch
 From:	http://bugs.gentoo.org/215714
 Desc:	Fix IPW2200 radiotap interface
