@@ -83,6 +83,10 @@ Patch:	2400_ipw2200-radiotap-addr.patch
 From:	http://bugs.gentoo.org/215714
 Desc:	Fix IPW2200 radiotap interface
 
+Patch:	2500_qla2xxx-relogin-loop-id.patch
+From:	http://bugs.gentoo.org/214883
+Desc:	Fix regression in QLA2xxx relogin handling
+
 Patch:	2510_ricoh-handle-susp-resum-disab.patch
 From:	http://bugs.gentoo.org/185581
 Desc:	Handle suspend/resume in Ricoh MMC disabler
