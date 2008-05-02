@@ -63,6 +63,10 @@ Patch:	1005_linux-2.6.24.6.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.24.6
 
+Patch:	1700_x86-defconfig.patch
+From:	http://bugs.gentoo.org/215442
+Desc:	Fix import of default config on i386/x86_64
+
 Patch:	2100_sd-sr-medium-detection.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Add early medium-not-present detection in sr/sd drivers
