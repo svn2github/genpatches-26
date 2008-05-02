@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1000_linux-2.6.25.1.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.1
+
 Patch:	1700_x86-defconfig.patch
 From:	http://bugs.gentoo.org/215442
 Desc:	Fix import of default config on i386/x86_64
