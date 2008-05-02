@@ -1,0 +1,31 @@
+From: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Date: Thu, 24 Apr 2008 22:21:30 +0000 (-0700)
+Subject: [SCSI] qla2xxx: Correct regression in relogin code.
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=666301e673e192c87a40e07a8357d6996b57b70f
+
+[SCSI] qla2xxx: Correct regression in relogin code.
+
+Commit 63a8651f2548c6bb5132c0b4e7dad4f57a9274db ([SCSI] qla2xxx:
+Correct infinite-login-retry issue.) introduced a small
+regression where a successful relogin would result in an fcport's
+loop_id to be incorrectly reset to FC_NO_LOOP_ID.  Only clear-out
+loopid, if retries have been 'truly' exhausted.
+
+Signed-off-by: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Cc: Stable Tree <stable@kernel.org>
+Signed-off-by: James Bottomley <James.Bottomley@HansenPartnership.com>
+---
+
+diff --git a/drivers/scsi/qla2xxx/qla_os.c b/drivers/scsi/qla2xxx/qla_os.c
+index 878a37a..3223fd1 100644
+--- a/drivers/scsi/qla2xxx/qla_os.c
++++ b/drivers/scsi/qla2xxx/qla_os.c
+@@ -2373,7 +2373,7 @@ qla2x00_do_dpc(void *data)
+ 					} else {
+ 						fcport->login_retry = 0;
+ 					}
+-					if (fcport->login_retry == 0)
++					if (fcport->login_retry == 0 && status != QLA_SUCCESS)
+ 						fcport->loop_id = FC_NO_LOOP_ID;
+ 				}
+ 				if (test_bit(LOOP_RESYNC_NEEDED, &ha->dpc_flags))

@@ -1,0 +1,53 @@
+From: Sam Ravnborg <sam@ravnborg.org>
+Date: Tue, 29 Apr 2008 10:48:15 +0000 (+0200)
+Subject: x86: use defconfigs from x86/configs/*
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=b9b39bfba5b0de3418305f01cfa7bc55a16004e1
+
+x86: use defconfigs from x86/configs/*
+
+Daniel Drake <dsd@gentoo.org> reported:
+
+In 2.6.23, if you unpacked a kernel source tarball and then
+ran "make menuconfig" you'd be presented with this message:
+    # using defaults found in arch/i386/defconfig
+
+and the default options would be set.
+
+The same thing in 2.6.24 does not give you any "using defaults" message, and
+the default config options within menuconfig are rather blank (e.g. no PCI
+support). You can work around this by explicitly running "make defconfig"
+before menuconfig, but it would be nice to have the behaviour the way it was
+for 2.6.23 (and the way it still is for other archs).
+
+Fixed by adding a x86 specific defconfig list to Kconfig.
+
+Fixes: http://bugzilla.kernel.org/show_bug.cgi?id=10470
+Tested-by: dsd@gentoo.org
+Signed-off-by: Sam Ravnborg <sam@ravnborg.org>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+
+Index: linux-2.6.24-gentoo-r6/arch/x86/Kconfig
+===================================================================
+--- linux-2.6.24-gentoo-r6.orig/arch/x86/Kconfig
++++ linux-2.6.24-gentoo-r6/arch/x86/Kconfig
+@@ -116,6 +116,18 @@ config ARCH_SUPPORTS_OPROFILE
+ 	bool
+ 	default y
+ 
++config DEFCONFIG_LIST
++	string
++	depends on X86_32
++	option defconfig_list
++	default "arch/x86/configs/i386_defconfig"
++
++config DEFCONFIG_LIST
++	string
++	depends on X86_64
++	option defconfig_list
++	default "arch/x86/configs/x86_64_defconfig"
++
+ 
+ config ZONE_DMA32
+ 	bool
