@@ -24,13 +24,14 @@ USB keyboards.
 
 Signed-off-by: Diego 'Flameeyes' Petteno <flameeyes@gmail.com>
 Signed-off-by: Jiri Kosina <jkosina@suse.cz>
+[dsd@gentoo.org: backport to 2.6.25]
 ---
 
-diff --git a/drivers/hid/hid-input.c b/drivers/hid/hid-input.c
-index c3eb3f1..452b94d 100644
---- a/drivers/hid/hid-input.c
-+++ b/drivers/hid/hid-input.c
-@@ -218,8 +218,9 @@ int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
+Index: linux-2.6.25-gentoo-r3/drivers/hid/hid-input.c
+===================================================================
+--- linux-2.6.25-gentoo-r3.orig/drivers/hid/hid-input.c
++++ linux-2.6.25-gentoo-r3/drivers/hid/hid-input.c
+@@ -218,8 +218,9 @@ int hidinput_apple_event(struct hid_devi
  			}
  		}
  
@@ -42,11 +43,11 @@ index c3eb3f1..452b94d 100644
  			trans = find_translation(powerbook_numlock_keys, usage->code);
  
  			if (trans) {
-diff --git a/drivers/hid/usbhid/hid-quirks.c b/drivers/hid/usbhid/hid-quirks.c
-index d3f8d91..a2fc8d4 100644
---- a/drivers/hid/usbhid/hid-quirks.c
-+++ b/drivers/hid/usbhid/hid-quirks.c
-@@ -611,28 +611,28 @@ static const struct hid_blacklist {
+Index: linux-2.6.25-gentoo-r3/drivers/hid/usbhid/hid-quirks.c
+===================================================================
+--- linux-2.6.25-gentoo-r3.orig/drivers/hid/usbhid/hid-quirks.c
++++ linux-2.6.25-gentoo-r3/drivers/hid/usbhid/hid-quirks.c
+@@ -613,28 +613,28 @@ static const struct hid_blacklist {
  
  	{ USB_VENDOR_ID_WISEGROUP_LTD, USB_DEVICE_ID_SMARTJOY_DUAL_PLUS, HID_QUIRK_NOGET | HID_QUIRK_MULTI_INPUT },
  
@@ -94,15 +95,15 @@ index d3f8d91..a2fc8d4 100644
  
  	{ USB_VENDOR_ID_DELL, USB_DEVICE_ID_DELL_W7658, HID_QUIRK_RESET_LEDS },
  	{ USB_VENDOR_ID_LOGITECH, USB_DEVICE_ID_LOGITECH_KBD, HID_QUIRK_RESET_LEDS },
-diff --git a/include/linux/hid.h b/include/linux/hid.h
-index 4ce3b7a..6fc10d1 100644
---- a/include/linux/hid.h
-+++ b/include/linux/hid.h
-@@ -285,6 +285,7 @@ struct hid_item {
+Index: linux-2.6.25-gentoo-r3/include/linux/hid.h
+===================================================================
+--- linux-2.6.25-gentoo-r3.orig/include/linux/hid.h
++++ linux-2.6.25-gentoo-r3/include/linux/hid.h
+@@ -284,6 +284,7 @@ struct hid_item {
+ #define HID_QUIRK_2WHEEL_MOUSE_HACK_B8		0x02000000
  #define HID_QUIRK_HWHEEL_WHEEL_INVERT		0x04000000
  #define HID_QUIRK_MICROSOFT_KEYS		0x08000000
- #define HID_QUIRK_FULLSPEED_INTERVAL		0x10000000
-+#define HID_QUIRK_APPLE_NUMLOCK_EMULATION	0x20000000
++#define HID_QUIRK_APPLE_NUMLOCK_EMULATION	0x10000000
  
  /*
   * Separate quirks for runtime report descriptor fixup
