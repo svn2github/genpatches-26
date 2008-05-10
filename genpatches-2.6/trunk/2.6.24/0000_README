@@ -67,6 +67,10 @@ Patch:	1006_linux-2.6.24.7.patch
 From:	http://www.kernel.org
 Desc:	fcntl security fix
 
+Patch:	1500_utimensat-permissions.patch
+From:	http://bugs.gentoo.org/221123
+Desc:	Fix utimensat() system call permissions checking
+
 Patch:	1700_x86-defconfig.patch
 From:	http://bugs.gentoo.org/215442
 Desc:	Fix import of default config on i386/x86_64
