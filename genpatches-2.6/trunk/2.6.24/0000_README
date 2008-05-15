@@ -87,6 +87,10 @@ Patch:	2102_sr-test-unit-ready.patch
 From:	http://bugs.gentoo.org/196879
 Desc:	Fix TEST_UNIT_READY for medium detection
 
+Patch:	2300_msi-mapping-msg-interrupt-fix.patch
+From:	http://bugs.gentoo.org/222013
+Desc:	Set bit of MSI Mapping to get msg interrupt
+
 Patch:	2400_ipw2200-radiotap-addr.patch
 From:	http://bugs.gentoo.org/215714
 Desc:	Fix IPW2200 radiotap interface
