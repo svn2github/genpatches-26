@@ -55,6 +55,10 @@ Patch:	1003_linux-2.6.25.4.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.4
 
+Patch:	1004_linux-2.6.25.5.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.5
+
 Patch:	2600_apple-numlock-emulation.patch
 From:	http://bugs.gentoo.org/219981
 Desc:	Fix numlock emulation on Apple Aluminium keyboards
