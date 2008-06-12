@@ -59,9 +59,9 @@ Patch:	1004_linux-2.6.25.5.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.5
 
-Patch:	2600_apple-numlock-emulation.patch
-From:	http://bugs.gentoo.org/219981
-Desc:	Fix numlock emulation on Apple Aluminium keyboards
+Patch:	1005_linux-2.6.25.6.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.6
 
 Patch:	2705_alsa-hda-fujitsu.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
