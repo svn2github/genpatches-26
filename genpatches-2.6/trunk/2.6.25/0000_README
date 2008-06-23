@@ -67,6 +67,10 @@ Patch:	1006_linux-2.6.25.7.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.7
 
+Patch:	1007_linux-2.6.25.8.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.8
+
 Patch:	2705_alsa-hda-fujitsu.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
