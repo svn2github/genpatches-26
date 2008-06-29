@@ -75,6 +75,10 @@ Patch:	1008_linux-2.6.25.9.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.9
 
+Patch:	2600_evdev-compat-ioctl-force-feedback.patch
+From:	http://bugs.gentoo.org/214700
+Desc:	Fix evdev force feedback in 32-bit compat mode
+
 Patch:	2705_alsa-hda-fujitsu.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
