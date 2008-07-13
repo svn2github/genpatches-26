@@ -83,6 +83,10 @@ Patch:	2705_alsa-hda-fujitsu.patch
 From:	Tony Vroon <chainsaw@gentoo.org>
 Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
 
+Patch:	2710_ssa7134-tuner-type-setup.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=231451
+Desc:	Removes tuner type setup from saa7134-i2c
+
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
