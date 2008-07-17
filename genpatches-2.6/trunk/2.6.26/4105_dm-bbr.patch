@@ -1,10 +1,13 @@
 BBR Target, updated by dsd@gentoo.org
 
 Incomplete changelog:
+ 2008/06/16: updated for new API in 2.6.26
  2007/07/08: updated for new API in 2.6.22
 
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
+Index: linux-2.6.26-gentoo/drivers/md/Kconfig
+===================================================================
+--- linux-2.6.26-gentoo.orig/drivers/md/Kconfig
++++ linux-2.6.26-gentoo/drivers/md/Kconfig
 @@ -288,4 +288,15 @@ config DM_UEVENT
  	---help---
  	Generate udev events for DM events.
@@ -21,18 +24,22 @@ Incomplete changelog:
 +	  If unsure, say N.
 +
  endif # MD
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
+Index: linux-2.6.26-gentoo/drivers/md/Makefile
+===================================================================
+--- linux-2.6.26-gentoo.orig/drivers/md/Makefile
++++ linux-2.6.26-gentoo/drivers/md/Makefile
 @@ -41,6 +41,7 @@ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rd
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
 +obj-$(CONFIG_BLK_DEV_DM_BBR)	+= dm-bbr.o
  
  quiet_cmd_unroll = UNROLL  $@
        cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
+Index: linux-2.6.26-gentoo/drivers/md/dm-bbr.c
+===================================================================
 --- /dev/null
-+++ b/drivers/md/dm-bbr.c
++++ linux-2.6.26-gentoo/drivers/md/dm-bbr.c
 @@ -0,0 +1,1012 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -69,12 +76,12 @@ Incomplete changelog:
 +#include <linux/mempool.h>
 +#include <linux/workqueue.h>
 +#include <linux/vmalloc.h>
++#include <linux/dm-io.h>
 +
 +#include "dm.h"
 +#include "dm-bio-list.h"
 +#include "dm-bio-record.h"
 +#include "dm-bbr.h"
-+#include "dm-io.h"
 +
 +#define DM_MSG_PREFIX "bbr"
 +#define SECTOR_SIZE (1 << SECTOR_SHIFT)
@@ -426,7 +433,7 @@ Incomplete changelog:
 +}
 +
 +static int rw_table(struct bbr_private *bbr_id, void *vma,
-+		    struct io_region *ptr, int rw)
++		    struct dm_io_region *ptr, int rw)
 +{
 +	bbr_id->vma_io_req.bi_rw = rw;
 +	bbr_id->vma_io_req.mem.ptr.vma = vma;
@@ -436,7 +443,7 @@ Incomplete changelog:
 +}
 +
 +static int io_sync(struct bbr_private *bbr_id, struct page_list *pl,
-+		   unsigned offset, struct io_region *ptr, int rw)
++		   unsigned offset, struct dm_io_region *ptr, int rw)
 +{
 +	bbr_id->page_io_req.bi_rw = rw;
 +	bbr_id->page_io_req.mem.ptr.pl = pl;
@@ -454,7 +461,7 @@ Incomplete changelog:
 +static int bbr_setup(struct bbr_private *bbr_id)
 +{
 +	struct bbr_table *table = bbr_id->bbr_table;
-+	struct io_region job;
++	struct dm_io_region job;
 +	int i, rc = 0;
 +
 +	job.bdev = bbr_id->dev->bdev;
@@ -507,7 +514,7 @@ Incomplete changelog:
 +			      unsigned int offset)
 +{
 +	struct bbr_table *bbr_table;
-+	struct io_region job;
++	struct dm_io_region job;
 +	struct page_list pl;
 +	unsigned long table_sector_index;
 +	unsigned long table_sector_offset;
@@ -620,7 +627,7 @@ Incomplete changelog:
 +static int bbr_io_process_request(struct bbr_private *bbr_id,
 +				  struct bio *bio)
 +{
-+	struct io_region job;
++	struct dm_io_region job;
 +	u64 starting_lsn = bio->bi_sector;
 +	u64 count, lsn, remapped_lsn;
 +	struct page_list pl;
@@ -1046,8 +1053,10 @@ Incomplete changelog:
 +module_init(dm_bbr_init);
 +module_exit(dm_bbr_exit);
 +MODULE_LICENSE("GPL");
+Index: linux-2.6.26-gentoo/drivers/md/dm-bbr.h
+===================================================================
 --- /dev/null
-+++ b/drivers/md/dm-bbr.h
++++ linux-2.6.26-gentoo/drivers/md/dm-bbr.h
 @@ -0,0 +1,130 @@
 +/*
 + *   (C) Copyright IBM Corp. 2002, 2004
@@ -1076,7 +1085,7 @@ Incomplete changelog:
 + * BBR replacement sectors have been used.
 + */
 +
-+#include "dm-io.h"
++#include <linux/dm-io.h>
 +
 +#define BBR_TABLE_SIGNATURE		0x42627254 /* BbrT */
 +#define BBR_ENTRIES_PER_SECT		31
