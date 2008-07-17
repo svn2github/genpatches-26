@@ -39,53 +39,9 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	1000_linux-2.6.25.1.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.1
-
-Patch:	1001_linux-2.6.25.2.patch
-From:	http://www.kernel.org
-Desc:	fcntl security fix
-
-Patch:	1002_linux-2.6.25.3.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.3
-
-Patch:	1003_linux-2.6.25.4.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.4
-
-Patch:	1004_linux-2.6.25.5.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.5
-
-Patch:	1005_linux-2.6.25.6.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.6
-
-Patch:	1006_linux-2.6.25.7.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.7
-
-Patch:	1007_linux-2.6.25.8.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.8
-
-Patch:	1008_linux-2.6.25.9.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.25.9
-
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
-
-Patch:	2705_alsa-hda-fujitsu.patch
-From:	Tony Vroon <chainsaw@gentoo.org>
-Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
-
-Patch:	2710_ssa7134-tuner-type-setup.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=231451
-Desc:	Removes tuner type setup from saa7134-i2c
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
