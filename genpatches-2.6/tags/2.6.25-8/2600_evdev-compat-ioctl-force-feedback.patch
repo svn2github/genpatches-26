@@ -1,0 +1,159 @@
+From: Adam Dawidowski <drake_ster@wp.pl>
+Date: Mon, 2 Jun 2008 05:08:10 +0000 (-0400)
+Subject: Input: fix force feedback upload issue in compat mode
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fdtor%2Finput.git;a=commitdiff_plain;h=bb00421d9b684253468bf751e7ce0a4667b721e8
+
+Input: fix force feedback upload issue in compat mode
+
+Force feedback upload of effects through the event device (ioctl
+EVIOCSFF) is not working in 32 bit applications running on 64-bit
+kernel due to the fact that struct ff_effect contains a pointer,
+resulting in the structure having different sizes in 64 and 32 bit
+programs and causing difference in ioctl numbers.
+
+[dtor@mail.ru: refactor to keep all ugliness in evdev]
+
+Signed-off-by: Adam Dawidowski <drake_ster@wp.pl>
+Signed-off-by: Dmitry Torokhov <dtor@mail.ru>
+---
+
+diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
+index b32984b..2d65411 100644
+--- a/drivers/input/evdev.c
++++ b/drivers/input/evdev.c
+@@ -300,6 +300,35 @@ struct input_event_compat {
+ 	__s32 value;
+ };
+ 
++struct ff_periodic_effect_compat {
++	__u16 waveform;
++	__u16 period;
++	__s16 magnitude;
++	__s16 offset;
++	__u16 phase;
++
++	struct ff_envelope envelope;
++
++	__u32 custom_len;
++	compat_uptr_t custom_data;
++};
++
++struct ff_effect_compat {
++	__u16 type;
++	__s16 id;
++	__u16 direction;
++	struct ff_trigger trigger;
++	struct ff_replay replay;
++
++	union {
++		struct ff_constant_effect constant;
++		struct ff_ramp_effect ramp;
++		struct ff_periodic_effect_compat periodic;
++		struct ff_condition_effect condition[2]; /* One for each axis */
++		struct ff_rumble_effect rumble;
++	} u;
++};
++
+ /* Note to the author of this code: did it ever occur to
+    you why the ifdefs are needed? Think about it again. -AK */
+ #ifdef CONFIG_X86_64
+@@ -368,6 +397,42 @@ static int evdev_event_to_user(char __user *buffer,
+ 	return 0;
+ }
+ 
++static int evdev_ff_effect_from_user(const char __user *buffer, size_t size,
++				     struct ff_effect *effect)
++{
++	if (COMPAT_TEST) {
++		struct ff_effect_compat *compat_effect;
++
++		if (size != sizeof(struct ff_effect_compat))
++			return -EINVAL;
++
++		/*
++		 * It so happens that the pointer which needs to be changed
++		 * is the last field in the structure, so we can copy the
++		 * whole thing and replace just the pointer.
++		 */
++
++		compat_effect = (struct ff_effect_compat *)effect;
++
++		if (copy_from_user(compat_effect, buffer,
++				   sizeof(struct ff_effect_compat)))
++			return -EFAULT;
++
++		if (compat_effect->type == FF_PERIODIC &&
++		    compat_effect->u.periodic.waveform == FF_CUSTOM)
++			effect->u.periodic.custom_data =
++				compat_ptr(compat_effect->u.periodic.custom_data);
++	} else {
++		if (size != sizeof(struct ff_effect))
++			return -EINVAL;
++
++		if (copy_from_user(effect, buffer, sizeof(struct ff_effect)))
++			return -EFAULT;
++	}
++
++	return 0;
++}
++
+ #else
+ 
+ static inline size_t evdev_event_size(void)
+@@ -393,6 +458,18 @@ static int evdev_event_to_user(char __user *buffer,
+ 	return 0;
+ }
+ 
++static int evdev_ff_effect_from_user(const char __user *buffer, size_t size,
++				     struct ff_effect *effect)
++{
++	if (size != sizeof(struct ff_effect))
++		return -EINVAL;
++
++	if (copy_from_user(effect, buffer, sizeof(struct ff_effect)))
++		return -EFAULT;
++
++	return 0;
++}
++
+ #endif /* CONFIG_COMPAT */
+ 
+ static ssize_t evdev_write(struct file *file, const char __user *buffer,
+@@ -633,17 +710,6 @@ static long evdev_do_ioctl(struct file *file, unsigned int cmd,
+ 
+ 		return input_set_keycode(dev, t, v);
+ 
+-	case EVIOCSFF:
+-		if (copy_from_user(&effect, p, sizeof(effect)))
+-			return -EFAULT;
+-
+-		error = input_ff_upload(dev, &effect, file);
+-
+-		if (put_user(effect.id, &(((struct ff_effect __user *)p)->id)))
+-			return -EFAULT;
+-
+-		return error;
+-
+ 	case EVIOCRMFF:
+ 		return input_ff_erase(dev, (int)(unsigned long) p, file);
+ 
+@@ -733,6 +799,19 @@ static long evdev_do_ioctl(struct file *file, unsigned int cmd,
+ 
+ 		if (_IOC_DIR(cmd) == _IOC_WRITE) {
+ 
++			if (_IOC_NR(cmd) == _IOC_NR(EVIOCSFF)) {
++
++				if (evdev_ff_effect_from_user(p, _IOC_SIZE(cmd), &effect))
++					return -EFAULT;
++
++				error = input_ff_upload(dev, &effect, file);
++
++				if (put_user(effect.id, &(((struct ff_effect __user *)p)->id)))
++					return -EFAULT;
++
++				return error;
++			}
++
+ 			if ((_IOC_NR(cmd) & ~ABS_MAX) == _IOC_NR(EVIOCSABS(0))) {
+ 
+ 				t = _IOC_NR(cmd) & ABS_MAX;
