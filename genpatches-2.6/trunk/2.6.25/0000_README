@@ -75,6 +75,14 @@ Patch:	1008_linux-2.6.25.9.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.9
 
+Patch:	1009_linux-2.6.25.10.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.10
+
+Patch:	1010_linux-2.6.25.11.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.11
+
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
