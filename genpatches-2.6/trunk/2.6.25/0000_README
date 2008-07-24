@@ -83,6 +83,10 @@ Patch:	1010_linux-2.6.25.11.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.11
 
+Patch:	2500_fix-missing-scsi-inlines.patch
+From:	http://bugs.gentoo.org/232747
+Desc:	Fix missing inlines in header file
+
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
