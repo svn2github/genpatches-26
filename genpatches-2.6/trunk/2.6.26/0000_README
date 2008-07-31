@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1900_UTC-timestamp-option.patch
+From:	http://bugs.gentoo.org/233307
+Desc:	Fix to add UTC timestamp option
+
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
