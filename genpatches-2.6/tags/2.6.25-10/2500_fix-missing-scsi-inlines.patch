@@ -1,0 +1,48 @@
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Date: Thu, 3 Apr 2008 14:04:31 +0000 (-0500)
+Subject: [SCSI] libsas: fix missing inlines in header file
+X-Git-Tag: v2.6.26-rc1~1140^2~46
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=79bc14813cd7e1b75d2e4cbbc17043261cf4bcdc
+
+[SCSI] libsas: fix missing inlines in header file
+
+Two functions in include/scsi/sas_ata.h don't have static inlines
+leading to problems if they're built in:
+
+On Thu, 2008-04-03 at 14:06 +0200, Toralf Förster wrote:
+> drivers/scsi/mvsas.o: In function `sas_ata_init_host_and_port':
+> mvsas.c:(.text+0x0): multiple definition of `sas_ata_init_host_and_port'
+> drivers/scsi/libsas/built-in.o:(.text+0x37f4): first defined here
+> drivers/scsi/mvsas.o: In function `sas_ata_task_abort':
+> mvsas.c:(.text+0x7): multiple definition of `sas_ata_task_abort'
+> drivers/scsi/libsas/built-in.o:(.text+0x37fb): first defined here
+> make[2]: *** [drivers/scsi/built-in.o] Error 1
+> make[1]: *** [drivers/scsi] Error 2
+> make: *** [drivers] Error 2
+
+Add the correct static inline modifiers.
+
+Tested-by: Toralf Förster <toralf.foerster@gmx.de>
+Signed-off-by: James Bottomley <James.Bottomley@HansenPartnership.com>
+---
+
+diff --git a/include/scsi/sas_ata.h b/include/scsi/sas_ata.h
+index dd5edc9..c583193 100644
+--- a/include/scsi/sas_ata.h
++++ b/include/scsi/sas_ata.h
+@@ -47,12 +47,12 @@ static inline int dev_is_sata(struct domain_device *dev)
+ {
+ 	return 0;
+ }
+-int sas_ata_init_host_and_port(struct domain_device *found_dev,
++static inline int sas_ata_init_host_and_port(struct domain_device *found_dev,
+ 			       struct scsi_target *starget)
+ {
+ 	return 0;
+ }
+-void sas_ata_task_abort(struct sas_task *task)
++static inline void sas_ata_task_abort(struct sas_task *task)
+ {
+ }
+ #endif
+
