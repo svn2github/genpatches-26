@@ -83,21 +83,25 @@ Patch:	1010_linux-2.6.25.11.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.11
 
-Patch:	1010_linux-2.6.25.12.patch
+Patch:	1011_linux-2.6.25.12.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.12
 
-Patch:	1010_linux-2.6.25.13.patch
+Patch:	1012_linux-2.6.25.13.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.13
 
-Patch:	1010_linux-2.6.25.14.patch
+Patch:	1013_linux-2.6.25.14.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.14
 
-Patch:	1010_linux-2.6.25.15.patch
+Patch:	1014_linux-2.6.25.15.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.15
+
+Patch:	1015_linux-2.6.25.16.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.16
 
 Patch:	2500_fix-missing-scsi-inlines.patch
 From:	http://bugs.gentoo.org/232747
