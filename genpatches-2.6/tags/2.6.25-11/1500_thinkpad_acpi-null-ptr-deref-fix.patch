@@ -1,0 +1,27 @@
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+Date: Fri, 18 Apr 2008 20:27:29 +0000 (-0700)
+Subject: thinkpad_acpi: fix possible NULL pointer dereference if kstrdup failed
+X-Git-Tag: v2.6.26-rc1~101^2~1^8~3
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=90fe17f4df2f830601ffd422b11d1f7f9a9d0355
+
+thinkpad_acpi: fix possible NULL pointer dereference if kstrdup failed
+
+Signed-off-by: Cyrill Gorcunov <gorcunov@gmail.com>
+Acked-by: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Len Brown <len.brown@intel.com>
+---
+
+diff --git a/drivers/misc/thinkpad_acpi.c b/drivers/misc/thinkpad_acpi.c
+index 6cb7812..31115c9 100644
+--- a/drivers/misc/thinkpad_acpi.c
++++ b/drivers/misc/thinkpad_acpi.c
+@@ -5826,7 +5826,7 @@ static void __init get_thinkpad_model_data(struct thinkpad_id_data *tp)
+ 
+ 	tp->model_str = kstrdup(dmi_get_system_info(DMI_PRODUCT_VERSION),
+ 					GFP_KERNEL);
+-	if (strnicmp(tp->model_str, "ThinkPad", 8) != 0) {
++	if (tp->model_str && strnicmp(tp->model_str, "ThinkPad", 8) != 0) {
+ 		kfree(tp->model_str);
+ 		tp->model_str = NULL;
+ 	}

@@ -1,0 +1,161 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:	1000_linux-2.6.25.1.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.1
+
+Patch:	1001_linux-2.6.25.2.patch
+From:	http://www.kernel.org
+Desc:	fcntl security fix
+
+Patch:	1002_linux-2.6.25.3.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.3
+
+Patch:	1003_linux-2.6.25.4.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.4
+
+Patch:	1004_linux-2.6.25.5.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.5
+
+Patch:	1005_linux-2.6.25.6.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.6
+
+Patch:	1006_linux-2.6.25.7.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.7
+
+Patch:	1007_linux-2.6.25.8.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.8
+
+Patch:	1008_linux-2.6.25.9.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.9
+
+Patch:	1009_linux-2.6.25.10.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.10
+
+Patch:	1010_linux-2.6.25.11.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.11
+
+Patch:	1011_linux-2.6.25.12.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.12
+
+Patch:	1012_linux-2.6.25.13.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.13
+
+Patch:	1013_linux-2.6.25.14.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.14
+
+Patch:	1014_linux-2.6.25.15.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.15
+
+Patch:	1015_linux-2.6.25.16.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.16
+
+Patch:	1016_linux-2.6.25.17.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.17
+
+Patch:  1500_thinkpad_acpi-null-ptr-deref-fix.patch
+From:	http://bugs.gentoo.org/222331
+Desc:   Fixes potential NULL pointer deref in Thinkpad ACPI
+
+Patch:  1501_nfs-validate_mount_data-null-ptr-deref-fixes.patch
+From:	http://bugs.gentoo.org/222249
+Desc:   Fixes potential NULL pointer derefs in NFSv{3,4}
+
+Patch:  1502_wan-sbni_ioctl-add-missing-capability-checks.patch
+From:   http://www.kernel.org
+Desc:   Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
+
+Patch:	2500_fix-missing-scsi-inlines.patch
+From:	http://bugs.gentoo.org/232747
+Desc:	Fix missing inlines in header file
+
+Patch:	2600_evdev-compat-ioctl-force-feedback.patch
+From:	http://bugs.gentoo.org/214700
+Desc:	Fix evdev force feedback in 32-bit compat mode
+
+Patch:	2705_alsa-hda-fujitsu.patch
+From:	Tony Vroon <chainsaw@gentoo.org>
+Desc:	Fix docking station headphone port and PC speaker for Fujitsu ALC262
+
+Patch:	2710_ssa7134-tuner-type-setup.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=231451
+Desc:	Removes tuner type setup from saa7134-i2c
+
+Patch:  2900_linux-2.6.27-makefile.patch
+From:   http://www.kernel.org
+Desc:   Makefile patch
+
+Patch:	4105_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4200_fbcondecor-0.9.4.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4300_squashfs-3.3.patch
+From:	http://squashfs.sourceforge.net/
+Desc:	driver to support squashfs filesystems.
+
+Patch:	4400_speakup-support.patch
+From:	http://bugs.gentoo.org/215189
+Desc:	Add support for externally building speech synthesizer
+
+Patch:	4405_alpha-sysctl-uac.patch
+From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
+Desc:	enable control of the unaligned access control policy from sysctl
+
