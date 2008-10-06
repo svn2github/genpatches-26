@@ -103,6 +103,22 @@ Patch:	1015_linux-2.6.25.16.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.16
 
+Patch:	1016_linux-2.6.25.17.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.17
+
+Patch:  1500_thinkpad_acpi-null-ptr-deref-fix.patch
+From:	http://bugs.gentoo.org/222331
+Desc:   Fixes potential NULL pointer deref in Thinkpad ACPI
+
+Patch:  1501_nfs-validate_mount_data-null-ptr-deref-fixes.patch
+From:	http://bugs.gentoo.org/222249
+Desc:   Fixes potential NULL pointer derefs in NFSv{3,4}
+
+Patch:  1502_wan-sbni_ioctl-add-missing-capability-checks.patch
+From:   http://www.kernel.org
+Desc:   Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
+
 Patch:	2500_fix-missing-scsi-inlines.patch
 From:	http://bugs.gentoo.org/232747
 Desc:	Fix missing inlines in header file
