@@ -63,6 +63,10 @@ Patch:  1005_linux-2.6.26.6.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.26.6
 
+Patch:  1502_wan-sbni_ioctl-add-missing-capability-checks.patch
+From:   http://www.kernel.org
+Desc:   Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
+
 Patch:	1900_UTC-timestamp-option.patch
 From:	http://bugs.gentoo.org/233307
 Desc:	Fix to add UTC timestamp option
