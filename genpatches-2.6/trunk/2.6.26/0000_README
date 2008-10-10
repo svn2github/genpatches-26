@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.26.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.26.5
 
+Patch:  1005_linux-2.6.26.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.26.6
+
 Patch:	1900_UTC-timestamp-option.patch
 From:	http://bugs.gentoo.org/233307
 Desc:	Fix to add UTC timestamp option
