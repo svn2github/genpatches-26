@@ -39,7 +39,7 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:	4105_dm-bbr.patch
+Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
 
@@ -51,7 +51,7 @@ Patch:	4300_squashfs-3.3.patch
 From:	http://squashfs.sourceforge.net/
 Desc:	driver to support squashfs filesystems.
 
-Patch:	4405_alpha-sysctl-uac.patch
+Patch:	4400_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	enable control of the unaligned access control policy from sysctl
 

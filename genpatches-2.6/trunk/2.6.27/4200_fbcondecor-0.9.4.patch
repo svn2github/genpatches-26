@@ -221,10 +221,9 @@ diff -Naurp -x .git /tmp/linux/Documentation/fb/fbcondecor.txt ./Documentation/f
 +Fbcondecor, fbcondecor protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 +
-diff -Naurp -x .git /tmp/linux/drivers/Makefile ./drivers/Makefile
---- /tmp/linux/drivers/Makefile	2008-03-25 07:24:16.000000000 +0100
-+++ ./drivers/Makefile	2008-03-25 23:04:10.000000000 +0100
-@@ -9,6 +9,9 @@ obj-$(CONFIG_HAVE_GPIO_LIB)	+= gpio/
+--- a/drivers/Makefile	2008-10-12 13:30:08.000000000 -0400
++++ b/drivers/Makefile	2008-10-12 13:30:51.000000000 -0400
+@@ -9,6 +9,9 @@ obj-y				+= gpio/
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
  obj-$(CONFIG_RAPIDIO)		+= rapidio/
@@ -234,17 +233,16 @@ diff -Naurp -x .git /tmp/linux/drivers/Makefile ./drivers/Makefile
  obj-y				+= video/
  obj-$(CONFIG_ACPI)		+= acpi/
  # PnP must come after ACPI since it will eventually need to check if acpi
-@@ -18,10 +21,6 @@ obj-$(CONFIG_ARM_AMBA)		+= amba/
+@@ -18,9 +21,6 @@ obj-$(CONFIG_ARM_AMBA)		+= amba/
  
  obj-$(CONFIG_XEN)		+= xen/
  
 -# char/ comes before serial/ etc so that the VT console is the boot-time
 -# default.
 -obj-y				+= char/
--
- obj-$(CONFIG_CONNECTOR)		+= connector/
  
- # i810fb and intelfb depend on char/agp/
+ # gpu/ comes after char for AGP vs DRM startup
+ obj-y				+= gpu/
 diff -Naurp -x .git /tmp/linux/drivers/video/console/bitblit.c ./drivers/video/console/bitblit.c
 --- /tmp/linux/drivers/video/console/bitblit.c	2008-03-25 07:24:16.000000000 +0100
 +++ ./drivers/video/console/bitblit.c	2008-03-25 23:04:10.000000000 +0100
@@ -973,21 +971,6 @@ diff -Naurp -x .git /tmp/linux/drivers/video/console/fbcon.c ./drivers/video/con
  	if (fbcon_is_inactive(vc, info) ||
  	    ops->blank_state != FB_BLANK_UNBLANK)
  		fbcon_del_cursor_timer(info);
-@@ -2394,8 +2450,12 @@ static int fbcon_blank(struct vc_data *v
- 			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
- 			ops->cursor_flash = (!blank);
- 
--			if (fb_blank(info, blank))
--				fbcon_generic_blank(vc, info, blank);
-+			if (fb_blank(info, blank)) {
-+				if (fbcon_decor_active(info, vc))
-+					fbcon_decor_blank(vc, info, blank);
-+				else 
-+					fbcon_generic_blank(vc, info, blank);
-+			}
- 		}
- 
- 		if (!blank)
 @@ -2546,13 +2606,22 @@ static int fbcon_do_set_font(struct vc_d
  	}
  
