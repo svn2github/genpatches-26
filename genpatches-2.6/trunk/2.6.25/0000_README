@@ -107,6 +107,10 @@ Patch:	1016_linux-2.6.25.17.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.25.17
 
+Patch:	1017_linux-2.6.25.18.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.18
+
 Patch:  1500_thinkpad_acpi-null-ptr-deref-fix.patch
 From:	http://bugs.gentoo.org/222331
 Desc:   Fixes potential NULL pointer deref in Thinkpad ACPI
