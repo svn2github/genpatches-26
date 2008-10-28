@@ -51,6 +51,10 @@ Patch:  1002_linux-2.6.27.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.27.3
 
+Patch:  1003_linux-2.6.27.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.27.4
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
