@@ -63,6 +63,10 @@ Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
 
+Patch:	2900_IT8720-chipset-support-and-type-values-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
+Desc:	Patch to retrieve sensor information from the IT8720 chipset and type values fixes
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
