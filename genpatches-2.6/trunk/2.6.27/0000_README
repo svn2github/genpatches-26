@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.27.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.27.5
 
+Patch:	1700_HP-laptop-dmi-quirk-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=245158
+Desc:	dmi quirk call fix for HP laptops
+
 Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
