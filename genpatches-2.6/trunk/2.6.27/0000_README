@@ -59,10 +59,6 @@ Patch:  1004_linux-2.6.27.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.27.5
 
-Patch:  2000_tcp-option-ordering-restore.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=242634
-Desc:   Restore ordering of TCP options for the sake of inter-operability
-
 Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
