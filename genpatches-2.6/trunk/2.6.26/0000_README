@@ -39,33 +39,33 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:  1000_linux-2.6.26.1.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.1
+Patch:	1000_linux-2.6.26.1.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.1
 
-Patch:  1001_linux-2.6.26.2.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.2
+Patch:	1001_linux-2.6.26.2.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.2
 
-Patch:  1002_linux-2.6.26.3.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.3
+Patch:	1002_linux-2.6.26.3.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.3
 
-Patch:  1003_linux-2.6.26.4.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.4
+Patch:	1003_linux-2.6.26.4.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.4
 
-Patch:  1004_linux-2.6.26.5.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.5
+Patch:	1004_linux-2.6.26.5.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.5
 
-Patch:  1005_linux-2.6.26.6.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.26.6
+Patch:	1005_linux-2.6.26.6.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.6
 
-Patch:  1502_wan-sbni_ioctl-add-missing-capability-checks.patch
-From:   http://www.kernel.org
-Desc:   Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
+Patch:	1502_wan-sbni_ioctl-add-missing-capability-checks.patch
+From:	http://www.kernel.org
+Desc:	Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
 
 Patch:	1900_UTC-timestamp-option.patch
 From:	http://bugs.gentoo.org/233307
@@ -78,6 +78,10 @@ Desc:	Fix evdev force feedback in 32-bit compat mode
 Patch:	2900_linux-2.6.27-makefile.patch
 From:	http://www.kernel.org
 Desc:	Makefile patch
+
+Patch:	2905_clockevents-resume-regression.patch
+From:	http://bugs.gentoo.org/245927
+Desc:	Fix clockevents-related resume regression
 
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
