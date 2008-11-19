@@ -67,6 +67,10 @@ Patch:	1502_wan-sbni_ioctl-add-missing-capability-checks.patch
 From:	http://www.kernel.org
 Desc:	Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
 
+Patch:	1800_sched-disable-hrtick.patch
+From:	http://bugs.gentoo.org/247453
+Desc:	Disable high-resolution scheduler ticks to avoid performance regression
+
 Patch:	1900_UTC-timestamp-option.patch
 From:	http://bugs.gentoo.org/233307
 Desc:	Fix to add UTC timestamp option
