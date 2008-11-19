@@ -95,10 +95,6 @@ Patch:	1915_hfsplus-buffer-overflow.patch
 From:	http://bugs.gentoo.org/245650
 Desc:	Fix hfsplus potential buffer overflow
 
-Patch:	2400_libertas-scan-buffer-overflow.patch
-From:	http://bugs.gentoo.org/247541
-Desc:	Fix libertas buffer overflow
-
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
