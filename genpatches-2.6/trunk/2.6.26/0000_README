@@ -79,6 +79,14 @@ Patch:	1905_hfs-namelength-corruption.patch
 From:	http://bugs.gentoo.org/246710
 Desc:	Fix hfs security issue with long catalog names
 
+Patch:	1910_hfsplus-unchecked-page-mapping.patch
+From:	http://bugs.gentoo.org/245650
+Desc:	Fix hfsplus security issue with corrupted images
+
+Patch:	1915_hfsplus-buffer-overflow.patch
+From:	http://bugs.gentoo.org/245650
+Desc:	Fix hfsplus potential buffer overflow
+
 Patch:	2400_libertas-scan-buffer-overflow.patch
 From:	http://bugs.gentoo.org/247541
 Desc:	Fix libertas buffer overflow
