@@ -1,0 +1,31 @@
+From: Johannes Berg <johannes@sipsolutions.net>
+Date: Wed, 29 Oct 2008 10:43:32 +0000 (+0100)
+Subject: libertas: fix buffer overrun
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fstable%2Flinux-2.6.27.y.git;a=commitdiff_plain;h=48735d8d8bd701b1e0cd3d49c21e5e385ddcb077
+
+libertas: fix buffer overrun
+
+If somebody sends an invalid beacon/probe response, that can trash the
+whole BSS descriptor. The descriptor is, luckily, large enough so that
+it cannot scribble past the end of it; it's well above 400 bytes long.
+
+Signed-off-by: Johannes Berg <johannes@sipsolutions.net>
+Cc: stable@kernel.org [2.6.24-2.6.27, bug present in some form since driver was added (2.6.22)]
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+---
+
+diff --git a/drivers/net/wireless/libertas/scan.c b/drivers/net/wireless/libertas/scan.c
+index 8f66903..22c4c61 100644
+--- a/drivers/net/wireless/libertas/scan.c
++++ b/drivers/net/wireless/libertas/scan.c
+@@ -598,8 +598,8 @@ static int lbs_process_bss(struct bss_descriptor *bss,
+ 
+ 		switch (elem->id) {
+ 		case MFIE_TYPE_SSID:
+-			bss->ssid_len = elem->len;
+-			memcpy(bss->ssid, elem->data, elem->len);
++			bss->ssid_len = min_t(int, 32, elem->len);
++			memcpy(bss->ssid, elem->data, bss->ssid_len);
+ 			lbs_deb_scan("got SSID IE: '%s', len %u\n",
+ 			             escape_essid(bss->ssid, bss->ssid_len),
+ 			             bss->ssid_len);
