@@ -1,0 +1,50 @@
+README
+-----------------------------------------------------------------------------
+
+Individual Patch Descriptions:
+-----------------------------------------------------------------------------
+Patch:	1006_linux-2.6.26.7.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.26.7
+
+Patch:	4420_grsec-2.1.12-2.6.26.6-200810131006.patch
+From:	http://www.grsecurity.net
+Desc:	hardened-sources base patch from upstream grsecurity
+	
+Patch:	4421_grsec-remove-localversion-grsec.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Removes grsecurity's localversion-grsec file
+
+Patch:	4422_grsec-mute-warnings.patch
+From:	Alexander Gabert <gaberta@fh-trier.de>
+	Gordon Malm <gengor@gentoo.org>
+Desc:	Removes verbose compile warning settings from grsecurity, restores
+	mainline Linux kernel behavior
+
+Patch:	4425_grsec-pax-without-grsec.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Allows PaX features to be selected without enabling GRKERNSEC
+
+Patch:	4430_grsec-kconfig-default-gids.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Sets sane(r) default GIDs on various grsecurity group-dependent
+	features
+
+Patch:	4435_grsec-kconfig-gentoo.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Adds Hardened Gentoo [server/workstation] security levels, sets
+	Hardened Gentoo [workstation] as default
+
+Patch:	4440_selinux-avc_audit-log-curr_ip.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Configurable option to add src IP address to SELinux log messages
+
+Patch:	4445_disable-compat_vdso.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Disables VDSO_COMPAT operation completely
+
+Patch:	4450_pax-2.6.26.7-test32-to-test33.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Adds PaX changes from pax-2.6.26.7-test33

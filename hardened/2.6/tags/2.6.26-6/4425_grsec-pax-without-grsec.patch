@@ -1,0 +1,47 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+Allow PaX options to be selected without first selecting CONFIG_GRKERNSEC.
+
+This patch has been updated to keep current with newer kernel versions.
+The original version of this patch contained no credits/description.
+
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -422,10 +422,12 @@ static void show_fault_oops(struct pt_re
+ #else
+ 	if (init_mm.start_code <= address && address < init_mm.end_code)
+ #endif
++#ifdef CONFIG_GRKERNSEC
+ 		if (current->signal->curr_ip)
+ 			printk(KERN_ERR "PAX: From %u.%u.%u.%u: %s:%d, uid/euid: %u/%u, attempted to modify kernel code\n",
+ 					 NIPQUAD(current->signal->curr_ip), current->comm, task_pid_nr(current), current->uid, current->euid);
+ 		else
++#endif
+ 			printk(KERN_ERR "PAX: %s:%d, uid/euid: %u/%u, attempted to modify kernel code\n",
+ 					 current->comm, task_pid_nr(current), current->uid, current->euid);
+ #endif
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1682,9 +1682,11 @@ void pax_report_fault(struct pt_regs *re
+ 		}
+ 		up_read(&mm->mmap_sem);
+ 	}
++#ifdef CONFIG_GRKERNSEC
+ 	if (tsk->signal->curr_ip)
+ 		printk(KERN_ERR "PAX: From %u.%u.%u.%u: execution attempt in: %s, %08lx-%08lx %08lx\n", NIPQUAD(tsk->signal->curr_ip), path_fault, start, end, offset);
+ 	else
++#endif
+ 		printk(KERN_ERR "PAX: execution attempt in: %s, %08lx-%08lx %08lx\n", path_fault, start, end, offset);
+ 	printk(KERN_ERR "PAX: terminating task: %s(%s):%d, uid/euid: %u/%u, "
+ 			"PC: %p, SP: %p\n", path_exec, tsk->comm, task_pid_nr(tsk),
+--- a/security/Kconfig
++++ b/security/Kconfig
+@@ -10,7 +10,7 @@ menu "PaX"
+ 
+ config PAX
+ 	bool "Enable various PaX features"
+-	depends on GRKERNSEC && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86)
++	depends on (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86)
+ 	help
+ 	  This allows you to enable various PaX features.  PaX adds
+ 	  intrusion prevention mechanisms to the kernel that reduce
