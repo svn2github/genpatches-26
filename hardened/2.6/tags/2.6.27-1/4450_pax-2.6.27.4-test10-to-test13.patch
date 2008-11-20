@@ -1,0 +1,64 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+PaX: Add fixes from pax-2.6.27.4-test11 through pax-2.6.27.4-test13
+which are not yet integrated into main grsecurity-2.6.27.X patch.
+
+--- a/arch/x86/kernel/vmlinux_64.lds.S
++++ b/arch/x86/kernel/vmlinux_64.lds.S
+@@ -228,10 +228,10 @@
+   .bss : AT(ADDR(.bss) - LOAD_OFFSET) {
+ 	*(.bss.page_aligned)
+ 	*(.bss)
++	. = ALIGN(2*1024*1024);
+ 	}
+   __bss_stop = .;
+ 
+-  . = ALIGN(2*1024*1024);
+   _end = . ;
+ 
+   /* Sections to be discarded */
+--- a/arch/x86/xen/smp.c
++++ b/arch/x86/xen/smp.c
+@@ -170,11 +170,6 @@
+ {
+ 	BUG_ON(smp_processor_id() != 0);
+ 	native_smp_prepare_boot_cpu();
+-
+-	/* We've switched to the "real" per-cpu gdt, so make sure the
+-	   old memory can be recycled */
+-	make_lowmem_page_readwrite(get_cpu_gdt_table(smp_processor_id()));
+-
+ 	xen_setup_vcpu_info_placement();
+ }
+ 
+--- a/include/asm-x86/pgtable.h
++++ b/include/asm-x86/pgtable.h
+@@ -41,7 +41,7 @@
+ #if defined(CONFIG_X86_64) || defined(CONFIG_X86_PAE)
+ #define _PAGE_NX	(_AT(pteval_t, 1) << _PAGE_BIT_NX)
+ #else
+-#define _PAGE_NX	(_AT(pteval_t, 0))
++#define _PAGE_NX	(_AT(pteval_t, 1) << _PAGE_BIT_UNUSED3)
+ #endif
+ 
+ /* If _PAGE_PRESENT is clear, we use these: */
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -489,7 +489,7 @@
+ 		return NULL;
+ 
+ #if defined(CONFIG_MODULES) && defined(CONFIG_X86_32) && defined(CONFIG_PAX_KERNEXEC)
+-	if (pgprot_val(prot) & _PAGE_NX)
++	if (!(pgprot_val(prot) & _PAGE_NX))
+ 		flags |= VM_KERNEXEC;
+ #endif
+ 
+@@ -588,7 +588,7 @@
+ 		return NULL;
+ 
+ #if defined(CONFIG_MODULES) && defined(CONFIG_X86_32) && defined(CONFIG_PAX_KERNEXEC)
+-	if (pgprot_val(prot) & _PAGE_NX)
++	if (!(pgprot_val(prot) & _PAGE_NX))
+ 		area = __get_vm_area_node(size, VM_ALLOC | VM_KERNEXEC, VMALLOC_START, VMALLOC_END,
+ 						node, gfp_mask, caller);
+ 	else
