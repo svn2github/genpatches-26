@@ -1,0 +1,10 @@
+--- a/security/Kconfig
++++ b/security/Kconfig
+@@ -155,6 +155,7 @@ config PAX_SEGMEXEC
+ config PAX_EMUTRAMP
+ 	bool "Emulate trampolines" if (PAX_PAGEEXEC || PAX_SEGMEXEC) && (PARISC || PPC32 || X86)
+ 	default y if PARISC || PPC32
++	depends on PARISC || PPC32
+ 	help
+ 	  There are some programs and libraries that for one reason or
+ 	  another attempt to execute special small code snippets from
