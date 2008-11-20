@@ -1,0 +1,1023 @@
+diff --git a/arch/x86/kernel/hpet.c b/arch/x86/kernel/hpet.c
+index 36652ea..bec6496 100644
+--- a/arch/x86/kernel/hpet.c
++++ b/arch/x86/kernel/hpet.c
+@@ -222,8 +222,8 @@ static void hpet_legacy_clockevent_register(void)
+ 	/* Calculate the min / max delta */
+ 	hpet_clockevent.max_delta_ns = clockevent_delta2ns(0x7FFFFFFF,
+ 							   &hpet_clockevent);
+-	hpet_clockevent.min_delta_ns = clockevent_delta2ns(0x30,
+-							   &hpet_clockevent);
++	/* 5 usec minimum reprogramming delta. */
++	hpet_clockevent.min_delta_ns = 5000;
+ 
+ 	/*
+ 	 * Start hpet with the boot cpu mask and make it
+@@ -282,15 +282,22 @@ static void hpet_legacy_set_mode(enum clock_event_mode mode,
+ }
+ 
+ static int hpet_legacy_next_event(unsigned long delta,
+-			   struct clock_event_device *evt)
++				  struct clock_event_device *evt)
+ {
+-	unsigned long cnt;
++	u32 cnt;
+ 
+ 	cnt = hpet_readl(HPET_COUNTER);
+-	cnt += delta;
++	cnt += (u32) delta;
+ 	hpet_writel(cnt, HPET_T0_CMP);
+ 
+-	return ((long)(hpet_readl(HPET_COUNTER) - cnt ) > 0) ? -ETIME : 0;
++	/*
++	 * We need to read back the CMP register to make sure that
++	 * what we wrote hit the chip before we compare it to the
++	 * counter.
++	 */
++	WARN_ON((u32)hpet_readl(HPET_T0_CMP) != cnt);
++
++	return (s32)((u32)hpet_readl(HPET_COUNTER) - cnt) >= 0 ? -ETIME : 0;
+ }
+ 
+ /*
+diff --git a/arch/x86/kernel/io_delay.c b/arch/x86/kernel/io_delay.c
+index 5921e5f..84ec3cd 100644
+--- a/arch/x86/kernel/io_delay.c
++++ b/arch/x86/kernel/io_delay.c
+@@ -92,6 +92,14 @@ static struct dmi_system_id __initdata io_delay_0xed_port_dmi_table[] = {
+ 			DMI_MATCH(DMI_BOARD_NAME, "30BF")
+ 		}
+ 	},
++	{
++		.callback	= dmi_io_delay_0xed_port,
++		.ident		= "Presario F700",
++		.matches	= {
++			DMI_MATCH(DMI_BOARD_VENDOR, "Quanta"),
++			DMI_MATCH(DMI_BOARD_NAME, "30D3")
++		}
++	},
+ 	{ }
+ };
+ 
+diff --git a/arch/x86/kernel/vmi_32.c b/arch/x86/kernel/vmi_32.c
+index 12affe1..72f9826 100644
+--- a/arch/x86/kernel/vmi_32.c
++++ b/arch/x86/kernel/vmi_32.c
+@@ -234,7 +234,7 @@ static void vmi_write_ldt_entry(struct desc_struct *dt, int entry,
+ 				const void *desc)
+ {
+ 	u32 *ldt_entry = (u32 *)desc;
+-	vmi_ops.write_idt_entry(dt, entry, ldt_entry[0], ldt_entry[1]);
++	vmi_ops.write_ldt_entry(dt, entry, ldt_entry[0], ldt_entry[1]);
+ }
+ 
+ static void vmi_load_sp0(struct tss_struct *tss,
+diff --git a/drivers/acpi/ec.c b/drivers/acpi/ec.c
+index 7222a18..a9b8796 100644
+--- a/drivers/acpi/ec.c
++++ b/drivers/acpi/ec.c
+@@ -228,6 +228,8 @@ static int acpi_ec_wait(struct acpi_ec *ec, enum ec_event event, int force_poll)
+ 			if (acpi_ec_check_status(ec, event))
+ 				goto end;
+ 		}
++		if (acpi_ec_check_status(ec,event))
++			return 0;
+ 	}
+ 	pr_err(PREFIX "acpi_ec_wait timeout,"
+ 			       " status = %d, expect_event = %d\n",
+diff --git a/drivers/acpi/processor_perflib.c b/drivers/acpi/processor_perflib.c
+index 42fb635..87b9a17 100644
+--- a/drivers/acpi/processor_perflib.c
++++ b/drivers/acpi/processor_perflib.c
+@@ -70,7 +70,7 @@ static DEFINE_MUTEX(performance_mutex);
+  *  0 -> cpufreq low level drivers initialized -> consider _PPC values
+  *  1 -> ignore _PPC totally -> forced by user through boot param
+  */
+-static unsigned int ignore_ppc = -1;
++static int ignore_ppc = -1;
+ module_param(ignore_ppc, uint, 0644);
+ MODULE_PARM_DESC(ignore_ppc, "If the frequency of your machine gets wrongly" \
+ 		 "limited by BIOS, this should help");
+diff --git a/drivers/i2c/i2c-dev.c b/drivers/i2c/i2c-dev.c
+index 393e679..342255b 100644
+--- a/drivers/i2c/i2c-dev.c
++++ b/drivers/i2c/i2c-dev.c
+@@ -574,8 +574,10 @@ static int __init i2c_dev_init(void)
+ 		goto out;
+ 
+ 	i2c_dev_class = class_create(THIS_MODULE, "i2c-dev");
+-	if (IS_ERR(i2c_dev_class))
++	if (IS_ERR(i2c_dev_class)) {
++		res = PTR_ERR(i2c_dev_class);
+ 		goto out_unreg_chrdev;
++	}
+ 
+ 	res = i2c_add_driver(&i2cdev_driver);
+ 	if (res)
+diff --git a/drivers/mmc/card/block.c b/drivers/mmc/card/block.c
+index 91ded3e..3318642 100644
+--- a/drivers/mmc/card/block.c
++++ b/drivers/mmc/card/block.c
+@@ -103,8 +103,10 @@ static int mmc_blk_open(struct inode *inode, struct file *filp)
+ 			check_disk_change(inode->i_bdev);
+ 		ret = 0;
+ 
+-		if ((filp->f_mode & FMODE_WRITE) && md->read_only)
++		if ((filp->f_mode & FMODE_WRITE) && md->read_only) {
++			mmc_blk_put(md);
+ 			ret = -EROFS;
++		}
+ 	}
+ 
+ 	return ret;
+diff --git a/drivers/net/niu.c b/drivers/net/niu.c
+index d11ba61..5fd6a65 100644
+--- a/drivers/net/niu.c
++++ b/drivers/net/niu.c
+@@ -5230,6 +5230,56 @@ static void niu_netif_start(struct niu *np)
+ 	niu_enable_interrupts(np, 1);
+ }
+ 
++static void niu_reset_buffers(struct niu *np)
++{
++	int i, j, k, err;
++
++	if (np->rx_rings) {
++		for (i = 0; i < np->num_rx_rings; i++) {
++			struct rx_ring_info *rp = &np->rx_rings[i];
++
++			for (j = 0, k = 0; j < MAX_RBR_RING_SIZE; j++) {
++				struct page *page;
++
++				page = rp->rxhash[j];
++				while (page) {
++					struct page *next =
++						(struct page *) page->mapping;
++					u64 base = page->index;
++					base = base >> RBR_DESCR_ADDR_SHIFT;
++					rp->rbr[k++] = cpu_to_le32(base);
++					page = next;
++				}
++			}
++			for (; k < MAX_RBR_RING_SIZE; k++) {
++				err = niu_rbr_add_page(np, rp, GFP_ATOMIC, k);
++				if (unlikely(err))
++					break;
++			}
++
++			rp->rbr_index = rp->rbr_table_size - 1;
++			rp->rcr_index = 0;
++			rp->rbr_pending = 0;
++			rp->rbr_refill_pending = 0;
++		}
++	}
++	if (np->tx_rings) {
++		for (i = 0; i < np->num_tx_rings; i++) {
++			struct tx_ring_info *rp = &np->tx_rings[i];
++
++			for (j = 0; j < MAX_TX_RING_SIZE; j++) {
++				if (rp->tx_buffs[j].skb)
++					(void) release_tx_packet(np, rp, j);
++			}
++
++			rp->pending = MAX_TX_RING_SIZE;
++			rp->prod = 0;
++			rp->cons = 0;
++			rp->wrap_bit = 0;
++		}
++	}
++}
++
+ static void niu_reset_task(struct work_struct *work)
+ {
+ 	struct niu *np = container_of(work, struct niu, reset_task);
+@@ -5252,6 +5302,12 @@ static void niu_reset_task(struct work_struct *work)
+ 
+ 	niu_stop_hw(np);
+ 
++	spin_unlock_irqrestore(&np->lock, flags);
++
++	niu_reset_buffers(np);
++
++	spin_lock_irqsave(&np->lock, flags);
++
+ 	err = niu_init_hw(np);
+ 	if (!err) {
+ 		np->timer.expires = jiffies + HZ;
+diff --git a/drivers/spi/pxa2xx_spi.c b/drivers/spi/pxa2xx_spi.c
+index 147e26a..1dcc79f 100644
+--- a/drivers/spi/pxa2xx_spi.c
++++ b/drivers/spi/pxa2xx_spi.c
+@@ -48,9 +48,10 @@ MODULE_ALIAS("platform:pxa2xx-spi");
+ 
+ #define MAX_BUSES 3
+ 
+-#define DMA_INT_MASK (DCSR_ENDINTR | DCSR_STARTINTR | DCSR_BUSERR)
+-#define RESET_DMA_CHANNEL (DCSR_NODESC | DMA_INT_MASK)
+-#define IS_DMA_ALIGNED(x) (((u32)(x)&0x07)==0)
++#define DMA_INT_MASK		(DCSR_ENDINTR | DCSR_STARTINTR | DCSR_BUSERR)
++#define RESET_DMA_CHANNEL	(DCSR_NODESC | DMA_INT_MASK)
++#define IS_DMA_ALIGNED(x)	((((u32)(x)) & 0x07) == 0)
++#define MAX_DMA_LEN		8191
+ 
+ /*
+  * for testing SSCR1 changes that require SSP restart, basically
+@@ -142,7 +143,6 @@ struct driver_data {
+ 	size_t tx_map_len;
+ 	u8 n_bytes;
+ 	u32 dma_width;
+-	int cs_change;
+ 	int (*write)(struct driver_data *drv_data);
+ 	int (*read)(struct driver_data *drv_data);
+ 	irqreturn_t (*transfer_handler)(struct driver_data *drv_data);
+@@ -404,8 +404,45 @@ static void giveback(struct driver_data *drv_data)
+ 					struct spi_transfer,
+ 					transfer_list);
+ 
++	/* Delay if requested before any change in chip select */
++	if (last_transfer->delay_usecs)
++		udelay(last_transfer->delay_usecs);
++
++	/* Drop chip select UNLESS cs_change is true or we are returning
++	 * a message with an error, or next message is for another chip
++	 */
+ 	if (!last_transfer->cs_change)
+ 		drv_data->cs_control(PXA2XX_CS_DEASSERT);
++	else {
++		struct spi_message *next_msg;
++
++		/* Holding of cs was hinted, but we need to make sure
++		 * the next message is for the same chip.  Don't waste
++		 * time with the following tests unless this was hinted.
++		 *
++		 * We cannot postpone this until pump_messages, because
++		 * after calling msg->complete (below) the driver that
++		 * sent the current message could be unloaded, which
++		 * could invalidate the cs_control() callback...
++		 */
++
++		/* get a pointer to the next message, if any */
++		spin_lock_irqsave(&drv_data->lock, flags);
++		if (list_empty(&drv_data->queue))
++			next_msg = NULL;
++		else
++			next_msg = list_entry(drv_data->queue.next,
++					struct spi_message, queue);
++		spin_unlock_irqrestore(&drv_data->lock, flags);
++
++		/* see if the next and current messages point
++		 * to the same chip
++		 */
++		if (next_msg && next_msg->spi != msg->spi)
++			next_msg = NULL;
++		if (!next_msg || msg->state == ERROR_STATE)
++			drv_data->cs_control(PXA2XX_CS_DEASSERT);
++	}
+ 
+ 	msg->state = NULL;
+ 	if (msg->complete)
+@@ -488,10 +525,9 @@ static void dma_transfer_complete(struct driver_data *drv_data)
+ 	msg->actual_length += drv_data->len -
+ 				(drv_data->rx_end - drv_data->rx);
+ 
+-	/* Release chip select if requested, transfer delays are
+-	 * handled in pump_transfers */
+-	if (drv_data->cs_change)
+-		drv_data->cs_control(PXA2XX_CS_DEASSERT);
++	/* Transfer delays and chip select release are
++	 * handled in pump_transfers or giveback
++	 */
+ 
+ 	/* Move to next transfer */
+ 	msg->state = next_transfer(drv_data);
+@@ -600,10 +636,9 @@ static void int_transfer_complete(struct driver_data *drv_data)
+ 	drv_data->cur_msg->actual_length += drv_data->len -
+ 				(drv_data->rx_end - drv_data->rx);
+ 
+-	/* Release chip select if requested, transfer delays are
+-	 * handled in pump_transfers */
+-	if (drv_data->cs_change)
+-		drv_data->cs_control(PXA2XX_CS_DEASSERT);
++	/* Transfer delays and chip select release are
++	 * handled in pump_transfers or giveback
++	 */
+ 
+ 	/* Move to next transfer */
+ 	drv_data->cur_msg->state = next_transfer(drv_data);
+@@ -837,23 +872,40 @@ static void pump_transfers(unsigned long data)
+ 		return;
+ 	}
+ 
+-	/* Delay if requested at end of transfer*/
++	/* Delay if requested at end of transfer before CS change */
+ 	if (message->state == RUNNING_STATE) {
+ 		previous = list_entry(transfer->transfer_list.prev,
+ 					struct spi_transfer,
+ 					transfer_list);
+ 		if (previous->delay_usecs)
+ 			udelay(previous->delay_usecs);
++
++		/* Drop chip select only if cs_change is requested */
++		if (previous->cs_change)
++			drv_data->cs_control(PXA2XX_CS_DEASSERT);
+ 	}
+ 
+-	/* Check transfer length */
+-	if (transfer->len > 8191)
+-	{
+-		dev_warn(&drv_data->pdev->dev, "pump_transfers: transfer "
+-				"length greater than 8191\n");
+-		message->status = -EINVAL;
+-		giveback(drv_data);
+-		return;
++	/* Check for transfers that need multiple DMA segments */
++	if (transfer->len > MAX_DMA_LEN && chip->enable_dma) {
++
++		/* reject already-mapped transfers; PIO won't always work */
++		if (message->is_dma_mapped
++				|| transfer->rx_dma || transfer->tx_dma) {
++			dev_err(&drv_data->pdev->dev,
++				"pump_transfers: mapped transfer length "
++				"of %u is greater than %d\n",
++				transfer->len, MAX_DMA_LEN);
++			message->status = -EINVAL;
++			giveback(drv_data);
++			return;
++		}
++
++		/* warn ... we force this to PIO mode */
++		if (printk_ratelimit())
++			dev_warn(&message->spi->dev, "pump_transfers: "
++				"DMA disabled for transfer length %ld "
++				"greater than %d\n",
++				(long)drv_data->len, MAX_DMA_LEN);
+ 	}
+ 
+ 	/* Setup the transfer state based on the type of transfer */
+@@ -875,7 +927,6 @@ static void pump_transfers(unsigned long data)
+ 	drv_data->len = transfer->len & DCMD_LENGTH;
+ 	drv_data->write = drv_data->tx ? chip->write : null_writer;
+ 	drv_data->read = drv_data->rx ? chip->read : null_reader;
+-	drv_data->cs_change = transfer->cs_change;
+ 
+ 	/* Change speed and bit per word on a per transfer */
+ 	cr0 = chip->cr0;
+@@ -922,7 +973,7 @@ static void pump_transfers(unsigned long data)
+ 							&dma_thresh))
+ 				if (printk_ratelimit())
+ 					dev_warn(&message->spi->dev,
+-						"pump_transfer: "
++						"pump_transfers: "
+ 						"DMA burst size reduced to "
+ 						"match bits_per_word\n");
+ 		}
+@@ -936,8 +987,23 @@ static void pump_transfers(unsigned long data)
+ 
+ 	message->state = RUNNING_STATE;
+ 
+-	/* Try to map dma buffer and do a dma transfer if successful */
+-	if ((drv_data->dma_mapped = map_dma_buffers(drv_data))) {
++	/* Try to map dma buffer and do a dma transfer if successful, but
++	 * only if the length is non-zero and less than MAX_DMA_LEN.
++	 *
++	 * Zero-length non-descriptor DMA is illegal on PXA2xx; force use
++	 * of PIO instead.  Care is needed above because the transfer may
++	 * have have been passed with buffers that are already dma mapped.
++	 * A zero-length transfer in PIO mode will not try to write/read
++	 * to/from the buffers
++	 *
++	 * REVISIT large transfers are exactly where we most want to be
++	 * using DMA.  If this happens much, split those transfers into
++	 * multiple DMA segments rather than forcing PIO.
++	 */
++	drv_data->dma_mapped = 0;
++	if (drv_data->len > 0 && drv_data->len <= MAX_DMA_LEN)
++		drv_data->dma_mapped = map_dma_buffers(drv_data);
++	if (drv_data->dma_mapped) {
+ 
+ 		/* Ensure we have the correct interrupt handler */
+ 		drv_data->transfer_handler = dma_transfer;
+diff --git a/drivers/usb/core/hcd.c b/drivers/usb/core/hcd.c
+index 27533b3..ed7b123 100644
+--- a/drivers/usb/core/hcd.c
++++ b/drivers/usb/core/hcd.c
+@@ -1877,7 +1877,8 @@ int usb_add_hcd(struct usb_hcd *hcd,
+ 		 * with IRQF_SHARED. As usb_hcd_irq() will always disable
+ 		 * interrupts we can remove it here.
+ 		 */
+-		irqflags &= ~IRQF_DISABLED;
++		if (irqflags & IRQF_SHARED)
++			irqflags &= ~IRQF_DISABLED;
+ 
+ 		snprintf(hcd->irq_descr, sizeof(hcd->irq_descr), "%s:usb%d",
+ 				hcd->driver->description, hcd->self.busnum);
+diff --git a/include/asm-generic/rtc.h b/include/asm-generic/rtc.h
+index dd1bed8..85286fb 100644
+--- a/include/asm-generic/rtc.h
++++ b/include/asm-generic/rtc.h
+@@ -17,6 +17,7 @@
+ #include <linux/mc146818rtc.h>
+ #include <linux/rtc.h>
+ #include <linux/bcd.h>
++#include <linux/delay.h>
+ 
+ #define RTC_PIE 0x40		/* periodic interrupt enable */
+ #define RTC_AIE 0x20		/* alarm interrupt enable */
+@@ -45,7 +46,6 @@ static inline unsigned char rtc_is_updating(void)
+ 
+ static inline unsigned int get_rtc_time(struct rtc_time *time)
+ {
+-	unsigned long uip_watchdog = jiffies;
+ 	unsigned char ctrl;
+ 	unsigned long flags;
+ 
+@@ -55,19 +55,15 @@ static inline unsigned int get_rtc_time(struct rtc_time *time)
+ 
+ 	/*
+ 	 * read RTC once any update in progress is done. The update
+-	 * can take just over 2ms. We wait 10 to 20ms. There is no need to
++	 * can take just over 2ms. We wait 20ms. There is no need to
+ 	 * to poll-wait (up to 1s - eeccch) for the falling edge of RTC_UIP.
+ 	 * If you need to know *exactly* when a second has started, enable
+ 	 * periodic update complete interrupts, (via ioctl) and then 
+ 	 * immediately read /dev/rtc which will block until you get the IRQ.
+ 	 * Once the read clears, read the RTC time (again via ioctl). Easy.
+ 	 */
+-
+-	if (rtc_is_updating() != 0)
+-		while (jiffies - uip_watchdog < 2*HZ/100) {
+-			barrier();
+-			cpu_relax();
+-		}
++	if (rtc_is_updating())
++		mdelay(20);
+ 
+ 	/*
+ 	 * Only the values that we read from the RTC are set. We leave
+diff --git a/include/linux/clockchips.h b/include/linux/clockchips.h
+index c33b0dc..ed3a5d4 100644
+--- a/include/linux/clockchips.h
++++ b/include/linux/clockchips.h
+@@ -127,6 +127,8 @@ extern int clockevents_register_notifier(struct notifier_block *nb);
+ extern int clockevents_program_event(struct clock_event_device *dev,
+ 				     ktime_t expires, ktime_t now);
+ 
++extern void clockevents_handle_noop(struct clock_event_device *dev);
++
+ #ifdef CONFIG_GENERIC_CLOCKEVENTS
+ extern void clockevents_notify(unsigned long reason, void *arg);
+ #else
+diff --git a/include/net/netlink.h b/include/net/netlink.h
+index 112dcdf..5383fdf 100644
+--- a/include/net/netlink.h
++++ b/include/net/netlink.h
+@@ -704,7 +704,7 @@ static inline int nla_len(const struct nlattr *nla)
+  */
+ static inline int nla_ok(const struct nlattr *nla, int remaining)
+ {
+-	return remaining >= sizeof(*nla) &&
++	return remaining >= (int) sizeof(*nla) &&
+ 	       nla->nla_len >= sizeof(*nla) &&
+ 	       nla->nla_len <= remaining;
+ }
+diff --git a/kernel/time/clockevents.c b/kernel/time/clockevents.c
+index 3d1e3e1..1876b52 100644
+--- a/kernel/time/clockevents.c
++++ b/kernel/time/clockevents.c
+@@ -177,7 +177,7 @@ void clockevents_register_device(struct clock_event_device *dev)
+ /*
+  * Noop handler when we shut down an event device
+  */
+-static void clockevents_handle_noop(struct clock_event_device *dev)
++void clockevents_handle_noop(struct clock_event_device *dev)
+ {
+ }
+ 
+@@ -199,7 +199,6 @@ void clockevents_exchange_device(struct clock_event_device *old,
+ 	 * released list and do a notify add later.
+ 	 */
+ 	if (old) {
+-		old->event_handler = clockevents_handle_noop;
+ 		clockevents_set_mode(old, CLOCK_EVT_MODE_UNUSED);
+ 		list_del(&old->list);
+ 		list_add(&old->list, &clockevents_released);
+diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
+index 5fd9b94..a1dac40 100644
+--- a/kernel/time/ntp.c
++++ b/kernel/time/ntp.c
+@@ -205,7 +205,7 @@ static void sync_cmos_clock(unsigned long dummy)
+ 	if (abs(now.tv_nsec - (NSEC_PER_SEC / 2)) <= tick_nsec / 2)
+ 		fail = update_persistent_clock(now);
+ 
+-	next.tv_nsec = (NSEC_PER_SEC / 2) - now.tv_nsec;
++	next.tv_nsec = (NSEC_PER_SEC / 2) - now.tv_nsec - (TICK_NSEC / 2);
+ 	if (next.tv_nsec <= 0)
+ 		next.tv_nsec += NSEC_PER_SEC;
+ 
+diff --git a/kernel/time/tick-broadcast.c b/kernel/time/tick-broadcast.c
+index e1bd50c..0edd345 100644
+--- a/kernel/time/tick-broadcast.c
++++ b/kernel/time/tick-broadcast.c
+@@ -174,6 +174,8 @@ static void tick_do_periodic_broadcast(void)
+  */
+ static void tick_handle_periodic_broadcast(struct clock_event_device *dev)
+ {
++	ktime_t next;
++
+ 	tick_do_periodic_broadcast();
+ 
+ 	/*
+@@ -184,10 +186,13 @@ static void tick_handle_periodic_broadcast(struct clock_event_device *dev)
+ 
+ 	/*
+ 	 * Setup the next period for devices, which do not have
+-	 * periodic mode:
++	 * periodic mode. We read dev->next_event first and add to it
++	 * when the event alrady expired. clockevents_program_event()
++	 * sets dev->next_event only when the event is really
++	 * programmed to the device.
+ 	 */
+-	for (;;) {
+-		ktime_t next = ktime_add(dev->next_event, tick_period);
++	for (next = dev->next_event; ;) {
++		next = ktime_add(next, tick_period);
+ 
+ 		if (!clockevents_program_event(dev, next, ktime_get()))
+ 			return;
+@@ -204,7 +209,7 @@ static void tick_do_broadcast_on_off(void *why)
+ 	struct clock_event_device *bc, *dev;
+ 	struct tick_device *td;
+ 	unsigned long flags, *reason = why;
+-	int cpu;
++	int cpu, bc_stopped;
+ 
+ 	spin_lock_irqsave(&tick_broadcast_lock, flags);
+ 
+@@ -222,6 +227,8 @@ static void tick_do_broadcast_on_off(void *why)
+ 	if (!tick_device_is_functional(dev))
+ 		goto out;
+ 
++	bc_stopped = cpus_empty(tick_broadcast_mask);
++
+ 	switch (*reason) {
+ 	case CLOCK_EVT_NOTIFY_BROADCAST_ON:
+ 	case CLOCK_EVT_NOTIFY_BROADCAST_FORCE:
+@@ -243,9 +250,10 @@ static void tick_do_broadcast_on_off(void *why)
+ 		break;
+ 	}
+ 
+-	if (cpus_empty(tick_broadcast_mask))
+-		clockevents_set_mode(bc, CLOCK_EVT_MODE_SHUTDOWN);
+-	else {
++	if (cpus_empty(tick_broadcast_mask)) {
++		if (!bc_stopped)
++			clockevents_set_mode(bc, CLOCK_EVT_MODE_SHUTDOWN);
++	} else if (bc_stopped) {
+ 		if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
+ 			tick_broadcast_start_periodic(bc);
+ 		else
+@@ -362,16 +370,8 @@ cpumask_t *tick_get_broadcast_oneshot_mask(void)
+ static int tick_broadcast_set_event(ktime_t expires, int force)
+ {
+ 	struct clock_event_device *bc = tick_broadcast_device.evtdev;
+-	ktime_t now = ktime_get();
+-	int res;
+-
+-	for(;;) {
+-		res = clockevents_program_event(bc, expires, now);
+-		if (!res || !force)
+-			return res;
+-		now = ktime_get();
+-		expires = ktime_add(now, ktime_set(0, bc->min_delta_ns));
+-	}
++
++	return tick_dev_program_event(bc, expires, force);
+ }
+ 
+ int tick_resume_broadcast_oneshot(struct clock_event_device *bc)
+@@ -490,14 +490,52 @@ static void tick_broadcast_clear_oneshot(int cpu)
+ 	cpu_clear(cpu, tick_broadcast_oneshot_mask);
+ }
+ 
++static void tick_broadcast_init_next_event(cpumask_t *mask, ktime_t expires)
++{
++	struct tick_device *td;
++	int cpu;
++
++	for_each_cpu_mask(cpu, *mask) {
++		td = &per_cpu(tick_cpu_device, cpu);
++		if (td->evtdev)
++			td->evtdev->next_event = expires;
++	}
++}
++
+ /**
+  * tick_broadcast_setup_oneshot - setup the broadcast device
+  */
+ void tick_broadcast_setup_oneshot(struct clock_event_device *bc)
+ {
+-	bc->event_handler = tick_handle_oneshot_broadcast;
+-	clockevents_set_mode(bc, CLOCK_EVT_MODE_ONESHOT);
+-	bc->next_event.tv64 = KTIME_MAX;
++	/* Set it up only once ! */
++	if (bc->event_handler != tick_handle_oneshot_broadcast) {
++		int was_periodic = bc->mode == CLOCK_EVT_MODE_PERIODIC;
++		int cpu = smp_processor_id();
++		cpumask_t mask;
++
++		bc->event_handler = tick_handle_oneshot_broadcast;
++		clockevents_set_mode(bc, CLOCK_EVT_MODE_ONESHOT);
++
++		/* Take the do_timer update */
++		tick_do_timer_cpu = cpu;
++
++		/*
++		 * We must be careful here. There might be other CPUs
++		 * waiting for periodic broadcast. We need to set the
++		 * oneshot_mask bits for those and program the
++		 * broadcast device to fire.
++		 */
++		mask = tick_broadcast_mask;
++		cpu_clear(cpu, mask);
++		cpus_or(tick_broadcast_oneshot_mask,
++			tick_broadcast_oneshot_mask, mask);
++
++		if (was_periodic && !cpus_empty(mask)) {
++			tick_broadcast_init_next_event(&mask, tick_next_period);
++			tick_broadcast_set_event(tick_next_period, 1);
++		} else
++			bc->next_event.tv64 = KTIME_MAX;
++	}
+ }
+ 
+ /*
+diff --git a/kernel/time/tick-common.c b/kernel/time/tick-common.c
+index 1bea399..d106d61 100644
+--- a/kernel/time/tick-common.c
++++ b/kernel/time/tick-common.c
+@@ -159,6 +159,7 @@ static void tick_setup_device(struct tick_device *td,
+ 	} else {
+ 		handler = td->evtdev->event_handler;
+ 		next_event = td->evtdev->next_event;
++		td->evtdev->event_handler = clockevents_handle_noop;
+ 	}
+ 
+ 	td->evtdev = newdev;
+diff --git a/kernel/time/tick-internal.h b/kernel/time/tick-internal.h
+index f13f2b7..0ffc291 100644
+--- a/kernel/time/tick-internal.h
++++ b/kernel/time/tick-internal.h
+@@ -17,6 +17,8 @@ extern void tick_handle_periodic(struct clock_event_device *dev);
+ extern void tick_setup_oneshot(struct clock_event_device *newdev,
+ 			       void (*handler)(struct clock_event_device *),
+ 			       ktime_t nextevt);
++extern int tick_dev_program_event(struct clock_event_device *dev,
++				  ktime_t expires, int force);
+ extern int tick_program_event(ktime_t expires, int force);
+ extern void tick_oneshot_notify(void);
+ extern int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *));
+diff --git a/kernel/time/tick-oneshot.c b/kernel/time/tick-oneshot.c
+index 0258d31..0737da0 100644
+--- a/kernel/time/tick-oneshot.c
++++ b/kernel/time/tick-oneshot.c
+@@ -23,24 +23,56 @@
+ #include "tick-internal.h"
+ 
+ /**
+- * tick_program_event
++ * tick_program_event internal worker function
+  */
+-int tick_program_event(ktime_t expires, int force)
++int tick_dev_program_event(struct clock_event_device *dev, ktime_t expires,
++			   int force)
+ {
+-	struct clock_event_device *dev = __get_cpu_var(tick_cpu_device).evtdev;
+ 	ktime_t now = ktime_get();
++	int i;
+ 
+-	while (1) {
++	for (i = 0;;) {
+ 		int ret = clockevents_program_event(dev, expires, now);
+ 
+ 		if (!ret || !force)
+ 			return ret;
++
++		/*
++		 * We tried 2 times to program the device with the given
++		 * min_delta_ns. If that's not working then we double it
++		 * and emit a warning.
++		 */
++		if (++i > 2) {
++			/* Increase the min. delta and try again */
++			if (!dev->min_delta_ns)
++				dev->min_delta_ns = 5000;
++			else
++				dev->min_delta_ns += dev->min_delta_ns >> 1;
++
++			printk(KERN_WARNING
++			       "CE: %s increasing min_delta_ns to %lu nsec\n",
++			       dev->name ? dev->name : "?",
++			       dev->min_delta_ns << 1);
++
++			i = 0;
++		}
++
+ 		now = ktime_get();
+-		expires = ktime_add(now, ktime_set(0, dev->min_delta_ns));
++		expires = ktime_add_ns(now, dev->min_delta_ns);
+ 	}
+ }
+ 
+ /**
++ * tick_program_event
++ */
++int tick_program_event(ktime_t expires, int force)
++{
++	struct clock_event_device *dev = __get_cpu_var(tick_cpu_device).evtdev;
++
++	return tick_dev_program_event(dev, expires, force);
++}
++
++/**
+  * tick_resume_onshot - resume oneshot mode
+  */
+ void tick_resume_oneshot(void)
+@@ -61,7 +93,7 @@ void tick_setup_oneshot(struct clock_event_device *newdev,
+ {
+ 	newdev->event_handler = handler;
+ 	clockevents_set_mode(newdev, CLOCK_EVT_MODE_ONESHOT);
+-	clockevents_program_event(newdev, next_event, ktime_get());
++	tick_dev_program_event(newdev, next_event, 1);
+ }
+ 
+ /**
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index 9703c87..b924502 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -956,6 +956,27 @@ int udp_disconnect(struct sock *sk, int flags)
+ 	return 0;
+ }
+ 
++static int __udp_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
++{
++	int is_udplite = IS_UDPLITE(sk);
++	int rc;
++
++	if ((rc = sock_queue_rcv_skb(sk, skb)) < 0) {
++		/* Note that an ENOMEM error is charged twice */
++		if (rc == -ENOMEM)
++			UDP_INC_STATS_BH(UDP_MIB_RCVBUFERRORS,
++					 is_udplite);
++		goto drop;
++	}
++
++	return 0;
++
++drop:
++	UDP_INC_STATS_BH(UDP_MIB_INERRORS, is_udplite);
++	kfree_skb(skb);
++	return -1;
++}
++
+ /* returns:
+  *  -1: error
+  *   0: success
+@@ -1046,14 +1067,16 @@ int udp_queue_rcv_skb(struct sock * sk, struct sk_buff *skb)
+ 			goto drop;
+ 	}
+ 
+-	if ((rc = sock_queue_rcv_skb(sk,skb)) < 0) {
+-		/* Note that an ENOMEM error is charged twice */
+-		if (rc == -ENOMEM)
+-			UDP_INC_STATS_BH(UDP_MIB_RCVBUFERRORS, is_udplite);
+-		goto drop;
+-	}
++	rc = 0;
+ 
+-	return 0;
++	bh_lock_sock(sk);
++	if (!sock_owned_by_user(sk))
++		rc = __udp_queue_rcv_skb(sk, skb);
++	else
++		sk_add_backlog(sk, skb);
++	bh_unlock_sock(sk);
++
++	return rc;
+ 
+ drop:
+ 	UDP_INC_STATS_BH(UDP_MIB_INERRORS, is_udplite);
+@@ -1091,15 +1114,7 @@ static int __udp4_lib_mcast_deliver(struct sk_buff *skb,
+ 				skb1 = skb_clone(skb, GFP_ATOMIC);
+ 
+ 			if (skb1) {
+-				int ret = 0;
+-
+-				bh_lock_sock_nested(sk);
+-				if (!sock_owned_by_user(sk))
+-					ret = udp_queue_rcv_skb(sk, skb1);
+-				else
+-					sk_add_backlog(sk, skb1);
+-				bh_unlock_sock(sk);
+-
++				int ret = udp_queue_rcv_skb(sk, skb1);
+ 				if (ret > 0)
+ 					/* we should probably re-process instead
+ 					 * of dropping packets here. */
+@@ -1192,13 +1207,7 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct hlist_head udptable[],
+ 			uh->dest, inet_iif(skb), udptable);
+ 
+ 	if (sk != NULL) {
+-		int ret = 0;
+-		bh_lock_sock_nested(sk);
+-		if (!sock_owned_by_user(sk))
+-			ret = udp_queue_rcv_skb(sk, skb);
+-		else
+-			sk_add_backlog(sk, skb);
+-		bh_unlock_sock(sk);
++		int ret = udp_queue_rcv_skb(sk, skb);
+ 		sock_put(sk);
+ 
+ 		/* a return value > 0 means to resubmit the input, but
+@@ -1493,7 +1502,7 @@ struct proto udp_prot = {
+ 	.sendmsg	   = udp_sendmsg,
+ 	.recvmsg	   = udp_recvmsg,
+ 	.sendpage	   = udp_sendpage,
+-	.backlog_rcv	   = udp_queue_rcv_skb,
++	.backlog_rcv	   = __udp_queue_rcv_skb,
+ 	.hash		   = udp_lib_hash,
+ 	.unhash		   = udp_lib_unhash,
+ 	.get_port	   = udp_v4_get_port,
+diff --git a/net/ipv6/ip6_output.c b/net/ipv6/ip6_output.c
+index fb1c192..d650e10 100644
+--- a/net/ipv6/ip6_output.c
++++ b/net/ipv6/ip6_output.c
+@@ -930,39 +930,39 @@ static int ip6_dst_lookup_tail(struct sock *sk,
+ 	}
+ 
+ #ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+-		/*
+-		 * Here if the dst entry we've looked up
+-		 * has a neighbour entry that is in the INCOMPLETE
+-		 * state and the src address from the flow is
+-		 * marked as OPTIMISTIC, we release the found
+-		 * dst entry and replace it instead with the
+-		 * dst entry of the nexthop router
+-		 */
+-		if (!((*dst)->neighbour->nud_state & NUD_VALID)) {
+-			struct inet6_ifaddr *ifp;
+-			struct flowi fl_gw;
+-			int redirect;
+-
+-			ifp = ipv6_get_ifaddr(&init_net, &fl->fl6_src,
+-					      (*dst)->dev, 1);
+-
+-			redirect = (ifp && ifp->flags & IFA_F_OPTIMISTIC);
+-			if (ifp)
+-				in6_ifa_put(ifp);
+-
+-			if (redirect) {
+-				/*
+-				 * We need to get the dst entry for the
+-				 * default router instead
+-				 */
+-				dst_release(*dst);
+-				memcpy(&fl_gw, fl, sizeof(struct flowi));
+-				memset(&fl_gw.fl6_dst, 0, sizeof(struct in6_addr));
+-				*dst = ip6_route_output(sk, &fl_gw);
+-				if ((err = (*dst)->error))
+-					goto out_err_release;
+-			}
++	/*
++	 * Here if the dst entry we've looked up
++	 * has a neighbour entry that is in the INCOMPLETE
++	 * state and the src address from the flow is
++	 * marked as OPTIMISTIC, we release the found
++	 * dst entry and replace it instead with the
++	 * dst entry of the nexthop router
++	 */
++	if ((*dst)->neighbour && !((*dst)->neighbour->nud_state & NUD_VALID)) {
++		struct inet6_ifaddr *ifp;
++		struct flowi fl_gw;
++		int redirect;
++
++		ifp = ipv6_get_ifaddr(&init_net, &fl->fl6_src,
++				      (*dst)->dev, 1);
++
++		redirect = (ifp && ifp->flags & IFA_F_OPTIMISTIC);
++		if (ifp)
++			in6_ifa_put(ifp);
++
++		if (redirect) {
++			/*
++			 * We need to get the dst entry for the
++			 * default router instead
++			 */
++			dst_release(*dst);
++			memcpy(&fl_gw, fl, sizeof(struct flowi));
++			memset(&fl_gw.fl6_dst, 0, sizeof(struct in6_addr));
++			*dst = ip6_route_output(sk, &fl_gw);
++			if ((err = (*dst)->error))
++				goto out_err_release;
+ 		}
++	}
+ #endif
+ 
+ 	return 0;
+diff --git a/net/ipv6/udp.c b/net/ipv6/udp.c
+index 53739de..4e36c57 100644
+--- a/net/ipv6/udp.c
++++ b/net/ipv6/udp.c
+@@ -373,7 +373,7 @@ static int __udp6_lib_mcast_deliver(struct sk_buff *skb, struct in6_addr *saddr,
+ 					uh->source, saddr, dif))) {
+ 		struct sk_buff *buff = skb_clone(skb, GFP_ATOMIC);
+ 		if (buff) {
+-			bh_lock_sock_nested(sk2);
++			bh_lock_sock(sk2);
+ 			if (!sock_owned_by_user(sk2))
+ 				udpv6_queue_rcv_skb(sk2, buff);
+ 			else
+@@ -381,7 +381,7 @@ static int __udp6_lib_mcast_deliver(struct sk_buff *skb, struct in6_addr *saddr,
+ 			bh_unlock_sock(sk2);
+ 		}
+ 	}
+-	bh_lock_sock_nested(sk);
++	bh_lock_sock(sk);
+ 	if (!sock_owned_by_user(sk))
+ 		udpv6_queue_rcv_skb(sk, skb);
+ 	else
+@@ -499,7 +499,7 @@ int __udp6_lib_rcv(struct sk_buff *skb, struct hlist_head udptable[],
+ 
+ 	/* deliver */
+ 
+-	bh_lock_sock_nested(sk);
++	bh_lock_sock(sk);
+ 	if (!sock_owned_by_user(sk))
+ 		udpv6_queue_rcv_skb(sk, skb);
+ 	else
+diff --git a/net/sctp/associola.c b/net/sctp/associola.c
+index d29f792..1eefac2 100644
+--- a/net/sctp/associola.c
++++ b/net/sctp/associola.c
+@@ -588,11 +588,12 @@ struct sctp_transport *sctp_assoc_add_peer(struct sctp_association *asoc,
+ 	/* Check to see if this is a duplicate. */
+ 	peer = sctp_assoc_lookup_paddr(asoc, addr);
+ 	if (peer) {
++		/* An UNKNOWN state is only set on transports added by
++		 * user in sctp_connectx() call.  Such transports should be
++		 * considered CONFIRMED per RFC 4960, Section 5.4.
++		 */
+ 		if (peer->state == SCTP_UNKNOWN) {
+-			if (peer_state == SCTP_ACTIVE)
+-				peer->state = SCTP_ACTIVE;
+-			if (peer_state == SCTP_UNCONFIRMED)
+-				peer->state = SCTP_UNCONFIRMED;
++			peer->state = SCTP_ACTIVE;
+ 		}
+ 		return peer;
+ 	}
+diff --git a/net/sctp/sm_make_chunk.c b/net/sctp/sm_make_chunk.c
+index 36ebb39..d024fd0 100644
+--- a/net/sctp/sm_make_chunk.c
++++ b/net/sctp/sm_make_chunk.c
+@@ -1886,11 +1886,13 @@ static void sctp_process_ext_param(struct sctp_association *asoc,
+ 			    /* if the peer reports AUTH, assume that he
+ 			     * supports AUTH.
+ 			     */
+-			    asoc->peer.auth_capable = 1;
++			    if (sctp_auth_enable)
++				    asoc->peer.auth_capable = 1;
+ 			    break;
+ 		    case SCTP_CID_ASCONF:
+ 		    case SCTP_CID_ASCONF_ACK:
+-			    asoc->peer.asconf_capable = 1;
++			    if (sctp_addip_enable)
++				    asoc->peer.asconf_capable = 1;
+ 			    break;
+ 		    default:
+ 			    break;
+@@ -2319,12 +2321,10 @@ clean_up:
+ 	/* Release the transport structures. */
+ 	list_for_each_safe(pos, temp, &asoc->peer.transport_addr_list) {
+ 		transport = list_entry(pos, struct sctp_transport, transports);
+-		list_del_init(pos);
+-		sctp_transport_free(transport);
++		if (transport->state != SCTP_ACTIVE)
++			sctp_assoc_rm_peer(asoc, transport);
+ 	}
+ 
+-	asoc->peer.transport_count = 0;
+-
+ nomem:
+ 	return 0;
+ }
+@@ -2454,6 +2454,9 @@ static int sctp_process_param(struct sctp_association *asoc,
+ 		break;
+ 
+ 	case SCTP_PARAM_SET_PRIMARY:
++		if (!sctp_addip_enable)
++			goto fall_through;
++
+ 		addr_param = param.v + sizeof(sctp_addip_param_t);
+ 
+ 		af = sctp_get_af_specific(param_type2af(param.p->type));

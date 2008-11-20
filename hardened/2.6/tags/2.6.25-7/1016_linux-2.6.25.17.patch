@@ -1,0 +1,706 @@
+diff --git a/arch/x86/kernel/cpu/mtrr/generic.c b/arch/x86/kernel/cpu/mtrr/generic.c
+index 3e18db4..f49c970 100644
+--- a/arch/x86/kernel/cpu/mtrr/generic.c
++++ b/arch/x86/kernel/cpu/mtrr/generic.c
+@@ -229,6 +229,7 @@ static void generic_get_mtrr(unsigned int reg, unsigned long *base,
+ 			     unsigned long *size, mtrr_type *type)
+ {
+ 	unsigned int mask_lo, mask_hi, base_lo, base_hi;
++	unsigned int tmp, hi;
+ 
+ 	rdmsr(MTRRphysMask_MSR(reg), mask_lo, mask_hi);
+ 	if ((mask_lo & 0x800) == 0) {
+@@ -242,8 +243,18 @@ static void generic_get_mtrr(unsigned int reg, unsigned long *base,
+ 	rdmsr(MTRRphysBase_MSR(reg), base_lo, base_hi);
+ 
+ 	/* Work out the shifted address mask. */
+-	mask_lo = size_or_mask | mask_hi << (32 - PAGE_SHIFT)
+-	    | mask_lo >> PAGE_SHIFT;
++	tmp = mask_hi << (32 - PAGE_SHIFT) | mask_lo >> PAGE_SHIFT;
++	mask_lo = size_or_mask | tmp;
++	/* Expand tmp with high bits to all 1s*/
++	hi = fls(tmp);
++	if (hi > 0) {
++		tmp |= ~((1<<(hi - 1)) - 1);
++
++		if (tmp != mask_lo) {
++			WARN_ON("mtrr: your BIOS has set up an incorrect mask, fixing it up.\n");
++			mask_lo = tmp;
++		}
++	}
+ 
+ 	/* This works correctly if size is a power of two, i.e. a
+ 	   contiguous range. */
+diff --git a/crypto/authenc.c b/crypto/authenc.c
+index 4b22676..fd9f06c 100644
+--- a/crypto/authenc.c
++++ b/crypto/authenc.c
+@@ -174,8 +174,9 @@ static int crypto_authenc_genicv(struct aead_request *req, u8 *iv,
+ static void crypto_authenc_encrypt_done(struct crypto_async_request *req,
+ 					int err)
+ {
++	struct aead_request *areq = req->data;
++
+ 	if (!err) {
+-		struct aead_request *areq = req->data;
+ 		struct crypto_aead *authenc = crypto_aead_reqtfm(areq);
+ 		struct crypto_authenc_ctx *ctx = crypto_aead_ctx(authenc);
+ 		struct ablkcipher_request *abreq = aead_request_ctx(areq);
+@@ -185,7 +186,7 @@ static void crypto_authenc_encrypt_done(struct crypto_async_request *req,
+ 		err = crypto_authenc_genicv(areq, iv, 0);
+ 	}
+ 
+-	aead_request_complete(req->data, err);
++	aead_request_complete(areq, err);
+ }
+ 
+ static int crypto_authenc_encrypt(struct aead_request *req)
+@@ -216,14 +217,15 @@ static int crypto_authenc_encrypt(struct aead_request *req)
+ static void crypto_authenc_givencrypt_done(struct crypto_async_request *req,
+ 					   int err)
+ {
++	struct aead_request *areq = req->data;
++
+ 	if (!err) {
+-		struct aead_request *areq = req->data;
+ 		struct skcipher_givcrypt_request *greq = aead_request_ctx(areq);
+ 
+ 		err = crypto_authenc_genicv(areq, greq->giv, 0);
+ 	}
+ 
+-	aead_request_complete(req->data, err);
++	aead_request_complete(areq, err);
+ }
+ 
+ static int crypto_authenc_givencrypt(struct aead_givcrypt_request *req)
+diff --git a/drivers/net/forcedeth.c b/drivers/net/forcedeth.c
+index 8e877e7..5435970 100644
+--- a/drivers/net/forcedeth.c
++++ b/drivers/net/forcedeth.c
+@@ -5249,7 +5249,7 @@ static int __devinit nv_probe(struct pci_dev *pci_dev, const struct pci_device_i
+ 	if (id->driver_data & DEV_HAS_CHECKSUM) {
+ 		np->rx_csum = 1;
+ 		np->txrxctl_bits |= NVREG_TXRXCTL_RXCHECK;
+-		dev->features |= NETIF_F_HW_CSUM | NETIF_F_SG;
++		dev->features |= NETIF_F_IP_CSUM | NETIF_F_SG;
+ 		dev->features |= NETIF_F_TSO;
+ 	}
+ 
+@@ -5548,7 +5548,7 @@ static int __devinit nv_probe(struct pci_dev *pci_dev, const struct pci_device_i
+ 
+ 	dev_printk(KERN_INFO, &pci_dev->dev, "%s%s%s%s%s%s%s%s%s%sdesc-v%u\n",
+ 		   dev->features & NETIF_F_HIGHDMA ? "highdma " : "",
+-		   dev->features & (NETIF_F_HW_CSUM | NETIF_F_SG) ?
++		   dev->features & (NETIF_F_IP_CSUM | NETIF_F_SG) ?
+ 		   	"csum " : "",
+ 		   dev->features & (NETIF_F_HW_VLAN_RX | NETIF_F_HW_VLAN_TX) ?
+ 		   	"vlan " : "",
+diff --git a/drivers/net/r8169.c b/drivers/net/r8169.c
+index 42d7c0a..0e4eb15 100644
+--- a/drivers/net/r8169.c
++++ b/drivers/net/r8169.c
+@@ -2822,7 +2822,7 @@ static int rtl8169_rx_interrupt(struct net_device *dev,
+ 					pkt_size, PCI_DMA_FROMDEVICE);
+ 				rtl8169_mark_to_asic(desc, tp->rx_buf_sz);
+ 			} else {
+-				pci_unmap_single(pdev, addr, pkt_size,
++				pci_unmap_single(pdev, addr, tp->rx_buf_sz,
+ 						 PCI_DMA_FROMDEVICE);
+ 				tp->Rx_skbuff[entry] = NULL;
+ 			}
+diff --git a/drivers/usb/class/cdc-acm.c b/drivers/usb/class/cdc-acm.c
+index d8160fa..9c2b7b4 100644
+--- a/drivers/usb/class/cdc-acm.c
++++ b/drivers/usb/class/cdc-acm.c
+@@ -531,8 +531,8 @@ static int acm_tty_open(struct tty_struct *tty, struct file *filp)
+ 	tasklet_schedule(&acm->urb_task);
+ 
+ done:
+-err_out:
+ 	mutex_unlock(&acm->mutex);
++err_out:
+ 	mutex_unlock(&open_mutex);
+ 	return rv;
+ 
+diff --git a/drivers/video/fb_defio.c b/drivers/video/fb_defio.c
+index 59df132..4835bdc 100644
+--- a/drivers/video/fb_defio.c
++++ b/drivers/video/fb_defio.c
+@@ -114,6 +114,17 @@ static struct vm_operations_struct fb_deferred_io_vm_ops = {
+ 	.page_mkwrite	= fb_deferred_io_mkwrite,
+ };
+ 
++static int fb_deferred_io_set_page_dirty(struct page *page)
++{
++	if (!PageDirty(page))
++		SetPageDirty(page);
++	return 0;
++}
++
++static const struct address_space_operations fb_deferred_io_aops = {
++	.set_page_dirty = fb_deferred_io_set_page_dirty,
++};
++
+ static int fb_deferred_io_mmap(struct fb_info *info, struct vm_area_struct *vma)
+ {
+ 	vma->vm_ops = &fb_deferred_io_vm_ops;
+@@ -163,6 +174,14 @@ void fb_deferred_io_init(struct fb_info *info)
+ }
+ EXPORT_SYMBOL_GPL(fb_deferred_io_init);
+ 
++void fb_deferred_io_open(struct fb_info *info,
++			 struct inode *inode,
++			 struct file *file)
++{
++	file->f_mapping->a_ops = &fb_deferred_io_aops;
++}
++EXPORT_SYMBOL_GPL(fb_deferred_io_open);
++
+ void fb_deferred_io_cleanup(struct fb_info *info)
+ {
+ 	void *screen_base = (void __force *) info->screen_base;
+diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
+index 01072f4..79b410c 100644
+--- a/drivers/video/fbmem.c
++++ b/drivers/video/fbmem.c
+@@ -1315,6 +1315,10 @@ fb_open(struct inode *inode, struct file *file)
+ 		if (res)
+ 			module_put(info->fbops->owner);
+ 	}
++#ifdef CONFIG_FB_DEFERRED_IO
++	if (info->fbdefio)
++		fb_deferred_io_open(info, inode, file);
++#endif
+ 	return res;
+ }
+ 
+diff --git a/fs/cifs/file.c b/fs/cifs/file.c
+index 40b6900..a80a917 100644
+--- a/fs/cifs/file.c
++++ b/fs/cifs/file.c
+@@ -835,6 +835,10 @@ ssize_t cifs_user_write(struct file *file, const char __user *write_data,
+ 		return -EBADF;
+ 	open_file = (struct cifsFileInfo *) file->private_data;
+ 
++	rc = generic_write_checks(file, poffset, &write_size, 0);
++	if (rc)
++		return rc;
++
+ 	xid = GetXid();
+ 
+ 	if (*poffset > file->f_path.dentry->d_inode->i_size)
+diff --git a/fs/cramfs/inode.c b/fs/cramfs/inode.c
+index 350680f..b392002 100644
+--- a/fs/cramfs/inode.c
++++ b/fs/cramfs/inode.c
+@@ -44,58 +44,13 @@ static DEFINE_MUTEX(read_mutex);
+ static int cramfs_iget5_test(struct inode *inode, void *opaque)
+ {
+ 	struct cramfs_inode *cramfs_inode = opaque;
+-
+-	if (inode->i_ino != CRAMINO(cramfs_inode))
+-		return 0; /* does not match */
+-
+-	if (inode->i_ino != 1)
+-		return 1;
+-
+-	/* all empty directories, char, block, pipe, and sock, share inode #1 */
+-
+-	if ((inode->i_mode != cramfs_inode->mode) ||
+-	    (inode->i_gid != cramfs_inode->gid) ||
+-	    (inode->i_uid != cramfs_inode->uid))
+-		return 0; /* does not match */
+-
+-	if ((S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode)) &&
+-	    (inode->i_rdev != old_decode_dev(cramfs_inode->size)))
+-		return 0; /* does not match */
+-
+-	return 1; /* matches */
++	return inode->i_ino == CRAMINO(cramfs_inode) && inode->i_ino != 1;
+ }
+ 
+ static int cramfs_iget5_set(struct inode *inode, void *opaque)
+ {
+-	static struct timespec zerotime;
+ 	struct cramfs_inode *cramfs_inode = opaque;
+-	inode->i_mode = cramfs_inode->mode;
+-	inode->i_uid = cramfs_inode->uid;
+-	inode->i_size = cramfs_inode->size;
+-	inode->i_blocks = (cramfs_inode->size - 1) / 512 + 1;
+-	inode->i_gid = cramfs_inode->gid;
+-	/* Struct copy intentional */
+-	inode->i_mtime = inode->i_atime = inode->i_ctime = zerotime;
+ 	inode->i_ino = CRAMINO(cramfs_inode);
+-	/* inode->i_nlink is left 1 - arguably wrong for directories,
+-	   but it's the best we can do without reading the directory
+-           contents.  1 yields the right result in GNU find, even
+-	   without -noleaf option. */
+-	if (S_ISREG(inode->i_mode)) {
+-		inode->i_fop = &generic_ro_fops;
+-		inode->i_data.a_ops = &cramfs_aops;
+-	} else if (S_ISDIR(inode->i_mode)) {
+-		inode->i_op = &cramfs_dir_inode_operations;
+-		inode->i_fop = &cramfs_directory_operations;
+-	} else if (S_ISLNK(inode->i_mode)) {
+-		inode->i_op = &page_symlink_inode_operations;
+-		inode->i_data.a_ops = &cramfs_aops;
+-	} else {
+-		inode->i_size = 0;
+-		inode->i_blocks = 0;
+-		init_special_inode(inode, inode->i_mode,
+-			old_decode_dev(cramfs_inode->size));
+-	}
+ 	return 0;
+ }
+ 
+@@ -105,12 +60,48 @@ static struct inode *get_cramfs_inode(struct super_block *sb,
+ 	struct inode *inode = iget5_locked(sb, CRAMINO(cramfs_inode),
+ 					    cramfs_iget5_test, cramfs_iget5_set,
+ 					    cramfs_inode);
++	static struct timespec zerotime;
++
+ 	if (inode && (inode->i_state & I_NEW)) {
++		inode->i_mode = cramfs_inode->mode;
++		inode->i_uid = cramfs_inode->uid;
++		inode->i_size = cramfs_inode->size;
++		inode->i_blocks = (cramfs_inode->size - 1) / 512 + 1;
++		inode->i_gid = cramfs_inode->gid;
++		/* Struct copy intentional */
++		inode->i_mtime = inode->i_atime = inode->i_ctime = zerotime;
++		/* inode->i_nlink is left 1 - arguably wrong for directories,
++		   but it's the best we can do without reading the directory
++		   contents.  1 yields the right result in GNU find, even
++		   without -noleaf option. */
++		if (S_ISREG(inode->i_mode)) {
++			inode->i_fop = &generic_ro_fops;
++			inode->i_data.a_ops = &cramfs_aops;
++		} else if (S_ISDIR(inode->i_mode)) {
++			inode->i_op = &cramfs_dir_inode_operations;
++			inode->i_fop = &cramfs_directory_operations;
++		} else if (S_ISLNK(inode->i_mode)) {
++			inode->i_op = &page_symlink_inode_operations;
++			inode->i_data.a_ops = &cramfs_aops;
++		} else {
++			inode->i_size = 0;
++			inode->i_blocks = 0;
++			init_special_inode(inode, inode->i_mode,
++				old_decode_dev(cramfs_inode->size));
++		}
+ 		unlock_new_inode(inode);
+ 	}
+ 	return inode;
+ }
+ 
++static void cramfs_drop_inode(struct inode *inode)
++{
++	if (inode->i_ino == 1)
++		generic_delete_inode(inode);
++	else
++		generic_drop_inode(inode);
++}
++
+ /*
+  * We have our own block cache: don't fill up the buffer cache
+  * with the rom-image, because the way the filesystem is set
+@@ -535,6 +526,7 @@ static const struct super_operations cramfs_ops = {
+ 	.put_super	= cramfs_put_super,
+ 	.remount_fs	= cramfs_remount,
+ 	.statfs		= cramfs_statfs,
++	.drop_inode	= cramfs_drop_inode,
+ };
+ 
+ static int cramfs_get_sb(struct file_system_type *fs_type,
+diff --git a/fs/nfsd/nfs4acl.c b/fs/nfsd/nfs4acl.c
+index b6ed383..54b8b41 100644
+--- a/fs/nfsd/nfs4acl.c
++++ b/fs/nfsd/nfs4acl.c
+@@ -443,7 +443,7 @@ init_state(struct posix_acl_state *state, int cnt)
+ 	 * enough space for either:
+ 	 */
+ 	alloc = sizeof(struct posix_ace_state_array)
+-		+ cnt*sizeof(struct posix_ace_state);
++		+ cnt*sizeof(struct posix_user_ace_state);
+ 	state->users = kzalloc(alloc, GFP_KERNEL);
+ 	if (!state->users)
+ 		return -ENOMEM;
+diff --git a/include/linux/fb.h b/include/linux/fb.h
+index 58c57a3..e1ee345 100644
+--- a/include/linux/fb.h
++++ b/include/linux/fb.h
+@@ -966,6 +966,9 @@ static inline void __fb_pad_aligned_buffer(u8 *dst, u32 d_pitch,
+ 
+ /* drivers/video/fb_defio.c */
+ extern void fb_deferred_io_init(struct fb_info *info);
++extern void fb_deferred_io_open(struct fb_info *info,
++				struct inode *inode,
++				struct file *file);
+ extern void fb_deferred_io_cleanup(struct fb_info *info);
+ extern int fb_deferred_io_fsync(struct file *file, struct dentry *dentry,
+ 				int datasync);
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index f7082af..15ff806 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -717,6 +717,9 @@ int move_freepages(struct zone *zone,
+ #endif
+ 
+ 	for (page = start_page; page <= end_page;) {
++		/* Make sure we are not inadvertently changing nodes */
++		VM_BUG_ON(page_to_nid(page) != zone_to_nid(zone));
++
+ 		if (!pfn_valid_within(page_to_pfn(page))) {
+ 			page++;
+ 			continue;
+@@ -2476,6 +2479,10 @@ static void setup_zone_migrate_reserve(struct zone *zone)
+ 			continue;
+ 		page = pfn_to_page(pfn);
+ 
++		/* Watch out for overlapping nodes */
++		if (page_to_nid(page) != zone_to_nid(zone))
++			continue;
++
+ 		/* Blocks with reserved pages will never free, skip them. */
+ 		if (PageReserved(page))
+ 			continue;
+diff --git a/net/sched/sch_prio.c b/net/sched/sch_prio.c
+index 4aa2b45..d11f8d6 100644
+--- a/net/sched/sch_prio.c
++++ b/net/sched/sch_prio.c
+@@ -228,14 +228,20 @@ static int prio_tune(struct Qdisc *sch, struct nlattr *opt)
+ {
+ 	struct prio_sched_data *q = qdisc_priv(sch);
+ 	struct tc_prio_qopt *qopt;
+-	struct nlattr *tb[TCA_PRIO_MAX + 1];
++	struct nlattr *tb[TCA_PRIO_MAX + 1] = {0};
+ 	int err;
+ 	int i;
+ 
+-	err = nla_parse_nested_compat(tb, TCA_PRIO_MAX, opt, NULL, qopt,
+-				      sizeof(*qopt));
+-	if (err < 0)
+-		return err;
++	qopt = nla_data(opt);
++	if (nla_len(opt) < sizeof(*qopt))
++		return -1;
++
++	if (nla_len(opt) >= sizeof(*qopt) + sizeof(struct nlattr)) {
++		err = nla_parse_nested(tb, TCA_PRIO_MAX,
++				       (struct nlattr *) (qopt + 1), NULL);
++		if (err < 0)
++			return err;
++	}
+ 
+ 	q->bands = qopt->bands;
+ 	/* If we're multiqueue, make sure the number of incoming bands
+diff --git a/net/sctp/auth.c b/net/sctp/auth.c
+index 675a5c3..52db5f6 100644
+--- a/net/sctp/auth.c
++++ b/net/sctp/auth.c
+@@ -80,6 +80,10 @@ static struct sctp_auth_bytes *sctp_auth_create_key(__u32 key_len, gfp_t gfp)
+ {
+ 	struct sctp_auth_bytes *key;
+ 
++	/* Verify that we are not going to overflow INT_MAX */
++	if ((INT_MAX - key_len) < sizeof(struct sctp_auth_bytes))
++		return NULL;
++
+ 	/* Allocate the shared key */
+ 	key = kmalloc(sizeof(struct sctp_auth_bytes) + key_len, gfp);
+ 	if (!key)
+@@ -782,6 +786,9 @@ int sctp_auth_ep_set_hmacs(struct sctp_endpoint *ep,
+ 	for (i = 0; i < hmacs->shmac_num_idents; i++) {
+ 		id = hmacs->shmac_idents[i];
+ 
++		if (id > SCTP_AUTH_HMAC_ID_MAX)
++			return -EOPNOTSUPP;
++
+ 		if (SCTP_AUTH_HMAC_ID_SHA1 == id)
+ 			has_sha1 = 1;
+ 
+diff --git a/net/sctp/endpointola.c b/net/sctp/endpointola.c
+index e39a0cd..4c8d9f4 100644
+--- a/net/sctp/endpointola.c
++++ b/net/sctp/endpointola.c
+@@ -103,6 +103,7 @@ static struct sctp_endpoint *sctp_endpoint_init(struct sctp_endpoint *ep,
+ 
+ 		/* Initialize the CHUNKS parameter */
+ 		auth_chunks->param_hdr.type = SCTP_PARAM_CHUNKS;
++		auth_chunks->param_hdr.length = htons(sizeof(sctp_paramhdr_t));
+ 
+ 		/* If the Add-IP functionality is enabled, we must
+ 		 * authenticate, ASCONF and ASCONF-ACK chunks
+@@ -110,8 +111,7 @@ static struct sctp_endpoint *sctp_endpoint_init(struct sctp_endpoint *ep,
+ 		if (sctp_addip_enable) {
+ 			auth_chunks->chunks[0] = SCTP_CID_ASCONF;
+ 			auth_chunks->chunks[1] = SCTP_CID_ASCONF_ACK;
+-			auth_chunks->param_hdr.length =
+-					htons(sizeof(sctp_paramhdr_t) + 2);
++			auth_chunks->param_hdr.length += htons(2);
+ 		}
+ 	}
+ 
+diff --git a/net/sctp/socket.c b/net/sctp/socket.c
+index 2d42260..f8c66d6 100644
+--- a/net/sctp/socket.c
++++ b/net/sctp/socket.c
+@@ -2983,6 +2983,9 @@ static int sctp_setsockopt_auth_chunk(struct sock *sk,
+ {
+ 	struct sctp_authchunk val;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (optlen != sizeof(struct sctp_authchunk))
+ 		return -EINVAL;
+ 	if (copy_from_user(&val, optval, optlen))
+@@ -3011,8 +3014,12 @@ static int sctp_setsockopt_hmac_ident(struct sock *sk,
+ 				    int optlen)
+ {
+ 	struct sctp_hmacalgo *hmacs;
++	u32 idents;
+ 	int err;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (optlen < sizeof(struct sctp_hmacalgo))
+ 		return -EINVAL;
+ 
+@@ -3025,8 +3032,9 @@ static int sctp_setsockopt_hmac_ident(struct sock *sk,
+ 		goto out;
+ 	}
+ 
+-	if (hmacs->shmac_num_idents == 0 ||
+-	    hmacs->shmac_num_idents > SCTP_AUTH_NUM_HMACS) {
++	idents = hmacs->shmac_num_idents;
++	if (idents == 0 || idents > SCTP_AUTH_NUM_HMACS ||
++	    (idents * sizeof(u16)) > (optlen - sizeof(struct sctp_hmacalgo))) {
+ 		err = -EINVAL;
+ 		goto out;
+ 	}
+@@ -3051,6 +3059,9 @@ static int sctp_setsockopt_auth_key(struct sock *sk,
+ 	struct sctp_association *asoc;
+ 	int ret;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (optlen <= sizeof(struct sctp_authkey))
+ 		return -EINVAL;
+ 
+@@ -3063,6 +3074,11 @@ static int sctp_setsockopt_auth_key(struct sock *sk,
+ 		goto out;
+ 	}
+ 
++	if (authkey->sca_keylength > optlen - sizeof(struct sctp_authkey)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
+ 	asoc = sctp_id2assoc(sk, authkey->sca_assoc_id);
+ 	if (!asoc && authkey->sca_assoc_id && sctp_style(sk, UDP)) {
+ 		ret = -EINVAL;
+@@ -3088,6 +3104,9 @@ static int sctp_setsockopt_active_key(struct sock *sk,
+ 	struct sctp_authkeyid val;
+ 	struct sctp_association *asoc;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (optlen != sizeof(struct sctp_authkeyid))
+ 		return -EINVAL;
+ 	if (copy_from_user(&val, optval, optlen))
+@@ -3113,6 +3132,9 @@ static int sctp_setsockopt_del_key(struct sock *sk,
+ 	struct sctp_authkeyid val;
+ 	struct sctp_association *asoc;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (optlen != sizeof(struct sctp_authkeyid))
+ 		return -EINVAL;
+ 	if (copy_from_user(&val, optval, optlen))
+@@ -5073,19 +5095,29 @@ static int sctp_getsockopt_maxburst(struct sock *sk, int len,
+ static int sctp_getsockopt_hmac_ident(struct sock *sk, int len,
+ 				    char __user *optval, int __user *optlen)
+ {
++	struct sctp_hmacalgo  __user *p = (void __user *)optval;
+ 	struct sctp_hmac_algo_param *hmacs;
+-	__u16 param_len;
++	__u16 data_len = 0;
++	u32 num_idents;
++
++	if (!sctp_auth_enable)
++		return -EACCES;
+ 
+ 	hmacs = sctp_sk(sk)->ep->auth_hmacs_list;
+-	param_len = ntohs(hmacs->param_hdr.length);
++	data_len = ntohs(hmacs->param_hdr.length) - sizeof(sctp_paramhdr_t);
+ 
+-	if (len < param_len)
++	if (len < sizeof(struct sctp_hmacalgo) + data_len)
+ 		return -EINVAL;
++
++	len = sizeof(struct sctp_hmacalgo) + data_len;
++	num_idents = data_len / sizeof(u16);
++
+ 	if (put_user(len, optlen))
+ 		return -EFAULT;
+-	if (copy_to_user(optval, hmacs->hmac_ids, len))
++	if (put_user(num_idents, &p->shmac_num_idents))
++		return -EFAULT;
++	if (copy_to_user(p->shmac_idents, hmacs->hmac_ids, data_len))
+ 		return -EFAULT;
+-
+ 	return 0;
+ }
+ 
+@@ -5095,6 +5127,9 @@ static int sctp_getsockopt_active_key(struct sock *sk, int len,
+ 	struct sctp_authkeyid val;
+ 	struct sctp_association *asoc;
+ 
++	if (!sctp_auth_enable)
++		return -EACCES;
++
+ 	if (len < sizeof(struct sctp_authkeyid))
+ 		return -EINVAL;
+ 	if (copy_from_user(&val, optval, sizeof(struct sctp_authkeyid)))
+@@ -5109,6 +5144,12 @@ static int sctp_getsockopt_active_key(struct sock *sk, int len,
+ 	else
+ 		val.scact_keynumber = sctp_sk(sk)->ep->active_key_id;
+ 
++	len = sizeof(struct sctp_authkeyid);
++	if (put_user(len, optlen))
++		return -EFAULT;
++	if (copy_to_user(optval, &val, len))
++		return -EFAULT;
++
+ 	return 0;
+ }
+ 
+@@ -5119,13 +5160,16 @@ static int sctp_getsockopt_peer_auth_chunks(struct sock *sk, int len,
+ 	struct sctp_authchunks val;
+ 	struct sctp_association *asoc;
+ 	struct sctp_chunks_param *ch;
+-	u32    num_chunks;
++	u32    num_chunks = 0;
+ 	char __user *to;
+ 
+-	if (len <= sizeof(struct sctp_authchunks))
++	if (!sctp_auth_enable)
++		return -EACCES;
++
++	if (len < sizeof(struct sctp_authchunks))
+ 		return -EINVAL;
+ 
+-	if (copy_from_user(&val, p, sizeof(struct sctp_authchunks)))
++	if (copy_from_user(&val, optval, sizeof(struct sctp_authchunks)))
+ 		return -EFAULT;
+ 
+ 	to = p->gauth_chunks;
+@@ -5134,20 +5178,21 @@ static int sctp_getsockopt_peer_auth_chunks(struct sock *sk, int len,
+ 		return -EINVAL;
+ 
+ 	ch = asoc->peer.peer_chunks;
++	if (!ch)
++		goto num;
+ 
+ 	/* See if the user provided enough room for all the data */
+ 	num_chunks = ntohs(ch->param_hdr.length) - sizeof(sctp_paramhdr_t);
+ 	if (len < num_chunks)
+ 		return -EINVAL;
+ 
+-	len = num_chunks;
+-	if (put_user(len, optlen))
++	if (copy_to_user(to, ch->chunks, num_chunks))
+ 		return -EFAULT;
++num:
++	len = sizeof(struct sctp_authchunks) + num_chunks;
++	if (put_user(len, optlen)) return -EFAULT;
+ 	if (put_user(num_chunks, &p->gauth_number_of_chunks))
+ 		return -EFAULT;
+-	if (copy_to_user(to, ch->chunks, len))
+-		return -EFAULT;
+-
+ 	return 0;
+ }
+ 
+@@ -5158,13 +5203,16 @@ static int sctp_getsockopt_local_auth_chunks(struct sock *sk, int len,
+ 	struct sctp_authchunks val;
+ 	struct sctp_association *asoc;
+ 	struct sctp_chunks_param *ch;
+-	u32    num_chunks;
++	u32    num_chunks = 0;
+ 	char __user *to;
+ 
+-	if (len <= sizeof(struct sctp_authchunks))
++	if (!sctp_auth_enable)
++		return -EACCES;
++
++	if (len < sizeof(struct sctp_authchunks))
+ 		return -EINVAL;
+ 
+-	if (copy_from_user(&val, p, sizeof(struct sctp_authchunks)))
++	if (copy_from_user(&val, optval, sizeof(struct sctp_authchunks)))
+ 		return -EFAULT;
+ 
+ 	to = p->gauth_chunks;
+@@ -5177,17 +5225,21 @@ static int sctp_getsockopt_local_auth_chunks(struct sock *sk, int len,
+ 	else
+ 		ch = sctp_sk(sk)->ep->auth_chunk_list;
+ 
++	if (!ch)
++		goto num;
++
+ 	num_chunks = ntohs(ch->param_hdr.length) - sizeof(sctp_paramhdr_t);
+-	if (len < num_chunks)
++	if (len < sizeof(struct sctp_authchunks) + num_chunks)
+ 		return -EINVAL;
+ 
+-	len = num_chunks;
++	if (copy_to_user(to, ch->chunks, num_chunks))
++		return -EFAULT;
++num:
++	len = sizeof(struct sctp_authchunks) + num_chunks;
+ 	if (put_user(len, optlen))
+ 		return -EFAULT;
+ 	if (put_user(num_chunks, &p->gauth_number_of_chunks))
+ 		return -EFAULT;
+-	if (copy_to_user(to, ch->chunks, len))
+-		return -EFAULT;
+ 
+ 	return 0;
+ }
+diff --git a/net/sunrpc/sysctl.c b/net/sunrpc/sysctl.c
+index 0f8c439..5231f7a 100644
+--- a/net/sunrpc/sysctl.c
++++ b/net/sunrpc/sysctl.c
+@@ -60,24 +60,14 @@ static int proc_do_xprt(ctl_table *table, int write, struct file *file,
+ 			void __user *buffer, size_t *lenp, loff_t *ppos)
+ {
+ 	char tmpbuf[256];
+-	int len;
++	size_t len;
++
+ 	if ((*ppos && !write) || !*lenp) {
+ 		*lenp = 0;
+ 		return 0;
+ 	}
+-	if (write)
+-		return -EINVAL;
+-	else {
+-		len = svc_print_xprts(tmpbuf, sizeof(tmpbuf));
+-		if (!access_ok(VERIFY_WRITE, buffer, len))
+-			return -EFAULT;
+-
+-		if (__copy_to_user(buffer, tmpbuf, len))
+-			return -EFAULT;
+-	}
+-	*lenp -= len;
+-	*ppos += len;
+-	return 0;
++	len = svc_print_xprts(tmpbuf, sizeof(tmpbuf));
++	return simple_read_from_buffer(buffer, *lenp, ppos, tmpbuf, len);
+ }
+ 
+ static int

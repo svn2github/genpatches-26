@@ -1,0 +1,28 @@
+From: Gordon Malm <bugs-gentoo-org-02@bumpin.org>
+
+Thinkpad ACPI: Fix potential NULL pointer dereference.
+
+Fixes security bug #222331
+
+---
+http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=90fe17f4df2f830601ffd422b11d1f7f9a9d0355
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+thinkpad_acpi: fix possible NULL pointer dereference if kstrdup failed
+ 
+Signed-off-by: Cyrill Gorcunov <gorcunov@gmail.com>
+Acked-by: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Len Brown <len.brown@intel.com>
+---
+
+--- a/drivers/misc/thinkpad_acpi.c
++++ b/drivers/misc/thinkpad_acpi.c
+@@ -5826,7 +5826,7 @@ static void __init get_thinkpad_model_da
+ 
+ 	tp->model_str = kstrdup(dmi_get_system_info(DMI_PRODUCT_VERSION),
+ 					GFP_KERNEL);
+-	if (strnicmp(tp->model_str, "ThinkPad", 8) != 0) {
++	if (tp->model_str && strnicmp(tp->model_str, "ThinkPad", 8) != 0) {
+ 		kfree(tp->model_str);
+ 		tp->model_str = NULL;
+ 	}
