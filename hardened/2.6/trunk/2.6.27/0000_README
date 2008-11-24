@@ -3,7 +3,7 @@ README
 
 Individual Patch Descriptions:
 -----------------------------------------------------------------------------
-Patch:	4420_grsec-2.1.12-2.6.27.6-200811191750.patch
+Patch:	4420_grsec-2.1.12-2.6.27.7-200811201849.patch
 From:	http://www.grsecurity.net
 Desc:	hardened-sources base patch from upstream grsecurity
 	
