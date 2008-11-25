@@ -99,6 +99,10 @@ Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
 
+Patch:	2700_hda-asus-mic-input.patch
+From:	http://bugs.gentoo.org/235732
+Desc:	Fix microphone input regression on Asus laptops
+
 Patch:	2900_linux-2.6.27-makefile.patch
 From:	http://www.kernel.org
 Desc:	Makefile patch
