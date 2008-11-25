@@ -107,10 +107,6 @@ Patch:	2900_linux-2.6.27-makefile.patch
 From:	http://www.kernel.org
 Desc:	Makefile patch
 
-Patch:	2905_clockevents-resume-regression.patch
-From:	http://bugs.gentoo.org/245927
-Desc:	Fix clockevents-related resume regression
-
 Patch:	4105_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
