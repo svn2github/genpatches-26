@@ -75,6 +75,10 @@ Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
 
+Patch:	2200_sb600-acpi-irq0-override.patch
+From:	http://bugs.gentoo.org/245158
+Desc:	Fix ACPI-related performance degradation on HP laptops
+
 Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
