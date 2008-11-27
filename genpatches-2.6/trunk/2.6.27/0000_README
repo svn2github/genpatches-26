@@ -67,6 +67,10 @@ Patch:	1006_linux-2.6.27.7.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.27.7
 
+Patch:	1500_inotify-watch-removal-race.patch
+From:	http://bugs.gentoo.org/248754
+Desc:	Fix potential inotify watch removal race
+
 Patch:	1700_HP-laptop-dmi-quirk-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245158
 Desc:	dmi quirk call fix for HP laptops
