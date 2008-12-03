@@ -1,0 +1,92 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+PaX: Add changes from pax-2.6.26.7-test33 which are not
+integrated into main grsecurity-2.6.26.X patch.
+
+--- a/arch/mips/kernel/binfmt_elfn32.c
++++ b/arch/mips/kernel/binfmt_elfn32.c
+@@ -51,10 +51,10 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_N
+ #define ELF_ET_DYN_BASE         (TASK32_SIZE / 3 * 2)
+ 
+ #ifdef CONFIG_PAX_ASLR
+-#define PAX_ELF_ET_DYN_BASE	((current->thread.mflags & MF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
++#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
+ 
+-#define PAX_DELTA_MMAP_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+-#define PAX_DELTA_STACK_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+ #endif
+ 
+ #include <asm/processor.h>
+--- a/arch/mips/kernel/binfmt_elfo32.c
++++ b/arch/mips/kernel/binfmt_elfo32.c
+@@ -53,10 +53,10 @@ typedef elf_fpreg_t elf_fpregset_t[ELF_N
+ #define ELF_ET_DYN_BASE         (TASK32_SIZE / 3 * 2)
+ 
+ #ifdef CONFIG_PAX_ASLR
+-#define PAX_ELF_ET_DYN_BASE	((current->thread.mflags & MF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
++#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
+ 
+-#define PAX_DELTA_MMAP_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+-#define PAX_DELTA_STACK_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+ #endif
+ 
+ #include <asm/processor.h>
+--- a/arch/mips/kernel/process.c
++++ b/arch/mips/kernel/process.c
+@@ -464,15 +464,3 @@ unsigned long get_wchan(struct task_stru
+ out:
+ 	return pc;
+ }
+-
+-/*
+- * Don't forget that the stack pointer must be aligned on a 8 bytes
+- * boundary for 32-bits ABI and 16 bytes for 64-bits ABI.
+- */
+-unsigned long arch_align_stack(unsigned long sp)
+-{
+-	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
+-		sp -= get_random_int() & ~PAGE_MASK;
+-
+-	return sp & ALMASK;
+-}
+--- a/include/asm-mips/elf.h
++++ b/include/asm-mips/elf.h
+@@ -369,10 +369,10 @@ extern int dump_task_fpu(struct task_str
+ #endif
+ 
+ #ifdef CONFIG_PAX_ASLR
+-#define PAX_ELF_ET_DYN_BASE	((current->thread.mflags & MF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
++#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT_ADDR) ? 0x00400000UL : 0x00400000UL)
+ 
+-#define PAX_DELTA_MMAP_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+-#define PAX_DELTA_STACK_LEN	((current->thread.mflags & MF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
++#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT_ADDR) ? 27-PAGE_SHIFT : 36-PAGE_SHIFT)
+ #endif
+ 
+ #endif /* _ASM_ELF_H */
+--- a/include/asm-mips/system.h
++++ b/include/asm-mips/system.h
+@@ -215,6 +215,6 @@ extern void per_cpu_trap_init(void);
+  */
+ #define __ARCH_WANT_UNLOCKED_CTXSW
+ 
+-#define arch_align_stack(x) (x)
++#define arch_align_stack(x) ((x) & ALMASK)
+ 
+ #endif /* _ASM_SYSTEM_H */
+--- a/include/asm-x86/system.h
++++ b/include/asm-x86/system.h
+@@ -325,7 +325,7 @@ void enable_hlt(void);
+ extern int es7000_plat;
+ void cpu_idle_wait(void);
+ 
+-#define arch_align_stack(x) (x)
++#define arch_align_stack(x) ((x) & ~0xfUL)
+ extern void free_init_pages(char *what, unsigned long begin, unsigned long end);
+ 
+ void default_idle(void);
