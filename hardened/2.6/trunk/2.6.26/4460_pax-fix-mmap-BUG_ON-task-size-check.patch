@@ -1,0 +1,22 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+Fix incorrect vma task size check under SEGMEXEC.
+
+Fixes bug #246607.
+
+Thanks to Hugo Mildenberger for reporting and PaX Team for the fix.
+
+This patch is present in upstream grsecurity patches as of
+pax-linux-2.6.27.7-test22.patch.
+
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1719,7 +1719,7 @@ struct vm_area_struct *pax_find_mirror_v
+ 		BUG_ON(vma->vm_mirror);
+ 		return NULL;
+ 	}
+-	BUG_ON(vma->vm_end - SEGMEXEC_TASK_SIZE - 1 < vma->vm_start - SEGMEXEC_TASK_SIZE - 1);
++	BUG_ON(vma->vm_start < SEGMEXEC_TASK_SIZE && SEGMEXEC_TASK_SIZE < vma->vm_end);
+ 	vma_m = vma->vm_mirror;
+ 	BUG_ON(!vma_m || vma_m->vm_mirror != vma);
+ 	BUG_ON(vma->vm_file != vma_m->vm_file);

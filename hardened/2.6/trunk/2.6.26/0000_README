@@ -3,21 +3,19 @@ README
 
 Individual Patch Descriptions:
 -----------------------------------------------------------------------------
-Patch:	1006_linux-2.6.26.7.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.26.7
+Patch:	1401* -> 1413*
+From	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=ff413e9814b3914ddf3d4634e9a6cc1c6b21e787
+Desc:	Backported subset of 2.6.27.6 -stable release patches
 
-Patch:	1007_linux-2.6.26.8.patch
-From:	http://www.kernel.org
-Desc:	Linux 2.6.26.8
+Patch:	1414* -> 1423*
+From	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=526550b7f86d9d395ee1b27ed804e6ffc3feb17c
+Desc:	Backported subset of 2.6.27.7 -stable release patches
 
-Patch:	1503_hfsplus-check-read_mapping_page-return-value.patch
-From:	Eric Sesterhenn <snakebyte@gmx.de>
-Desc:	hfsplus: check return value of read_mapping_page()
-
-Patch:	1504_hfsplus-fix-buffer-overflow-with-a-corrupted-image.patch
-From:	Eric Sesterhenn <snakebyte@gmx.de>
-Desc:	hfsplus: fix buffer overflow when mounting corrupted image
+Patch:	1503_inotify-fix-watch-removal-or-umount-races.patch
+From:	Al Viro <viro@ZenIV.linux.org.uk>
+Desc:	Fix inotify watch removal/umount races (bug #248754)
 
 Patch:	4420_grsec-2.1.12-2.6.26.6-200810131006.patch
 From:	http://www.grsecurity.net
@@ -60,3 +58,15 @@ Desc:	Disables VDSO_COMPAT operation completely
 Patch:	4450_pax-2.6.26.7-test32-to-test33.patch
 From:	Gordon Malm <gengor@gentoo.org>
 Desc:	Adds PaX changes from pax-2.6.26.7-test33
+
+Patch:	4455_grsec-make-PAX_REFCOUNT-conditional-on-x86.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Make selection of PAX_REFCOUNT depend on X86 (bug #246763)
+
+Patch:	4460_pax-fix-mmap-BUG_ON-task-size-check.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fix incorrect vma task size check under SEGMEXEC
+
+Patch:	4465_pax-fix-false-RLIMIT_STACK-warnings.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fix false-positive RLIMIT_STACK warnings
