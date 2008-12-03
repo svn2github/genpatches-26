@@ -1,0 +1,17 @@
+From: Kerin Millar <kerframil@gmail.com>
+
+This is a backport to 2.6.25 of commit 612f39d5e7baeb0518cfe50d53e37e14c0ca1475
+from Ingo Molnar, which disables hrtick (high-resolution preemption ticks). For
+further information, please refer to Gentoo Bug #247453.
+
+--- a/kernel/sched.c	2008-04-17 03:49:44.000000000 +0100
++++ b/kernel/sched.c	2008-11-18 20:30:33.000000000 +0000
+@@ -602,7 +602,7 @@
+ 		SCHED_FEAT_NEW_FAIR_SLEEPERS	* 1 |
+ 		SCHED_FEAT_WAKEUP_PREEMPT	* 1 |
+ 		SCHED_FEAT_START_DEBIT		* 1 |
+-		SCHED_FEAT_HRTICK		* 1 |
++		SCHED_FEAT_HRTICK		* 0 |
+ 		SCHED_FEAT_DOUBLE_TICK		* 0;
+ 
+ #define sched_feat(x) (sysctl_sched_features & SCHED_FEAT_##x)
