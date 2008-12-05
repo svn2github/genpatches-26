@@ -1,8 +1,8 @@
 From: Jean-Marc Spaggiari <jean-marc@spaggiari.org>
-Date: Mon, 27 Oct 2008 23:32:00 +0000 (+1100)
+Date: Mon, 1 Dec 2008 22:24:31 +0000 (+1100)
 Subject: hwmon: (it87) Add support for the ITE IT8720F
-X-Git-Tag: next-20081028~38^2
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fsfr%2Flinux-next.git;a=commitdiff_plain;h=47fd550939fc9f1dd0a20a59d4db83f9b7a164ad
+X-Git-Tag: next-20081203~53^2~6
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fsfr%2Flinux-next.git;a=commitdiff_plain;h=19ec1c4104174bdfb04ddbb09546a1b4bc64f6c2
 
 hwmon: (it87) Add support for the ITE IT8720F
 
@@ -74,10 +74,10 @@ index 042c041..659315d 100644
  the mainboard and/or processor itself. It is a value in volts.
  
 diff --git a/drivers/hwmon/Kconfig b/drivers/hwmon/Kconfig
-index 032593b..9551e40 100644
+index 2be02d3..e6e2b7d 100644
 --- a/drivers/hwmon/Kconfig
 +++ b/drivers/hwmon/Kconfig
-@@ -389,7 +389,8 @@ config SENSORS_IT87
+@@ -399,7 +399,8 @@ config SENSORS_IT87
  	select HWMON_VID
  	help
  	  If you say yes here you get support for ITE IT8705F, IT8712F,
@@ -205,75 +205,3 @@ index b74c957..0e0d692 100644
  module_param(update_vbat, bool, 0);
  MODULE_PARM_DESC(update_vbat, "Update vbat if set else return powerup value");
  module_param(fix_pwm_polarity, bool, 0);
-
-From: Jean Delvare <khali@linux-fr.org>
-Date: Fri, 17 Oct 2008 15:51:16 +0000 (+0200)
-Subject: hwmon: (it87) Fix thermal sensor type values
-X-Git-Tag: v2.6.28-rc1~259^2~18
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=4ed1077953f531b3fef4af4b4ade48a828c48869
-
-hwmon: (it87) Fix thermal sensor type values
-
-The it87 driver doesn't follow the standard sensor type values as
-documented in Documentation/hwmon/sysfs-interface. It uses value 2 for
-thermistors instead of value 4. This causes "sensors" to tell the user
-that the chip is setup for a transistor while it is actually setup for
-a thermistor.
-
-Using value 4 for thermistors solves the problem. For compatibility
-reasons, we still accept value 2 but emit a warning message so that
-users update their configuration files.
-
-Signed-off-by: Jean Delvare <khali@linux-fr.org>
-Acked-by: Hans de Goede <hdegoede@redhat.com>
----
-
-diff --git a/Documentation/hwmon/it87 b/Documentation/hwmon/it87
-index 3496b70..042c041 100644
---- a/Documentation/hwmon/it87
-+++ b/Documentation/hwmon/it87
-@@ -136,10 +136,10 @@ once-only alarms.
- The IT87xx only updates its values each 1.5 seconds; reading it more often
- will do no harm, but will return 'old' values.
- 
--To change sensor N to a thermistor, 'echo 2 > tempN_type' where N is 1, 2,
-+To change sensor N to a thermistor, 'echo 4 > tempN_type' where N is 1, 2,
- or 3. To change sensor N to a thermal diode, 'echo 3 > tempN_type'.
- Give 0 for unused sensor. Any other value is invalid. To configure this at
--startup, consult lm_sensors's /etc/sensors.conf. (2 = thermistor;
-+startup, consult lm_sensors's /etc/sensors.conf. (4 = thermistor;
- 3 = thermal diode)
- 
- 
-diff --git a/drivers/hwmon/it87.c b/drivers/hwmon/it87.c
-index d793cc0..b74c957 100644
---- a/drivers/hwmon/it87.c
-+++ b/drivers/hwmon/it87.c
-@@ -477,7 +477,7 @@ static ssize_t show_sensor(struct device *dev, struct device_attribute *attr,
- 	if (reg & (1 << nr))
- 		return sprintf(buf, "3\n");  /* thermal diode */
- 	if (reg & (8 << nr))
--		return sprintf(buf, "2\n");  /* thermistor */
-+		return sprintf(buf, "4\n");  /* thermistor */
- 	return sprintf(buf, "0\n");      /* disabled */
- }
- static ssize_t set_sensor(struct device *dev, struct device_attribute *attr,
-@@ -493,10 +493,15 @@ static ssize_t set_sensor(struct device *dev, struct device_attribute *attr,
- 
- 	data->sensor &= ~(1 << nr);
- 	data->sensor &= ~(8 << nr);
--	/* 3 = thermal diode; 2 = thermistor; 0 = disabled */
-+	if (val == 2) {	/* backwards compatibility */
-+		dev_warn(dev, "Sensor type 2 is deprecated, please use 4 "
-+			 "instead\n");
-+		val = 4;
-+	}
-+	/* 3 = thermal diode; 4 = thermistor; 0 = disabled */
- 	if (val == 3)
- 	    data->sensor |= 1 << nr;
--	else if (val == 2)
-+	else if (val == 4)
- 	    data->sensor |= 8 << nr;
- 	else if (val != 0) {
- 		mutex_unlock(&data->update_lock);
-
