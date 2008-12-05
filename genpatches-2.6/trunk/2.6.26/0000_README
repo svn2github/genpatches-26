@@ -79,6 +79,10 @@ Patch:	1502_wan-sbni_ioctl-add-missing-capability-checks.patch
 From:	http://www.kernel.org
 Desc:	Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
 
+Patch:	1505_inotify-watch-removal-race.patch
+From:	http://bugs.gentoo.org/248754
+Desc:	Fix potential inotify security issue
+
 Patch:	1800_sched-disable-hrtick.patch
 From:	http://bugs.gentoo.org/247453
 Desc:	Disable high-resolution scheduler ticks to avoid performance regression
