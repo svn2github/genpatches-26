@@ -1,0 +1,32 @@
+From: Ingo Molnar <mingo@elte.hu>
+Date: Mon, 20 Oct 2008 12:27:43 +0000 (+0200)
+Subject: sched: disable the hrtick for now
+X-Git-Tag: v2.6.28-rc1~43^2
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=0c4b83da58ec2e96ce9c44c211d6eac5f9dae478
+
+sched: disable the hrtick for now
+
+David Miller reported that hrtick update overhead has tripled the
+wakeup overhead on Sparc64.
+
+That is too much - disable the HRTICK feature for now by default,
+until a faster implementation is found.
+
+Reported-by: David Miller <davem@davemloft.net>
+Acked-by: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+---
+
+diff --git a/kernel/sched_features.h b/kernel/sched_features.h
+index 7c9e8f4..fda0162 100644
+--- a/kernel/sched_features.h
++++ b/kernel/sched_features.h
+@@ -5,7 +5,7 @@ SCHED_FEAT(START_DEBIT, 1)
+ SCHED_FEAT(AFFINE_WAKEUPS, 1)
+ SCHED_FEAT(CACHE_HOT_BUDDY, 1)
+ SCHED_FEAT(SYNC_WAKEUPS, 1)
+-SCHED_FEAT(HRTICK, 1)
++SCHED_FEAT(HRTICK, 0)
+ SCHED_FEAT(DOUBLE_TICK, 0)
+ SCHED_FEAT(ASYM_GRAN, 1)
+ SCHED_FEAT(LB_BIAS, 1)
