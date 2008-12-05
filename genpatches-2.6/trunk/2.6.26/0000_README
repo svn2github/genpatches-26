@@ -71,6 +71,10 @@ Patch:	1007_linux-2.6.26.8.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.26.8
 
+Patch:	1500_unix-socket-oom.patch
+From:	http://bugs.gentoo.org/249729
+Desc:	Fix AF_UNIX garbage collection security issue
+
 Patch:	1502_wan-sbni_ioctl-add-missing-capability-checks.patch
 From:	http://www.kernel.org
 Desc:	Adds missing capability checks in drivers/net/wan/sbni.c -> sbni_ioctl()
