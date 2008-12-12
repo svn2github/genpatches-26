@@ -107,6 +107,10 @@ Patch:	2300_btusb-quirks.patch
 From:	http://bugs.gentoo.org/249523
 Desc:	Add device quirks to btusb driver
 
+Patch:	2500_pentax-k10d-wrong-capacity.patch
+From:	http://bugs.gentoo.org/250406
+Desc:	Fix capacity reported by Pentax K10D camera
+
 Patch:	2600_evdev-compat-ioctl-force-feedback.patch
 From:	http://bugs.gentoo.org/214700
 Desc:	Fix evdev force feedback in 32-bit compat mode
