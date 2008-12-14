@@ -71,6 +71,10 @@ Patch:	1007_linux-2.6.27.8.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.27.8
 
+Patch:	1008_linux-2.6.27.9.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.27.9
+
 Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
