@@ -76,8 +76,12 @@ From:	http://www.kernel.org
 Desc:	Linux 2.6.27.9
 
 Patch:	1800_revert-clock-backwards-fix.patch
-From:	https://bugs.gentoo.org/show_bug.cgi?id=249498
-Desc:	Fix a 2.6.27 suspend/resume regression
+From:	http://bugs.gentoo.org/249498
+Desc:	Fix a 2.6.27.5 suspend/resume regression
+
+Patch:	1805_vmi-boot-crash.patch
+From:	http://bugs.gentoo.org/249751
+Desc:	Fix vmware guest crash-on-boot
 
 Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
