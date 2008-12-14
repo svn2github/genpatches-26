@@ -95,9 +95,13 @@ Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
 
-Patch:	2900_IT8720-chipset-support-and-type-values-fix.patch
+Patch:	2900_it87-support-it8720.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
-Desc:	Patch to retrieve sensor information from the IT8720 chipset and type values fixes
+Desc:	Patch to retrieve sensor information from the IT8720 chipset
+
+Patch:	2905_it87-sensor-type-values.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
+Desc:	Fix sensor type values for it87 hwmon driver
 
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
