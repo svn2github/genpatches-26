@@ -9,6 +9,7 @@
 use File::Basename;
 use File::Copy;
 use URI::Escape;
+use Cwd;
 use gentoo_sources_web;
 
 make_index_page();
@@ -158,6 +159,15 @@ sub generate_issues_resolved {
 	close(FD);
 }
 
+sub order_kernel {
+	my $pkgCmp = ($a->{'pkg'} cmp $b->{'pkg'});
+	if ($pkgCmp != 0) {
+		return $pkgCmp;
+	} else {
+		return ($a->{'ver'} cmp $b->{'ver'});
+	}
+}
+
 sub make_kernels_page {
 	local *FD;
 	my $kernel;
@@ -169,7 +179,7 @@ sub make_kernels_page {
 	print FD '<h1>Available Kernels</h1>';
 	print FD '<table class="kernels">';
 	print FD '<tr><th>Kernel</th><th>Version</th><th>Genpatches</th></tr>';
-	foreach $kernel (values %kernels) {
+	foreach $kernel (sort order_kernel (values %kernels)) {
 		print FD '<tr>';
 		print FD '<td>'.$kernel->{'pkg'}.'</td>';
 		print FD '<td>'.$kernel->{'ver'}.'</td>';

@@ -1,14 +1,20 @@
 # Copyright 2000-2005 Gentoo Foundation; Distributed under the GPL v2
 
-$genpatches_path = '/home/dsd/projects/gentoo/genpatches';
-$subversion_root = 'svn+ssh://svn.gentoo.org/var/svnroot/linux-patches/genpatches-2.6';
-$webscript_path = '/home/dsd/projects/gentoo/genpatches-misc/web';
+$subversion_scheme = `svn info | head -n 2 | tail -n 1`;
+$subversion_scheme =~ s|^URL: ([a-z][a-z0-9+-.]*)://.*|\1|s;
+if ($subversion_scheme =~ m/ssh/) {
+  $subversion_midpart = 'svn.gentoo.org/var/svnroot';
+} else {
+  $subversion_midpart = 'anonsvn.gentoo.org';
+}
+$subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
+$webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
 $website_base = 'http://dev.gentoo.org/~dsd/genpatches';
 
-$ebuild_base = '/usr/local/gentoo-x86';
-@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/hardened-sources', 'sys-kernel/xen-sources', 'sys-kernel/rsbac-sources', 'sys-kernel/tuxonice-sources', 'sys-kernel/usermode-sources', 'sys-kernel/suspend2-sources', 'sys-kernel/vserver-sources');
+$ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
+@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/hardened-sources', 'sys-kernel/xen-sources', 'sys-kernel/rsbac-sources', 'sys-kernel/tuxonice-sources', 'sys-kernel/usermode-sources', 'sys-kernel/vserver-sources');
 
 sub html_header {
 	local *FD = shift;
