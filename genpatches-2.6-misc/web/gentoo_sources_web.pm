@@ -179,16 +179,16 @@ sub _get_patch_list {
 	foreach (@readme_lines) {
 		chomp;
 		
-		if (/^[Pp]atch:\t(.*)$/) {
+		if (/^[Pp]atch:[ \t]+(.*)$/) {
 			$count++;
 			$patches[$count]{'patch'} = $1;
 		}
 
-		if (/^[Ff]rom:\t(.*)$/) {
+		if (/^[Ff]rom:[ \t]+(.*)$/) {
 			$patches[$count]{'from'} = $1;
 		}
 
-		if (/^[Dd]esc:\t(.*)$/) {
+		if (/^[Dd]esc:[ \t]+(.*)$/) {
 			$patches[$count]{'desc'} = $1;
 		}
 	}
