@@ -75,6 +75,10 @@ Patch:	1008_linux-2.6.27.9.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.27.9
 
+Patch:	1700_sparc-poweroff-hang.patch
+From:	http://bugs.gentoo.org/229441
+Desc:	Fix shutdown hang on Sun Blade 100
+
 Patch:	1800_revert-clock-backwards-fix.patch
 From:	http://bugs.gentoo.org/249498
 Desc:	Fix a 2.6.27.5 suspend/resume regression
