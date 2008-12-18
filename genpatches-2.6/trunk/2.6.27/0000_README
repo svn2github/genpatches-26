@@ -95,6 +95,10 @@ Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
 
+Patch:	2505_macpower-wrong-capacity.patch
+From:	http://bugs.gentoo.org/250789
+Desc:	Fix capacity reported by Macpower hard drive
+
 Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
