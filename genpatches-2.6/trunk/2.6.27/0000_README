@@ -79,10 +79,6 @@ Patch:	1700_sparc-poweroff-hang.patch
 From:	http://bugs.gentoo.org/229441
 Desc:	Fix shutdown hang on Sun Blade 100
 
-Patch:	2001_setkey-policy-breakage-fix.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
-Desc:	Patch to fix setkey policy breakage
-
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
