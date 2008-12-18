@@ -79,10 +79,6 @@ Patch:	1700_sparc-poweroff-hang.patch
 From:	http://bugs.gentoo.org/229441
 Desc:	Fix shutdown hang on Sun Blade 100
 
-Patch:	1800_revert-clock-backwards-fix.patch
-From:	http://bugs.gentoo.org/249498
-Desc:	Fix a 2.6.27.5 suspend/resume regression
-
 Patch:	2001_setkey-policy-breakage-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245369
 Desc:	Patch to fix setkey policy breakage
