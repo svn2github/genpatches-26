@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 # Copyright 2005 Gentoo Foundation; Distributed under the GPL v2
 
+use Cwd;
 use gentoo_sources_web;
 
 $tag = shift;
