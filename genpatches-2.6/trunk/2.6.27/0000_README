@@ -83,6 +83,14 @@ Patch:	1700_sparc-poweroff-hang.patch
 From:	http://bugs.gentoo.org/229441
 Desc:	Fix shutdown hang on Sun Blade 100
 
+Patch:	1705_s390-00.patch
+From:	http://bugs.gentoo.org/252421
+Desc:	IBM's s390-00 fixes for s390 architecture
+
+Patch:	1710_s390-01.patch
+From:	http://bugs.gentoo.org/252421
+Desc:	IBM's s390-01 fixes for s390 architecture
+
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
