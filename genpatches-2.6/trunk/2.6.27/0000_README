@@ -103,6 +103,10 @@ Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
 
+Patch:	2705_dvb-kconfig-tuner-customize.patch
+From:	http://bugs.gentoo.org/245106
+Desc:	Fix inability to select correct DVB tuner modules
+
 Patch:	2900_it87-support-it8720.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
 Desc:	Patch to retrieve sensor information from the IT8720 chipset
