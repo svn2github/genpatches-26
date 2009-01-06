@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	2300_usb-reenable-interface.patch
+From:	http://bugs.gentoo.org/252997
+Desc:	Fix reuse of USB interfaces from userspace
+
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
