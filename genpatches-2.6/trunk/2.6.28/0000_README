@@ -43,6 +43,10 @@ Patch:	2300_usb-reenable-interface.patch
 From:	http://bugs.gentoo.org/252997
 Desc:	Fix reuse of USB interfaces from userspace
 
+Patch:	2305_uninline-pci-ioremap-bar.patch
+From:	http://bugs.gentoo.org/252488
+Desc:	Move some PCI code around to fix compilation on alpha
+
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
