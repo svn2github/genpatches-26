@@ -47,10 +47,6 @@ Patch:	4200_fbcondecor-0.9.4.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
-Patch:	4300_squashfs-3.3.patch
-From:	http://squashfs.sourceforge.net/
-Desc:	driver to support squashfs filesystems.
-
 Patch:	4400_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	enable control of the unaligned access control policy from sysctl
