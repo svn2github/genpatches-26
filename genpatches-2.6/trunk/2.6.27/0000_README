@@ -91,6 +91,14 @@ Patch:	1710_s390-01.patch
 From:	http://bugs.gentoo.org/252421
 Desc:	IBM's s390-01 fixes for s390 architecture
 
+Patch:	1715_s390-02.patch
+From:	http://bugs.gentoo.org/252421
+Desc:	IBM's s390-02 fixes for s390 architecture
+
+Patch:	1720_s390-03.patch
+From:	http://bugs.gentoo.org/252421
+Desc:	IBM's s390-03 fixes for s390 architecture
+
 Patch:	2300_irda-transfer-breakage.patch
 From:	http://bugs.gentoo.org/254046
 Desc:	Fix data transfer over IrDA
