@@ -47,6 +47,10 @@ Patch:	2305_uninline-pci-ioremap-bar.patch
 From:	http://bugs.gentoo.org/252488
 Desc:	Move some PCI code around to fix compilation on alpha
 
+Patch:	2400_iwl3945-adhoc-disconnect-fix.patch
+From:	http://bugs.gentoo.org/254586
+Desc:	Fix adhoc disconnect issue in iwl3945
+
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
