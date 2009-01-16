@@ -107,6 +107,10 @@ Patch:	2300_irda-transfer-breakage.patch
 From:	http://bugs.gentoo.org/254046
 Desc:	Fix data transfer over IrDA
 
+Patch:	2400_iwl3945-adhoc-disconnect-fix.patch
+From:	http://bugs.gentoo.org/254586
+Desc:	Fix adhoc disconnect issue in iwl3945
+
 Patch:	2500_pentax-k10d-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250406
 Desc:	Fix capacity reported by Pentax K10D camera
