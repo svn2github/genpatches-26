@@ -103,6 +103,10 @@ Patch:	1720_s390-03.patch
 From:	http://bugs.gentoo.org/252421
 Desc:	IBM's s390-03 fixes for s390 architecture
 
+Patch:	1725_alpha-srm-compile-failure.patch
+From:	http://bugs.gentoo.org/254150
+Desc:	Fix irq_srm compile failure on some Alpha platforms
+
 Patch:	2300_irda-transfer-breakage.patch
 From:	http://bugs.gentoo.org/254046
 Desc:	Fix data transfer over IrDA
