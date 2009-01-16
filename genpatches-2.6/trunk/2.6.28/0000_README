@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1725_alpha-srm-compile-failure.patch
+From:	http://bugs.gentoo.org/254150
+Desc:	Fix irq_srm compile failure on some Alpha platforms
+
 Patch:	2300_usb-reenable-interface.patch
 From:	http://bugs.gentoo.org/252997
 Desc:	Fix reuse of USB interfaces from userspace
