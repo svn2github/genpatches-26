@@ -55,6 +55,10 @@ Patch:	2505_macpower-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250789
 Desc:	Fix capacity reported by Macpower hard drive
 
+Patch:	2510_pata-hpt366-boot-hang.patch
+From:	http://bugs.gentoo.org/254793
+Desc:	Fix boot hang with pata_hpt366 driver
+
 Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
