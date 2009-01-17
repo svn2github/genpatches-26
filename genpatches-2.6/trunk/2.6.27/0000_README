@@ -123,6 +123,10 @@ Patch:	2505_macpower-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250789
 Desc:	Fix capacity reported by Macpower hard drive
 
+Patch:	2510_nokia-6300-wrong-capacity.patch
+From:	http://bugs.gentoo.org/254034
+Desc:	Fix capacity reported by Nokia 6300 phone
+
 Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
