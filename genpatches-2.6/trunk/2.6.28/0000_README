@@ -67,6 +67,10 @@ Patch:	2510_pata-hpt366-boot-hang.patch
 From:	http://bugs.gentoo.org/254793
 Desc:	Fix boot hang with pata_hpt366 driver
 
+Patch:	2515_nokia-6300-wrong-capacity.patch
+From:	http://bugs.gentoo.org/254034
+Desc:	Fix capacity reported by Nokia 6300 phone
+
 Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
