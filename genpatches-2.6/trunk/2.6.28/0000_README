@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	1000_linux-2.6.28.1.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.1
+
 Patch:	1725_alpha-srm-compile-failure.patch
 From:	http://bugs.gentoo.org/254150
 Desc:	Fix irq_srm compile failure on some Alpha platforms
@@ -54,10 +58,6 @@ Desc:	Move some PCI code around to fix compilation on alpha
 Patch:	2400_iwl3945-adhoc-disconnect-fix.patch
 From:	http://bugs.gentoo.org/254586
 Desc:	Fix adhoc disconnect issue in iwl3945
-
-Patch:	2500_pentax-k10d-wrong-capacity.patch
-From:	http://bugs.gentoo.org/250406
-Desc:	Fix capacity reported by Pentax K10D camera
 
 Patch:	2505_macpower-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250789
