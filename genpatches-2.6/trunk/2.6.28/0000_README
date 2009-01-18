@@ -75,6 +75,14 @@ Patch:	2700_hda-asus-mic-input.patch
 From:	http://bugs.gentoo.org/235732
 Desc:	Fix microphone input regression on Asus laptops
 
+Patch:	2705_i915-no-vblank-on-disabled-pipe.patch
+From:	http://bugs.gentoo.org/253813
+Desc:	Fix crash with GEM + compiz
+
+Patch:	2710_i915-set-vblank-flag-correctly.patch
+From;	http://bugs.gentoo.org/253813
+Desc:	Fix crash with GEM + compiz
+
 Patch:	2900_IT8720-chipset-support-and-type-values-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
 Desc:	Patch to retrieve sensor information from the IT8720 chipset and type values fixes
