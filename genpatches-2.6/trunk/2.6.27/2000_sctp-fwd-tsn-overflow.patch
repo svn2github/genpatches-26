@@ -26,13 +26,14 @@ less than MIS.
 Signed-off-by: Wei Yongjun <yjwei@cn.fujitsu.com>
 Signed-off-by: Vlad Yasevich <vladislav.yasevich@hp.com>
 Signed-off-by: David S. Miller <davem@davemloft.net>
+[dsd@gentoo.org: rediff for 2.6.27]
 ---
 
-diff --git a/net/sctp/sm_statefuns.c b/net/sctp/sm_statefuns.c
-index 9f2a3eb..1c4e5d6 100644
---- a/net/sctp/sm_statefuns.c
-+++ b/net/sctp/sm_statefuns.c
-@@ -3689,6 +3689,7 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn(const struct sctp_endpoint *ep,
+Index: linux-2.6.27-gentoo-r8/net/sctp/sm_statefuns.c
+===================================================================
+--- linux-2.6.27-gentoo-r8.orig/net/sctp/sm_statefuns.c
++++ linux-2.6.27-gentoo-r8/net/sctp/sm_statefuns.c
+@@ -3635,6 +3635,7 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn(c
  {
  	struct sctp_chunk *chunk = arg;
  	struct sctp_fwdtsn_hdr *fwdtsn_hdr;
@@ -40,7 +41,7 @@ index 9f2a3eb..1c4e5d6 100644
  	__u16 len;
  	__u32 tsn;
  
-@@ -3718,6 +3719,12 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn(const struct sctp_endpoint *ep,
+@@ -3664,6 +3665,12 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn(c
  	if (sctp_tsnmap_check(&asoc->peer.tsn_map, tsn) < 0)
  		goto discard_noforce;
  
@@ -53,7 +54,7 @@ index 9f2a3eb..1c4e5d6 100644
  	sctp_add_cmd_sf(commands, SCTP_CMD_REPORT_FWDTSN, SCTP_U32(tsn));
  	if (len > sizeof(struct sctp_fwdtsn_hdr))
  		sctp_add_cmd_sf(commands, SCTP_CMD_PROCESS_FWDTSN,
-@@ -3749,6 +3756,7 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn_fast(
+@@ -3695,6 +3702,7 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn_f
  {
  	struct sctp_chunk *chunk = arg;
  	struct sctp_fwdtsn_hdr *fwdtsn_hdr;
@@ -61,7 +62,7 @@ index 9f2a3eb..1c4e5d6 100644
  	__u16 len;
  	__u32 tsn;
  
-@@ -3778,6 +3786,12 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn_fast(
+@@ -3724,6 +3732,12 @@ sctp_disposition_t sctp_sf_eat_fwd_tsn_f
  	if (sctp_tsnmap_check(&asoc->peer.tsn_map, tsn) < 0)
  		goto gen_shutdown;
  
