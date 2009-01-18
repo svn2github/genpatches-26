@@ -47,6 +47,10 @@ Patch:	1725_alpha-srm-compile-failure.patch
 From:	http://bugs.gentoo.org/254150
 Desc:	Fix irq_srm compile failure on some Alpha platforms
 
+Patch:	2000_sctp-fwd-tsn-overflow.patch
+From:	http://bugs.gentoo.org/254907
+Desc:	Fix possible memory overflow with SCTP networking
+
 Patch:	2300_usb-reenable-interface.patch
 From:	http://bugs.gentoo.org/252997
 Desc:	Fix reuse of USB interfaces from userspace
