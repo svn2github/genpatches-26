@@ -1,0 +1,78 @@
+README
+-----------------------------------------------------------------------------
+
+Individual Patch Descriptions:
+-----------------------------------------------------------------------------
+Patch:	1401* -> 1413*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=ff413e9814b3914ddf3d4634e9a6cc1c6b21e787
+Desc:	Backported subset of 2.6.27.6 -stable release patches
+
+Patch:	1414* -> 1423*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=526550b7f86d9d395ee1b27ed804e6ffc3feb17c
+Desc:	Backported subset of 2.6.27.7 -stable release patches
+
+Patch:	1424* -> 1425*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=2ef6627be7502193f7c42f694a651fa710507089
+Desc:	Backported subset of 2.6.27.9 -stable release patches
+
+Patch:	1506_sctp-avoid_memory_overflow_with_bad_stream_ID.patch
+From:	Wei Yongjun <yjwei@cn.fujitsu.com>
+Desc:	Avoid memory overflow while FWD-TSN chunk received with bad stream ID
+	(bug #254907)
+
+Patch:	4420_grsec-2.1.12-2.6.26.6-200810131006.patch
+From:	http://www.grsecurity.net
+Desc:	hardened-sources base patch from upstream grsecurity
+	
+Patch:	4421_grsec-remove-localversion-grsec.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Removes grsecurity's localversion-grsec file
+
+Patch:	4422_grsec-mute-warnings.patch
+From:	Alexander Gabert <gaberta@fh-trier.de>
+	Gordon Malm <gengor@gentoo.org>
+Desc:	Removes verbose compile warning settings from grsecurity, restores
+	mainline Linux kernel behavior
+
+Patch:	4425_grsec-pax-without-grsec.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Allows PaX features to be selected without enabling GRKERNSEC
+
+Patch:	4430_grsec-kconfig-default-gids.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Sets sane(r) default GIDs on various grsecurity group-dependent
+	features
+
+Patch:	4435_grsec-kconfig-gentoo.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Adds Hardened Gentoo [server/workstation] security levels, sets
+	Hardened Gentoo [workstation] as default
+
+Patch:	4440_selinux-avc_audit-log-curr_ip.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Configurable option to add src IP address to SELinux log messages
+
+Patch:	4445_disable-compat_vdso.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Disables VDSO_COMPAT operation completely
+
+Patch:	4450_pax-2.6.26.7-test32-to-test33.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Adds PaX changes from pax-2.6.26.7-test33
+
+Patch:	4455_grsec-make-PAX_REFCOUNT-conditional-on-x86.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Make selection of PAX_REFCOUNT depend on X86 (bug #246763)
+
+Patch:	4460_pax-fix-mmap-BUG_ON-task-size-check.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fix incorrect vma task size check under SEGMEXEC
+
+Patch:	4465_pax-fix-false-RLIMIT_STACK-warnings.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fix false-positive RLIMIT_STACK warnings
