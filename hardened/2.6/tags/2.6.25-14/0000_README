@@ -1,0 +1,113 @@
+README
+-----------------------------------------------------------------------------
+
+Individual Patch Descriptions:
+-----------------------------------------------------------------------------
+Patch:	1017_linux-2.6.25.18.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.18
+
+Patch:	1018_linux-2.6.25.19.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.19
+
+Patch:	1019_linux-2.6.25.20.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.25.20
+
+Patch:	1401* -> 1412*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=ff413e9814b3914ddf3d4634e9a6cc1c6b21e787
+Desc:	Backported subset of 2.6.27.6 -stable release patches
+
+Patch:	1413* -> 1422*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=526550b7f86d9d395ee1b27ed804e6ffc3feb17c
+Desc:	Backported subset of 2.6.27.7 -stable release patches
+
+Patch:	1423*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=1db886b63e735c3439e5c2f6813c5207c2206895
+Desc:	Backported subset of 2.6.27.8 -stable release patches
+
+Patch:	1424* -> 1425*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=2ef6627be7502193f7c42f694a651fa710507089
+Desc:	Backported subset of 2.6.27.9 -stable release patches
+
+Patch:	1503_hfsplus-check-read_mapping_page-return-value.patch
+From:	Eric Sesterhenn <snakebyte@gmx.de>
+Desc:	hfsplus: check return value of read_mapping_page()
+
+Patch:	1504_hfsplus-fix-buffer-overflow-with-a-corrupted-image.patch
+From:	Eric Sesterhenn <snakebyte@gmx.de>
+Desc:	hfsplus: fix buffer overflow when mounting corrupted image
+
+Patch:	1505_hfs-fix-namelength-memory-corruption.patch
+From:	Eric Sesterhenn <snakebyte@gmx.de>
+Desc:	hfsplug: Fix stack corruption due to corrupted hfs filesystem
+
+Patch:	1506_inotify-fix-watch-removal-or-umount-races.patch
+From:	Al Viro <viro@ZenIV.linux.org.uk>
+Desc:	Fix inotify watch removal/umount races (bug #248754)
+
+Patch:	1507_sctp-avoid_memory_overflow_with_bad_stream_ID.patch
+From:	Wei Yongjun <yjwei@cn.fujitsu.com>
+Desc:	Avoid memory overflow while FWD-TSN chunk received with bad stream ID
+	(bug #254907)
+
+Patch:	1800_sched-disable-hrtick.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Disable high-resolution scheduler ticks (bug #247453)
+
+Patch:	4420_grsec-2.1.12-2.6.25.16-200808201644.patch
+From:	http://www.grsecurity.net
+Desc:	hardened-sources base patch from upstream grsecurity
+Note:	Ported to 2.6.25.16, adding PaX -test27 through -test30, fixed
+	missing check in arch/x86/kernel/ioport.c -> do_iopl()
+	
+Patch:	4421_grsec-remove-localversion-grsec.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Removes grsecurity's localversion-grsec file
+
+Patch:	4422_grsec-mute-warnings.patch
+From:	Alexander Gabert <gaberta@fh-trier.de>
+	Gordon Malm <gengor@gentoo.org>
+Desc:	Removes verbose compile warning settings from grsecurity, restores
+	mainline Linux kernel behavior
+
+Patch:	4425_grsec-pax-without-grsec.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Allows PaX features to be selected without enabling GRKERNSEC
+
+Patch:	4430_grsec-kconfig-default-gids.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Sets sane(r) default GIDs on various grsecurity group-dependent
+	features
+
+Patch:	4435_grsec-kconfig-gentoo.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Adds Hardened Gentoo [server/workstation] security levels, sets
+	Hardened Gentoo [workstation] as default
+
+Patch:	4440_selinux-avc_audit-log-curr_ip.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Configurable option to add src IP address to SELinux log messages
+
+Patch:	4445_disable-compat_vdso.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Disables VDSO_COMPAT operation completely
+
+Patch:	4450_pax-remove-read_implies_exec-for-pax-binaries.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Remove READ_IMPLIES_EXEC personality for PaX controlled binaries
+
+Patch:	4455_pax-fix-uvesafb-compile-and-misc.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fixes compilation and miscellaneous other problems in uvesafb
+
+Patch:	4460_pax-fix-mmap-BUG_ON-task-size-check.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Fix incorrect vma task size check under SEGMEXEC

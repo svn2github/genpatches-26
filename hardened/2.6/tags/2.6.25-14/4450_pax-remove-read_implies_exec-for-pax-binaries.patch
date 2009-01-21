@@ -1,0 +1,30 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+Remove READ_IMPLIES_EXEC personality for PaX controlled binaries.
+
+This fixes problems that can occur when a binary has neither PT_PAX or
+GNU_STACK ELF program headers on a system without an EI_PAX enabled kernel.
+
+See also: http://forums.grsecurity.net/viewtopic.php?f=3&t=2023
+
+Thanks to nixnut <nixnut@gentoo.org> and Kerin Millar <kerframil@gmail.com>
+for bringing it to my attention.
+
+This patch is present in upstream grsecurity patches as of
+pax-linux-2.6.26.3-test19.patch.
+
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -993,9 +993,10 @@ static int load_elf_binary(struct linux_
+ 	SET_PERSONALITY(loc->elf_ex, 0);
+ 
+ #if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
+-	if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC))
++	if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
+ 		executable_stack = EXSTACK_DISABLE_X;
+-	else
++		current->personality &= ~READ_IMPLIES_EXEC;
++	} else
+ #endif
+ 
+ 	if (elf_read_implies_exec(loc->elf_ex, executable_stack))
