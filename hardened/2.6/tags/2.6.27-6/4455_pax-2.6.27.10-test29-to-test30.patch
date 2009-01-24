@@ -1,0 +1,19 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+PaX: Add changes from pax-2.6.27.11-test30 which are not
+integrated into main grsecurity-2.6.27.X patch.
+
+--- a/arch/x86/mm/ioremap.c
++++ b/arch/x86/mm/ioremap.c
+@@ -449,7 +449,11 @@ static inline pmd_t * __init early_iorem
+ 
+ static inline pte_t * __init early_ioremap_pte(unsigned long addr)
+ {
++#ifdef CONFIG_X86_32
+ 	return &bm_pte[pte_index(addr)];
++#else
++	return &level1_fixmap_pgt[pte_index(addr)];
++#endif
+ }
+ 
+ void __init early_ioremap_init(void)
