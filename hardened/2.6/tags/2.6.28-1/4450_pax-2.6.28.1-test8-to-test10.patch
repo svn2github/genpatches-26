@@ -1,0 +1,33 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+PaX: Add changes from pax-2.6.28.1-test9 and pax-2.6.28.1-test10
+which are not yet integrated into main grsecurity-2.6.28.X patch.
+
+--- a/arch/x86/boot/compressed/relocs.c
++++ b/arch/x86/boot/compressed/relocs.c
+@@ -399,7 +399,7 @@
+ 		for (j = 0; j < ehdr.e_phnum; j++) {
+ 			if (phdr[j].p_type != PT_LOAD )
+ 				continue;
+-			if (secs[secs[i].shdr.sh_info].shdr.sh_offset < phdr[j].p_offset || secs[secs[i].shdr.sh_info].shdr.sh_offset > phdr[j].p_offset + phdr[j].p_filesz)
++			if (secs[sec->shdr.sh_info].shdr.sh_offset < phdr[j].p_offset || secs[sec->shdr.sh_info].shdr.sh_offset >= phdr[j].p_offset + phdr[j].p_filesz)
+ 				continue;
+ 			base = CONFIG_PAGE_OFFSET + phdr[j].p_paddr - phdr[j].p_vaddr;
+ 			break;
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -839,8 +839,12 @@
+ 	 * and pusha to work.  ("enter $65535,$31" pushes
+ 	 * 32 pointers and then decrements %sp by 65535.)
+ 	 */
+-	if (address + 65536 + 32 * sizeof(unsigned long) < regs->sp)
+-		goto bad_area;
++	if (address + 65536 + 32 * sizeof(unsigned long) < regs->sp) {
++		if (error_code & PF_USER)
++			goto bad_area;
++		printk(KERN_ERR "PAX: abnormal kernel stack expansion: %s(%d) %lx %lx-%lx\n", tsk->comm, task_pid_nr(tsk), address, vma->vm_start, vma->vm_end);
++		dump_stack();
++	}
+ 
+ #ifdef CONFIG_PAX_SEGMEXEC
+ 	if ((mm->pax_flags & MF_PAX_SEGMEXEC) && vma->vm_end - SEGMEXEC_TASK_SIZE - 1 < address - SEGMEXEC_TASK_SIZE - 1)

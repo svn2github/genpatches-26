@@ -1,0 +1,28 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+Updated patch for kernel series 2.6.24.
+
+The credits/description from the original version of this patch remain accurate
+and are included below.
+
+---
+From: Alexander Gabert <gaberta@fh-trier.de>
+
+This patch removes the warnings introduced by grsec patch 2.1.9 and later.
+It removes the -W options added by the patch and restores the original
+warning flags of vanilla kernel versions.
+
+Acked-by: Christian Heim <phreak@gentoo.org>
+---
+
+--- a/Makefile
++++ b/Makefile
+@@ -214,7 +214,7 @@
+ 
+ HOSTCC       = gcc
+ HOSTCXX      = g++
+-HOSTCFLAGS   = -Wall -W -Wno-unused -Wno-sign-compare -Wstrict-prototypes -O2 -fomit-frame-pointer
++HOSTCFLAGS   = -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer
+ HOSTCXXFLAGS = -O2
+ 
+ # Decide whether to build built-in, modular, or both.
