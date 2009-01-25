@@ -1,0 +1,21 @@
+From: Gordon Malm <gengor@gentoo.org>
+
+Add offender's IP to PAX_REFCOUNT log messages if it is available.
+
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1710,7 +1710,13 @@ void pax_report_fault(struct pt_regs *re
+ #ifdef CONFIG_PAX_REFCOUNT
+ void pax_report_refcount_overflow(struct pt_regs *regs)
+ {
+-	printk(KERN_ERR "PAX: refcount overflow detected in: %s:%d, uid/euid: %u/%u\n",
++#ifdef CONFIG_GRKERNSEC
++	if (current->signal->curr_ip)
++		printk(KERN_ERR "PAX: From %u.%u.%u.%u: refcount overflow detected in: %s:%d, uid/euid: %u/%u\n",
++			NIPQUAD(current->signal->curr_ip), current->comm, task_pid_nr(current), current->uid, current->euid);
++	else
++#endif
++		printk(KERN_ERR "PAX: refcount overflow detected in: %s:%d, uid/euid: %u/%u\n",
+ 			 current->comm, task_pid_nr(current), current->uid, current->euid);
+ 	print_symbol(KERN_ERR "PAX: refcount overflow occured at: %s\n", instruction_pointer(regs));
+ 	show_registers(regs);

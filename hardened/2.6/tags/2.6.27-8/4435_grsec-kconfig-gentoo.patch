@@ -1,0 +1,243 @@
+From: Gordon Malm <gengor@gentoo.org>
+From: Kerin Millar <kerframil@gmail.com>
+
+Add Hardened Gentoo [server/workstation] predefined grsecurity
+levels. They're designed to provide a comparitively high level of
+security while remaining generally suitable for as great a majority
+of the userbase as possible (particularly new users).
+
+Make Hardened Gentoo [workstation] predefined grsecurity level the
+default. The Hardened Gentoo [server] level is more restrictive
+and conflicts with some software and thus would be less suitable.
+
+The original version of this patch was conceived and created by:
+Ned Ludd <solar@gentoo.org>
+
+--- a/grsecurity/Kconfig
++++ b/grsecurity/Kconfig
+@@ -20,7 +20,7 @@ config GRKERNSEC
+ choice
+ 	prompt "Security Level"
+ 	depends on GRKERNSEC
+-	default GRKERNSEC_CUSTOM
++	default GRKERNSEC_HARDENED_WORKSTATION
+ 
+ config GRKERNSEC_LOW
+ 	bool "Low"
+@@ -183,6 +183,216 @@ config GRKERNSEC_HIGH
+ 	  - Mount/unmount/remount logging
+ 	  - Kernel symbol hiding
+ 	  - Prevention of memory exhaustion-based exploits
++
++config GRKERNSEC_HARDENED_SERVER
++	bool "Hardened Gentoo [server]"
++	select GRKERNSEC_AUDIT_MOUNT
++	select GRKERNSEC_BRUTE
++	select GRKERNSEC_CHROOT
++	select GRKERNSEC_CHROOT_CAPS
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_CHMOD
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_FCHDIR
++	select GRKERNSEC_CHROOT_FINDTASK
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_NICE
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_SHMAT
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_HIDESYM
++	select GRKERNSEC_IO if (X86)
++	select GRKERNSEC_KMEM
++	select GRKERNSEC_LINK
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_ADD
++	select GRKERNSEC_PROC_IPADDR
++	select GRKERNSEC_PROC_MEMMAP
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_RESLOG
++	select GRKERNSEC_SIGNAL
++#	select GRKERNSEC_SOCKET
++#	select GRKERNSEC_SOCKET_SERVER
++	select GRKERNSEC_SYSCTL
++	select GRKERNSEC_SYSCTL_ON
++	select GRKERNSEC_TIME
++	select PAX
++	select PAX_ASLR
++	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
++	select PAX_EI_PAX
++	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
++	select PAX_EMUSIGRT if (PARISC || PPC32)
++	select PAX_EMUTRAMP if (PARISC || PPC32)
++	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
++	select PAX_KERNEXEC if (X86 && !EFI && !COMPAT_VDSO && !PARAVIRT && (!X86_32 || X86_WP_WORKS_OK))
++	select PAX_MEMORY_SANITIZE
++	select PAX_MEMORY_UDEREF if (X86_32 && !COMPAT_VDSO && !UML_X86)
++	select PAX_MPROTECT if (!PPC64)
++	select PAX_HAVE_ACL_FLAGS
++	select PAX_NOELFRELOCS if (X86)
++	select PAX_NOEXEC
++	select PAX_PAGEEXEC
++	select PAX_PT_PAX_FLAGS
++	select PAX_RANDKSTACK if (X86_32 && X86_TSC)
++	select PAX_RANDMMAP
++	select PAX_RANDUSTACK
++	select PAX_REFCOUNT if (X86)
++	select PAX_SEGMEXEC if (X86_32)
++	select PAX_SYSCALL if (PPC32)
++	help
++	  If you say Y here, a configuration will be used that is endorsed by
++	  the Hardened Gentoo project.  Therefore, many of the protections
++	  made available by grsecurity and PaX will be enabled.
++
++	  Hardened Gentoo's pre-defined security levels are designed to provide
++	  a high level of security while minimizing incompatibilities with the
++	  majority of available software.  For further information, please
++	  view <http://www.grsecurity.net> and <http://pax.grsecurity.net> as
++	  well as the Hardened Gentoo Primer at
++	  <http://www.gentoo.org/proj/en/hardened/primer.xml>.
++
++	  This Hardened Gentoo [server] level is identical to the
++	  Hardened Gentoo [workstation] level, but with the GRKERNSEC_IO,
++	  PAX_KERNEXEC and PAX_NOELFRELOCS security features enabled.
++	  Accordingly, this is the preferred security level if the system will
++	  not be utilizing software incompatible with the aforementioned
++	  grsecurity/PaX features.
++
++	  You may wish to emerge paxctl, a utility which allows you to toggle
++	  PaX features on problematic binaries on an individual basis. Note that
++	  this only works for ELF binaries that contain a PT_PAX_FLAGS header.
++	  Translated, this means that if you wish to toggle PaX features on
++	  binaries provided by applications that are distributed only in binary
++	  format (rather than being built locally from sources), you will need to
++	  run paxctl -C on the binaries beforehand so as to inject the missing
++	  headers.
++
++	  When this level is selected, some options cannot be changed. However,
++	  you may opt to fully customize the options that are selected by
++	  choosing "Custom" in the Security Level menu. You may find it helpful
++	  to inherit the options selected by the "Hardened Gentoo [server]"
++	  security level as a starting point for further configuration. To
++	  accomplish this, select this security level then exit the menuconfig
++	  interface, saving changes when prompted. Then, run make menuconfig
++	  again and select the "Custom" level.
++
++	  Note that this security level probably should not be used if the
++	  target system is a 32bit x86 virtualized guest.  If you intend to run
++	  the kernel in a 32bit x86 virtualized guest you will likely need to
++	  disable the PAX_MEMORY_UDEREF option in order to avoid an unacceptable
++	  impact on performance.
++
++config GRKERNSEC_HARDENED_WORKSTATION
++	bool "Hardened Gentoo [workstation]"
++	select GRKERNSEC_AUDIT_MOUNT
++	select GRKERNSEC_BRUTE
++	select GRKERNSEC_CHROOT
++	select GRKERNSEC_CHROOT_CAPS
++	select GRKERNSEC_CHROOT_CHDIR
++	select GRKERNSEC_CHROOT_CHMOD
++	select GRKERNSEC_CHROOT_DOUBLE
++	select GRKERNSEC_CHROOT_FCHDIR
++	select GRKERNSEC_CHROOT_FINDTASK
++	select GRKERNSEC_CHROOT_MKNOD
++	select GRKERNSEC_CHROOT_MOUNT
++	select GRKERNSEC_CHROOT_NICE
++	select GRKERNSEC_CHROOT_PIVOT
++	select GRKERNSEC_CHROOT_SHMAT
++	select GRKERNSEC_CHROOT_SYSCTL
++	select GRKERNSEC_CHROOT_UNIX
++	select GRKERNSEC_DMESG
++	select GRKERNSEC_EXECVE
++	select GRKERNSEC_FIFO
++	select GRKERNSEC_FORKFAIL
++	select GRKERNSEC_HIDESYM
++	select GRKERNSEC_KMEM
++	select GRKERNSEC_LINK
++	select GRKERNSEC_MODSTOP if (MODULES)
++	select GRKERNSEC_PROC
++	select GRKERNSEC_PROC_ADD
++	select GRKERNSEC_PROC_IPADDR
++	select GRKERNSEC_PROC_MEMMAP
++	select GRKERNSEC_PROC_USERGROUP
++	select GRKERNSEC_RANDNET
++	select GRKERNSEC_RESLOG
++	select GRKERNSEC_SIGNAL
++#	select GRKERNSEC_SOCKET
++#	select GRKERNSEC_SOCKET_SERVER
++	select GRKERNSEC_SYSCTL
++	select GRKERNSEC_SYSCTL_ON
++	select GRKERNSEC_TIME
++	select PAX
++	select PAX_ASLR
++	select PAX_DLRESOLVE if (SPARC32 || SPARC64)
++	select PAX_EI_PAX
++	select PAX_EMUPLT if (ALPHA || PARISC || PPC32 || SPARC32 || SPARC64)
++	select PAX_EMUSIGRT if (PARISC || PPC32)
++	select PAX_EMUTRAMP if (PARISC || PPC32)
++	select PAX_ETEXECRELOCS if (ALPHA || IA64 || PARISC)
++	select PAX_MEMORY_SANITIZE
++	select PAX_MEMORY_UDEREF if (X86_32 && !COMPAT_VDSO && !UML_X86)
++	select PAX_MPROTECT if (!PPC64)
++	select PAX_HAVE_ACL_FLAGS
++	select PAX_NOEXEC
++	select PAX_PAGEEXEC
++	select PAX_PT_PAX_FLAGS
++	select PAX_RANDKSTACK if (X86_32 && X86_TSC)
++	select PAX_RANDMMAP
++	select PAX_RANDUSTACK
++	select PAX_REFCOUNT if (X86)
++	select PAX_SEGMEXEC if (X86_32)
++	select PAX_SYSCALL if (PPC32)
++	help
++	  If you say Y here, a configuration will be used that is endorsed by
++	  the Hardened Gentoo project.  Therefore, many of the protections
++	  made available by grsecurity and PaX will be enabled.
++
++	  Hardened Gentoo's pre-defined security levels are designed to provide
++	  a high level of security while minimizing incompatibilities with the
++	  majority of available software.  For further information, please
++	  view <http://www.grsecurity.net> and <http://pax.grsecurity.net> as
++	  well as the Hardened Gentoo Primer at
++	  <http://www.gentoo.org/proj/en/hardened/primer.xml>.
++
++	  This Hardened Gentoo [workstation] level is designed for machines
++	  which are intended to run software not compatible with the
++	  GRKERNSEC_IO, PAX_KERNEXEC and PAX_NOELFRELOCS features of grsecurity.
++	  Accordingly, this security level is suitable for use with the X server
++	  "Xorg" and/or any system that will act as host OS to the virtualization
++	  softwares vmware-server or virtualbox.
++
++	  You may wish to emerge paxctl, a utility which allows you to toggle
++	  PaX features on problematic binaries on an individual basis. Note that
++	  this only works for ELF binaries that contain a PT_PAX_FLAGS header.
++	  Translated, this means that if you wish to toggle PaX features on
++	  binaries provided by applications that are distributed only in binary
++	  format (rather than being built locally from sources), you will need to
++	  run paxctl -C on the binaries beforehand so as to inject the missing
++	  headers.
++
++	  When this level is selected, some options cannot be changed. However,
++	  you may opt to fully customize the options that are selected by
++	  choosing "Custom" in the Security Level menu. You may find it helpful
++	  to inherit the options selected by the "Hardened Gentoo [workstation]"
++	  security level as a starting point for further configuration. To
++	  accomplish this, select this security level then exit the menuconfig
++	  interface, saving changes when prompted. Then, run make menuconfig
++	  again and select the "Custom" level.
++
++	  Note that this security level probably should not be used if the
++	  target system is a 32bit x86 virtualized guest.  If you intend to run
++	  the kernel in a 32bit x86 virtualized guest you will likely need to
++	  disable the PAX_MEMORY_UDEREF option in order to avoid an unacceptable
++	  impact on performance.
++
+ config GRKERNSEC_CUSTOM
+ 	bool "Custom"
+ 	help
