@@ -43,17 +43,13 @@ Patch:	1000_linux-2.6.28.1.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.28.1
 
+Patch:	1001_linux-2.6.28.2.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.2
+
 Patch:	1725_alpha-srm-compile-failure.patch
 From:	http://bugs.gentoo.org/254150
 Desc:	Fix irq_srm compile failure on some Alpha platforms
-
-Patch:	2000_sctp-fwd-tsn-overflow.patch
-From:	http://bugs.gentoo.org/254907
-Desc:	Fix possible memory overflow with SCTP networking
-
-Patch:	2300_usb-reenable-interface.patch
-From:	http://bugs.gentoo.org/252997
-Desc:	Fix reuse of USB interfaces from userspace
 
 Patch:	2305_uninline-pci-ioremap-bar.patch
 From:	http://bugs.gentoo.org/252488
@@ -70,14 +66,6 @@ Desc:	Fix capacity reported by Macpower hard drive
 Patch:	2510_pata-hpt366-boot-hang.patch
 From:	http://bugs.gentoo.org/254793
 Desc:	Fix boot hang with pata_hpt366 driver
-
-Patch:	2515_nokia-6300-wrong-capacity.patch
-From:	http://bugs.gentoo.org/254034
-Desc:	Fix capacity reported by Nokia 6300 phone
-
-Patch:	2700_hda-asus-mic-input.patch
-From:	http://bugs.gentoo.org/235732
-Desc:	Fix microphone input regression on Asus laptops
 
 Patch:	2705_i915-no-vblank-on-disabled-pipe.patch
 From:	http://bugs.gentoo.org/253813
