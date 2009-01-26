@@ -87,6 +87,10 @@ Patch:	1011_linux-2.6.27.12.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.27.12
 
+Patch:	1012_linux-2.6.27.13.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.27.13
+
 Patch:	1700_sparc-poweroff-hang.patch
 From:	http://bugs.gentoo.org/229441
 Desc:	Fix shutdown hang on Sun Blade 100
@@ -111,10 +115,6 @@ Patch:	1725_alpha-srm-compile-failure.patch
 From:	http://bugs.gentoo.org/254150
 Desc:	Fix irq_srm compile failure on some Alpha platforms
 
-Patch:	2000_sctp-fwd-tsn-overflow.patch
-From:	http://bugs.gentoo.org/254907
-Desc:	Fix possible memory overflow with SCTP networking
-
 Patch:	2300_irda-transfer-breakage.patch
 From:	http://bugs.gentoo.org/254046
 Desc:	Fix data transfer over IrDA
@@ -126,14 +126,6 @@ Desc:	Fix adhoc disconnect issue in iwl3945
 Patch:	2505_macpower-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250789
 Desc:	Fix capacity reported by Macpower hard drive
-
-Patch:	2510_nokia-6300-wrong-capacity.patch
-From:	http://bugs.gentoo.org/254034
-Desc:	Fix capacity reported by Nokia 6300 phone
-
-Patch:	2700_hda-asus-mic-input.patch
-From:	http://bugs.gentoo.org/235732
-Desc:	Fix microphone input regression on Asus laptops
 
 Patch:	2705_dvb-kconfig-tuner-customize.patch
 From:	http://bugs.gentoo.org/245106
