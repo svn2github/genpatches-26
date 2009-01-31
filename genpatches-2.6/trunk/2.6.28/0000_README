@@ -67,6 +67,10 @@ Patch:	2510_pata-hpt366-boot-hang.patch
 From:	http://bugs.gentoo.org/254793
 Desc:	Fix boot hang with pata_hpt366 driver
 
+Patch:	2600_Microsoft-kbd-rpt-descriptor-fix.patch
+From:	http://bugs.gentoo.org/256355
+Desc:	Report descriptor fixup for MS 1028 receiver changes
+
 Patch:	2705_i915-no-vblank-on-disabled-pipe.patch
 From:	http://bugs.gentoo.org/253813
 Desc:	Fix crash with GEM + compiz
