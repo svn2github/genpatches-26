@@ -91,6 +91,10 @@ Patch:	1012_linux-2.6.27.13.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.27.13
 
+Patch:	1013_linux-2.6.27.14.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.27.14
+
 Patch:	1700_sparc-poweroff-hang.patch
 From:	http://bugs.gentoo.org/229441
 Desc:	Fix shutdown hang on Sun Blade 100
