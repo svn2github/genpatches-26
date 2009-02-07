@@ -51,6 +51,10 @@ Patch:	1002_linux-2.6.28.3.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.28.3
 
+Patch:	1003_linux-2.6.28.4.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.4
+
 Patch:	2305_uninline-pci-ioremap-bar.patch
 From:	http://bugs.gentoo.org/252488
 Desc:	Move some PCI code around to fix compilation on alpha
