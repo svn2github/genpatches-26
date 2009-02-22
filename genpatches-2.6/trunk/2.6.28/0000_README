@@ -67,6 +67,10 @@ Patch:	1006_linux-2.6.28.7.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.28.7
 
+Patch:	1500_algo-test-race-fix-aead-init.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=259332
+Desc:	crypto: api - Fix algorithm test race that broke aead init
+
 Patch:	1900_revert-ext3-wait-on-pending-commits.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=257738
 Desc:	revert of wait on all pending commits in ext3_sync_fs patch
