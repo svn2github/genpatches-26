@@ -67,6 +67,14 @@ Patch:	1006_linux-2.6.28.7.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.28.7
 
+Patch:	1900_revert-ext3-wait-on-pending-commits.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=257738
+Desc:	revert of wait on all pending commits in ext3_sync_fs patch
+
+Patch:	1905_fix-retval-journal-start-commit.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=257738
+Desc:	Fix return value of journal_start_commit()
+
 Patch:	2305_uninline-pci-ioremap-bar.patch
 From:	http://bugs.gentoo.org/252488
 Desc:	Move some PCI code around to fix compilation on alpha
