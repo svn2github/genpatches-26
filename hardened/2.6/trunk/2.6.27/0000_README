@@ -3,9 +3,14 @@ README
 
 Individual Patch Descriptions:
 -----------------------------------------------------------------------------
-Patch:	4420_grsec-2.1.12-2.6.27.7-200811291903.patch
+Patch:	1018_linux-2.6.27.19.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.27.19
+
+Patch:	4420_grsec-2.1.12-2.6.27.19-200902231736.patch
 From:	http://www.grsecurity.net
 Desc:	hardened-sources base patch from upstream grsecurity
+Note:	Ported to 2.6.27.19, adding PaX -test30 through -test32
 	
 Patch:	4421_grsec-remove-localversion-grsec.patch
 From:	Kerin Millar <kerframil@gmail.com>
@@ -44,7 +49,3 @@ Desc:	Disables VDSO_COMPAT operation completely
 Patch:	4450_grsec-add-offender-IP-to-pax_refcount-logging.patch
 From:	Gordon Malm <gengor@gentoo.org>
 Desc:	Add offender's IP to PAX_REFCOUNT log messages if it is available
-
-Patch:	4455_pax-2.6.27.7-test22-to-test23.patch
-From:	Gordon Malm <gengor@gentoo.org>
-Desc:	Adds PaX changes from pax-2.6.27.7-test23
