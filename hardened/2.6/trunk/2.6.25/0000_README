@@ -16,14 +16,24 @@ From:	http://www.kernel.org
 Desc:	Linux 2.6.25.20
 
 Patch:	1401* -> 1412*
-From	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
 	a=commit;h=ff413e9814b3914ddf3d4634e9a6cc1c6b21e787
 Desc:	Backported subset of 2.6.27.6 -stable release patches
 
 Patch:	1413* -> 1422*
-From	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
 	a=commit;h=526550b7f86d9d395ee1b27ed804e6ffc3feb17c
 Desc:	Backported subset of 2.6.27.7 -stable release patches
+
+Patch:	1423*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=1db886b63e735c3439e5c2f6813c5207c2206895
+Desc:	Backported subset of 2.6.27.8 -stable release patches
+
+Patch:	1424* -> 1425*
+From:	http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git;
+	a=commit;h=2ef6627be7502193f7c42f694a651fa710507089
+Desc:	Backported subset of 2.6.27.9 -stable release patches
 
 Patch:	1503_hfsplus-check-read_mapping_page-return-value.patch
 From:	Eric Sesterhenn <snakebyte@gmx.de>
@@ -40,6 +50,11 @@ Desc:	hfsplug: Fix stack corruption due to corrupted hfs filesystem
 Patch:	1506_inotify-fix-watch-removal-or-umount-races.patch
 From:	Al Viro <viro@ZenIV.linux.org.uk>
 Desc:	Fix inotify watch removal/umount races (bug #248754)
+
+Patch:	1507_sctp-avoid_memory_overflow_with_bad_stream_ID.patch
+From:	Wei Yongjun <yjwei@cn.fujitsu.com>
+Desc:	Avoid memory overflow while FWD-TSN chunk received with bad stream ID
+	(bug #254907)
 
 Patch:	1800_sched-disable-hrtick.patch
 From:	Kerin Millar <kerframil@gmail.com>
@@ -96,7 +111,3 @@ Desc:	Fixes compilation and miscellaneous other problems in uvesafb
 Patch:	4460_pax-fix-mmap-BUG_ON-task-size-check.patch
 From:	Gordon Malm <gengor@gentoo.org>
 Desc:	Fix incorrect vma task size check under SEGMEXEC
-
-Patch:	4465_pax-fix-false-RLIMIT_STACK-warnings.patch
-From:	Gordon Malm <gengor@gentoo.org>
-Desc:	Fix false-positive RLIMIT_STACK warnings
