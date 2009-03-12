@@ -79,6 +79,10 @@ Patch:	1905_fix-retval-journal-start-commit.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=257738
 Desc:	Fix return value of journal_start_commit()
 
+Patch:	1910_j-list-lock-contention-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=262258
+Desc:	Fix journal commit callback to avoid lock contention
+
 Patch	2300_ppc-legacymem-anon-memory.patch
 From:	https://bugs.gentoo.org/253149
 Desc:	Fix launching of X.org on some PPC platforms
