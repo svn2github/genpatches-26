@@ -131,3 +131,7 @@ Patch:	4400_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	enable control of the unaligned access control policy from sysctl
 
+Patch:	4405_gspca-support-another-pac207.patch
+From:	http://bugs.gentoo.org/256002
+Desc:	Add support for another PAC207 webcam
+
