@@ -1,0 +1,70 @@
+README
+-----------------------------------------------------------------------------
+
+Individual Patch Descriptions:
+-----------------------------------------------------------------------------
+Patch:	1007_linux-2.6.28.8.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.8
+
+Patch:	1910_ext4-automatically-allocate-delay-allocated-blocks-on-rename.patch
+From:	Theodore Ts'o <tytso@mit.edu>
+Desc:	ext4: Automatically allocate delay allocated blocks on rename
+
+Patch:	1911_ext4-automatically-allocate-delay-allocated-blocks-on-close.patch
+From:	Theodore Ts'o <tytso@mit.edu>
+Desc:	ext4: Automatically allocate delay allocated blocks on close
+
+Patch:	1912_ext4-add-EXT4_IOC_ALLOC_DA_BLKS-ioctl.patch
+From:	Theodore Ts'o <tytso@mit.edu>
+Desc:	ext4: add EXT4_IOC_ALLOC_DA_BLKS ioctl
+
+Patch:	1913_ext4-fix-discard-of-inode-prealloc-space-with-delayed-allocation.patch
+From:	Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+Desc:	ext4: Fix discard of inode prealloc space with delayed allocation
+
+Patch:	4420_grsec-2.1.13-2.6.28.7-200903091908.patch
+From:	http://www.grsecurity.net
+Desc:	hardened-sources base patch from upstream grsecurity
+	
+Patch:	4421_grsec-remove-localversion-grsec.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Removes grsecurity's localversion-grsec file
+
+Patch:	4422_grsec-mute-warnings.patch
+From:	Alexander Gabert <gaberta@fh-trier.de>
+	Gordon Malm <gengor@gentoo.org>
+Desc:	Removes verbose compile warning settings from grsecurity, restores
+	mainline Linux kernel behavior
+
+Patch:	4425_grsec-pax-without-grsec.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Allows PaX features to be selected without enabling GRKERNSEC
+
+Patch:	4430_grsec-kconfig-default-gids.patch
+From:	Kerin Millar <kerframil@gmail.com>
+Desc:	Sets sane(r) default GIDs on various grsecurity group-dependent
+	features
+
+Patch:	4435_grsec-kconfig-gentoo.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Adds Hardened Gentoo [server/workstation] security levels, sets
+	Hardened Gentoo [workstation] as default
+
+Patch:	4440_selinux-avc_audit-log-curr_ip.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Configurable option to add src IP address to SELinux log messages
+
+Patch:	4445_disable-compat_vdso.patch
+From:	Gordon Malm <gengor@gentoo.org>
+	Kerin Millar <kerframil@gmail.com>
+Desc:	Disables VDSO_COMPAT operation completely
+
+Patch:	4450_pax-2.6.28.7-test19-to-test20.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Adds PaX changes from pax-2.6.28.7-test20
+
+Patch:	4455_pax-2.6.28.8-test20-to-test23.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Adds PaX changes from pax-2.6.28.8-test23
