@@ -1,0 +1,48 @@
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 11 Feb 2009 21:04:26 +0000 (-0800)
+Subject: ext3: revert "ext3: wait on all pending commits in ext3_sync_fs"
+X-Git-Tag: v2.6.29-rc5~23
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=02ac597c9b86af49b2016aa98aee20ab59dbf0d2
+
+ext3: revert "ext3: wait on all pending commits in ext3_sync_fs"
+
+This reverts commit c87591b719737b4e91eb1a9fa8fd55a4ff1886d6.
+
+Since journal_start_commit() is now fixed to return 1 when we started a
+transaction commit, there's some transaction waiting to be committed or
+there's a transaction already committing, we don't need to call
+ext3_force_commit() in ext3_sync_fs().  Furthermore ext3_force_commit()
+can unnecessarily create sync transaction which is expensive so it's
+worthwhile to remove it when we can.
+
+Cc: Eric Sandeen <sandeen@redhat.com>
+Cc: <linux-ext4@vger.kernel.org>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/fs/ext3/super.c b/fs/ext3/super.c
+index b70d90e..4a97041 100644
+--- a/fs/ext3/super.c
++++ b/fs/ext3/super.c
+@@ -2428,12 +2428,13 @@ static void ext3_write_super (struct super_block * sb)
+ 
+ static int ext3_sync_fs(struct super_block *sb, int wait)
+ {
+-	sb->s_dirt = 0;
+-	if (wait)
+-		ext3_force_commit(sb);
+-	else
+-		journal_start_commit(EXT3_SB(sb)->s_journal, NULL);
++	tid_t target;
+ 
++	sb->s_dirt = 0;
++	if (journal_start_commit(EXT3_SB(sb)->s_journal, &target)) {
++		if (wait)
++			log_wait_commit(EXT3_SB(sb)->s_journal, target);
++	}
+ 	return 0;
+ }
+ 
+
