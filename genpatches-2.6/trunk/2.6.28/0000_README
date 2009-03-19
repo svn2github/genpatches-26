@@ -83,6 +83,22 @@ Patch:	1910_j-list-lock-contention-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=262258
 Desc:	Fix journal commit callback to avoid lock contention
 
+Patch:  1915_ext4-automatically-allocate-delay-allocated-blocks-on-rename.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: Automatically allocate delay allocated blocks on rename
+
+Patch:  1916_ext4-automatically-allocate-delay-allocated-blocks-on-close.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: Automatically allocate delay allocated blocks on close
+
+Patch:  1917_ext4-add-EXT4_IOC_ALLOC_DA_BLKS-ioctl.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: add EXT4_IOC_ALLOC_DA_BLKS ioctl
+
+Patch:  1918_ext4-fix-discard-of-inode-prealloc-space-with-delayed-allocation.patch
+From:   Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+Desc:   ext4: Fix discard of inode prealloc space with delayed allocation
+
 Patch	2300_ppc-legacymem-anon-memory.patch
 From:	https://bugs.gentoo.org/253149
 Desc:	Fix launching of X.org on some PPC platforms
