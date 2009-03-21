@@ -40,3 +40,7 @@ Patch:	4445_disable-compat_vdso.patch
 From:	Gordon Malm <gengor@gentoo.org>
 	Kerin Millar <kerframil@gmail.com>
 Desc:	Disables VDSO_COMPAT operation completely
+
+Patch:	4450_grsec-grkernsec_io-select-rtc-cmos.patch
+From:	Gordon Malm <gengor@gentoo.org>
+Desc:	Build rtc-cmos driver into the kernel when GRKERNSEC_IO is enabled
