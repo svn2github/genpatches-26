@@ -1651,15 +1651,6 @@ diff -Naurp -x .git /tmp/linux/drivers/video/fbcmap.c ./drivers/video/fbcmap.c
  	return rc;
  }
  
-@@ -249,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user
- {
- 	int rc, size = cmap->len * sizeof(u16);
- 	struct fb_cmap umap;
--
-+	
- 	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
- 			        !info->fbops->fb_setcmap))
- 		return -EINVAL;
 diff -Naurp -x .git /tmp/linux/drivers/video/Kconfig ./drivers/video/Kconfig
 --- /tmp/linux/drivers/video/Kconfig	2008-03-25 07:24:16.000000000 +0100
 +++ ./drivers/video/Kconfig	2008-03-25 23:04:10.000000000 +0100
