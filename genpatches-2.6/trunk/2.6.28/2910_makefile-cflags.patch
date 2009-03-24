@@ -1,0 +1,12 @@
+--- a/Makefile	2009-03-23 21:50:02.000000000 -0400
++++ b/Makefile	2009-03-23 21:52:02.000000000 -0400
+@@ -555,6 +555,9 @@ KBUILD_CFLAGS += $(call cc-option,-Wdecl
+ # disable pointer signed / unsigned warnings in gcc 4.0
+ KBUILD_CFLAGS += $(call cc-option,-Wno-pointer-sign,)
+ 
++# disable invalid "can't wrap" optimzations for signed / pointers
++KBUILD_CFLAGS	+= $(call cc-option,-fwrapv)
++
+ # Add user supplied CPPFLAGS, AFLAGS and CFLAGS as the last assignments
+ # But warn user when we do so
+ warn-assign = \

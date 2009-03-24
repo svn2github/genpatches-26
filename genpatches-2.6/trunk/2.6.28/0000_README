@@ -119,17 +119,13 @@ Patch:	2510_pata-hpt366-boot-hang.patch
 From:	http://bugs.gentoo.org/254793
 Desc:	Fix boot hang with pata_hpt366 driver
 
-Patch:	2705_i915-no-vblank-on-disabled-pipe.patch
-From:	http://bugs.gentoo.org/253813
-ppDesc:	Fix crash with GEM + compiz
-
-Patch:	2710_i915-set-vblank-flag-correctly.patch
-From;	http://bugs.gentoo.org/253813
-Desc:	Fix crash with GEM + compiz
-
 Patch:	2900_IT8720-chipset-support-and-type-values-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=245625
 Desc:	Patch to retrieve sensor information from the IT8720 chipset and type values fixes
+
+Patch:	2910_makefile-cflags.patch
+From:	http://www.kernel.org
+Desc:	Disable invalid "can't wrap" optimzations for signed / pointers
 
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
