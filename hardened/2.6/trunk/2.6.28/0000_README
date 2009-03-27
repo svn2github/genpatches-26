@@ -3,6 +3,14 @@ README
 
 Individual Patch Descriptions:
 -----------------------------------------------------------------------------
+Patch:	1008_linux-2.6.28.9.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.9
+
+Patch:	2100_block-fix-performance-regression-in-sync_dirty_buffer.patch
+From:	Jens Axboe <jens.axboe@oracle.com>
+Desc:	Fixes performance regression, bug #263870
+
 Patch:	4420_grsec-2.1.13-2.6.28.8-200903191958.patch
 From:	http://www.grsecurity.net
 Desc:	hardened-sources base patch from upstream grsecurity
