@@ -111,6 +111,10 @@ Patch:	2305_uninline-pci-ioremap-bar.patch
 From:	http://bugs.gentoo.org/252488
 Desc:	Move some PCI code around to fix compilation on alpha
 
+Patch:	2310_usblp-status-polling.patch
+From:	http://bugs.gentoo.org/251237
+Desc:	Fixes print hanging in some printers (e.g. Canon BJC-3000)
+
 Patch:	2400_iwl3945-adhoc-disconnect-fix.patch
 From:	http://bugs.gentoo.org/254586
 Desc:	Fix adhoc disconnect issue in iwl3945
