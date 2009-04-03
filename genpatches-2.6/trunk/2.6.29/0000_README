@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.29.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.29.1
+
 Patch:  1915_ext4-automatically-allocate-delay-allocated-blocks-on-rename.patch
 From:   Theodore Ts'o <tytso@mit.edu>
 Desc:   ext4: Automatically allocate delay allocated blocks on rename
