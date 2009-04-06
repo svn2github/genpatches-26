@@ -55,6 +55,10 @@ Patch:  1917_ext4-add-EXT4_IOC_ALLOC_DA_BLKS-ioctl.patch
 From:   Theodore Ts'o <tytso@mit.edu>
 Desc:   ext4: add EXT4_IOC_ALLOC_DA_BLKS ioctl
 
+Patch:  1918_ext4-fix-discard-of-inode-prealloc-space-with-delayed-allocation.patch
+From:   Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+Desc:   ext4: Fix discard of inode prealloc space with delayed allocation
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
