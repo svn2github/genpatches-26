@@ -1,0 +1,51 @@
+From: Fabrice Bellet <fabrice@bellet.info>
+Date: Fri, 24 Oct 2008 06:48:57 +0000 (-0700)
+Subject: iwl3945: iwl3945_mac_get_tsf() should not return zero
+X-Git-Tag: v2.6.29-rc1~581^2~820
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=9fe1c5052019da3d2770abd7b727cbc1083f7937
+
+iwl3945: iwl3945_mac_get_tsf() should not return zero
+
+The problem fixed here is that iwl3945_mac_get_tsf() returns 0, as the
+function is not implemented, and this is considered as a valid value by
+the mac layer in mlme.c:1605. The consequence is that the STA in ad-hoc
+mode is inserted/removed quite frequently due to IBSS merging.
+
+This patch fixes :
+http://www.intellinuxwireless.org/bugzilla/show_bug.cgi?id=1781
+and https://bugzilla.redhat.com/show_bug.cgi?id=459401
+
+Signed-off-by: Fabrice Bellet <fabrice@bellet.info>
+Acked-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Reinette Chatre <reinette.chatre@intel.com>
+Signed-off-by: John W. Linville <linville@tuxdriver.com>
+---
+
+diff --git a/drivers/net/wireless/iwlwifi/iwl3945-base.c b/drivers/net/wireless/iwlwifi/iwl3945-base.c
+index a4d9247..5436cb4 100644
+--- a/drivers/net/wireless/iwlwifi/iwl3945-base.c
++++ b/drivers/net/wireless/iwlwifi/iwl3945-base.c
+@@ -7155,14 +7155,6 @@ static int iwl3945_mac_get_stats(struct ieee80211_hw *hw,
+ 	return 0;
+ }
+ 
+-static u64 iwl3945_mac_get_tsf(struct ieee80211_hw *hw)
+-{
+-	IWL_DEBUG_MAC80211("enter\n");
+-	IWL_DEBUG_MAC80211("leave\n");
+-
+-	return 0;
+-}
+-
+ static void iwl3945_mac_reset_tsf(struct ieee80211_hw *hw)
+ {
+ 	struct iwl3945_priv *priv = hw->priv;
+@@ -7805,7 +7797,6 @@ static struct ieee80211_ops iwl3945_hw_ops = {
+ 	.get_stats = iwl3945_mac_get_stats,
+ 	.get_tx_stats = iwl3945_mac_get_tx_stats,
+ 	.conf_tx = iwl3945_mac_conf_tx,
+-	.get_tsf = iwl3945_mac_get_tsf,
+ 	.reset_tsf = iwl3945_mac_reset_tsf,
+ 	.bss_info_changed = iwl3945_bss_info_changed,
+ 	.hw_scan = iwl3945_mac_hw_scan
+
