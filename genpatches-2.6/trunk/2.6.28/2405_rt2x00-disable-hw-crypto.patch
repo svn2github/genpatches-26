@@ -1,0 +1,25 @@
+diff --git a/drivers/net/wireless/rt2x00/rt61pci.c b/drivers/net/wireless/rt2x00/rt61pci.c
+index 4346cd1..1e1bf5c 100644
+--- a/drivers/net/wireless/rt2x00/rt61pci.c
++++ b/drivers/net/wireless/rt2x00/rt61pci.c
+@@ -40,6 +40,6 @@
+ /*
+  * Allow hardware encryption to be disabled.
+  */
+-static int modparam_nohwcrypt = 0;
++static int modparam_nohwcrypt = 1;
+ module_param_named(nohwcrypt, modparam_nohwcrypt, bool, S_IRUGO);
+ MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");
+ 
+diff --git a/drivers/net/wireless/rt2x00/rt73usb.c b/drivers/net/wireless/rt2x00/rt73usb.c
+index 853b2b2..48a109a 100644
+--- a/drivers/net/wireless/rt2x00/rt73usb.c
++++ b/drivers/net/wireless/rt2x00/rt73usb.c
+@@ -39,7 +39,7 @@
+ /*
+  * Allow hardware encryption to be disabled.
+  */
+-static int modparam_nohwcrypt = 0;
++static int modparam_nohwcrypt = 1;
+ module_param_named(nohwcrypt, modparam_nohwcrypt, bool, S_IRUGO);
+ MODULE_PARM_DESC(nohwcrypt, "Disable hardware encryption.");

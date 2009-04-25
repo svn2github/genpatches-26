@@ -123,6 +123,10 @@ Patch:	2400_iwl3945-adhoc-disconnect-fix.patch
 From:	http://bugs.gentoo.org/254586
 Desc:	Fix adhoc disconnect issue in iwl3945
 
+Patch:	2405_rt2x00-disable-hw-crypto.patch
+From:	http://bugs.gentoo.org/262862
+Desc:	Fixes crashes caused by the rt61pci/rt73usb drivers by disabling HW crypto functionality.
+
 Patch:	2505_macpower-wrong-capacity.patch
 From:	http://bugs.gentoo.org/250789
 Desc:	Fix capacity reported by Macpower hard drive
