@@ -11,19 +11,6 @@ index 5ede747..0876275 100644
  
  To remove an ARP target:
  # echo -192.168.0.100 > /sys/class/net/bond0/bonding/arp_ip_target
-diff --git a/Makefile b/Makefile
-index cdb1133..0380c7e 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 29
--EXTRAVERSION = .1
-+EXTRAVERSION = .2
- NAME = Temporary Tasmanian Devil
- 
- # *DOCUMENTATION*
 diff --git a/arch/ia64/kvm/Kconfig b/arch/ia64/kvm/Kconfig
 index f833a0b..0a2d6b8 100644
 --- a/arch/ia64/kvm/Kconfig
