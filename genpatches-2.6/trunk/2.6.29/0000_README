@@ -63,6 +63,10 @@ Patch:  1918_ext4-fix-discard-of-inode-prealloc-space-with-delayed-allocation.pa
 From:   Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
 Desc:   ext4: Fix discard of inode prealloc space with delayed allocation
 
+Patch:  2700_usblp-poll-for-status.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=251237
+Desc:   usblp: continuously poll for status
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
