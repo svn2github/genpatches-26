@@ -71,7 +71,7 @@ Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
 
-Patch:	4200_fbcondecor-0.9.6.patch
+Patch:	4201_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
 
