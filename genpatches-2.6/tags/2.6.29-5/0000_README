@@ -1,0 +1,81 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:  1000_linux-2.6.29.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.29.1
+
+Patch:  1001_linux-2.6.29.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.29.2
+
+Patch:  1915_ext4-automatically-allocate-delay-allocated-blocks-on-rename.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: Automatically allocate delay allocated blocks on rename
+
+Patch:  1916_ext4-automatically-allocate-delay-allocated-blocks-on-close.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: Automatically allocate delay allocated blocks on close
+
+Patch:  1917_ext4-add-EXT4_IOC_ALLOC_DA_BLKS-ioctl.patch
+From:   Theodore Ts'o <tytso@mit.edu>
+Desc:   ext4: add EXT4_IOC_ALLOC_DA_BLKS ioctl
+
+Patch:  1918_ext4-fix-discard-of-inode-prealloc-space-with-delayed-allocation.patch
+From:   Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+Desc:   ext4: Fix discard of inode prealloc space with delayed allocation
+
+Patch:  2700_usblp-poll-for-status.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=251237
+Desc:   usblp: continuously poll for status
+
+Patch:	4100_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4201_fbcondecor-0.9.6.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4400_alpha-sysctl-uac.patch
+From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
+Desc:	enable control of the unaligned access control policy from sysctl
+
