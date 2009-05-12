@@ -1,13 +1,24 @@
-# Copyright 2000-2005 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 2000-2009 Gentoo Foundation; Distributed under the GPL v2
 
-$subversion_scheme = `svn info | head -n 2 | tail -n 1`;
+# Detect which svn server and username to use
+$subversion_scheme = `svn info 2>/dev/null | head -n 2 | tail -n 1`;
+$subversion_uri = $subversion_scheme;
+chomp $subversion_uri;
 $subversion_scheme =~ s|^URL: ([a-z][a-z0-9+-.]*)://.*|\1|s;
-if ($subversion_scheme =~ m/ssh/) {
-  $subversion_midpart = 'svn.gentoo.org/var/svnroot';
+
+if ($subversion_scheme == "svn+ssh") {
+	$trimmed = substr($subversion_uri, 15);
+	if ($trimmed =~ m/^([a-zA-Z]+)@/) {
+		$subversion_midpart = "$1\@svn.gentoo.org/var/svnroot";
+	} else {
+		# couldn't detect username
+		$subversion_midpart = 'svn.gentoo.org/var/svnroot';
+	}
 } else {
-  $subversion_midpart = 'anonsvn.gentoo.org';
+	$subversion_midpart = 'anonsvn.gentoo.org';
 }
 $subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
+
 $webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
