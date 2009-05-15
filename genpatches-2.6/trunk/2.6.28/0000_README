@@ -71,6 +71,14 @@ Patch:	1007_linux-2.6.28.8.patch
 From:	http://www.kernel.org
 Desc:	Linux 2.6.28.8
 
+Patch:	1008_linux-2.6.28.9.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.9
+
+Patch:	1009_linux-2.6.28.10.patch
+From:	http://www.kernel.org
+Desc:	Linux 2.6.28.10
+
 Patch:	1900_revert-ext3-wait-on-pending-commits.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=257738
 Desc:	revert of wait on all pending commits in ext3_sync_fs patch
