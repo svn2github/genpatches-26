@@ -3,7 +3,7 @@ README
 
 Individual Patch Descriptions:
 -----------------------------------------------------------------------------
-Patch:	4420_grsec-2.1.13-2.6.28.10-200905171500.patch
+Patch:	4420_grsec-2.1.13-2.6.28.10-200905241817.patch
 From:	http://www.grsecurity.net
 Desc:	hardened-sources base patch from upstream grsecurity
 Note:	Ported to 2.6.28.10, added PaX -test24 through -test25 and
