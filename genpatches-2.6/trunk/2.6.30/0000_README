@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:	2500_ide-cd-handle-fragmented-patckets.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
+Desc:	ide-cd: handle fragmented packet commands gracefully
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
