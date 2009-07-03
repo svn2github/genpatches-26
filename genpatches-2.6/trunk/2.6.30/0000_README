@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.30.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.30.1
+
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
