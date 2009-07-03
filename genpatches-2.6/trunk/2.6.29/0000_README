@@ -83,6 +83,10 @@ Patch:  2700_usblp-poll-for-status.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=251237
 Desc:   usblp: continuously poll for status
 
+Patch:  2705_i915-domain-set-when-faulting.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=275549
+Desc:   i915: Set object to gtt domain when faulting it back in
+
 Patch:	2900_bluetooth-fix-sysfs.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274007
 Desc:	Fix hard lock with bluetooth connections
