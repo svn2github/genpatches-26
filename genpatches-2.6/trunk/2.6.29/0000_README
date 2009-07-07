@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.29.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.29.5
 
+Patch:  1005_linux-2.6.29.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.29.6
+
 Patch:  1915_ext4-automatically-allocate-delay-allocated-blocks-on-rename.patch
 From:   Theodore Ts'o <tytso@mit.edu>
 Desc:   ext4: Automatically allocate delay allocated blocks on rename
