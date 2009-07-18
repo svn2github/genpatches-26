@@ -47,6 +47,10 @@ Patch:	1500_per-clear-on-setid-cve-2009-1895.patch
 From:	https://bugs.gentoo.org/show_bug.cgi?id=277714
 Desc:   fix PER_CLEAR_ON_SETID
 
+Patch:	1505_fix-null-ptr-def-in-tun-chr-pool.patch
+From:	https://bugs.gentoo.org/show_bug.cgi?id=278122
+Desc:	Fix NULL pointer dereference in tun_chr_pool
+
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
