@@ -55,6 +55,10 @@ Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
 
+Patch:	2700_init-fence-regs-to-zero-on-GEM-load.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=269554
+Desc:	drm/i915: initialize fence registers to zero when loading GEM
+
 Patch:	2900_makefile-no-delete-null-pointer-checks-fix.patch
 From:	http://www.kernel.org
 Desc:	Add compiler flag to not remove useless null ptr checks on optimization
