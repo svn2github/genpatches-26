@@ -51,6 +51,10 @@ Patch:  1002_linux-2.6.30.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.30.3
 
+Patch:  1003_linux-2.6.30.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.30.4
+
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
