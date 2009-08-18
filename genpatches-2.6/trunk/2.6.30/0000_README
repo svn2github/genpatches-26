@@ -59,10 +59,6 @@ Patch:  1004_linux-2.6.30.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.30.4
 
-Patch:  1505_fix-oops-in-clock-nanosleep.patch
-From:   http://bugs.gentoo.org/281180
-Desc:   Linux 2.6.30.4
-
 Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
 Desc:   HID: Move dereferences below a NULL test
