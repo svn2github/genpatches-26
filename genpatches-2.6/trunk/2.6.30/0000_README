@@ -55,9 +55,9 @@ Patch:  1003_linux-2.6.30.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.30.4
 
-Patch:  1004_linux-2.6.30.4.patch
+Patch:  1004_linux-2.6.30.5.patch
 From:   http://www.kernel.org
-Desc:   Linux 2.6.30.4
+Desc:   Linux 2.6.30.5
 
 Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
