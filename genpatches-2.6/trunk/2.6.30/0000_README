@@ -63,6 +63,10 @@ Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
 Desc:   HID: Move dereferences below a NULL test
 
+Patch:	1700_empty-ipi-check.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=273936
+Desc:	Fixes freezes caused by careless IPI sends on some x86 setups
+
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
@@ -81,5 +85,4 @@ Desc:	Bootsplash successor by Michal Januszewski
 
 Patch:	4400_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
-Desc:	enable control of the unaligned access control policy from sysctl
-
+Desc:	Enable control of the unaligned access control policy from sysctl
