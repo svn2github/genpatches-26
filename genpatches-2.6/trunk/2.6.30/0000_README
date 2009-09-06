@@ -75,6 +75,10 @@ Patch:	2900_makefile-no-delete-null-pointer-checks-fix.patch
 From:	http://www.kernel.org
 Desc:	Add compiler flag to not remove useless null ptr checks on optimization
 
+Patch:	2910_add-sysrq-h-needs-errno-h-include.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=283812
+Desc:	linux/sysrq.h needs linux/errno.h
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
