@@ -59,13 +59,13 @@ Patch:  1004_linux-2.6.30.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.30.5
 
+Patch:  1005_linux-2.6.30.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.30.6
+
 Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
 Desc:   HID: Move dereferences below a NULL test
-
-Patch:	1700_empty-ipi-check.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=273936
-Desc:	Fixes freezes caused by careless IPI sends on some x86 setups
 
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
