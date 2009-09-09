@@ -39,46 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:  1000_linux-2.6.30.1.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.1
-
-Patch:  1001_linux-2.6.30.2.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.2
-
-Patch:  1002_linux-2.6.30.3.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.3
-
-Patch:  1003_linux-2.6.30.4.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.4
-
-Patch:  1004_linux-2.6.30.5.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.5
-
-Patch:  1005_linux-2.6.30.6.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.30.6
-
-Patch:  1510_hid-move-deref-below-null-test.patch
-From:   http://lwn.net/Articles/342440/
-Desc:   HID: Move dereferences below a NULL test
-
-Patch:	2500_ide-cd-handle-fragmented-patckets.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
-Desc:	ide-cd: handle fragmented packet commands gracefully
-
-Patch:	2900_makefile-no-delete-null-pointer-checks-fix.patch
-From:	http://www.kernel.org
-Desc:	Add compiler flag to not remove useless null ptr checks on optimization
-
-Patch:	2910_add-sysrq-h-needs-errno-h-include.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=283812
-Desc:	linux/sysrq.h needs linux/errno.h
-
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
