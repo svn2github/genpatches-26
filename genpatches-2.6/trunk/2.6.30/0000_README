@@ -67,6 +67,10 @@ Patch:  1006_linux-2.6.30.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.30.7
 
+Patch:  1007_linux-2.6.30.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.30.8
+
 Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
 Desc:   HID: Move dereferences below a NULL test
