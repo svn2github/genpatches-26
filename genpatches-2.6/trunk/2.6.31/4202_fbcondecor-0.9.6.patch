@@ -866,7 +866,7 @@ index 3a44695..6ba9550 100644
  
  	if (!num_registered_fb)
  		return -ENODEV;
-@@ -539,11 +542,17 @@ static int fbcon_takeover(int show_logo)
+@@ -542,11 +545,17 @@ static int fbcon_takeover(int show_logo)
  	err = take_over_console(&fb_con, first_fb_vc, last_fb_vc,
  				fbcon_is_default);
  
