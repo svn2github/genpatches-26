@@ -1,0 +1,1072 @@
+diff --git a/arch/powerpc/include/asm/pte-common.h b/arch/powerpc/include/asm/pte-common.h
+index a7e210b..0cd2e34 100644
+--- a/arch/powerpc/include/asm/pte-common.h
++++ b/arch/powerpc/include/asm/pte-common.h
+@@ -176,7 +176,7 @@ extern unsigned long bad_call_to_PMD_PAGE_SIZE(void);
+ #define HAVE_PAGE_AGP
+ 
+ /* Advertise support for _PAGE_SPECIAL */
+-#ifdef _PAGE_SPECIAL
++#if _PAGE_SPECIAL != 0
+ #define __HAVE_ARCH_PTE_SPECIAL
+ #endif
+ 
+diff --git a/arch/powerpc/mm/pgtable.c b/arch/powerpc/mm/pgtable.c
+index ae1d67c..f1d5f0c 100644
+--- a/arch/powerpc/mm/pgtable.c
++++ b/arch/powerpc/mm/pgtable.c
+@@ -30,6 +30,8 @@
+ #include <asm/tlbflush.h>
+ #include <asm/tlb.h>
+ 
++#include "mmu_decl.h"
++
+ static DEFINE_PER_CPU(struct pte_freelist_batch *, pte_freelist_cur);
+ static unsigned long pte_freelist_forced_free;
+ 
+@@ -119,7 +121,7 @@ void pte_free_finish(void)
+ /*
+  * Handle i/d cache flushing, called from set_pte_at() or ptep_set_access_flags()
+  */
+-static pte_t do_dcache_icache_coherency(pte_t pte)
++static pte_t do_dcache_icache_coherency(pte_t pte, unsigned long addr)
+ {
+ 	unsigned long pfn = pte_pfn(pte);
+ 	struct page *page;
+@@ -128,6 +130,17 @@ static pte_t do_dcache_icache_coherency(pte_t pte)
+ 		return pte;
+ 	page = pfn_to_page(pfn);
+ 
++#ifdef CONFIG_8xx
++       /* On 8xx, cache control instructions (particularly
++        * "dcbst" from flush_dcache_icache) fault as write
++        * operation if there is an unpopulated TLB entry
++        * for the address in question. To workaround that,
++        * we invalidate the TLB here, thus avoiding dcbst
++        * misbehaviour.
++        */
++       _tlbil_va(addr, 0 /* 8xx doesn't care about PID */);
++#endif
++
+ 	if (!PageReserved(page) && !test_bit(PG_arch_1, &page->flags)) {
+ 		pr_debug("do_dcache_icache_coherency... flushing\n");
+ 		flush_dcache_icache_page(page);
+@@ -198,7 +211,7 @@ void set_pte_at(struct mm_struct *mm, unsigned long addr, pte_t *ptep, pte_t pte
+ 	 */
+ 	pte = __pte(pte_val(pte) & ~_PAGE_HPTEFLAGS);
+ 	if (pte_need_exec_flush(pte, 1))
+-		pte = do_dcache_icache_coherency(pte);
++		pte = do_dcache_icache_coherency(pte, addr);
+ 
+ 	/* Perform the setting of the PTE */
+ 	__set_pte_at(mm, addr, ptep, pte, 0);
+@@ -216,7 +229,7 @@ int ptep_set_access_flags(struct vm_area_struct *vma, unsigned long address,
+ {
+ 	int changed;
+ 	if (!dirty && pte_need_exec_flush(entry, 0))
+-		entry = do_dcache_icache_coherency(entry);
++		entry = do_dcache_icache_coherency(entry, address);
+ 	changed = !pte_same(*(ptep), entry);
+ 	if (changed) {
+ 		if (!(vma->vm_flags & VM_HUGETLB))
+diff --git a/arch/x86/include/asm/kvm_host.h b/arch/x86/include/asm/kvm_host.h
+index 9a9efb0..e8b9c8c 100644
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -620,6 +620,7 @@ void kvm_queue_exception(struct kvm_vcpu *vcpu, unsigned nr);
+ void kvm_queue_exception_e(struct kvm_vcpu *vcpu, unsigned nr, u32 error_code);
+ void kvm_inject_page_fault(struct kvm_vcpu *vcpu, unsigned long cr2,
+ 			   u32 error_code);
++bool kvm_require_cpl(struct kvm_vcpu *vcpu, int required_cpl);
+ 
+ int kvm_pic_set_irq(void *opaque, int irq, int level);
+ 
+diff --git a/arch/x86/kernel/cpu/cpufreq/powernow-k8.c b/arch/x86/kernel/cpu/cpufreq/powernow-k8.c
+index cf52215..66a37cf 100644
+--- a/arch/x86/kernel/cpu/cpufreq/powernow-k8.c
++++ b/arch/x86/kernel/cpu/cpufreq/powernow-k8.c
+@@ -618,9 +618,10 @@ static int check_pst_table(struct powernow_k8_data *data, struct pst_s *pst,
+ 	return 0;
+ }
+ 
+-static void invalidate_entry(struct powernow_k8_data *data, unsigned int entry)
++static void invalidate_entry(struct cpufreq_frequency_table *powernow_table,
++		unsigned int entry)
+ {
+-	data->powernow_table[entry].frequency = CPUFREQ_ENTRY_INVALID;
++	powernow_table[entry].frequency = CPUFREQ_ENTRY_INVALID;
+ }
+ 
+ static void print_basics(struct powernow_k8_data *data)
+@@ -926,13 +927,13 @@ static int fill_powernow_table_pstate(struct powernow_k8_data *data,
+ 					"bad value %d.\n", i, index);
+ 			printk(KERN_ERR PFX "Please report to BIOS "
+ 					"manufacturer\n");
+-			invalidate_entry(data, i);
++			invalidate_entry(powernow_table, i);
+ 			continue;
+ 		}
+ 		rdmsr(MSR_PSTATE_DEF_BASE + index, lo, hi);
+ 		if (!(hi & HW_PSTATE_VALID_MASK)) {
+ 			dprintk("invalid pstate %d, ignoring\n", index);
+-			invalidate_entry(data, i);
++			invalidate_entry(powernow_table, i);
+ 			continue;
+ 		}
+ 
+@@ -982,7 +983,7 @@ static int fill_powernow_table_fidvid(struct powernow_k8_data *data,
+ 		/* verify frequency is OK */
+ 		if ((freq > (MAX_FREQ * 1000)) || (freq < (MIN_FREQ * 1000))) {
+ 			dprintk("invalid freq %u kHz, ignoring\n", freq);
+-			invalidate_entry(data, i);
++			invalidate_entry(powernow_table, i);
+ 			continue;
+ 		}
+ 
+@@ -990,7 +991,7 @@ static int fill_powernow_table_fidvid(struct powernow_k8_data *data,
+ 		 * BIOSs are using "off" to indicate invalid */
+ 		if (vid == VID_OFF) {
+ 			dprintk("invalid vid %u, ignoring\n", vid);
+-			invalidate_entry(data, i);
++			invalidate_entry(powernow_table, i);
+ 			continue;
+ 		}
+ 
+@@ -1021,7 +1022,7 @@ static int fill_powernow_table_fidvid(struct powernow_k8_data *data,
+ 				(unsigned int)
+ 				(data->acpi_data.states[i].core_frequency
+ 				 * 1000));
+-			invalidate_entry(data, i);
++			invalidate_entry(powernow_table, i);
+ 			continue;
+ 		}
+ 	}
+diff --git a/arch/x86/kernel/kvmclock.c b/arch/x86/kernel/kvmclock.c
+index 223af43..e5efcdc 100644
+--- a/arch/x86/kernel/kvmclock.c
++++ b/arch/x86/kernel/kvmclock.c
+@@ -50,8 +50,8 @@ static unsigned long kvm_get_wallclock(void)
+ 	struct timespec ts;
+ 	int low, high;
+ 
+-	low = (int)__pa(&wall_clock);
+-	high = ((u64)__pa(&wall_clock) >> 32);
++	low = (int)__pa_symbol(&wall_clock);
++	high = ((u64)__pa_symbol(&wall_clock) >> 32);
+ 	native_write_msr(MSR_KVM_WALL_CLOCK, low, high);
+ 
+ 	vcpu_time = &get_cpu_var(hv_clock);
+diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
+index f0b67f2..dba1f4d 100644
+--- a/arch/x86/kvm/lapic.c
++++ b/arch/x86/kvm/lapic.c
+@@ -635,6 +635,15 @@ static void start_apic_timer(struct kvm_lapic *apic)
+ 
+ 	if (!apic->timer.period)
+ 		return;
++	/*
++	 * Do not allow the guest to program periodic timers with small
++	 * interval, since the hrtimers are not throttled by the host
++	 * scheduler.
++	 */
++	if (apic_lvtt_period(apic)) {
++		if (apic->timer.period < NSEC_PER_MSEC/2)
++			apic->timer.period = NSEC_PER_MSEC/2;
++	}
+ 
+ 	hrtimer_start(&apic->timer.dev,
+ 		      ktime_add_ns(now, apic->timer.period),
+diff --git a/arch/x86/kvm/mmu.c b/arch/x86/kvm/mmu.c
+index d7ce26b..0c43e13 100644
+--- a/arch/x86/kvm/mmu.c
++++ b/arch/x86/kvm/mmu.c
+@@ -2612,7 +2612,8 @@ EXPORT_SYMBOL_GPL(kvm_mmu_unprotect_page_virt);
+ 
+ void __kvm_mmu_free_some_pages(struct kvm_vcpu *vcpu)
+ {
+-	while (vcpu->kvm->arch.n_free_mmu_pages < KVM_REFILL_PAGES) {
++	while (vcpu->kvm->arch.n_free_mmu_pages < KVM_REFILL_PAGES &&
++	       !list_empty(&vcpu->kvm->arch.active_mmu_pages)) {
+ 		struct kvm_mmu_page *sp;
+ 
+ 		sp = container_of(vcpu->kvm->arch.active_mmu_pages.prev,
+@@ -2691,12 +2692,6 @@ static int alloc_mmu_pages(struct kvm_vcpu *vcpu)
+ 
+ 	ASSERT(vcpu);
+ 
+-	if (vcpu->kvm->arch.n_requested_mmu_pages)
+-		vcpu->kvm->arch.n_free_mmu_pages =
+-					vcpu->kvm->arch.n_requested_mmu_pages;
+-	else
+-		vcpu->kvm->arch.n_free_mmu_pages =
+-					vcpu->kvm->arch.n_alloc_mmu_pages;
+ 	/*
+ 	 * When emulating 32-bit mode, cr3 is only 32 bits even on x86_64.
+ 	 * Therefore we need to allocate shadow page tables in the first
+diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
+index 1a0d5cd..691f8e0 100644
+--- a/arch/x86/kvm/vmx.c
++++ b/arch/x86/kvm/vmx.c
+@@ -1206,12 +1206,9 @@ static __init int setup_vmcs_config(struct vmcs_config *vmcs_conf)
+ 	if (_cpu_based_2nd_exec_control & SECONDARY_EXEC_ENABLE_EPT) {
+ 		/* CR3 accesses and invlpg don't need to cause VM Exits when EPT
+ 		   enabled */
+-		min &= ~(CPU_BASED_CR3_LOAD_EXITING |
+-			 CPU_BASED_CR3_STORE_EXITING |
+-			 CPU_BASED_INVLPG_EXITING);
+-		if (adjust_vmx_controls(min, opt, MSR_IA32_VMX_PROCBASED_CTLS,
+-					&_cpu_based_exec_control) < 0)
+-			return -EIO;
++		_cpu_based_exec_control &= ~(CPU_BASED_CR3_LOAD_EXITING |
++					     CPU_BASED_CR3_STORE_EXITING |
++					     CPU_BASED_INVLPG_EXITING);
+ 		rdmsr(MSR_IA32_VMX_EPT_VPID_CAP,
+ 		      vmx_capability.ept, vmx_capability.vpid);
+ 	}
+@@ -2865,6 +2862,8 @@ static int handle_dr(struct kvm_vcpu *vcpu, struct kvm_run *kvm_run)
+ 	unsigned long val;
+ 	int dr, reg;
+ 
++	if (!kvm_require_cpl(vcpu, 0))
++		return 1;
+ 	dr = vmcs_readl(GUEST_DR7);
+ 	if (dr & DR7_GD) {
+ 		/*
+diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
+index 0b1bfc6..ec56c78 100644
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -217,6 +217,19 @@ static void __queue_exception(struct kvm_vcpu *vcpu)
+ }
+ 
+ /*
++ * Checks if cpl <= required_cpl; if true, return true.  Otherwise queue
++ * a #GP and return false.
++ */
++bool kvm_require_cpl(struct kvm_vcpu *vcpu, int required_cpl)
++{
++	if (kvm_x86_ops->get_cpl(vcpu) <= required_cpl)
++		return true;
++	kvm_queue_exception_e(vcpu, GP_VECTOR, 0);
++	return false;
++}
++EXPORT_SYMBOL_GPL(kvm_require_cpl);
++
++/*
+  * Load the pae pdptrs.  Return true is they are all valid.
+  */
+ int load_pdptrs(struct kvm_vcpu *vcpu, unsigned long cr3)
+@@ -1425,6 +1438,10 @@ static int kvm_dev_ioctl_get_supported_cpuid(struct kvm_cpuid2 *cpuid,
+ 	for (func = 0x80000001; func <= limit && nent < cpuid->nent; ++func)
+ 		do_cpuid_ent(&cpuid_entries[nent], func, 0,
+ 			     &nent, cpuid->nent);
++	r = -E2BIG;
++	if (nent >= cpuid->nent)
++		goto out_free;
++
+ 	r = -EFAULT;
+ 	if (copy_to_user(entries, cpuid_entries,
+ 			 nent * sizeof(struct kvm_cpuid_entry2)))
+@@ -2885,6 +2902,11 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
+ 		a3 &= 0xFFFFFFFF;
+ 	}
+ 
++	if (kvm_x86_ops->get_cpl(vcpu) != 0) {
++		ret = -KVM_EPERM;
++		goto out;
++	}
++
+ 	switch (nr) {
+ 	case KVM_HC_VAPIC_POLL_IRQ:
+ 		ret = 0;
+@@ -2896,6 +2918,7 @@ int kvm_emulate_hypercall(struct kvm_vcpu *vcpu)
+ 		ret = -KVM_ENOSYS;
+ 		break;
+ 	}
++out:
+ 	kvm_register_write(vcpu, VCPU_REGS_RAX, ret);
+ 	++vcpu->stat.hypercalls;
+ 	return r;
+@@ -3989,13 +4012,7 @@ int kvm_arch_vcpu_ioctl_set_sregs(struct kvm_vcpu *vcpu,
+ 
+ 	vcpu->arch.cr2 = sregs->cr2;
+ 	mmu_reset_needed |= vcpu->arch.cr3 != sregs->cr3;
+-
+-	down_read(&vcpu->kvm->slots_lock);
+-	if (gfn_to_memslot(vcpu->kvm, sregs->cr3 >> PAGE_SHIFT))
+-		vcpu->arch.cr3 = sregs->cr3;
+-	else
+-		set_bit(KVM_REQ_TRIPLE_FAULT, &vcpu->requests);
+-	up_read(&vcpu->kvm->slots_lock);
++	vcpu->arch.cr3 = sregs->cr3;
+ 
+ 	kvm_set_cr8(vcpu, sregs->cr8);
+ 
+diff --git a/drivers/acpi/pci_slot.c b/drivers/acpi/pci_slot.c
+index 12158e0..da9d6d2 100644
+--- a/drivers/acpi/pci_slot.c
++++ b/drivers/acpi/pci_slot.c
+@@ -57,7 +57,7 @@ ACPI_MODULE_NAME("pci_slot");
+ 				MY_NAME , ## arg);		\
+ 	} while (0)
+ 
+-#define SLOT_NAME_SIZE 20		/* Inspired by #define in acpiphp.h */
++#define SLOT_NAME_SIZE 21		/* Inspired by #define in acpiphp.h */
+ 
+ struct acpi_pci_slot {
+ 	acpi_handle root_handle;	/* handle of the root bridge */
+@@ -149,7 +149,7 @@ register_slot(acpi_handle handle, u32 lvl, void *context, void **rv)
+ 		return AE_OK;
+ 	}
+ 
+-	snprintf(name, sizeof(name), "%u", (u32)sun);
++	snprintf(name, sizeof(name), "%llu", sun);
+ 	pci_slot = pci_create_slot(pci_bus, device, name, NULL);
+ 	if (IS_ERR(pci_slot)) {
+ 		err("pci_create_slot returned %ld\n", PTR_ERR(pci_slot));
+diff --git a/drivers/ata/ahci.c b/drivers/ata/ahci.c
+index 6b91c26..bc06245 100644
+--- a/drivers/ata/ahci.c
++++ b/drivers/ata/ahci.c
+@@ -2744,8 +2744,8 @@ static int ahci_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 	if (board_id == board_ahci_sb700 && pdev->revision >= 0x40)
+ 		hpriv->flags &= ~AHCI_HFLAG_IGN_SERR_INTERNAL;
+ 
+-	if (!(hpriv->flags & AHCI_HFLAG_NO_MSI))
+-		pci_enable_msi(pdev);
++	if ((hpriv->flags & AHCI_HFLAG_NO_MSI) || pci_enable_msi(pdev))
++		pci_intx(pdev, 1);
+ 
+ 	/* save initial config */
+ 	ahci_save_initial_config(pdev, hpriv);
+diff --git a/drivers/net/wireless/p54/p54usb.c b/drivers/net/wireless/p54/p54usb.c
+index 6cc6cbc..0d72890 100644
+--- a/drivers/net/wireless/p54/p54usb.c
++++ b/drivers/net/wireless/p54/p54usb.c
+@@ -66,6 +66,7 @@ static struct usb_device_id p54u_table[] __devinitdata = {
+ 	{USB_DEVICE(0x0bf8, 0x1009)},   /* FUJITSU E-5400 USB D1700*/
+ 	{USB_DEVICE(0x0cde, 0x0006)},   /* Medion MD40900 */
+ 	{USB_DEVICE(0x0cde, 0x0008)},	/* Sagem XG703A */
++	{USB_DEVICE(0x0cde, 0x0015)},	/* Zcomax XG-705A */
+ 	{USB_DEVICE(0x0d8e, 0x3762)},	/* DLink DWL-G120 Cohiba */
+ 	{USB_DEVICE(0x124a, 0x4025)},	/* IOGear GWU513 (GW3887IK chip) */
+ 	{USB_DEVICE(0x1260, 0xee22)},	/* SMC 2862W-G version 2 */
+diff --git a/drivers/pcmcia/at91_cf.c b/drivers/pcmcia/at91_cf.c
+index 9e1140f..e1dcced 100644
+--- a/drivers/pcmcia/at91_cf.c
++++ b/drivers/pcmcia/at91_cf.c
+@@ -363,7 +363,7 @@ static int at91_cf_suspend(struct platform_device *pdev, pm_message_t mesg)
+ 	struct at91_cf_socket	*cf = platform_get_drvdata(pdev);
+ 	struct at91_cf_data	*board = cf->board;
+ 
+-	pcmcia_socket_dev_suspend(&pdev->dev, mesg);
++	pcmcia_socket_dev_suspend(&pdev->dev);
+ 	if (device_may_wakeup(&pdev->dev)) {
+ 		enable_irq_wake(board->det_pin);
+ 		if (board->irq_pin)
+diff --git a/drivers/pcmcia/au1000_generic.c b/drivers/pcmcia/au1000_generic.c
+index 9001334..0208870 100644
+--- a/drivers/pcmcia/au1000_generic.c
++++ b/drivers/pcmcia/au1000_generic.c
+@@ -515,7 +515,7 @@ static int au1x00_drv_pcmcia_probe(struct platform_device *dev)
+ static int au1x00_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int au1x00_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/bfin_cf_pcmcia.c b/drivers/pcmcia/bfin_cf_pcmcia.c
+index b59d411..300b368 100644
+--- a/drivers/pcmcia/bfin_cf_pcmcia.c
++++ b/drivers/pcmcia/bfin_cf_pcmcia.c
+@@ -302,7 +302,7 @@ static int __devexit bfin_cf_remove(struct platform_device *pdev)
+ 
+ static int bfin_cf_suspend(struct platform_device *pdev, pm_message_t mesg)
+ {
+-	return pcmcia_socket_dev_suspend(&pdev->dev, mesg);
++	return pcmcia_socket_dev_suspend(&pdev->dev);
+ }
+ 
+ static int bfin_cf_resume(struct platform_device *pdev)
+diff --git a/drivers/pcmcia/cs.c b/drivers/pcmcia/cs.c
+index 0660ad1..934d4be 100644
+--- a/drivers/pcmcia/cs.c
++++ b/drivers/pcmcia/cs.c
+@@ -101,7 +101,7 @@ EXPORT_SYMBOL(pcmcia_socket_list_rwsem);
+ static int socket_resume(struct pcmcia_socket *skt);
+ static int socket_suspend(struct pcmcia_socket *skt);
+ 
+-int pcmcia_socket_dev_suspend(struct device *dev, pm_message_t state)
++int pcmcia_socket_dev_suspend(struct device *dev)
+ {
+ 	struct pcmcia_socket *socket;
+ 
+diff --git a/drivers/pcmcia/i82092.c b/drivers/pcmcia/i82092.c
+index 46561fa..a04f21c 100644
+--- a/drivers/pcmcia/i82092.c
++++ b/drivers/pcmcia/i82092.c
+@@ -42,7 +42,7 @@ MODULE_DEVICE_TABLE(pci, i82092aa_pci_ids);
+ #ifdef CONFIG_PM
+ static int i82092aa_socket_suspend (struct pci_dev *dev, pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int i82092aa_socket_resume (struct pci_dev *dev)
+diff --git a/drivers/pcmcia/i82365.c b/drivers/pcmcia/i82365.c
+index 40d4953..b906abe 100644
+--- a/drivers/pcmcia/i82365.c
++++ b/drivers/pcmcia/i82365.c
+@@ -1241,7 +1241,7 @@ static int pcic_init(struct pcmcia_socket *s)
+ static int i82365_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int i82365_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/m32r_cfc.c b/drivers/pcmcia/m32r_cfc.c
+index 62b4ecc..d1d89c4 100644
+--- a/drivers/pcmcia/m32r_cfc.c
++++ b/drivers/pcmcia/m32r_cfc.c
+@@ -699,7 +699,7 @@ static struct pccard_operations pcc_operations = {
+ static int cfc_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int cfc_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/m32r_pcc.c b/drivers/pcmcia/m32r_pcc.c
+index 12034b4..a065583 100644
+--- a/drivers/pcmcia/m32r_pcc.c
++++ b/drivers/pcmcia/m32r_pcc.c
+@@ -675,7 +675,7 @@ static struct pccard_operations pcc_operations = {
+ static int pcc_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int pcc_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/m8xx_pcmcia.c b/drivers/pcmcia/m8xx_pcmcia.c
+index d1ad096..c69f2c4 100644
+--- a/drivers/pcmcia/m8xx_pcmcia.c
++++ b/drivers/pcmcia/m8xx_pcmcia.c
+@@ -1296,7 +1296,7 @@ static int m8xx_remove(struct of_device *ofdev)
+ #ifdef CONFIG_PM
+ static int m8xx_suspend(struct platform_device *pdev, pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&pdev->dev, state);
++	return pcmcia_socket_dev_suspend(&pdev->dev);
+ }
+ 
+ static int m8xx_resume(struct platform_device *pdev)
+diff --git a/drivers/pcmcia/omap_cf.c b/drivers/pcmcia/omap_cf.c
+index f373639..68570bc 100644
+--- a/drivers/pcmcia/omap_cf.c
++++ b/drivers/pcmcia/omap_cf.c
+@@ -334,7 +334,7 @@ static int __exit omap_cf_remove(struct platform_device *pdev)
+ 
+ static int omap_cf_suspend(struct platform_device *pdev, pm_message_t mesg)
+ {
+-	return pcmcia_socket_dev_suspend(&pdev->dev, mesg);
++	return pcmcia_socket_dev_suspend(&pdev->dev);
+ }
+ 
+ static int omap_cf_resume(struct platform_device *pdev)
+diff --git a/drivers/pcmcia/pd6729.c b/drivers/pcmcia/pd6729.c
+index 8bed1da..1c39d34 100644
+--- a/drivers/pcmcia/pd6729.c
++++ b/drivers/pcmcia/pd6729.c
+@@ -758,7 +758,7 @@ static void __devexit pd6729_pci_remove(struct pci_dev *dev)
+ #ifdef CONFIG_PM
+ static int pd6729_socket_suspend(struct pci_dev *dev, pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int pd6729_socket_resume(struct pci_dev *dev)
+diff --git a/drivers/pcmcia/pxa2xx_base.c b/drivers/pcmcia/pxa2xx_base.c
+index c49a726..86ad876 100644
+--- a/drivers/pcmcia/pxa2xx_base.c
++++ b/drivers/pcmcia/pxa2xx_base.c
+@@ -302,7 +302,7 @@ static int pxa2xx_drv_pcmcia_remove(struct platform_device *dev)
+ 
+ static int pxa2xx_drv_pcmcia_suspend(struct platform_device *dev, pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int pxa2xx_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/sa1100_generic.c b/drivers/pcmcia/sa1100_generic.c
+index d8da5ac..2d0e997 100644
+--- a/drivers/pcmcia/sa1100_generic.c
++++ b/drivers/pcmcia/sa1100_generic.c
+@@ -89,7 +89,7 @@ static int sa11x0_drv_pcmcia_remove(struct platform_device *dev)
+ static int sa11x0_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int sa11x0_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/sa1111_generic.c b/drivers/pcmcia/sa1111_generic.c
+index 401052a..4be4e17 100644
+--- a/drivers/pcmcia/sa1111_generic.c
++++ b/drivers/pcmcia/sa1111_generic.c
+@@ -159,7 +159,7 @@ static int __devexit pcmcia_remove(struct sa1111_dev *dev)
+ 
+ static int pcmcia_suspend(struct sa1111_dev *dev, pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int pcmcia_resume(struct sa1111_dev *dev)
+diff --git a/drivers/pcmcia/tcic.c b/drivers/pcmcia/tcic.c
+index 9ad97ea..9974410 100644
+--- a/drivers/pcmcia/tcic.c
++++ b/drivers/pcmcia/tcic.c
+@@ -366,7 +366,7 @@ static int __init get_tcic_id(void)
+ static int tcic_drv_pcmcia_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int tcic_drv_pcmcia_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/vrc4171_card.c b/drivers/pcmcia/vrc4171_card.c
+index 659421d..05144e7 100644
+--- a/drivers/pcmcia/vrc4171_card.c
++++ b/drivers/pcmcia/vrc4171_card.c
+@@ -707,7 +707,7 @@ __setup("vrc4171_card=", vrc4171_card_setup);
+ static int vrc4171_card_suspend(struct platform_device *dev,
+ 				     pm_message_t state)
+ {
+-	return pcmcia_socket_dev_suspend(&dev->dev, state);
++	return pcmcia_socket_dev_suspend(&dev->dev);
+ }
+ 
+ static int vrc4171_card_resume(struct platform_device *dev)
+diff --git a/drivers/pcmcia/yenta_socket.c b/drivers/pcmcia/yenta_socket.c
+index 3ecd7c9..f728a45 100644
+--- a/drivers/pcmcia/yenta_socket.c
++++ b/drivers/pcmcia/yenta_socket.c
+@@ -1225,60 +1225,71 @@ static int __devinit yenta_probe (struct pci_dev *dev, const struct pci_device_i
+ }
+ 
+ #ifdef CONFIG_PM
+-static int yenta_dev_suspend (struct pci_dev *dev, pm_message_t state)
++static int yenta_dev_suspend_noirq(struct device *dev)
+ {
+-	struct yenta_socket *socket = pci_get_drvdata(dev);
++	struct pci_dev *pdev = to_pci_dev(dev);
++	struct yenta_socket *socket = pci_get_drvdata(pdev);
+ 	int ret;
+ 
+-	ret = pcmcia_socket_dev_suspend(&dev->dev, state);
++	ret = pcmcia_socket_dev_suspend(dev);
+ 
+-	if (socket) {
+-		if (socket->type && socket->type->save_state)
+-			socket->type->save_state(socket);
++	if (!socket)
++		return ret;
+ 
+-		/* FIXME: pci_save_state needs to have a better interface */
+-		pci_save_state(dev);
+-		pci_read_config_dword(dev, 16*4, &socket->saved_state[0]);
+-		pci_read_config_dword(dev, 17*4, &socket->saved_state[1]);
+-		pci_disable_device(dev);
++	if (socket->type && socket->type->save_state)
++		socket->type->save_state(socket);
+ 
+-		/*
+-		 * Some laptops (IBM T22) do not like us putting the Cardbus
+-		 * bridge into D3.  At a guess, some other laptop will
+-		 * probably require this, so leave it commented out for now.
+-		 */
+-		/* pci_set_power_state(dev, 3); */
+-	}
++	pci_save_state(pdev);
++	pci_read_config_dword(pdev, 16*4, &socket->saved_state[0]);
++	pci_read_config_dword(pdev, 17*4, &socket->saved_state[1]);
++	pci_disable_device(pdev);
++
++	/*
++	 * Some laptops (IBM T22) do not like us putting the Cardbus
++	 * bridge into D3.  At a guess, some other laptop will
++	 * probably require this, so leave it commented out for now.
++	 */
++	/* pci_set_power_state(dev, 3); */
+ 
+ 	return ret;
+ }
+ 
+-
+-static int yenta_dev_resume (struct pci_dev *dev)
++static int yenta_dev_resume_noirq(struct device *dev)
+ {
+-	struct yenta_socket *socket = pci_get_drvdata(dev);
++	struct pci_dev *pdev = to_pci_dev(dev);
++	struct yenta_socket *socket = pci_get_drvdata(pdev);
++	int ret;
+ 
+-	if (socket) {
+-		int rc;
++	if (!socket)
++		return 0;
+ 
+-		pci_set_power_state(dev, 0);
+-		/* FIXME: pci_restore_state needs to have a better interface */
+-		pci_restore_state(dev);
+-		pci_write_config_dword(dev, 16*4, socket->saved_state[0]);
+-		pci_write_config_dword(dev, 17*4, socket->saved_state[1]);
++	pci_write_config_dword(pdev, 16*4, socket->saved_state[0]);
++	pci_write_config_dword(pdev, 17*4, socket->saved_state[1]);
+ 
+-		rc = pci_enable_device(dev);
+-		if (rc)
+-			return rc;
++	ret = pci_enable_device(pdev);
++	if (ret)
++		return ret;
+ 
+-		pci_set_master(dev);
++	pci_set_master(pdev);
+ 
+-		if (socket->type && socket->type->restore_state)
+-			socket->type->restore_state(socket);
+-	}
++	if (socket->type && socket->type->restore_state)
++		socket->type->restore_state(socket);
+ 
+-	return pcmcia_socket_dev_resume(&dev->dev);
++	return pcmcia_socket_dev_resume(dev);
+ }
++
++static struct dev_pm_ops yenta_pm_ops = {
++	.suspend_noirq = yenta_dev_suspend_noirq,
++	.resume_noirq = yenta_dev_resume_noirq,
++	.freeze_noirq = yenta_dev_suspend_noirq,
++	.thaw_noirq = yenta_dev_resume_noirq,
++	.poweroff_noirq = yenta_dev_suspend_noirq,
++	.restore_noirq = yenta_dev_resume_noirq,
++};
++
++#define YENTA_PM_OPS	(&yenta_pm_ops)
++#else
++#define YENTA_PM_OPS	NULL
+ #endif
+ 
+ #define CB_ID(vend,dev,type)				\
+@@ -1376,10 +1387,7 @@ static struct pci_driver yenta_cardbus_driver = {
+ 	.id_table	= yenta_table,
+ 	.probe		= yenta_probe,
+ 	.remove		= __devexit_p(yenta_close),
+-#ifdef CONFIG_PM
+-	.suspend	= yenta_dev_suspend,
+-	.resume		= yenta_dev_resume,
+-#endif
++	.driver.pm	= YENTA_PM_OPS,
+ };
+ 
+ 
+diff --git a/drivers/platform/x86/thinkpad_acpi.c b/drivers/platform/x86/thinkpad_acpi.c
+index 912be65..7cd6d11 100644
+--- a/drivers/platform/x86/thinkpad_acpi.c
++++ b/drivers/platform/x86/thinkpad_acpi.c
+@@ -286,6 +286,8 @@ struct thinkpad_id_data {
+ 
+ 	u16 bios_model;		/* Big Endian, TP-1Y = 0x5931, 0 = unknown */
+ 	u16 ec_model;
++	u16 bios_release;	/* 1ZETK1WW = 0x314b, 0 = unknown */
++	u16 ec_release;
+ 
+ 	char *model_str;	/* ThinkPad T43 */
+ 	char *nummodel_str;	/* 9384A9C for a 9384-A9C model */
+@@ -362,6 +364,45 @@ static void tpacpi_log_usertask(const char * const what)
+ 		} \
+ 	} while (0)
+ 
++#define TPACPI_MATCH_ANY		0xffffU
++#define TPACPI_MATCH_UNKNOWN		0U
++
++/* TPID('1', 'Y') == 0x5931 */
++#define TPID(__c1, __c2) (((__c2) << 8) | (__c1))
++
++#define TPACPI_Q_IBM(__id1, __id2, __quirk)	\
++	{ .vendor = PCI_VENDOR_ID_IBM,		\
++	  .bios = TPID(__id1, __id2),		\
++	  .ec = TPACPI_MATCH_ANY,		\
++	  .quirks = (__quirk) }
++
++struct tpacpi_quirk {
++	unsigned int vendor;
++	u16 bios;
++	u16 ec;
++	unsigned long quirks;
++};
++
++static unsigned long __init tpacpi_check_quirks(
++			const struct tpacpi_quirk *qlist,
++			unsigned int qlist_size)
++{
++	while (qlist_size) {
++		if ((qlist->vendor == thinkpad_id.vendor ||
++				qlist->vendor == TPACPI_MATCH_ANY) &&
++		    (qlist->bios == thinkpad_id.bios_model ||
++				qlist->bios == TPACPI_MATCH_ANY) &&
++		    (qlist->ec == thinkpad_id.ec_model ||
++				qlist->ec == TPACPI_MATCH_ANY))
++			return qlist->quirks;
++
++		qlist_size--;
++		qlist++;
++	}
++	return 0;
++}
++
++
+ /****************************************************************************
+  ****************************************************************************
+  *
+@@ -5757,14 +5798,27 @@ static struct backlight_ops ibm_backlight_data = {
+ 
+ /* --------------------------------------------------------------------- */
+ 
++#define TPACPI_BRGHT_Q_EC	0x0002  /* Should or must use EC HBRV */
++
++static const struct tpacpi_quirk brightness_quirk_table[] __initconst = {
++	TPACPI_Q_IBM('1', 'Y', TPACPI_BRGHT_Q_EC),
++	TPACPI_Q_IBM('1', 'Q', TPACPI_BRGHT_Q_EC),
++	TPACPI_Q_IBM('7', '6', TPACPI_BRGHT_Q_EC),
++	TPACPI_Q_IBM('7', '8', TPACPI_BRGHT_Q_EC),
++};
++
+ static int __init brightness_init(struct ibm_init_struct *iibm)
+ {
+ 	int b;
++	unsigned long quirks;
+ 
+ 	vdbg_printk(TPACPI_DBG_INIT, "initializing brightness subdriver\n");
+ 
+ 	mutex_init(&brightness_mutex);
+ 
++	quirks = tpacpi_check_quirks(brightness_quirk_table,
++				ARRAY_SIZE(brightness_quirk_table));
++
+ 	/*
+ 	 * We always attempt to detect acpi support, so as to switch
+ 	 * Lenovo Vista BIOS to ACPI brightness mode even if we are not
+@@ -5821,19 +5875,9 @@ static int __init brightness_init(struct ibm_init_struct *iibm)
+ 	/* TPACPI_BRGHT_MODE_AUTO not implemented yet, just use default */
+ 	if (brightness_mode == TPACPI_BRGHT_MODE_AUTO ||
+ 	    brightness_mode == TPACPI_BRGHT_MODE_MAX) {
+-		if (thinkpad_id.vendor == PCI_VENDOR_ID_IBM) {
+-			/*
+-			 * IBM models that define HBRV probably have
+-			 * EC-based backlight level control
+-			 */
+-			if (acpi_evalf(ec_handle, NULL, "HBRV", "qd"))
+-				/* T40-T43, R50-R52, R50e, R51e, X31-X41 */
+-				brightness_mode = TPACPI_BRGHT_MODE_ECNVRAM;
+-			else
+-				/* all other IBM ThinkPads */
+-				brightness_mode = TPACPI_BRGHT_MODE_UCMS_STEP;
+-		} else
+-			/* All Lenovo ThinkPads */
++		if (quirks & TPACPI_BRGHT_Q_EC)
++			brightness_mode = TPACPI_BRGHT_MODE_ECNVRAM;
++		else
+ 			brightness_mode = TPACPI_BRGHT_MODE_UCMS_STEP;
+ 
+ 		dbg_printk(TPACPI_DBG_BRGHT,
+@@ -7387,6 +7431,8 @@ static int __must_check __init get_thinkpad_model_data(
+ 		return 0;
+ 	tp->bios_model = tp->bios_version_str[0]
+ 			 | (tp->bios_version_str[1] << 8);
++	tp->bios_release = (tp->bios_version_str[4] << 8)
++			 | tp->bios_version_str[5];
+ 
+ 	/*
+ 	 * ThinkPad T23 or newer, A31 or newer, R50e or newer,
+@@ -7407,6 +7453,8 @@ static int __must_check __init get_thinkpad_model_data(
+ 				return -ENOMEM;
+ 			tp->ec_model = ec_fw_string[0]
+ 					| (ec_fw_string[1] << 8);
++			tp->ec_release = (ec_fw_string[4] << 8)
++					| ec_fw_string[5];
+ 			break;
+ 		}
+ 	}
+diff --git a/fs/cifs/cifsglob.h b/fs/cifs/cifsglob.h
+index a61ab77..115036f 100644
+--- a/fs/cifs/cifsglob.h
++++ b/fs/cifs/cifsglob.h
+@@ -544,9 +544,9 @@ require use of the stronger protocol */
+ #define   CIFSSEC_MUST_LANMAN	0x10010
+ #define   CIFSSEC_MUST_PLNTXT	0x20020
+ #ifdef CONFIG_CIFS_UPCALL
+-#define   CIFSSEC_MASK          0xAF0AF /* allows weak security but also krb5 */
++#define   CIFSSEC_MASK          0xBF0BF /* allows weak security but also krb5 */
+ #else
+-#define   CIFSSEC_MASK          0xA70A7 /* current flags supported if weak */
++#define   CIFSSEC_MASK          0xB70B7 /* current flags supported if weak */
+ #endif /* UPCALL */
+ #else /* do not allow weak pw hash */
+ #ifdef CONFIG_CIFS_UPCALL
+diff --git a/fs/inode.c b/fs/inode.c
+index a9e8ef0..d69a0eb 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -672,13 +672,15 @@ void unlock_new_inode(struct inode *inode)
+ 	}
+ #endif
+ 	/*
+-	 * This is special!  We do not need the spinlock
+-	 * when clearing I_LOCK, because we're guaranteed
+-	 * that nobody else tries to do anything about the
+-	 * state of the inode when it is locked, as we
+-	 * just created it (so there can be no old holders
+-	 * that haven't tested I_LOCK).
++	 * This is special!  We do not need the spinlock when clearing I_LOCK,
++	 * because we're guaranteed that nobody else tries to do anything about
++	 * the state of the inode when it is locked, as we just created it (so
++	 * there can be no old holders that haven't tested I_LOCK).
++	 * However we must emit the memory barrier so that other CPUs reliably
++	 * see the clearing of I_LOCK after the other inode initialisation has
++	 * completed.
+ 	 */
++	smp_mb();
+ 	WARN_ON((inode->i_state & (I_LOCK|I_NEW)) != (I_LOCK|I_NEW));
+ 	inode->i_state &= ~(I_LOCK|I_NEW);
+ 	wake_up_inode(inode);
+diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
+index b55f31c..8344005 100644
+--- a/fs/nilfs2/btnode.c
++++ b/fs/nilfs2/btnode.c
+@@ -36,6 +36,7 @@
+ 
+ void nilfs_btnode_cache_init_once(struct address_space *btnc)
+ {
++	memset(btnc, 0, sizeof(*btnc));
+ 	INIT_RADIX_TREE(&btnc->page_tree, GFP_ATOMIC);
+ 	spin_lock_init(&btnc->tree_lock);
+ 	INIT_LIST_HEAD(&btnc->private_list);
+diff --git a/fs/proc/kcore.c b/fs/proc/kcore.c
+index 59b43a0..5fd7d2b 100644
+--- a/fs/proc/kcore.c
++++ b/fs/proc/kcore.c
+@@ -361,7 +361,13 @@ read_kcore(struct file *file, char __user *buffer, size_t buflen, loff_t *fpos)
+ 				/* don't dump ioremap'd stuff! (TA) */
+ 				if (m->flags & VM_IOREMAP)
+ 					continue;
+-				memcpy(elf_buf + (vmstart - start),
++				/*
++				 * we may access memory holes, then use
++				 * ex_table. checking return value just for
++				 * avoid warnings.
++				 */
++				vmsize = __copy_from_user_inatomic(
++					elf_buf + (vmstart - start),
+ 					(char *)vmstart, vmsize);
+ 			}
+ 			read_unlock(&vmlist_lock);
+diff --git a/fs/proc/uptime.c b/fs/proc/uptime.c
+index 0c10a0b..766b1d4 100644
+--- a/fs/proc/uptime.c
++++ b/fs/proc/uptime.c
+@@ -4,13 +4,18 @@
+ #include <linux/sched.h>
+ #include <linux/seq_file.h>
+ #include <linux/time.h>
++#include <linux/kernel_stat.h>
+ #include <asm/cputime.h>
+ 
+ static int uptime_proc_show(struct seq_file *m, void *v)
+ {
+ 	struct timespec uptime;
+ 	struct timespec idle;
+-	cputime_t idletime = cputime_add(init_task.utime, init_task.stime);
++	int i;
++	cputime_t idletime = cputime_zero;
++
++	for_each_possible_cpu(i)
++		idletime = cputime64_add(idletime, kstat_cpu(i).cpustat.idle);
+ 
+ 	do_posix_clock_monotonic_gettime(&uptime);
+ 	monotonic_to_bootbased(&uptime);
+diff --git a/include/linux/kvm_para.h b/include/linux/kvm_para.h
+index 3ddce03..d731092 100644
+--- a/include/linux/kvm_para.h
++++ b/include/linux/kvm_para.h
+@@ -13,6 +13,7 @@
+ #define KVM_ENOSYS		1000
+ #define KVM_EFAULT		EFAULT
+ #define KVM_E2BIG		E2BIG
++#define KVM_EPERM		EPERM
+ 
+ #define KVM_HC_VAPIC_POLL_IRQ		1
+ #define KVM_HC_MMU_OP			2
+diff --git a/include/pcmcia/ss.h b/include/pcmcia/ss.h
+index 9b4ac93..56677eb 100644
+--- a/include/pcmcia/ss.h
++++ b/include/pcmcia/ss.h
+@@ -279,7 +279,7 @@ extern struct pccard_resource_ops pccard_iodyn_ops;
+ extern struct pccard_resource_ops pccard_nonstatic_ops;
+ 
+ /* socket drivers are expected to use these callbacks in their .drv struct */
+-extern int pcmcia_socket_dev_suspend(struct device *dev, pm_message_t state);
++extern int pcmcia_socket_dev_suspend(struct device *dev);
+ extern int pcmcia_socket_dev_resume(struct device *dev);
+ 
+ /* socket drivers use this callback in their IRQ handler */
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 2403eb9..42f7e1a 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -1017,6 +1017,7 @@ int __weak alloc_bootmem_huge_page(struct hstate *h)
+ 				NODE_DATA(h->hugetlb_next_nid),
+ 				huge_page_size(h), huge_page_size(h), 0);
+ 
++		hstate_next_node(h);
+ 		if (addr) {
+ 			/*
+ 			 * Use the beginning of the huge page to store the
+@@ -1026,7 +1027,6 @@ int __weak alloc_bootmem_huge_page(struct hstate *h)
+ 			m = addr;
+ 			goto found;
+ 		}
+-		hstate_next_node(h);
+ 		nr_nodes--;
+ 	}
+ 	return 0;
+diff --git a/mm/memory.c b/mm/memory.c
+index 4126dd1..445ff30 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -2586,7 +2586,8 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		goto oom_free_page;
+ 
+ 	entry = mk_pte(page, vma->vm_page_prot);
+-	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++	if (vma->vm_flags & VM_WRITE)
++		entry = pte_mkwrite(pte_mkdirty(entry));
+ 
+ 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
+ 	if (!pte_none(*page_table))
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 2b43fa1..2429a7b 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -572,9 +572,9 @@ again:			remove_next = 1 + (end > next->vm_end);
+ 
+ 	/*
+ 	 * When changing only vma->vm_end, we don't really need
+-	 * anon_vma lock: but is that case worth optimizing out?
++	 * anon_vma lock.
+ 	 */
+-	if (vma->anon_vma)
++	if (vma->anon_vma && (insert || importer || start != vma->vm_start))
+ 		anon_vma = vma->anon_vma;
+ 	if (anon_vma) {
+ 		spin_lock(&anon_vma->lock);
+diff --git a/net/ax25/af_ax25.c b/net/ax25/af_ax25.c
+index fd9d06f..e7af49d 100644
+--- a/net/ax25/af_ax25.c
++++ b/net/ax25/af_ax25.c
+@@ -539,7 +539,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
+ 	if (level != SOL_AX25)
+ 		return -ENOPROTOOPT;
+ 
+-	if (optlen < sizeof(int))
++	if (optlen < (int)sizeof(int))
+ 		return -EINVAL;
+ 
+ 	if (get_user(opt, (int __user *)optval))
+diff --git a/net/bridge/br_netfilter.c b/net/bridge/br_netfilter.c
+index e4a418f..9de46b4 100644
+--- a/net/bridge/br_netfilter.c
++++ b/net/bridge/br_netfilter.c
+@@ -357,7 +357,7 @@ static int br_nf_pre_routing_finish(struct sk_buff *skb)
+ 				},
+ 				.proto = 0,
+ 			};
+-			struct in_device *in_dev = in_dev_get(dev);
++			struct in_device *in_dev = __in_dev_get_rcu(dev);
+ 
+ 			/* If err equals -EHOSTUNREACH the error is due to a
+ 			 * martian destination or due to the fact that
+diff --git a/net/bridge/netfilter/ebt_ulog.c b/net/bridge/netfilter/ebt_ulog.c
+index 133eeae..ce50688 100644
+--- a/net/bridge/netfilter/ebt_ulog.c
++++ b/net/bridge/netfilter/ebt_ulog.c
+@@ -266,7 +266,7 @@ static bool ebt_ulog_tg_check(const struct xt_tgchk_param *par)
+ 	if (uloginfo->qthreshold > EBT_ULOG_MAX_QLEN)
+ 		uloginfo->qthreshold = EBT_ULOG_MAX_QLEN;
+ 
+-	return 0;
++	return true;
+ }
+ 
+ static struct xt_target ebt_ulog_tg_reg __read_mostly = {
+diff --git a/net/ipv4/netfilter/nf_nat_core.c b/net/ipv4/netfilter/nf_nat_core.c
+index 3229e0a..b6ddd56 100644
+--- a/net/ipv4/netfilter/nf_nat_core.c
++++ b/net/ipv4/netfilter/nf_nat_core.c
+@@ -212,7 +212,7 @@ find_best_ips_proto(struct nf_conntrack_tuple *tuple,
+ 	maxip = ntohl(range->max_ip);
+ 	j = jhash_2words((__force u32)tuple->src.u3.ip,
+ 			 range->flags & IP_NAT_RANGE_PERSISTENT ?
+-				(__force u32)tuple->dst.u3.ip : 0, 0);
++				0 : (__force u32)tuple->dst.u3.ip, 0);
+ 	j = ((u64)j * (maxip - minip + 1)) >> 32;
+ 	*var_ipp = htonl(minip + j);
+ }
+diff --git a/net/packet/af_packet.c b/net/packet/af_packet.c
+index f546e81..854d14b 100644
+--- a/net/packet/af_packet.c
++++ b/net/packet/af_packet.c
+@@ -1501,7 +1501,7 @@ packet_setsockopt(struct socket *sock, int level, int optname, char __user *optv
+ static int packet_getsockopt(struct socket *sock, int level, int optname,
+ 			     char __user *optval, int __user *optlen)
+ {
+-	int len;
++	unsigned int len;
+ 	int val;
+ 	struct sock *sk = sock->sk;
+ 	struct packet_sock *po = pkt_sk(sk);
+@@ -1514,7 +1514,7 @@ static int packet_getsockopt(struct socket *sock, int level, int optname,
+ 	if (get_user(len, optlen))
+ 		return -EFAULT;
+ 
+-	if (len < 0)
++	if ((int)len < 0)
+ 		return -EINVAL;
+ 
+ 	switch(optname)	{
+diff --git a/scripts/kallsyms.c b/scripts/kallsyms.c
+index 6654cbe..b187edc 100644
+--- a/scripts/kallsyms.c
++++ b/scripts/kallsyms.c
+@@ -539,7 +539,7 @@ static int prefix_underscores_count(const char *str)
+ {
+ 	const char *tail = str;
+ 
+-	while (*tail != '_')
++	while (*tail == '_')
+ 		tail++;
+ 
+ 	return tail - str;
