@@ -1,0 +1,51 @@
+From: Mart Raudsepp <mart.raudsepp@artecdesign.ee>
+Date: Fri, 24 Jul 2009 16:45:41 +0000 (-0300)
+Subject: V4L/DVB: af9015: add new USB ID for KWorld PlusTV Dual DVB-T Stick (DVB-T 399U)
+X-Git-Tag: v2.6.32-rc1~679^2~84
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=c92f056308c4a77a833e1cc1e16c1b68974483a6
+
+V4L/DVB: af9015: add new USB ID for KWorld PlusTV Dual DVB-T Stick (DVB-T 399U)
+
+Add new USB ID (1b80:e400) for KWorld PlusTV Dual DVB-T Stick (DVB-T 399U).
+The model number on the devices sticker label is "KW-DVB-T 399UR".
+
+Signed-off-by: Mart Raudsepp <mart.raudsepp@artecdesign.ee>
+Acked-by: Antti Palosaari <crope@iki.fi>
+Signed-off-by: Mauro Carvalho Chehab <mchehab@redhat.com>
+---
+
+diff --git a/drivers/media/dvb/dvb-usb/af9015.c b/drivers/media/dvb/dvb-usb/af9015.c
+index 00fbaf5..7e571ad 100644
+--- a/drivers/media/dvb/dvb-usb/af9015.c
++++ b/drivers/media/dvb/dvb-usb/af9015.c
+@@ -1264,6 +1264,7 @@ static struct usb_device_id af9015_usb_table[] = {
+ 	{USB_DEVICE(USB_VID_KWORLD_2,  USB_PID_CONCEPTRONIC_CTVDIGRCU)},
+ 	{USB_DEVICE(USB_VID_KWORLD_2,  USB_PID_KWORLD_MC810)},
+ 	{USB_DEVICE(USB_VID_KYE,       USB_PID_GENIUS_TVGO_DVB_T03)},
++/* 25 */{USB_DEVICE(USB_VID_KWORLD_2,  USB_PID_KWORLD_399U_2)},
+ 	{0},
+ };
+ MODULE_DEVICE_TABLE(usb, af9015_usb_table);
+@@ -1344,7 +1345,8 @@ static struct dvb_usb_device_properties af9015_properties[] = {
+ 			{
+ 				.name = "KWorld PlusTV Dual DVB-T Stick " \
+ 					"(DVB-T 399U)",
+-				.cold_ids = {&af9015_usb_table[4], NULL},
++				.cold_ids = {&af9015_usb_table[4],
++					     &af9015_usb_table[25], NULL},
+ 				.warm_ids = {NULL},
+ 			},
+ 			{
+diff --git a/drivers/media/dvb/dvb-usb/dvb-usb-ids.h b/drivers/media/dvb/dvb-usb/dvb-usb-ids.h
+index bf73201..3324a73 100644
+--- a/drivers/media/dvb/dvb-usb/dvb-usb-ids.h
++++ b/drivers/media/dvb/dvb-usb/dvb-usb-ids.h
+@@ -104,6 +104,7 @@
+ #define USB_PID_GRANDTEC_DVBT_USB_WARM			0x0fa1
+ #define USB_PID_INTEL_CE9500				0x9500
+ #define USB_PID_KWORLD_399U				0xe399
++#define USB_PID_KWORLD_399U_2				0xe400
+ #define USB_PID_KWORLD_395U				0xe396
+ #define USB_PID_KWORLD_395U_2				0xe39b
+ #define USB_PID_KWORLD_395U_3				0xe395
+
