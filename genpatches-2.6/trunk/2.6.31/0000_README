@@ -67,6 +67,10 @@ Patch:  1004_linux-2.6.31.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.31.5
 
+Patch:	1500_pipe-c-null-ptr-dref.patch
+From:   https://bugs.gentoo.org/291904
+Desc:   Fix for the null pointer exception in pipe_rdwr_open (CVE-2009-3547)
+
 Patch:	2700_kworld-plustv-dual-dvb.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=288818
 Desc:	Add new USB ID for KWorld PlusTV Dual DVB-T Stick
