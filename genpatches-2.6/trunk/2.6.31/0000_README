@@ -71,6 +71,10 @@ Patch:	1500_pipe-c-null-ptr-dref.patch
 From:   https://bugs.gentoo.org/291904
 Desc:   Fix for the null pointer exception in pipe_rdwr_open (CVE-2009-3547)
 
+Patch:	1900_fsnotify-group-mark-fix.patch
+From:   https://bugs.gentoo.org/290651
+Desc:   fsnotify: do not set group for a mark before it is on the i_list 
+
 Patch:	2700_kworld-plustv-dual-dvb.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=288818
 Desc:	Add new USB ID for KWorld PlusTV Dual DVB-T Stick
