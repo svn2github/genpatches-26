@@ -75,6 +75,10 @@ Patch:	2700_kworld-plustv-dual-dvb.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=288818
 Desc:	Add new USB ID for KWorld PlusTV Dual DVB-T Stick
 
+Patch:	2710_audiotrak-prodigy-hd2-suspend-resume.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=293181
+Desc:	Patch for suspend/resume for Audiotrak Prodigy HD2
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
