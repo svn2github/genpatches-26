@@ -71,6 +71,10 @@ Patch:  1005_linux-2.6.31.6.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.31.6
 
+Patch:	2000_sk-forward-alloc-corruption-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=293378
+Desc:	Patch to fix sk_forward_alloc corruption on SUNRPC
+
 Patch:	2700_kworld-plustv-dual-dvb.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=288818
 Desc:	Add new USB ID for KWorld PlusTV Dual DVB-T Stick
