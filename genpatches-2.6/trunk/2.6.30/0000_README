@@ -83,6 +83,10 @@ Patch:  1510_hid-move-deref-below-null-test.patch
 From:   http://lwn.net/Articles/342440/
 Desc:   HID: Move dereferences below a NULL test
 
+Patch: 	1900_hfs-readdir-buffer-overflow.patch
+From:  	http://bugs.gentoo.org/show_bug.cgi?id=295652
+Desc:  	Fix for a buffer overflow attack in HFS
+
 Patch:	2500_ide-cd-handle-fragmented-patckets.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=274182
 Desc:	ide-cd: handle fragmented packet commands gracefully
