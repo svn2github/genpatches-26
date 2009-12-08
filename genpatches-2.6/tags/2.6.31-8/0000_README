@@ -1,0 +1,109 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:  1000_linux-2.6.31.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.1
+
+Patch:  1001_linux-2.6.31.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.2
+
+Patch:  1002_linux-2.6.31.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.3
+
+Patch:  1001_linux-2.6.31.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.2
+
+Patch:  1002_linux-2.6.31.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.3
+
+Patch:  1003_linux-2.6.31.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.4
+
+Patch:  1004_linux-2.6.31.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.5
+
+Patch:  1005_linux-2.6.31.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.6
+
+Patch:  1006_linux-2.6.31.7.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.7
+
+Patch: 	1900_hfs-readdir-buffer-overflow.patch
+From:  	http://bugs.gentoo.org/show_bug.cgi?id=295652
+Desc:  	Fix for a buffer overflow attack in HFS
+
+Patch:	2000_sk-forward-alloc-corruption-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=293378
+Desc:	Patch to fix sk_forward_alloc corruption on SUNRPC
+
+Patch:	2700_kworld-plustv-dual-dvb.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=288818
+Desc:	Add new USB ID for KWorld PlusTV Dual DVB-T Stick
+
+Patch:	2710_audiotrak-prodigy-hd2-suspend-resume.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=293181
+Desc:	Patch for suspend/resume for Audiotrak Prodigy HD2
+
+Patch:	4100_dm-bbr.patch
+From:	EVMS 2.5.2
+Desc:	Bad block relocation support for LiveCD users
+
+Patch:	4200_fbcondecor-0.9.6.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4400_alpha-sysctl-uac.patch
+From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
+Desc:	Enable control of the unaligned access control policy from sysctl
+
+Patch:  2900_makefile-changes.patch
+From:   http://www.kernel.org
+Desc:   Minor patch to makefile from Linux 2.6.31.5
+
