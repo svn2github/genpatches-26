@@ -91,6 +91,14 @@ Patch:	2710_audiotrak-prodigy-hd2-suspend-resume.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=293181
 Desc:	Patch for suspend/resume for Audiotrak Prodigy HD2
 
+Patch:  2900_makefile-changes.patch
+From:   http://www.kernel.org
+Desc:   Minor patch to makefile from Linux 2.6.31.5
+
+Patch:	2720_juli-suspend-resume-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=293181
+Desc:	Patch for suspend/resume for ESI Juli
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
@@ -102,8 +110,4 @@ Desc:	Bootsplash successor by Michal Januszewski
 Patch:	4400_alpha-sysctl-uac.patch
 From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
 Desc:	Enable control of the unaligned access control policy from sysctl
-
-Patch:  2900_makefile-changes.patch
-From:   http://www.kernel.org
-Desc:   Minor patch to makefile from Linux 2.6.31.5
 
