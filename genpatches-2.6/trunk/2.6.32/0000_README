@@ -43,9 +43,9 @@ Patch:  1000_linux-2.6.32.1.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.1
 
-Patch: 	1900_hfs-readdir-buffer-overflow.patch
-From:  	http://bugs.gentoo.org/show_bug.cgi?id=295652
-Desc:  	Fix for a buffer overflow attack in HFS
+Patch:  1001_linux-2.6.32.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.1
 
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
