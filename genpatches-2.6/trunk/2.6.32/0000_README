@@ -47,6 +47,14 @@ Patch:  1001_linux-2.6.32.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.1
 
+Patch:  1900_EFI-GPT-header-read-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=296915
+Desc:   Read whole sector with EFI GPT header
+
+Patch:  1910_sector-size-for-EFI-GPT-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=296915
+Desc:	Use sector size for EFI GPT
+
 Patch:	4100_dm-bbr.patch
 From:	EVMS 2.5.2
 Desc:	Bad block relocation support for LiveCD users
