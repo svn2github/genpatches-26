@@ -79,9 +79,9 @@ Patch:  1007_linux-2.6.31.8.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.31.8
 
-Patch: 	1900_hfs-readdir-buffer-overflow.patch
-From:  	http://bugs.gentoo.org/show_bug.cgi?id=295652
-Desc:  	Fix for a buffer overflow attack in HFS
+Patch:  1008_linux-2.6.31.9.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.9
 
 Patch:	2000_sk-forward-alloc-corruption-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=293378
