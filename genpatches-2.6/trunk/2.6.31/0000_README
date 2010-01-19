@@ -91,6 +91,10 @@ Patch:  1010_linux-2.6.31.11.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.31.11
 
+Patch:  1011_linux-2.6.31.12.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.31.12
+
 Patch:	2000_sk-forward-alloc-corruption-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=293378
 Desc:	Patch to fix sk_forward_alloc corruption on SUNRPC
