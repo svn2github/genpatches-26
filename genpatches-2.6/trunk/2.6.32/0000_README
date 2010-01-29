@@ -63,6 +63,10 @@ Patch:  1005_linux-2.6.32.6.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.6
 
+Patch:  1006_linux-2.6.32.7.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.7
+
 Patch:  1900_EFI-GPT-header-read-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=296915
 Desc:   Read whole sector with EFI GPT header
