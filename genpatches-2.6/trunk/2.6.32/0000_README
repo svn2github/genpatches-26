@@ -75,6 +75,10 @@ Patch:  2410_rtl8187se-compilation-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=296920
 Desc:	Fix rtl8187se compilation errors with mac80211
 
+Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
+Desc:	Fix bug which truncated LBA48 return values
+
 Patch:	4200_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
