@@ -5,8 +5,8 @@ This patch works around the problem by pivoting the 5906's transmit routine to t
 
 Signed-off-by: Mike Pagano <mpagano@gentoo.org>
 ---
---- a/drivers/net/tg3.c	2010-01-30 15:59:44.000000000 -0500
-+++ b/drivers/net/tg3.c	2010-02-13 10:16:16.000000000 -0500
+--- a/drivers/net/tg3.c	2010-02-02 11:09:54.000000000 -0500
++++ b/drivers/net/tg3.c	2010-02-17 12:54:08.000000000 -0500
 @@ -5392,7 +5392,7 @@ static netdev_tx_t tg3_start_xmit_dma_bu
  	mss = 0;
  	if ((mss = skb_shinfo(skb)->gso_size) != 0) {
@@ -50,7 +50,7 @@ Signed-off-by: Mike Pagano <mpagano@gentoo.org>
  			if (tg3_4g_overflow_test(mapping, len))
  				would_hit_hwbug = 1;
  
-@@ -12608,6 +12617,13 @@ static int __devinit tg3_get_invariants(
+@@ -12608,6 +12617,9 @@ static int __devinit tg3_get_invariants(
  		}
  	}
  
@@ -60,7 +60,7 @@ Signed-off-by: Mike Pagano <mpagano@gentoo.org>
  	tp->irq_max = 1;
  
  #ifdef TG3_NAPI
-@@ -13975,8 +13991,7 @@ static int __devinit tg3_init_one(struct
+@@ -13975,8 +13987,7 @@ static int __devinit tg3_init_one(struct
  		goto err_out_iounmap;
  	}
  
@@ -70,8 +70,8 @@ Signed-off-by: Mike Pagano <mpagano@gentoo.org>
  		dev->netdev_ops = &tg3_netdev_ops;
  	else
  		dev->netdev_ops = &tg3_netdev_ops_dma_bug;
---- a/drivers/net/tg3.h	2010-01-30 15:59:47.000000000 -0500
-+++ b/drivers/net/tg3.h	2010-01-31 14:02:59.000000000 -0500
+--- a/drivers/net/tg3.h	2010-02-17 12:44:57.000000000 -0500
++++ b/drivers/net/tg3.h	2010-02-17 12:46:02.000000000 -0500
 @@ -2759,6 +2759,9 @@ struct tg3 {
  #define TG3_FLG3_TOGGLE_10_100_L1PLLPD	0x00008000
  #define TG3_FLG3_PHY_IS_FET		0x00010000
