@@ -22,7 +22,7 @@ $subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/
 $webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
-$website_base = 'http://dev.gentoo.org/~dsd/genpatches';
+$website_base = 'http://dev.gentoo.org/~$1/genpatches';
 
 $ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
 @kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/hardened-sources', 'sys-kernel/xen-sources', 'sys-kernel/rsbac-sources', 'sys-kernel/tuxonice-sources', 'sys-kernel/usermode-sources', 'sys-kernel/vserver-sources');
