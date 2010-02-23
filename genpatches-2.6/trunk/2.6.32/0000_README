@@ -71,13 +71,13 @@ Patch:  1007_linux-2.6.32.8.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.8
 
+Patch:  1008_linux-2.6.32.9.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.9
+
 Patch:  2400_5906-transmit-hang-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=304625
 Desc:	tg3: Fix 5906 transmit hangs
-
-Patch:  2410_rtl8187se-compilation-fix.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=296920
-Desc:	Fix rtl8187se compilation errors with mac80211
 
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
