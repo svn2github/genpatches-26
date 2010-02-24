@@ -131,32 +131,33 @@ Index: linux-2.6.26-gentoo/arch/alpha/kernel/traps.c
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +	__initcall(init_uac_sysctl);
 +#endif
-Index: linux-2.6.26-gentoo/kernel/sysctl.c
+Index: linux-2.6.33-gentoo/kernel/sysctl.c
 ===================================================================
---- linux-2.6.26-gentoo.orig/kernel/sysctl.c
-+++ linux-2.6.26-gentoo/kernel/sysctl.c
-@@ -177,6 +177,9 @@ extern struct ctl_table random_table[];
+--- a/kernel/sysctl.c	2010-02-24 17:52:58.000000000 -0500
++++ b/kernel/sysctl.c	2010-02-24 17:57:49.000000000 -0500
+@@ -193,6 +193,10 @@ extern struct ctl_table random_table[];
  #ifdef CONFIG_INOTIFY_USER
  extern struct ctl_table inotify_table[];
  #endif
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
 +extern struct ctl_table uac_table[];
 +#endif
- 
- #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
- int sysctl_legacy_va_layout;
-@@ -832,6 +835,14 @@ static struct ctl_table kern_table[] = {
++
+ #ifdef CONFIG_EPOLL
+ extern struct ctl_table epoll_table[];
+ #endif
+@@ -940,6 +944,14 @@ static struct ctl_table kern_table[] = {
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
   */
 +#ifdef CONFIG_ALPHA_UAC_SYSCTL
-+    {
-+        .ctl_name   = CTL_UNNUMBERED,
-+        .procname   = "uac",
-+        .mode       = 0555,
-+        .child      = uac_table,
-+    },
++{
++	.ctl_name   = CTL_UNNUMBERED,
++	.procname   = "uac",
++	.mode       = 0555,
++	.child      = uac_table,
++},
 +#endif /* CONFIG_ALPHA_UAC_SYSCTL */
- 	{ .ctl_name = 0 }
+ 	{ }
  };
  
