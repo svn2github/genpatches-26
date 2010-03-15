@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.33.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.33.1
+
 Patch:  4100_dm-bbr.patch
 From:   EVMS 2.5.2
 Desc:   Bad block relocation support for LiveCD users
