@@ -79,9 +79,9 @@ Patch:  1009_linux-2.6.32.10.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.10
 
-Patch:  2400_5906-transmit-hang-fix.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=304625
-Desc:	tg3: Fix 5906 transmit hangs
+Patch:  1010-2.6.32.11.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.11
 
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
