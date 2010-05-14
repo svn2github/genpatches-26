@@ -1,0 +1,29 @@
+From: Douglas Gilbert <dgilbert@interlog.com>
+Date: Mon, 1 Feb 2010 18:11:38 +0000 (-0500)
+Subject: libata-scsi passthru: fix bug which truncated LBA48 return values
+X-Git-Tag: v2.6.33-rc7~5^2~3
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=bc496ed00ab1411d3efaf295b72e0c9eb343e1a3
+
+libata-scsi passthru: fix bug which truncated LBA48 return values
+
+Fix assignment which overwrote SAT ATA PASS-THROUGH command EXTEND
+bit setting (ATA_TFLAG_LBA48)
+
+Signed-off-by: Douglas Gilbert <dgilbert@interlog.com>
+Signed-off-by: Jeff Garzik <jgarzik@redhat.com>
+---
+
+diff --git a/drivers/ata/libata-scsi.c b/drivers/ata/libata-scsi.c
+index f4ea5a8..d096fbc 100644
+--- a/drivers/ata/libata-scsi.c
++++ b/drivers/ata/libata-scsi.c
+@@ -2875,7 +2875,7 @@ static unsigned int ata_scsi_pass_thru(struct ata_queued_cmd *qc)
+ 	 * write indication (used for PIO/DMA setup), result TF is
+ 	 * copied back and we don't whine too much about its failure.
+ 	 */
+-	tf->flags = ATA_TFLAG_ISADDR | ATA_TFLAG_DEVICE;
++	tf->flags |= ATA_TFLAG_ISADDR | ATA_TFLAG_DEVICE;
+ 	if (scmd->sc_data_direction == DMA_TO_DEVICE)
+ 		tf->flags |= ATA_TFLAG_WRITE;
+ 
+
