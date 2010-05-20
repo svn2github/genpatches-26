@@ -25,7 +25,7 @@ $output_path = $webscript_path.'/output';
 $website_base = 'http://dev.gentoo.org/~mpagano/genpatches';
 
 $ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
-@kernels = ('sys-kernel/gentoo-sources', 'sys-kernel/hardened-sources', 'sys-kernel/xen-sources', 'sys-kernel/rsbac-sources', 'sys-kernel/tuxonice-sources', 'sys-kernel/usermode-sources', 'sys-kernel/vserver-sources');
+@kernels = ('sys-kernel/ck-sources','sys-kernel/gentoo-sources','sys-kernel/hardened-sources','sys-kernel/openvz-sources','sys-kernel/xen-sources','sys-kernel/tuxonice-sources','sys-kernel/usermode-sources','sys-kernel/vserver-sources','sys-kernel/zen-sources');
 
 sub html_header {
 	local *FD = shift;
