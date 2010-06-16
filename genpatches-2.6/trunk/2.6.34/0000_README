@@ -43,6 +43,10 @@ Patch:	2700_nouveau-acpi-lid-open-undefined-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=322001
 Desc:	nouveau: fix acpi_lid_open undefined
 
+Patch:	2710_vbfb-section-cleanup.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=323021
+Desc:   Fix errors issued by modpost in vfb driver	
+
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761
 Desc:	xconfig patch for qt4 - thanks to Sam Iam
