@@ -47,6 +47,10 @@ Patch:	2710_vbfb-section-cleanup.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=323021
 Desc:   Fix errors issued by modpost in vfb driver	
 
+Patch:	2720_vbfb-section-cleanup.patch
+From:	http://lkml.org/lkml/2010/6/25/271
+Desc:   add missing define to prevent re-define errors in vgaarb.h
+
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761
 Desc:	xconfig patch for qt4 - thanks to Sam Iam
