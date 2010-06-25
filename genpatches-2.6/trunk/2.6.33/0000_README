@@ -59,6 +59,10 @@ Patch:  1002_linux-2.6.33.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.33.3
 
+Patch:  2700_vbfb-section-cleanup.patch
+From:   http://lkml.org/lkml/2010/6/25/271
+Desc:   add missing define to prevent re-define errors in vgaarb.h
+
 Patch:  4100_dm-bbr.patch
 From:   EVMS 2.5.2
 Desc:   Bad block relocation support for LiveCD users
