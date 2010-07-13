@@ -39,18 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:  1000_linux-2.6.34.1.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.34.1
-
-Patch:	2700_nouveau-acpi-lid-open-undefined-fix.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=322001
-Desc:	nouveau: fix acpi_lid_open undefined
-
-Patch:	2720_vbfb-section-cleanup.patch
-From:	http://lkml.org/lkml/2010/6/25/271
-Desc:   add missing define to prevent re-define errors in vgaarb.h
-
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761
 Desc:	xconfig patch for qt4 - thanks to Sam Iam
