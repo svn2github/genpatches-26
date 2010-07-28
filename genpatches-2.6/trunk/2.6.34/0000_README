@@ -43,10 +43,14 @@ Patch:  1000_linux-2.6.34.1.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.34.1
 
+Patch:	2600_synaptic-cap-ID-check-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
+Desc:	Synaptics capability ID check fix
+
 Patch:	2700_nouveau-acpi-lid-open-undefined-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=322001
 Desc:	nouveau: fix acpi_lid_open undefined
-
+8
 Patch:	2720_vbfb-section-cleanup.patch
 From:	http://lkml.org/lkml/2010/6/25/271
 Desc:   add missing define to prevent re-define errors in vgaarb.h
