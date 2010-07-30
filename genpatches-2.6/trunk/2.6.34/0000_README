@@ -50,10 +50,14 @@ Desc:	Synaptics capability ID check fix
 Patch:	2700_nouveau-acpi-lid-open-undefined-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=322001
 Desc:	nouveau: fix acpi_lid_open undefined
-8
+
 Patch:	2720_vbfb-section-cleanup.patch
 From:	http://lkml.org/lkml/2010/6/25/271
 Desc:   add missing define to prevent re-define errors in vgaarb.h
+
+Patch:	2730_i915-PLL-permissive-search-fix.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=325619
+Desc:   Make G4X-style PLL search more permissive
 
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761

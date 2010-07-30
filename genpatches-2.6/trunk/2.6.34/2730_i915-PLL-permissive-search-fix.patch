@@ -1,0 +1,13 @@
+--- a/drivers/gpu/drm/i915/intel_display.c	2010-07-30 08:40:58.000000000 -0400
++++ b/drivers/gpu/drm/i915/intel_display.c	2010-07-30 08:42:12.000000000 -0400
+@@ -880,8 +880,8 @@ intel_g4x_find_best_PLL(const intel_limi
+ 	intel_clock_t clock;
+ 	int max_n;
+ 	bool found;
+-	/* approximately equals target * 0.00488 */
+-	int err_most = (target >> 8) + (target >> 10);
++    /* approximately equals target * 0.00585 */
++    int err_most = (target >> 8) + (target >> 9);
+ 	found = false;
+ 
+ 	if (intel_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)) {
