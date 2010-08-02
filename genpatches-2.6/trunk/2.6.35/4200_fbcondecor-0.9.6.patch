@@ -225,7 +225,7 @@ index 0000000..15889f3
 +  Michal Januszewski <spock@gentoo.org>
 +
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 6ee53c7..4285118 100644
+index 91874e0..dc7663b 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -9,6 +9,9 @@ obj-y				+= gpio/
@@ -236,9 +236,9 @@ index 6ee53c7..4285118 100644
 +# default.
 +obj-y				+= char/
  obj-y				+= video/
+ obj-y				+= idle/
  obj-$(CONFIG_ACPI)		+= acpi/
- obj-$(CONFIG_SFI)		+= sfi/
-@@ -22,10 +25,6 @@ obj-$(CONFIG_XEN)		+= xen/
+@@ -24,10 +27,6 @@ obj-$(CONFIG_XEN)		+= xen/
  # regulators early, since some subsystems rely on them to initialize
  obj-$(CONFIG_REGULATOR)		+= regulator/
  
@@ -250,10 +250,10 @@ index 6ee53c7..4285118 100644
  obj-y				+= gpu/
  
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
-index 5a5c303..5c55b00 100644
+index 3d94a14..54e113d 100644
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -1180,7 +1180,6 @@ config FB_MATROX
+@@ -1195,7 +1195,6 @@ config FB_MATROX
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
@@ -262,10 +262,10 @@ index 5a5c303..5c55b00 100644
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
 diff --git a/drivers/video/console/Kconfig b/drivers/video/console/Kconfig
-index fc7d9bb..cb8412e 100644
+index 8e8f18d..86875c3 100644
 --- a/drivers/video/console/Kconfig
 +++ b/drivers/video/console/Kconfig
-@@ -121,6 +121,19 @@ config FRAMEBUFFER_CONSOLE_ROTATION
+@@ -122,6 +122,19 @@ config FRAMEBUFFER_CONSOLE_ROTATION
           such that other users of the framebuffer will remain normally
           oriented.
  
@@ -298,10 +298,10 @@ index a862e91..86bfcff 100644
  
  ifeq ($(CONFIG_USB_SISUSBVGA_CON),y)
 diff --git a/drivers/video/console/bitblit.c b/drivers/video/console/bitblit.c
-index 6b7c8fb..6b4d555 100644
+index af88651..4cd893d 100644
 --- a/drivers/video/console/bitblit.c
 +++ b/drivers/video/console/bitblit.c
-@@ -17,6 +17,7 @@
+@@ -18,6 +18,7 @@
  #include <linux/console.h>
  #include <asm/types.h>
  #include "fbcon.h"
@@ -309,7 +309,7 @@ index 6b7c8fb..6b4d555 100644
  
  /*
   * Accelerated handlers.
-@@ -54,6 +55,13 @@ static void bit_bmove(struct vc_data *vc, struct fb_info *info, int sy,
+@@ -55,6 +56,13 @@ static void bit_bmove(struct vc_data *vc, struct fb_info *info, int sy,
  	area.height = height * vc->vc_font.height;
  	area.width = width * vc->vc_font.width;
  
@@ -323,7 +323,7 @@ index 6b7c8fb..6b4d555 100644
  	info->fbops->fb_copyarea(info, &area);
  }
  
-@@ -379,11 +387,15 @@ static void bit_cursor(struct vc_data *vc, struct fb_info *info, int mode,
+@@ -380,11 +388,15 @@ static void bit_cursor(struct vc_data *vc, struct fb_info *info, int mode,
  	cursor.image.depth = 1;
  	cursor.rop = ROP_XOR;
  
@@ -345,10 +345,10 @@ index 6b7c8fb..6b4d555 100644
  }
 diff --git a/drivers/video/console/cfbcondecor.c b/drivers/video/console/cfbcondecor.c
 new file mode 100644
-index 0000000..7654ec6
+index 0000000..18a5452
 --- /dev/null
 +++ b/drivers/video/console/cfbcondecor.c
-@@ -0,0 +1,471 @@
+@@ -0,0 +1,472 @@
 +/*
 + *  linux/drivers/video/cfbcon_decor.c -- Framebuffer decor render functions
 + *
@@ -822,7 +822,7 @@ index 0000000..7654ec6
 +}
 +
 diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 3681c6a..f3da96a 100644
+index b0a3fa0..7121e94 100644
 --- a/drivers/video/console/fbcon.c
 +++ b/drivers/video/console/fbcon.c
 @@ -80,6 +80,7 @@
@@ -1187,7 +1187,7 @@ index 3681c6a..f3da96a 100644
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3498,6 +3634,7 @@ static void fbcon_exit(void)
+@@ -3516,6 +3652,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1881,7 +1881,7 @@ index f53b9f1..467f921 100644
  }
  
 diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
-index 99bbd28..893bca4 100644
+index 731fce6..f0ecef4 100644
 --- a/drivers/video/fbmem.c
 +++ b/drivers/video/fbmem.c
 @@ -1184,15 +1184,6 @@ struct fb_fix_screeninfo32 {
@@ -1974,17 +1974,10 @@ index 38fe59d..8e4058b 100644
  };
  
 diff --git a/include/linux/fb.h b/include/linux/fb.h
-index 369767b..2c14913 100644
+index 8e5a9df..7883651 100644
 --- a/include/linux/fb.h
 +++ b/include/linux/fb.h
-@@ -3,13 +3,31 @@
- 
- #include <linux/types.h>
- #include <linux/i2c.h>
--
- struct dentry;
- 
- /* Definitions of frame buffers						*/
+@@ -8,6 +8,25 @@
  
  #define FB_MAX			32	/* sufficient for now */
  
@@ -2010,10 +2003,10 @@ index 369767b..2c14913 100644
  /* ioctls
     0x46 is 'F'								*/
  #define FBIOGET_VSCREENINFO	0x4600
-@@ -37,7 +55,24 @@ struct dentry;
- #define FBIOGET_HWCINFO         0x4616
+@@ -36,6 +55,24 @@
  #define FBIOPUT_MODEINFO        0x4617
  #define FBIOGET_DISPINFO        0x4618
+ #define FBIO_WAITFORVSYNC	_IOW('F', 0x20, __u32)
 +#define FBIOCONDECOR_SETCFG	_IOWR('F', 0x19, struct fbcon_decor_iowrapper)
 +#define FBIOCONDECOR_GETCFG	_IOR('F', 0x1A, struct fbcon_decor_iowrapper)
 +#define FBIOCONDECOR_SETSTATE	_IOWR('F', 0x1B, struct fbcon_decor_iowrapper)
@@ -2028,14 +2021,14 @@ index 369767b..2c14913 100644
 +#define FBIOCONDECOR_SETPIC32	_IOWR('F', 0x1D, struct fbcon_decor_iowrapper32)
 +#endif /* CONFIG_COMPAT */
 +#endif /* __KERNEL__ */
- 
++
 +#define FBCON_DECOR_THEME_LEN		128	/* Maximum lenght of a theme name */
 +#define FBCON_DECOR_IO_ORIG_KERNEL	0	/* Kernel ioctl origin */
 +#define FBCON_DECOR_IO_ORIG_USER	1	/* User ioctl origin */
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -282,6 +317,28 @@ struct fb_cmap {
+@@ -280,6 +317,28 @@ struct fb_cmap {
  	__u16 *transp;			/* transparency, can be NULL */
  };
  
@@ -2064,7 +2057,7 @@ index 369767b..2c14913 100644
  struct fb_con2fbmap {
  	__u32 console;
  	__u32 framebuffer;
-@@ -363,6 +420,34 @@ struct fb_image {
+@@ -361,6 +420,34 @@ struct fb_image {
  	struct fb_cmap cmap;	/* color map info */
  };
  
@@ -2099,7 +2092,7 @@ index 369767b..2c14913 100644
  /*
   * hardware cursor control
   */
-@@ -855,6 +940,9 @@ struct fb_info {
+@@ -856,6 +943,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -2110,20 +2103,21 @@ index 369767b..2c14913 100644
  	void *par;
  	/* we need the PCI or similiar aperture base/size not
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 8a68b24..3232e2f 100644
+index d24f761..a47ce49 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -123,6 +123,9 @@ static int ngroups_max = NGROUPS_MAX;
- extern char modprobe_path[];
- extern int modules_disabled;
- #endif
+@@ -130,6 +130,10 @@ static int min_percpu_pagelist_fract = 8;
+ 
+ static int ngroups_max = NGROUPS_MAX;
+ 
 +#ifdef CONFIG_FB_CON_DECOR
 +extern char fbcon_decor_path[];
 +#endif
- #ifdef CONFIG_CHR_DEV_SG
- extern int sg_big_buff;
++
+ #ifdef CONFIG_SPARC
+ #include <asm/system.h>
  #endif
-@@ -232,6 +235,16 @@ static struct ctl_table root_table[] = {
+@@ -245,6 +249,16 @@ static struct ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
@@ -2140,4 +2134,3 @@ index 8a68b24..3232e2f 100644
  /*
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
-
