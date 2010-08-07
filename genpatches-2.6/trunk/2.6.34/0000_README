@@ -47,6 +47,10 @@ Patch:  1001_linux-2.6.34.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.34.2
 
+Patch:	1900_avoid-oops-on-md-removal.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=331225
+Desc:	Avoid possible oops when removing md devices
+
 Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
 Desc:	Synaptics capability ID check fix

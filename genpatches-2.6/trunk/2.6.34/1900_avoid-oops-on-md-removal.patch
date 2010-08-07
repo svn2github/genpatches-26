@@ -1,0 +1,33 @@
+From: NeilBrown <neilb@suse.de>
+Date: Mon, 17 May 2010 01:27:00 +0000 (+1000)
+Subject: md/linear: avoid possible oops and array stop
+X-Git-Tag: v2.6.35-rc1~440^2~44
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=ef2f80ff7325b2c1888ff02ead28957b5840bf51
+
+md/linear: avoid possible oops and array stop
+
+Since commit ef286f6fa673cd7fb367e1b145069d8dbfcc6081
+it has been important that each personality clears
+->private in the ->stop() function, or sets it to a
+attribute group to be removed.
+linear.c doesn't.  This can sometimes lead to an oops,
+though it doesn't always.
+
+Suitable for 2.6.33-stable and 2.6.34.
+
+Signed-off-by: NeilBrown <neilb@suse.de>
+Cc: stable@kernel.org
+---
+
+Index: linux-2.6.34-gentoo-r1/drivers/md/linear.c
+===================================================================
+--- linux-2.6.34-gentoo-r1.orig/drivers/md/linear.c
++++ linux-2.6.34-gentoo-r1/drivers/md/linear.c
+@@ -282,6 +282,7 @@ static int linear_stop (mddev_t *mddev)
+ 	rcu_barrier();
+ 	blk_sync_queue(mddev->queue); /* the unplug fn references 'conf'*/
+ 	kfree(conf);
++	mddev->private = NULL;
+ 
+ 	return 0;
+ }
