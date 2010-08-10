@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.35.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.35.1
+
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761
 Desc:	xconfig patch for qt4 - thanks to Sam Iam
