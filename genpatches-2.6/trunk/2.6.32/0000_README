@@ -111,6 +111,10 @@ Patch:  1017_linux-2.6.32.18.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.18
 
+Patch:  1017_linux-2.6.32.19.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.19
+
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
 Desc:	Fix bug which truncated LBA48 return values
