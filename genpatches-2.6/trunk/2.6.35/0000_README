@@ -51,6 +51,10 @@ Patch:  1800_page-table-unmap-for-stack-guard-fix.patch
 From:   https://bugzilla.kernel.org/show_bug.cgi?id=16588
 Desc:   Fix page table unmap for stack guard page properly
 
+Patch:  1805_fix-user-visible-effects-of-stack-guard-page.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=333477
+Desc:   Make the stack guard page somewhat less visible to user space
+
 Patch:  2600_support-eject-dell-studio-1555.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=333379
 Desc:   Add support for eject key on Dell Studio 1555
