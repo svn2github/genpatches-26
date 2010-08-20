@@ -63,6 +63,10 @@ Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
 Desc:	Synaptics capability ID check fix
 
+Patch:	2605_support-eject-dell-studio-1555.patch
+From:	http://bugs.gentoo.org/show_bug.cgi?id=333379
+Desc:	Add support for eject key on Dell Studio 1555
+
 Patch:	2700_nouveau-acpi-lid-open-undefined-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=322001
 Desc:	nouveau: fix acpi_lid_open undefined
