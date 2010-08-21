@@ -111,13 +111,13 @@ Patch:  1017_linux-2.6.32.18.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.18
 
-Patch:  1017_linux-2.6.32.19.patch
+Patch:  1018_linux-2.6.32.19.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.19
 
-Patch:  1800_page-table-unmap-for-stack-guard-fix.patch
-From:   https://bugzilla.kernel.org/show_bug.cgi?id=16588
-Desc:	Fix page table unmap for stack guard page properly
+Patch:  1019_linux-2.6.32.20.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.20
 
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
