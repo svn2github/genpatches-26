@@ -55,17 +55,9 @@ Patch:  1003_linux-2.6.34.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.34.4
 
-Patch:  1700_vmware-jiffies-include-fix.patch
-From:	http://bugs.gentoo.org/show_bug.cgi?id=332949
-Desc:	Add missing include
-
-Patch:  1800_page-table-unmap-for-stack-guard-fix.patch
-From:   https://bugzilla.kernel.org/show_bug.cgi?id=16588
-Desc:   Fix page table unmap for stack guard page properly
-
-Patch:  1805_fix-user-visible-effects-of-stack-guard-page.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=333477
-Desc:   Make the stack guard page somewhat less visible to user space
+Patch:  1004_linux-2.6.34.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.34.5
 
 Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
