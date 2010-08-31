@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.34.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.34.5
 
+Patch:  1005_linux-2.6.34.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.34.6
+
 Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
 Desc:	Synaptics capability ID check fix
