@@ -71,6 +71,14 @@ Patch:  1700_powerpc-event-scan-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=335003
 Desc:   powerpc patch to not start event scan if scan rate is zero
 
+Patch:  1705_retruncate-rax-after-ia32-syscall.patch
+From:   https://bugs.gentoo.org/326885
+Desc:   Retruncate rax after ia32 syscall entry tracing
+
+Patch:  1710_syscall-number-test-fix.patch
+From:   https://bugs.gentoo.org/326885
+Desc:   Test %rax for the syscall number, not %eax
+
 Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
 Desc:	Synaptics capability ID check fix
