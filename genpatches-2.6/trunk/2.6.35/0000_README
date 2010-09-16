@@ -55,6 +55,14 @@ Patch:  1003_linux-2.6.35.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.35.4
 
+Patch:  1700_retruncate-rax-after-ia32-syscall.patch
+From:   https://bugs.gentoo.org/326885
+Desc:   Retruncate rax after ia32 syscall entry tracing
+
+Patch:  1705_syscall-number-test-fix.patch
+From:   https://bugs.gentoo.org/326885
+Desc:   Test %rax for the syscall number, not %eax
+
 Patch:  1800_page-table-unmap-for-stack-guard-fix.patch
 From:   https://bugzilla.kernel.org/show_bug.cgi?id=16588
 Desc:   Fix page table unmap for stack guard page properly
