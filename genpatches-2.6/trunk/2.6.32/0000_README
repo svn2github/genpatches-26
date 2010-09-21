@@ -123,13 +123,9 @@ Patch:  1020_linux-2.6.32.21.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.21
 
-Patch:  1700_retruncate-rax-after-ia32-syscall.patch
-From:   https://bugs.gentoo.org/326885
-Desc:   Retruncate rax after ia32 syscall entry tracing
-
-Patch:  1705_syscall-number-test-fix.patch
-From:   https://bugs.gentoo.org/326885
-Desc:   Test %rax for the syscall number, not %eax
+Patch:  1021_linux-2.6.32.22.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.22
 
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
