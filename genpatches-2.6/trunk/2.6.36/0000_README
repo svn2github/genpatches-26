@@ -39,38 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:  1000_linux-2.6.35.1.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.35.1
-
-Patch:  1001_linux-2.6.35.2.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.35.2
-
-Patch:  1002_linux-2.6.35.3.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.35.3
-
-Patch:  1003_linux-2.6.35.4.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.35.4
-
-Patch:  1004_linux-2.6.35.5.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.35.5
-
-Patch:  1800_page-table-unmap-for-stack-guard-fix.patch
-From:   https://bugzilla.kernel.org/show_bug.cgi?id=16588
-Desc:   Fix page table unmap for stack guard page properly
-
-Patch:  1805_fix-user-visible-effects-of-stack-guard-page.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=333477
-Desc:   Make the stack guard page somewhat less visible to user space
-
-Patch:  1900_create-mount-for-cgroupsfs.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=318365
-Desc:   create /sys/fs/cgroup to mount cgroupfs to support systemd
-
 Patch:  2600_support-eject-dell-studio-1555.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=333379
 Desc:   Add support for eject key on Dell Studio 1555
