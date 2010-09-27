@@ -63,10 +63,6 @@ Patch:  1900_create-mount-for-cgroupsfs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318365
 Desc:   create /sys/fs/cgroup to mount cgroupfs to support systemd
 
-Patch:  2600_support-eject-dell-studio-1555.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=333379
-Desc:   Add support for eject key on Dell Studio 1555
-
 Patch:	2900_xconfig-with-qt4.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=320761
 Desc:	xconfig patch for qt4 - thanks to Sam Iam
