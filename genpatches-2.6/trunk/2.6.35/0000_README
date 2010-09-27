@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.35.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.35.5
 
+Patch:  1005_linux-2.6.35.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.35.6
+
 Patch:  1900_create-mount-for-cgroupsfs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318365
 Desc:   create /sys/fs/cgroup to mount cgroupfs to support systemd
