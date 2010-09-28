@@ -1,0 +1,115 @@
+--- a/arch/ia64/include/asm/compat.h	2010-09-27 19:44:38.000000000 -0400
++++ b/arch/ia64/include/asm/compat.h	2010-09-27 19:53:40.000000000 -0400
+@@ -199,7 +199,7 @@ ptr_to_compat(void __user *uptr)
+ }
+ 
+ static __inline__ void __user *
+-compat_alloc_user_space (long len)
++arch_compat_alloc_user_space (long len)
+ {
+ 	struct pt_regs *regs = task_pt_regs(current);
+ 	return (void __user *) (((regs->r12 & 0xffffffff) & -16) - len);
+--- a/arch/mips/include/asm/compat.h	2010-09-27 19:45:36.000000000 -0400
++++ b/arch/mips/include/asm/compat.h	2010-09-27 19:54:26.000000000 -0400
+@@ -145,7 +145,7 @@ static inline compat_uptr_t ptr_to_compa
+ 	return (u32)(unsigned long)uptr;
+ }
+ 
+-static inline void __user *compat_alloc_user_space(long len)
++static inline void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	struct pt_regs *regs = (struct pt_regs *)
+ 		((unsigned long) current_thread_info() + THREAD_SIZE - 32) - 1;
+--- a/arch/parisc/include/asm/compat.h	2010-09-27 19:46:09.000000000 -0400
++++ b/arch/parisc/include/asm/compat.h	2010-09-27 19:55:01.000000000 -0400
+@@ -147,7 +147,7 @@ static inline compat_uptr_t ptr_to_compa
+ 	return (u32)(unsigned long)uptr;
+ }
+ 
+-static __inline__ void __user *compat_alloc_user_space(long len)
++static __inline__ void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	struct pt_regs *regs = &current->thread.regs;
+ 	return (void __user *)regs->gr[30];
+--- a/arch/powerpc/include/asm/compat.h	2010-09-27 19:46:50.000000000 -0400
++++ b/arch/powerpc/include/asm/compat.h	2010-09-27 19:55:31.000000000 -0400
+@@ -134,7 +134,7 @@ static inline compat_uptr_t ptr_to_compa
+ 	return (u32)(unsigned long)uptr;
+ }
+ 
+-static inline void __user *compat_alloc_user_space(long len)
++static inline void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	struct pt_regs *regs = current->thread.regs;
+ 	unsigned long usp = regs->gpr[1];
+--- a/arch/s390/include/asm/compat.h	2010-09-27 19:47:36.000000000 -0400
++++ b/arch/s390/include/asm/compat.h	2010-09-27 19:56:30.000000000 -0400
+@@ -181,7 +181,7 @@ static inline int is_compat_task(void)
+ 
+ #endif
+ 
+-static inline void __user *compat_alloc_user_space(long len)
++static inline void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	unsigned long stack;
+ 
+--- a/arch/sparc/include/asm/compat.h	2010-09-27 19:48:16.000000000 -0400
++++ b/arch/sparc/include/asm/compat.h	2010-09-27 19:57:06.000000000 -0400
+@@ -167,7 +167,7 @@ static inline compat_uptr_t ptr_to_compa
+ 	return (u32)(unsigned long)uptr;
+ }
+ 
+-static inline void __user *compat_alloc_user_space(long len)
++static inline void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	struct pt_regs *regs = current_thread_info()->kregs;
+ 	unsigned long usp = regs->u_regs[UREG_I6];
+--- a/arch/x86/include/asm/compat.h	2010-09-27 19:50:18.000000000 -0400
++++ b/arch/x86/include/asm/compat.h	2010-09-27 19:57:58.000000000 -0400
+@@ -205,7 +205,7 @@ static inline compat_uptr_t ptr_to_compa
+ 	return (u32)(unsigned long)uptr;
+ }
+ 
+-static inline void __user *compat_alloc_user_space(long len)
++static inline void __user *arch_compat_alloc_user_space(long len)
+ {
+ 	struct pt_regs *regs = task_pt_regs(current);
+ 	return (void __user *)regs->sp - len;
+--- a/include/linux/compat.h	2010-09-27 20:09:26.000000000 -0400
++++ b/include/linux/compat.h	2010-09-27 20:10:01.000000000 -0400
+@@ -360,5 +360,8 @@ extern ssize_t compat_rw_copy_check_uvec
+ 		const struct compat_iovec __user *uvector, unsigned long nr_segs,
+ 		unsigned long fast_segs, struct iovec *fast_pointer,
+ 		struct iovec **ret_pointer);
++
++extern void __user *compat_alloc_user_space(unsigned long len);
++
+ #endif /* CONFIG_COMPAT */
+ #endif /* _LINUX_COMPAT_H */
+--- a/kernel/compat.c	2010-09-27 19:52:11.000000000 -0400
++++ b/kernel/compat.c	2010-09-27 19:59:57.000000000 -0400
+@@ -1140,3 +1140,24 @@ compat_sys_sysinfo(struct compat_sysinfo
+ 
+ 	return 0;
+ }
++
++/*
++ * Allocate user-space memory for the duration of a single system call,
++ * in order to marshall parameters inside a compat thunk.
++ */
++void __user *compat_alloc_user_space(unsigned long len)
++{
++    void __user *ptr;
++
++    /* If len would occupy more than half of the entire compat space... */
++    if (unlikely(len > (((compat_uptr_t)~0) >> 1)))
++        return NULL;
++
++    ptr = arch_compat_alloc_user_space(len);
++
++    if (unlikely(!access_ok(VERIFY_WRITE, ptr, len)))
++        return NULL;
++
++    return ptr;
++}
++EXPORT_SYMBOL_GPL(compat_alloc_user_space);

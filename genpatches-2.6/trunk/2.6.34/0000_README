@@ -79,6 +79,10 @@ Patch:  1710_syscall-number-test-fix.patch
 From:   https://bugs.gentoo.org/326885
 Desc:   Test %rax for the syscall number, not %eax
 
+Patch:  1715_compat-alloc-user-space-security-fix.patch
+From:   https://bugs.gentoo.org/337659
+Desc:   Make compat_alloc_user_space() incorporate the access_ok() (CVE-2010-3081)
+
 Patch:	2600_synaptic-cap-ID-check-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=328527
 Desc:	Synaptics capability ID check fix
