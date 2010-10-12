@@ -846,7 +846,7 @@ index b0a3fa0..7121e94 100644
  		vc->vc_mode != KD_TEXT || ops->graphics);
  }
  
--static inline int get_color(struct vc_data *vc, struct fb_info *info,
+-static int get_color(struct vc_data *vc, struct fb_info *info,
 +inline int get_color(struct vc_data *vc, struct fb_info *info,
  	      u16 c, int is_fg)
  {
@@ -1338,7 +1338,7 @@ index 0000000..a0b4ae3
 +	return 0;
 +}
 +
-+static inline int fbcon_decor_ioctl_dosetstate(struct vc_data *vc, unsigned int state, unsigned char origin)
++static inline long fbcon_decor_ioctl_dosetstate(struct vc_data *vc, unsigned int state, unsigned char origin)
 +{
 +	int ret;
 +
@@ -1359,7 +1359,7 @@ index 0000000..a0b4ae3
 +	*state = vc->vc_decor.state;
 +}
 +
-+static int fbcon_decor_ioctl_dosetcfg(struct vc_data *vc, struct vc_decor *cfg, unsigned char origin)
++static long fbcon_decor_ioctl_dosetcfg(struct vc_data *vc, struct vc_decor *cfg, unsigned char origin)
 +{
 +	struct fb_info *info;
 +	int len;
@@ -1406,7 +1406,7 @@ index 0000000..a0b4ae3
 +	return 0;
 +}
 +
-+static int fbcon_decor_ioctl_dogetcfg(struct vc_data *vc, struct vc_decor *decor)
++static long fbcon_decor_ioctl_dogetcfg(struct vc_data *vc, struct vc_decor *decor)
 +{
 +	char __user *tmp;
 +
@@ -1424,7 +1424,7 @@ index 0000000..a0b4ae3
 +	return 0;
 +}
 +
-+static int fbcon_decor_ioctl_dosetpic(struct vc_data *vc, struct fb_image *img, unsigned char origin)
++static long fbcon_decor_ioctl_dosetpic(struct vc_data *vc, struct fb_image *img, unsigned char origin)
 +{
 +	struct fb_info *info;
 +	int len;
@@ -1525,7 +1525,7 @@ index 0000000..a0b4ae3
 +	return -ENOMEM;
 +}
 +
-+static int fbcon_decor_ioctl(struct inode * inode, struct file *filp, u_int cmd,
++static long fbcon_decor_ioctl(struct file *filp, u_int cmd,
 +			u_long arg)
 +{
 +	struct fbcon_decor_iowrapper __user *wrapper = (void __user*) arg;
@@ -1702,7 +1702,7 @@ index 0000000..a0b4ae3
 +
 +static struct file_operations fbcon_decor_ops = {
 +	.owner = THIS_MODULE,
-+	.ioctl = fbcon_decor_ioctl,
++	.unlocked_ioctl = fbcon_decor_ioctl,
 +	.compat_ioctl = fbcon_decor_compat_ioctl
 +};
 +
@@ -1964,10 +1964,10 @@ index 38fe59d..8e4058b 100644
  
  struct vc_data {
  	unsigned short	vc_num;			/* Console number */
-@@ -105,6 +106,8 @@ struct vc_data {
- 	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
- 	unsigned long	vc_uni_pagedir;
- 	unsigned long	*vc_uni_pagedir_loc;  /* [!] Location of uni_pagedir variable for this console */
+@@ -107,6 +108,8 @@ struct vc_data {
+ 	unsigned long   vc_uni_pagedir;
+ 	unsigned long   *vc_uni_pagedir_loc;  /* [!] Location of uni_pagedir variable for this console */
+ 	bool vc_panic_force_write; /* when oops/panic this VC can accept forced output/blanking */
 +
 +	struct vc_decor vc_decor;
  	/* additional information is in vt_kern.h */
@@ -2106,7 +2106,7 @@ diff --git a/kernel/sysctl.c b/kernel/sysctl.c
 index d24f761..a47ce49 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -130,6 +130,10 @@ static int min_percpu_pagelist_fract = 8;
+@@ -132,6 +132,10 @@ static int min_percpu_pagelist_fract = 8;
  
  static int ngroups_max = NGROUPS_MAX;
  
@@ -2114,10 +2114,10 @@ index d24f761..a47ce49 100644
 +extern char fbcon_decor_path[];
 +#endif
 +
- #ifdef CONFIG_SPARC
- #include <asm/system.h>
+ #ifdef CONFIG_INOTIFY_USER
+ #include <linux/inotify.h>
  #endif
-@@ -245,6 +249,16 @@ static struct ctl_table root_table[] = {
+@@ -247,6 +251,16 @@ static struct ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
