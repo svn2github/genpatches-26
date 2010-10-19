@@ -67,6 +67,10 @@ Patch:  1006_linux-2.6.35.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.35.7
 
+Patch:  1500_CVE-2010-3904-RDS-Priv-Escal-fix.patch
+From:   http://www.kernel.org
+Desc:   CVE-2010-3904 RDS Protocol priviledge escalation
+
 Patch:  1900_create-mount-for-cgroupsfs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318365
 Desc:   create /sys/fs/cgroup to mount cgroupfs to support systemd
