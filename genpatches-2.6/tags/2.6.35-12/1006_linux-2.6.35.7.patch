@@ -1,0 +1,13 @@
+diff --git a/drivers/xen/events.c b/drivers/xen/events.c
+index 14ed358..6830a4d 100644
+--- a/drivers/xen/events.c
++++ b/drivers/xen/events.c
+@@ -935,7 +935,7 @@ static struct irq_chip xen_dynamic_chip __read_mostly = {
+ 	.retrigger	= retrigger_dynirq,
+ };
+ 
+-static struct irq_chip en_percpu_chip __read_mostly = {
++static struct irq_chip xen_percpu_chip __read_mostly = {
+ 	.name		= "xen-percpu",
+ 
+ 	.disable	= disable_dynirq,
