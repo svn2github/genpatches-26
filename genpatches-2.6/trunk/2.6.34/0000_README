@@ -67,6 +67,10 @@ Patch:  1006_linux-2.6.34.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.34.7
 
+Patch:  1500_CVE-2010-3904-RDS-Priv-Escal-fix.patch
+From:   http://www.kernel.org
+Desc:   CVE-2010-3904 RDS Protocol priviledge escalation
+
 Patch:  1700_powerpc-event-scan-fix.patch
 From:	http://bugs.gentoo.org/show_bug.cgi?id=335003
 Desc:   powerpc patch to not start event scan if scan rate is zero
