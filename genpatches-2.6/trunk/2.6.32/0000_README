@@ -135,9 +135,9 @@ Patch:  1023_linux-2.6.32.24.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.24
 
-Patch:  1500_CVE-2010-3904-RDS-Priv-Escal-fix.patch
+Patch:  1024_linux-2.6.32.25.patch
 From:   http://www.kernel.org
-Desc:   CVE-2010-3904 RDS Protocol priviledge escalation
+Desc:   Linux 2.6.32.25
 
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
