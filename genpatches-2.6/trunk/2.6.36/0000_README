@@ -47,6 +47,10 @@ Patch:  2900_xconfig-with-qt4.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=342007
 Desc:   xconfig patch for qt4 - thanks to alexander stein
 
+Patch:  2910_support-for-bzip2-lzma-lzo-compression.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=340021
+Desc:   Add support for kernels compressed with bzip2, lzma or lzo to the extract-ikconfig script.
+
 Patch:	4200_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
