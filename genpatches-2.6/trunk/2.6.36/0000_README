@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1800_automated-per-tty-task-groups.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=346021
+Desc:   Automatically create task groups per tty, to improve desktop interactivity
+
 Patch:  2700_disable-sticky-PCM-stream-assignment-for-AD-codecs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=344153
 Desc:   AD codec fix for PCM stream assignments
