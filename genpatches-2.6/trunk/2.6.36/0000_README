@@ -47,6 +47,10 @@ Patch:  2700_disable-sticky-PCM-stream-assignment-for-AD-codecs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=344153
 Desc:   AD codec fix for PCM stream assignments
 
+Patch:  2800_ttm-bo-init-retry-after-failure.patch
+From:   http://tinyurl.com/39fzx9t
+Desc:   radeon: Fix retrying ttm_bo_init() after it failed once
+
 Patch:  2900_xconfig-with-qt4.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=342007
 Desc:   xconfig patch for qt4 - thanks to alexander stein

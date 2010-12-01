@@ -1,0 +1,20 @@
+--- a/drivers/gpu/drm/radeon/radeon_object.c	2010-11-30 19:36:43.003461127 -0500
++++ b/drivers/gpu/drm/radeon/radeon_object.c	2010-11-30 19:44:48.197516895 -0500
+@@ -102,6 +102,8 @@ int radeon_bo_create(struct radeon_devic
+ 		type = ttm_bo_type_device;
+ 	}
+ 	*bo_ptr = NULL;
++ 
++retry:
+ 	bo = kzalloc(sizeof(struct radeon_bo), GFP_KERNEL);
+ 	if (bo == NULL)
+ 		return -ENOMEM;
+@@ -109,8 +111,6 @@ int radeon_bo_create(struct radeon_devic
+ 	bo->gobj = gobj;
+ 	bo->surface_reg = -1;
+ 	INIT_LIST_HEAD(&bo->list);
+-
+-retry:
+ 	radeon_ttm_placement_from_domain(bo, domain);
+ 	/* Kernel allocation are uninterruptible */
+ 	mutex_lock(&rdev->vram_mutex);
