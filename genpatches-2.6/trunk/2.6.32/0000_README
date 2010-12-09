@@ -143,6 +143,18 @@ Patch:  1025_linux-2.6.32.26.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.26
 
+Patch:  1500_econet-capable-SIOCSIFADDR-check.patch
+From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3850
+Desc:   Adds missing capable() check to SIOCSIFADDR operation (CVE-2010-3850)
+
+Patch:  1505_econet-null-ptr-dereference.patch
+From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3849
+Desc:   Fixes NULL pointer dereference in econet sockets (CVE-2010-3849)
+
+Patch:  1510_do-exit-kernel-mem-write.patch
+From:   https://patchwork.kernel.org/patch/386992/
+Desc:   Fixes kernel memory write in do_exit() (CVE-2010-4258)
+
 Patch:  2500_libata-fix-truncated-LBA48-ret-vals.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=303313
 Desc:	Fix bug which truncated LBA48 return values
