@@ -43,25 +43,13 @@ Patch:  1000_linux-2.6.36.1.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.36.1
 
-Patch:  1500_econet-capable-SIOCSIFADDR-check.patch
-From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3850
-Desc:   Adds missing capable() check to SIOCSIFADDR operation (CVE-2010-3850)
-
-Patch:  1505_econet-null-ptr-dereference.patch
-From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3849
-Desc:   Fixes NULL pointer dereference in econet sockets (CVE-2010-3849)
-
-Patch:  1510_do-exit-kernel-mem-write.patch
-From:   https://patchwork.kernel.org/patch/386992/
-Desc:   Fixes kernel memory write in do_exit() (CVE-2010-4258)
+Patch:  1001_linux-2.6.36.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.36.2
 
 Patch:  2700_disable-sticky-PCM-stream-assignment-for-AD-codecs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=344153
 Desc:   AD codec fix for PCM stream assignments
-
-Patch:  2800_ttm-bo-init-retry-after-failure.patch
-From:   http://tinyurl.com/39fzx9t
-Desc:   radeon: Fix retrying ttm_bo_init() after it failed once
 
 Patch:  2900_xconfig-with-qt4.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=342007
