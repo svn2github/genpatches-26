@@ -75,17 +75,9 @@ Patch:  1008_linux-2.6.35.9.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.35.9
 
-Patch:  1500_econet-capable-SIOCSIFADDR-check.patch
-From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3850
-Desc:   Adds missing capable() check to SIOCSIFADDR operation (CVE-2010-3850)
-
-Patch:  1505_econet-null-ptr-dereference.patch
-From:   https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3849
-Desc:   Fixes NULL pointer dereference in econet sockets (CVE-2010-3849)
-
-Patch:  1510_do-exit-kernel-mem-write.patch
-From:   https://patchwork.kernel.org/patch/386992/
-Desc:   Fixes kernel memory write in do_exit() (CVE-2010-4258)
+Patch:  1009_linux-2.6.35.10.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.35.10
 
 Patch:  1900_create-mount-for-cgroupsfs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318365
