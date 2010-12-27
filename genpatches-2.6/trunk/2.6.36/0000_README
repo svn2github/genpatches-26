@@ -63,6 +63,10 @@ Patch:  2910_support-for-bzip2-lzma-lzo-compression.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=340021
 Desc:   Add support for kernels compressed with bzip2, lzma or lzo to the extract-ikconfig script.
 
+Patch:  4000_support-version-5-intel-6250AGN-Adapter.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=349685
+Desc:   Add support for version 5 of the 6050 image for Intel Wireless Wifi Link 6250AGN Adapter
+
 Patch:	4200_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
