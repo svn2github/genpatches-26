@@ -39,6 +39,10 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  2400_iwlwifi-fw-reload-rf-fix.patch
+From:   http://www.spinics.net/lists/linux-wireless/msg61225.html
+Desc:   Do not reload fw if WiMAX own the RF
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski
