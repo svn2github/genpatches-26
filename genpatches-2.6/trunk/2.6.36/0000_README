@@ -55,6 +55,10 @@ Patch:  2700_disable-sticky-PCM-stream-assignment-for-AD-codecs.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=344153
 Desc:   AD codec fix for PCM stream assignments
 
+Patch:  2800_handle-ret-from-i915-gpu-idle.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=346705
+Desc:   Properly handle the return value from i915_wait_request call
+
 Patch:  2900_xconfig-with-qt4.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=342007
 Desc:   xconfig patch for qt4 - thanks to alexander stein
