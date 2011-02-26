@@ -39,6 +39,14 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.37.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.37.1
+
+Patch:  1001_linux-2.6.37.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.37.2
+
 Patch:  2400_iwlwifi-fw-reload-rf-fix.patch
 From:   http://www.spinics.net/lists/linux-wireless/msg61225.html
 Desc:   Do not reload fw if WiMAX own the RF
