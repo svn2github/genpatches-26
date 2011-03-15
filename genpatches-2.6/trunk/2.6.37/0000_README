@@ -51,6 +51,10 @@ Patch:  1002_linux-2.6.37.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.37.3
 
+Patch:  1003_linux-2.6.37.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.37.4
+
 Patch:  2400_iwlwifi-fw-reload-rf-fix.patch
 From:   http://www.spinics.net/lists/linux-wireless/msg61225.html
 Desc:   Do not reload fw if WiMAX own the RF
