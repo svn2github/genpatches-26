@@ -55,6 +55,10 @@ Patch:  1003_linux-2.6.37.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.37.4
 
+Patch:  1900_fs-cache-op-handling-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=352149
+Desc:   Fix operation handling in fscache
+
 Patch:  2400_iwlwifi-fw-reload-rf-fix.patch
 From:   http://www.spinics.net/lists/linux-wireless/msg61225.html
 Desc:   Do not reload fw if WiMAX own the RF
