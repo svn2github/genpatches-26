@@ -59,6 +59,10 @@ Patch:  1004_linux-2.6.37.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.37.5
 
+Patch:  1005_linux-2.6.37.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.37.6
+
 Patch:  1900_fs-cache-op-handling-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=352149
 Desc:   Fix operation handling in fscache
