@@ -1,0 +1,29 @@
+From: Akshat Aranya <aranya@nec-labs.com>
+Date: Fri, 14 Jan 2011 16:00:47 +0000 (+0000)
+Subject: FS-Cache: Fix operation handling
+X-Git-Tag: v2.6.38-rc1~59
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=ba28b93a5227cc69ec811507f7d85ac25fa20fe2
+
+FS-Cache: Fix operation handling
+
+fscache_submit_exclusive_op() adds an operation to the pending list if
+other operations are pending.  Fix the check for pending ops as n_ops
+must be greater than 0 at the point it is checked as it is incremented
+immediately before under lock.
+
+Signed-off-by: Akshat Aranya <aranya@nec-labs.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+--- a/fs/fscache/operation.c	2011-03-20 14:57:01.000000000 -0400
++++ b/fs/fscache/operation.c	2011-03-20 14:57:28.000000000 -0400
+@@ -101,7 +101,7 @@ int fscache_submit_exclusive_op(struct f
+ 		object->n_ops++;
+ 		object->n_exclusive++;	/* reads and writes must wait */
+ 
+-		if (object->n_ops > 0) {
++		if (object->n_ops > 1) {
+ 			atomic_inc(&op->usage);
+ 			list_add_tail(&op->pend_link, &object->pending_ops);
+ 			fscache_stat(&fscache_n_op_pend);
