@@ -179,6 +179,10 @@ Patch:  1034_2.6.32.35.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.35
 
+Patch:  1035_2.6.32.36.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.36
+
 Patch:	4200_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
 Desc:	Bootsplash successor by Michal Januszewski
