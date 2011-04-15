@@ -47,6 +47,14 @@ Patch:  1001_linux-2.6.38.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.38.2
 
+Patch:  1002_linux-2.6.38.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.38.3
+
+Patch:  1700_XEN-PVHVM-compile-issue-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=362415
+Desc:   Fix compile issue if XEN is enabled but XEN_PVHVM is disabled
+
 Patch:  1900_cifs-read-calls-regression-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=357463
 Desc:   prevent cifs from doing page-sized reads exclusively
