@@ -39,26 +39,3 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
-Patch:  1000_linux-2.6.38.1.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.38.1
-
-Patch:  1001_linux-2.6.38.2.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.38.2
-
-Patch:  1002_linux-2.6.38.3.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.38.3
-
-Patch:  1003_linux-2.6.38.4.patch
-From:   http://www.kernel.org
-Desc:   Linux 2.6.38.4
-
-Patch:  1700_XEN-PVHVM-compile-issue-fix.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=362415
-Desc:   Fix compile issue if XEN is enabled but XEN_PVHVM is disabled
-
-Patch:  4200_fbcondecor-0.9.6.patch
-From:   http://dev.gentoo.org/~spock
-Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
