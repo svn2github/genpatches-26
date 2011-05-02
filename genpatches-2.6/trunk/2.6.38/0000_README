@@ -55,6 +55,10 @@ Patch:  1003_linux-2.6.38.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.38.4
 
+Patch:  1004_linux-2.6.38.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.38.5
+
 Patch:  1700_XEN-PVHVM-compile-issue-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=362415
 Desc:   Fix compile issue if XEN is enabled but XEN_PVHVM is disabled
