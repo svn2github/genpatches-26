@@ -39,3 +39,6 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  4200_fbcondecor-0.9.6.patch
+From:   http://dev.gentoo.org/~spock
+Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
