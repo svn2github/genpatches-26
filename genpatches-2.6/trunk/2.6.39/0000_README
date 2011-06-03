@@ -39,12 +39,18 @@ FEATURES
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-2.6.39.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.39.1
+
 Patch:  2900_disable-wunused-but-set-var-gcc-4-6-0.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=366579
 Desc:   Disable -Wunused-but-set-variable for gcc 4.6.0. Thanks to Stratos Psomadakis
 
+Patch:  2910_gnu-make-3.80-compat-fix.patch
+From:   http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.39.y.git;a=patch;h=39b4e54266a625a141dac11c7bd22729b00c94d7
+Desc:   Fix GNU make v3.80 compatibility
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
-
-
