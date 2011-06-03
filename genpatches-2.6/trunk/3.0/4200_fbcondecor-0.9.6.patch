@@ -1,4 +1,4 @@
-From cfc6b027203601fcbf0578380b7f5922dc6b2798 Mon Sep 17 00:00:00 2001
+From 21d33d05340df17f3797ed0e53369f2470c1b8df Mon Sep 17 00:00:00 2001
 From: Alexey Shvetsov <alexxy@gentoo.org>
 Date: Sun, 23 Jan 2011 00:09:58 +0300
 Subject: [PATCH] [PATCH] [fbcondecor-0.9.6] Import fbcondecor
@@ -257,7 +257,7 @@ index 0000000..be435b5
 +Fbcondecor, fbcondecor protocol design, current implementation & docs by:
 +  Michal Januszewski <spock@gentoo.org>
 diff --git a/drivers/Makefile b/drivers/Makefile
-index b423bb1..4ce76a6 100644
+index 09f3232..594619b 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -9,6 +9,9 @@ obj-y				+= gpio/
@@ -270,7 +270,7 @@ index b423bb1..4ce76a6 100644
  obj-y				+= video/
  obj-y				+= idle/
  obj-$(CONFIG_ACPI)		+= acpi/
-@@ -27,7 +30,6 @@ obj-$(CONFIG_REGULATOR)		+= regulator/
+@@ -30,7 +33,6 @@ obj-$(CONFIG_REGULATOR)		+= regulator/
  # tty/ comes before char/ so that the VT console is the boot-time
  # default.
  obj-y				+= tty/
@@ -838,7 +838,7 @@ index 0000000..fbf6cf2
 +	}
 +}
 diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 9c092b8..e763778 100644
+index 8745637..7638d74 100644
 --- a/drivers/video/console/fbcon.c
 +++ b/drivers/video/console/fbcon.c
 @@ -80,6 +80,7 @@
@@ -867,7 +867,7 @@ index 9c092b8..e763778 100644
  	      u16 c, int is_fg)
  {
  	int depth = fb_get_color_depth(&info->var, &info->fix);
-@@ -528,6 +529,9 @@ static int search_for_mapped_con(void)
+@@ -526,6 +527,9 @@ static int search_for_mapped_con(void)
  static int fbcon_takeover(int show_logo)
  {
  	int err, i;
@@ -877,7 +877,7 @@ index 9c092b8..e763778 100644
  
  	if (!num_registered_fb)
  		return -ENODEV;
-@@ -548,6 +552,12 @@ static int fbcon_takeover(int show_logo)
+@@ -546,6 +550,12 @@ static int fbcon_takeover(int show_logo)
  		info_idx = -1;
  	} else {
  		fbcon_has_console_bind = 1;
@@ -890,7 +890,7 @@ index 9c092b8..e763778 100644
  	}
  
  	return err;
-@@ -1002,6 +1012,12 @@ static const char *fbcon_startup(void)
+@@ -1000,6 +1010,12 @@ static const char *fbcon_startup(void)
  	rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  	cols /= vc->vc_font.width;
  	rows /= vc->vc_font.height;
@@ -903,7 +903,7 @@ index 9c092b8..e763778 100644
  	vc_resize(vc, cols, rows);
  
  	DPRINTK("mode:   %s\n", info->fix.id);
-@@ -1031,7 +1047,7 @@ static void fbcon_init(struct vc_data *vc, int init)
+@@ -1029,7 +1045,7 @@ static void fbcon_init(struct vc_data *vc, int init)
  	cap = info->flags;
  
  	if (vc != svc || logo_shown == FBCON_LOGO_DONTSHOW ||
@@ -912,7 +912,7 @@ index 9c092b8..e763778 100644
  		logo = 0;
  
  	if (var_to_display(p, &info->var, info))
-@@ -1241,6 +1257,11 @@ static void fbcon_clear(struct vc_data *vc, int sy, int sx, int height,
+@@ -1239,6 +1255,11 @@ static void fbcon_clear(struct vc_data *vc, int sy, int sx, int height,
  	if (sy < vc->vc_top && vc->vc_top == logo_lines)
  		vc->vc_top = 0;
  
@@ -924,7 +924,7 @@ index 9c092b8..e763778 100644
  	/* Split blits that cross physical y_wrap boundary */
  
  	y_break = p->vrows - p->yscroll;
-@@ -1260,10 +1281,15 @@ static void fbcon_putcs(struct vc_data *vc, const unsigned short *s,
+@@ -1258,10 +1279,15 @@ static void fbcon_putcs(struct vc_data *vc, const unsigned short *s,
  	struct display *p = &fb_display[vc->vc_num];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -944,7 +944,7 @@ index 9c092b8..e763778 100644
  }
  
  static void fbcon_putc(struct vc_data *vc, int c, int ypos, int xpos)
-@@ -1279,8 +1305,13 @@ static void fbcon_clear_margins(struct vc_data *vc, int bottom_only)
+@@ -1277,8 +1303,13 @@ static void fbcon_clear_margins(struct vc_data *vc, int bottom_only)
  	struct fb_info *info = registered_fb[con2fb_map[vc->vc_num]];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -960,7 +960,7 @@ index 9c092b8..e763778 100644
  }
  
  static void fbcon_cursor(struct vc_data *vc, int mode)
-@@ -1800,7 +1831,7 @@ static int fbcon_scroll(struct vc_data *vc, int t, int b, int dir,
+@@ -1798,7 +1829,7 @@ static int fbcon_scroll(struct vc_data *vc, int t, int b, int dir,
  			count = vc->vc_rows;
  		if (softback_top)
  			fbcon_softback_note(vc, t, count);
@@ -969,7 +969,7 @@ index 9c092b8..e763778 100644
  			goto redraw_up;
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
-@@ -1893,6 +1924,8 @@ static int fbcon_scroll(struct vc_data *vc, int t, int b, int dir,
+@@ -1891,6 +1922,8 @@ static int fbcon_scroll(struct vc_data *vc, int t, int b, int dir,
  			count = vc->vc_rows;
  		if (logo_shown >= 0)
  			goto redraw_down;
@@ -978,7 +978,7 @@ index 9c092b8..e763778 100644
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			fbcon_redraw_blit(vc, info, p, b - 1, b - t - count,
-@@ -2041,6 +2074,13 @@ static void fbcon_bmove_rec(struct vc_data *vc, struct display *p, int sy, int s
+@@ -2039,6 +2072,13 @@ static void fbcon_bmove_rec(struct vc_data *vc, struct display *p, int sy, int s
  		}
  		return;
  	}
@@ -992,7 +992,7 @@ index 9c092b8..e763778 100644
  	ops->bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  		   height, width);
  }
-@@ -2111,8 +2151,8 @@ static int fbcon_resize(struct vc_data *vc, unsigned int width,
+@@ -2109,8 +2149,8 @@ static int fbcon_resize(struct vc_data *vc, unsigned int width,
  	var.yres = virt_h * virt_fh;
  	x_diff = info->var.xres - var.xres;
  	y_diff = info->var.yres - var.yres;
@@ -1003,7 +1003,7 @@ index 9c092b8..e763778 100644
  		const struct fb_videomode *mode;
  
  		DPRINTK("attempting resize %ix%i\n", var.xres, var.yres);
-@@ -2148,6 +2188,21 @@ static int fbcon_switch(struct vc_data *vc)
+@@ -2146,6 +2186,21 @@ static int fbcon_switch(struct vc_data *vc)
  
  	info = registered_fb[con2fb_map[vc->vc_num]];
  	ops = info->fbcon_par;
@@ -1025,7 +1025,7 @@ index 9c092b8..e763778 100644
  
  	if (softback_top) {
  		if (softback_lines)
-@@ -2166,9 +2221,6 @@ static int fbcon_switch(struct vc_data *vc)
+@@ -2164,9 +2219,6 @@ static int fbcon_switch(struct vc_data *vc)
  		logo_shown = FBCON_LOGO_CANSHOW;
  	}
  
@@ -1035,7 +1035,7 @@ index 9c092b8..e763778 100644
  	/*
  	 * FIXME: If we have multiple fbdev's loaded, we need to
  	 * update all info->currcon.  Perhaps, we can place this
-@@ -2212,6 +2264,18 @@ static int fbcon_switch(struct vc_data *vc)
+@@ -2210,6 +2262,18 @@ static int fbcon_switch(struct vc_data *vc)
  			fbcon_del_cursor_timer(old_info);
  	}
  
@@ -1054,7 +1054,7 @@ index 9c092b8..e763778 100644
  	if (fbcon_is_inactive(vc, info) ||
  	    ops->blank_state != FB_BLANK_UNBLANK)
  		fbcon_del_cursor_timer(info);
-@@ -2320,15 +2384,20 @@ static int fbcon_blank(struct vc_data *vc, int blank, int mode_switch)
+@@ -2318,15 +2382,20 @@ static int fbcon_blank(struct vc_data *vc, int blank, int mode_switch)
  		}
  	}
  
@@ -1079,7 +1079,7 @@ index 9c092b8..e763778 100644
  		}
  
  		if (!blank)
-@@ -2503,13 +2572,22 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
+@@ -2501,13 +2570,22 @@ static int fbcon_do_set_font(struct vc_data *vc, int w, int h,
  	}
  
  	if (resize) {
@@ -1102,7 +1102,7 @@ index 9c092b8..e763778 100644
  		if (CON_IS_VISIBLE(vc) && softback_buf)
  			fbcon_update_softback(vc);
  	} else if (CON_IS_VISIBLE(vc)
-@@ -2638,7 +2716,11 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
+@@ -2636,7 +2714,11 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
  	int i, j, k, depth;
  	u8 val;
  
@@ -1115,7 +1115,7 @@ index 9c092b8..e763778 100644
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2664,7 +2746,49 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
+@@ -2662,7 +2744,49 @@ static int fbcon_set_palette(struct vc_data *vc, unsigned char *table)
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1166,7 +1166,7 @@ index 9c092b8..e763778 100644
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2872,7 +2996,7 @@ static void fbcon_modechanged(struct fb_info *info)
+@@ -2870,7 +2994,7 @@ static void fbcon_modechanged(struct fb_info *info)
  	struct fbcon_ops *ops = info->fbcon_par;
  	struct vc_data *vc;
  	struct display *p;
@@ -1175,7 +1175,7 @@ index 9c092b8..e763778 100644
  
  	if (!ops || ops->currcon < 0)
  		return;
-@@ -2890,7 +3014,18 @@ static void fbcon_modechanged(struct fb_info *info)
+@@ -2888,7 +3012,18 @@ static void fbcon_modechanged(struct fb_info *info)
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
@@ -1195,7 +1195,7 @@ index 9c092b8..e763778 100644
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
-@@ -3321,7 +3456,7 @@ static ssize_t store_rotate(struct device *device,
+@@ -3319,7 +3454,7 @@ static ssize_t store_rotate(struct device *device,
  	if (fbcon_has_exited)
  		return count;
  
@@ -1204,7 +1204,7 @@ index 9c092b8..e763778 100644
  	idx = con2fb_map[fg_console];
  
  	if (idx == -1 || registered_fb[idx] == NULL)
-@@ -3369,7 +3504,7 @@ static ssize_t show_rotate(struct device *device,
+@@ -3367,7 +3502,7 @@ static ssize_t show_rotate(struct device *device,
  	if (fbcon_has_exited)
  		return 0;
  
@@ -1213,7 +1213,7 @@ index 9c092b8..e763778 100644
  	idx = con2fb_map[fg_console];
  
  	if (idx == -1 || registered_fb[idx] == NULL)
-@@ -3545,6 +3680,7 @@ static void fbcon_exit(void)
+@@ -3543,6 +3678,7 @@ static void fbcon_exit(void)
  		}
  	}
  
@@ -1902,10 +1902,10 @@ index 5c3960d..529db5b 100644
  }
  
 diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
-index e2bf953..cf0ecf7 100644
+index 5aac00e..c7b285d 100644
 --- a/drivers/video/fbmem.c
 +++ b/drivers/video/fbmem.c
-@@ -1166,15 +1166,6 @@ struct fb_fix_screeninfo32 {
+@@ -1208,15 +1208,6 @@ struct fb_fix_screeninfo32 {
  	u16			reserved[3];
  };
  
@@ -1995,7 +1995,7 @@ index 7f0c329..98f5d60 100644
  };
  
 diff --git a/include/linux/fb.h b/include/linux/fb.h
-index 68ba85a..da863a2 100644
+index 6a82748..b71a7c7 100644
 --- a/include/linux/fb.h
 +++ b/include/linux/fb.h
 @@ -11,6 +11,23 @@
@@ -2047,7 +2047,7 @@ index 68ba85a..da863a2 100644
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -283,6 +318,28 @@ struct fb_cmap {
+@@ -285,6 +320,28 @@ struct fb_cmap {
  	__u16 *transp;			/* transparency, can be NULL */
  };
  
@@ -2076,7 +2076,7 @@ index 68ba85a..da863a2 100644
  struct fb_con2fbmap {
  	__u32 console;
  	__u32 framebuffer;
-@@ -364,6 +421,34 @@ struct fb_image {
+@@ -366,6 +423,34 @@ struct fb_image {
  	struct fb_cmap cmap;	/* color map info */
  };
  
@@ -2111,7 +2111,7 @@ index 68ba85a..da863a2 100644
  /*
   * hardware cursor control
   */
-@@ -873,6 +958,9 @@ struct fb_info {
+@@ -876,6 +961,9 @@ struct fb_info {
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -2120,12 +2120,12 @@ index 68ba85a..da863a2 100644
 +
  	/* From here on everything is device dependent */
  	void *par;
- 	/* we need the PCI or similiar aperture base/size not
+ 	/* we need the PCI or similar aperture base/size not
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 0f1bd83..91946b3 100644
+index 4fc9244..5db0986 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -133,6 +133,10 @@ static int min_percpu_pagelist_fract = 8;
+@@ -135,6 +135,10 @@ static int min_percpu_pagelist_fract = 8;
  
  static int ngroups_max = NGROUPS_MAX;
  
@@ -2136,7 +2136,7 @@ index 0f1bd83..91946b3 100644
  #ifdef CONFIG_INOTIFY_USER
  #include <linux/inotify.h>
  #endif
-@@ -247,6 +251,15 @@ static struct ctl_table root_table[] = {
+@@ -254,6 +258,15 @@ static struct ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
@@ -2153,5 +2153,5 @@ index 0f1bd83..91946b3 100644
  };
  
 -- 
-1.7.4.1
+1.7.5.rc3
 
