@@ -67,6 +67,10 @@ Patch:  1006_linux-2.6.38.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.38.7
 
+Patch:  1007_linux-2.6.38.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.38.8
+
 Patch:  1700_XEN-PVHVM-compile-issue-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=362415
 Desc:   Fix compile issue if XEN is enabled but XEN_PVHVM is disabled
@@ -74,6 +78,10 @@ Desc:   Fix compile issue if XEN is enabled but XEN_PVHVM is disabled
 Patch:  2900_disable-wunused-but-set-var-gcc-4-6-0.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=366579
 Desc:   Disable -Wunused-but-set-variable for gcc 4.6.0. Thanks to Stratos Psomadakis
+
+Patch:  2910_gnu-make-3.80-compat-fix.patch
+From:   http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.39.y.git;a=patch;h=39b4e54266a625a141dac11c7bd22729b00c94d7
+Desc:   Fix GNU make v3.80 compatibility
 
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
