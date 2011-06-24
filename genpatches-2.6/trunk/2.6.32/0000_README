@@ -203,6 +203,10 @@ Patch:  1040_2.6.32.41.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.41
 
+Patch:  1041_2.6.32.42.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.42
+
 Patch:  2900_disable-wunused-but-set-var-gcc-4-6-0.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=366579
 Desc:   Disable -Wunused-but-set-variable for gcc 4.6.0. Thanks to Stratos Psomadakis
