@@ -6,4 +6,4 @@ GPV="$1"
 CODE="$2"
 
 shift 2
-patch -p1 $* -i ${LOCAL_PATCHES_TRUNK}/2.6.${GPV}/${CODE}_*.patch
+patch -p1 $* -i ${LOCAL_PATCHES_TRUNK}/${GPV}/${CODE}_*.patch
