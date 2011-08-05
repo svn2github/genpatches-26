@@ -4,9 +4,14 @@
 
 function usage {
 	echo ">>> USAGE: gpdorelease <version>"
-	echo "This will expand to ${LOCAL_PATCHES_TRUNK}/<version>"
-    echo "To support the 3.0 release of Linux, this script now requires the full kernel version"
-    echo "Example: gpdorelease 3.0 or gpdorelease 2.6.39"
+    echo "For kernel versions < 3, use the entire version: gpdorelease 2.6.39"
+    echo " "
+    echo "For kernels > 3: "
+    echo "  Use the major and minor versions only. "
+    echo "  Example for kernel version 3.0:  gpdorelease 3.0"
+    echo "  Example for kernel version 3.0.1: gpdorelease 3.0"
+    echo "  Example for kernel version 3.1:  gpdorelease 3.1"
+    echo "  Example for kernel version 3.1.1:  gpdorelease 3.1"
 }
 
 if [[ ${#@} == 0 ]] ; then
