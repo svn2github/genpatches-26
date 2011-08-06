@@ -1,3 +1,15 @@
+diff --git a/Makefile b/Makefile
+index 6a5bdad..f124b18 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERSION = 3
+ PATCHLEVEL = 0
+-SUBLEVEL = 0
++SUBLEVEL = 1
+ EXTRAVERSION =
+ NAME = Sneaky Weasel
+ 
 diff --git a/arch/alpha/kernel/time.c b/arch/alpha/kernel/time.c
 index 818e74e..f20d1b5 100644
 --- a/arch/alpha/kernel/time.c
