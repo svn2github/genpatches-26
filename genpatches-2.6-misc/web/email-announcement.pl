@@ -7,9 +7,16 @@ use gentoo_sources_web;
 $tag = shift;
 $kernel_name = shift;
 
-$tag =~ m/(2\.6\.\d+)-(\d+)/;
-$ver = $1;
-$rel = $2;
+if ($tag =~ m/(2\.6\.\d+)-(\d+)/) {
+    $ver = $1;
+    $rel = $2;
+}
+else { # support for kernels >= 3.0
+    $tag =~ m/(\d+\.\d+)-(\d+)/;
+    $ver = $1;
+    $rel = $2;
+}
+
 $have_history = 0;
 
 # Try and find previous release
