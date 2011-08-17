@@ -47,6 +47,10 @@ Patch:  1001_linux-3.0.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.2
 
+Patch:  1002_linux-3.0.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.3
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
