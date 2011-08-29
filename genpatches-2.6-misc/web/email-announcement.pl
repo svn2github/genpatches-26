@@ -72,7 +72,7 @@ if ($kernel_name == "genpatches") {
 	$email .= "For more information, see the genpatches homepage:\n";
 	$email .= $website_base."\n\n";
 	$email .= "For a simple example of how to use genpatches in your kernel ebuild, look at a\n";
-	$email .= "recent gentoo-sources-2.6.* ebuild.\n";
+	$email .= "recent gentoo-sources ebuild.\n";
 }
 
 print $email;
