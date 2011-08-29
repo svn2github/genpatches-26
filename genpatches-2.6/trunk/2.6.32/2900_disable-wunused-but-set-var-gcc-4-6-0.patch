@@ -1,9 +1,10 @@
---- a/Makefile	2011-06-24 14:52:17.601982186 -0400
-+++ b/Makefile	2011-06-24 14:54:05.335994115 -0400
-@@ -537,6 +537,8 @@ ifndef CONFIG_CC_STACKPROTECTOR
+--- linux-2.6.32.orig/Makefile
++++ linux-2.6.32/Makefile
+@@ -537,6 +537,9 @@ ifndef CONFIG_CC_STACKPROTECTOR
  KBUILD_CFLAGS += $(call cc-option, -fno-stack-protector)
  endif
  
++# This warning generated too much noise in a regular build.
 +KBUILD_CFLAGS += $(call cc-option, -Wno-unused-but-set-variable)
 +
  ifdef CONFIG_FRAME_POINTER
