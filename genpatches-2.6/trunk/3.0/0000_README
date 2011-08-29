@@ -55,6 +55,10 @@ Patch:  1003_linux-3.0.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.4
 
+Patch:  1700_i386-bigsmp-early-lapicid-override.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=379867
+Desc:   Eliminate false warnings regarding logical APIC ID mismatches for i386/bigsmp
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
