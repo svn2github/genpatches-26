@@ -1,0 +1,44 @@
+From 2788e3c50d2ba803581684e9e1aa2ae7def789d8 Mon Sep 17 00:00:00 2001
+From: Stratos Psomadakis <psomas@gentoo.org>
+Date: Tue, 30 Aug 2011 17:38:10 +0300
+Subject: [RESEND PATCH] Fix broken backport for IPv6 tunnels
+
+Fix broken backport for IPv6 tunnels in 2.6.32-longterm kernels.
+
+upstream commit d5aa407f59f5b83d2c50ec88f5bf56d40f1f8978 ("tunnels: fix
+netns vs proto registration ordering") , which was included in
+2.6.32.44-longterm, was not backported correctly, and results in a NULL
+pointer dereference in ip6_tunnel.c for longterm kernels >=2.6.32.44
+
+Use [un]register_pernet_gen_device() instead of
+[un]register_pernet_device() to fix it.
+
+Signed-off-by: Stratos Psomadakis <psomas@gentoo.org>
+---
+ net/ipv6/ip6_tunnel.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/net/ipv6/ip6_tunnel.c b/net/ipv6/ip6_tunnel.c
+index 7fb3e02..51ab519 100644
+--- a/net/ipv6/ip6_tunnel.c
++++ b/net/ipv6/ip6_tunnel.c
+@@ -1466,7 +1466,7 @@ static int __init ip6_tunnel_init(void)
+ {
+ 	int  err;
+ 
+-	err = register_pernet_device(&ip6_tnl_net_ops);
++	err = register_pernet_gen_device(&ip6_tnl_net_id, &ip6_tnl_net_ops);
+ 	if (err < 0)
+ 		goto out_pernet;
+ 
+@@ -1487,7 +1487,7 @@ static int __init ip6_tunnel_init(void)
+ out_ip6ip6:
+ 	xfrm6_tunnel_deregister(&ip4ip6_handler, AF_INET);
+ out_ip4ip6:
+-	unregister_pernet_device(&ip6_tnl_net_ops);
++	unregister_pernet_gen_device(ip6_tnl_net_id, &ip6_tnl_net_ops);
+ out_pernet:
+ 	return err;
+ }
+-- 
+1.7.3.4
