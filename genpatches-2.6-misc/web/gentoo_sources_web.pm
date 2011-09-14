@@ -30,7 +30,7 @@ $ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
 sub html_header {
 	local *FD = shift;
 	my $title = shift;
-	$title = 'genpatches-2.6 infopage' if !$title;
+	$title = 'genpatches infopage' if !$title;
 	
 	print FD '<html>';
 	print FD '<head>';
