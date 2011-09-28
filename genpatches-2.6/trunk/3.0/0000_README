@@ -67,6 +67,38 @@ Patch:  1805_vmscan-count-in-small-memcfgs-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=381963
 Desc:   Fix vmscan count in small memcgs
 
+Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Move protocol information to Documentation
+
+Patch:  2605_Input-psmouse-Add-PSMOUSE_CMD_RESET_WRAP.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add PSMOUSE_CMD_RESET_WRAP 
+
+Patch:  2610_Input-ALPS-Add-protocol-version-field-in-alps_model.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add protocol version field in alps_model_info
+
+Patch:  2615_Input-ALPS-Remove-assumptions-about-packet-size.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Remove assumptions about packet size
+
+Patch:  2620_Input-ALPS-Add-support-for-protocol-versions-3-and-4.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add support for protocol versions 3 and 4
+
+Patch:  2625_Input-ALPS-Add-documentation-for-protocol-versions-3.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add documentation for protocol versions 3 and 4
+
+Patch:  2630_Input-ALPS-Add-semi-MT-support-for-v3-protocol.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add semi-MT support for v3 protocol
+
+Patch:  2635_Input-ALPS-dump-raw-packet-data.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - dump raw packet data
+
 Patch:  2900_change-dvb-firmware-url.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=383819
 Desc:   Change firmware download url, thanks to Markos Chandras
