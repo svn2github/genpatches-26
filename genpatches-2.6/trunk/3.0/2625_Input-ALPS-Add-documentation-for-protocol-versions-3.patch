@@ -1,4 +1,4 @@
-From 986ad99c2ea79ba04d6f2f739513e721643ec78e Mon Sep 17 00:00:00 2001
+From 434f3ebdc039b7aa1f6d2d0769f471c0ab9a7c02 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:38 -0500
 Subject: [PATCH 6/8] Input: ALPS - Add documentation for protocol versions 3 and 4
@@ -181,10 +181,10 @@ index e88c921..2768ad1 100644
 +
 +So far no v4 devices with tracksticks have been encountered.
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index 2615b92..165c7a0 100644
+index 43949d4..f444870 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
-@@ -358,6 +358,15 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -353,6 +353,15 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  	y = ((packet[2] & 0x7f) << 4) | (packet[4] & 0x0f);
  	z = packet[5] & 0x7f;
  

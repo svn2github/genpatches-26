@@ -1,17 +1,35 @@
-From a4eab730f720a2a89be05aef40e35a08a8d85a37 Mon Sep 17 00:00:00 2001
+From d36756bfc5e83009f3563b1c3f7385cf7383f1b6 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:39 -0500
 Subject: [PATCH 8/8] Input: ALPS - dump raw packet data
 
 ---
- drivers/input/mouse/alps.c |   51 ++++++++++++++++++++++++++-----------------
- 1 files changed, 31 insertions(+), 20 deletions(-)
+ drivers/input/mouse/alps.c |   20 +++++++++++++++++++-
+ 1 files changed, 19 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index ce06b08..90f45ed 100644
+index fae0911..771e93c 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
-@@ -129,6 +129,19 @@ static const struct alps_model_info alps_model_data[] = {
+@@ -15,6 +15,8 @@
+  * the Free Software Foundation.
+  */
+ 
++#define DEBUG
++
+ #include <linux/slab.h>
+ #include <linux/input.h>
+ #include <linux/input/mt.h>
+@@ -24,7 +26,7 @@
+ #include "psmouse.h"
+ #include "alps.h"
+ 
+-#undef DEBUG
++/* #undef DEBUG */
+ #ifdef DEBUG
+ #define dbg(format, arg...) printk(KERN_INFO "alps.c: " format "\n", ## arg)
+ #else
+@@ -129,6 +131,19 @@ static const struct alps_model_info alps_model_data[] = {
  
  /* Packet formats are described in Documentation/input/alps.txt */
  
@@ -31,86 +49,7 @@ index ce06b08..90f45ed 100644
  static bool alps_is_valid_first_byte(const struct alps_model_info *model,
  				     unsigned char data)
  {
-@@ -400,7 +413,7 @@ static void alps_process_trackstick_packet_v3(struct psmouse *psmouse)
- 	struct alps_data *priv = psmouse->private;
- 	unsigned char *packet = psmouse->packet;
- 	struct input_dev *dev = priv->dev2;
--	int x, y, z, left, right, middle;
-+	int x, y, z;
- 
- 	/* Sanity check packet */
- 	if (!(packet[0] & 0x40)) {
-@@ -419,10 +432,6 @@ static void alps_process_trackstick_packet_v3(struct psmouse *psmouse)
- 	y = (s8)(((packet[0] & 0x10) << 3) | (packet[2] & 0x7f));
- 	z = (packet[4] & 0x7c) >> 2;
- 
--	left = packet[3] & 0x01;
--	right = packet[3] & 0x02;
--	middle = packet[3] & 0x04;
--
- 	/*
- 	 * The x and y values tend to be quite large, and when used
- 	 * alone the trackstick is difficult to use. Scale them down
-@@ -434,10 +443,6 @@ static void alps_process_trackstick_packet_v3(struct psmouse *psmouse)
- 	input_report_rel(dev, REL_X, x);
- 	input_report_rel(dev, REL_Y, -y);
- 
--	input_report_key(dev, BTN_LEFT, left);
--	input_report_key(dev, BTN_RIGHT, right);
--	input_report_key(dev, BTN_MIDDLE, middle);
--
- 	input_sync(dev);
- 	return;
- }
-@@ -447,8 +452,10 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 	struct alps_data *priv = psmouse->private;
- 	unsigned char *packet = psmouse->packet;
- 	struct input_dev *dev = psmouse->dev;
-+	struct input_dev *dev2 = priv->dev2;
- 	int x, y, z;
- 	int left, right, middle;
-+	int stick_left, stick_right, stick_middle;
- 	int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
- 	int fingers = 0, bmap_fingers;
- 	unsigned int x_bitmap, y_bitmap;
-@@ -500,17 +507,13 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 
- 	priv->multi_packet = 0;
- 
--	/*
--	 * Bits in the upper nibble of byte 3 represent the trackstick
--	 * buttons on some models, but on other models the trackstick
--	 * buttons are reported in the trackstic packets. If we try to
--	 * report the buttons on the trackstick device from here it can
--	 * lead to conflicts, so we treat any buttons reported in the
--	 * touchpad packets as belonging to the touchpad.
--	 */
--	left = packet[3] & 0x11;
--	right = packet[3] & 0x22;
--	middle = packet[3] & 0x44;
-+	left = packet[3] & 0x01;
-+	right = packet[3] & 0x02;
-+	middle = packet[3] & 0x04;
-+
-+	stick_left = packet[3] & 0x10;
-+	stick_right = packet[3] & 0x20;
-+	stick_middle = packet[3] & 0x40;
- 
- 	x = ((packet[1] & 0x7f) << 4) | ((packet[4] & 0x30) >> 2) |
- 	    ((packet[0] & 0x30) >> 4);
-@@ -560,6 +563,11 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 	input_report_abs(dev, ABS_PRESSURE, z);
- 
- 	input_sync(dev);
-+
-+	input_report_key(dev2, BTN_LEFT, stick_left);
-+	input_report_key(dev2, BTN_RIGHT, stick_right);
-+	input_report_key(dev2, BTN_MIDDLE, stick_middle);
-+	input_sync(dev2);
- }
- 
- static void alps_process_packet_v3(struct psmouse *psmouse)
-@@ -621,6 +629,9 @@ static void alps_process_packet(struct psmouse *psmouse)
+@@ -627,6 +642,9 @@ static void alps_process_packet(struct psmouse *psmouse)
  	struct alps_data *priv = psmouse->private;
  	const struct alps_model_info *model = priv->i;
  

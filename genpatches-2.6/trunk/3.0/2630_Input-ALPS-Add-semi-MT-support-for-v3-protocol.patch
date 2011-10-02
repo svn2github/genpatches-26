@@ -1,4 +1,4 @@
-From aca6e9b053bbd08d26fbabe226a9df876460b97c Mon Sep 17 00:00:00 2001
+From a4d9b41e00554a492bc74af6c3e0310d7546ea12 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Thu, 15 Sep 2011 16:50:09 -0500
 Subject: [PATCH 7/8] Input: ALPS - Add semi-MT support for v3 protocol
@@ -9,7 +9,7 @@ Subject: [PATCH 7/8] Input: ALPS - Add semi-MT support for v3 protocol
  2 files changed, 200 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index 165c7a0..ce06b08 100644
+index f444870..fae0911 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
 @@ -17,6 +17,7 @@
@@ -171,8 +171,8 @@ index 165c7a0..ce06b08 100644
  static void alps_process_trackstick_packet_v3(struct psmouse *psmouse)
  {
  	struct alps_data *priv = psmouse->private;
-@@ -311,6 +449,9 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 	struct input_dev *dev = psmouse->dev;
+@@ -314,6 +452,9 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+ 	struct input_dev *dev2 = priv->dev2;
  	int x, y, z;
  	int left, right, middle;
 +	int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
@@ -181,7 +181,7 @@ index 165c7a0..ce06b08 100644
  
  	/*
  	 * There's no single feature of touchpad position and bitmap
-@@ -319,8 +460,6 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -322,8 +463,6 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  	 * a position packet with bit 6 of packet[4] set.
  	 */
  	if (priv->multi_packet) {
@@ -190,7 +190,7 @@ index 165c7a0..ce06b08 100644
  		/*
  		 * Sometimes a position packet will indicate a multi-packet
  		 * sequence, but then what follows is another position
-@@ -328,18 +467,38 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -331,18 +470,38 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  		 * position packet as usual.
  		 */
  		if (packet[0] & 0x40) {
@@ -233,9 +233,9 @@ index 165c7a0..ce06b08 100644
 +
 +	priv->multi_packet = 0;
  
- 	/*
- 	 * Bits in the upper nibble of byte 3 represent the trackstick
-@@ -367,23 +526,39 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+ 	left = packet[3] & 0x01;
+ 	right = packet[3] & 0x02;
+@@ -362,23 +521,39 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  	if (x && y && !z)
  		return;
  
@@ -278,9 +278,9 @@ index 165c7a0..ce06b08 100644
 -	input_report_key(dev, BTN_MIDDLE, middle);
 -
  	input_sync(dev);
- }
  
-@@ -1358,9 +1533,18 @@ int alps_init(struct psmouse *psmouse)
+ 	if (!(priv->quirks & ALPS_QUIRK_TRACKSTICK_BUTTONS)) {
+@@ -1389,9 +1564,18 @@ int alps_init(struct psmouse *psmouse)
  		input_set_abs_params(dev1, ABS_Y, 0, 767, 0, 0);
  		break;
  	case ALPS_PROTO_V3:
@@ -302,7 +302,7 @@ index 165c7a0..ce06b08 100644
  	}
  
 diff --git a/drivers/input/mouse/alps.h b/drivers/input/mouse/alps.h
-index 0d911cf..e73995b 100644
+index 62db7f4..a00a4ab 100644
 --- a/drivers/input/mouse/alps.h
 +++ b/drivers/input/mouse/alps.h
 @@ -38,6 +38,7 @@ struct alps_data {
@@ -310,9 +310,9 @@ index 0d911cf..e73995b 100644
  	int prev_fin;			/* Finger bit from previous packet */
  	int multi_packet;		/* Multi-packet data in progress */
 +	unsigned char multi_data[6];	/* Saved multi-packet data */
+ 	u8 quirks;
  	struct timer_list timer;
  };
- 
 -- 
 1.7.4.1
 
