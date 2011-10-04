@@ -59,6 +59,10 @@ Patch:  1004_linux-3.0.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.5
 
+Patch:  1005_linux-3.0.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.6
+
 Patch:  1700_i386-bigsmp-early-lapicid-override.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=379867
 Desc:   Eliminate false warnings regarding logical APIC ID mismatches for i386/bigsmp
