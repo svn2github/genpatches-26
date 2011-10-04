@@ -55,6 +55,10 @@ Patch:  1003_linux-3.0.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.4
 
+Patch:  1004_linux-3.0.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.5
+
 Patch:  1700_i386-bigsmp-early-lapicid-override.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=379867
 Desc:   Eliminate false warnings regarding logical APIC ID mismatches for i386/bigsmp
@@ -62,10 +66,6 @@ Desc:   Eliminate false warnings regarding logical APIC ID mismatches for i386/b
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
-
-Patch:  1805_vmscan-count-in-small-memcfgs-fix.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=381963
-Desc:   Fix vmscan count in small memcgs
 
 Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
