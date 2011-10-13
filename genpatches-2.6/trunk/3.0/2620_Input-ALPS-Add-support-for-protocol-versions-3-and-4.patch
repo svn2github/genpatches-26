@@ -1,16 +1,24 @@
-From eb431563c721ef18736a36462e669062821702c5 Mon Sep 17 00:00:00 2001
+From 0d2064f77fc5b1d983a0b6bf39b08c36d7b58d68 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:39 -0500
 Subject: [PATCH 5/8] Input: ALPS - Add support for protocol versions 3 and 4
 
-Currently only single-touch, multi-touch to be added in the future.
+This patch adds support for two ALPS touchpad protocols not
+supported currently by the driver, which I am arbitrarily naming
+version 3 and version 4. Support is single-touch only at this time,
+although both protocols are capable of limited multitouch support.
+
+Thanks to Andrew Skalski, who did the initial reverse-engineering
+of the v3 protocol.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
- drivers/input/mouse/alps.c |  792 +++++++++++++++++++++++++++++++++++++++++---
+ drivers/input/mouse/alps.c |  787 +++++++++++++++++++++++++++++++++++++++++---
  drivers/input/mouse/alps.h |   14 +
- 2 files changed, 768 insertions(+), 38 deletions(-)
+ 2 files changed, 763 insertions(+), 38 deletions(-)
 
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index 14d1f64..43949d4 100644
+index 14d1f64..8419c14 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
 @@ -30,6 +30,50 @@
@@ -129,7 +137,7 @@ index 14d1f64..43949d4 100644
  {
  	struct alps_data *priv = psmouse->private;
  	const struct alps_model_info *model = priv->i;
-@@ -210,6 +257,206 @@ static void alps_process_packet(struct psmouse *psmouse)
+@@ -210,6 +257,226 @@ static void alps_process_packet(struct psmouse *psmouse)
  	input_sync(dev);
  }
  
@@ -168,11 +176,22 @@ index 14d1f64..43949d4 100644
 +	input_report_rel(dev, REL_X, x);
 +	input_report_rel(dev, REL_Y, -y);
 +
-+	if (priv->quirks & ALPS_QUIRK_TRACKSTICK_BUTTONS) {
-+		left = packet[3] & 0x01;
-+		right = packet[3] & 0x02;
-+		middle = packet[3] & 0x04;
++	/*
++	 * Most ALPS models report the trackstick buttons in the touchpad
++	 * packets, but a few report them here. No reliable way has been
++	 * found to differentiate between the models upfront, so we enable
++	 * the quirk in response to seeing a button press in the trackstick
++	 * packet.
++	 */
++	left = packet[3] & 0x01;
++	right = packet[3] & 0x02;
++	middle = packet[3] & 0x04;
++	
++	if (!(priv->quirks & ALPS_QUIRK_TRACKSTICK_BUTTONS) &&
++	    (left || right || middle))
++		priv->quirks |= ALPS_QUIRK_TRACKSTICK_BUTTONS;
 +
++	if (priv->quirks & ALPS_QUIRK_TRACKSTICK_BUTTONS) {
 +		input_report_key(dev, BTN_LEFT, left);
 +		input_report_key(dev, BTN_RIGHT, right);
 +		input_report_key(dev, BTN_MIDDLE, middle);
@@ -228,6 +247,15 @@ index 14d1f64..43949d4 100644
 +	    ((packet[0] & 0x30) >> 4);
 +	y = ((packet[2] & 0x7f) << 4) | (packet[4] & 0x0f);
 +	z = packet[5] & 0x7f;
++
++	/*
++	 * Sometimes the hardware sends a single packet with z = 0
++	 * in the middle of a stream. Real releases generate packets
++	 * with x, y, and z all zero, so these seem to be flukes.
++	 * Ignore them.
++	 */
++	if (x && y && !z)
++		return;
 +
 +	if (z >= 64) {
 +		input_report_key(dev, BTN_TOUCH, 1);
@@ -336,7 +364,7 @@ index 14d1f64..43949d4 100644
  static void alps_report_bare_ps2_packet(struct psmouse *psmouse,
  					unsigned char packet[],
  					bool report_buttons)
-@@ -381,11 +628,126 @@ static psmouse_ret_t alps_process_byte(struct psmouse *psmouse)
+@@ -381,11 +648,126 @@ static psmouse_ret_t alps_process_byte(struct psmouse *psmouse)
  	return PSMOUSE_GOOD_DATA;
  }
  
@@ -463,7 +491,7 @@ index 14d1f64..43949d4 100644
  	int i;
  
  	/*
-@@ -431,12 +793,38 @@ static const struct alps_model_info *alps_get_model(struct psmouse *psmouse, int
+@@ -431,12 +813,38 @@ static const struct alps_model_info *alps_get_model(struct psmouse *psmouse, int
  		*version = (param[0] << 8) | (param[1] << 4) | i;
  	}
  
@@ -477,8 +505,7 @@ index 14d1f64..43949d4 100644
 +			break;
 +		}
 +	}
- 
--	return NULL;
++
 +	if (model && model->proto_version > ALPS_PROTO_V2) {
 +		/*
 +		 * Need to check command mode response to identify
@@ -501,12 +528,13 @@ index 14d1f64..43949d4 100644
 +				pr_debug("alps.c: Unknown command mode response %2.2x\n", param[0]);
 +		}
 +	}
-+
+ 
+-	return NULL;
 +	return model;
  }
  
  /*
-@@ -444,7 +832,7 @@ static const struct alps_model_info *alps_get_model(struct psmouse *psmouse, int
+@@ -444,7 +852,7 @@ static const struct alps_model_info *alps_get_model(struct psmouse *psmouse, int
   * subsequent commands. It looks like glidepad is behind stickpointer,
   * I'd thought it would be other way around...
   */
@@ -515,7 +543,7 @@ index 14d1f64..43949d4 100644
  {
  	struct ps2dev *ps2dev = &psmouse->ps2dev;
  	int cmd = enable ? PSMOUSE_CMD_SETSCALE21 : PSMOUSE_CMD_SETSCALE11;
-@@ -461,7 +849,7 @@ static int alps_passthrough_mode(struct psmouse *psmouse, bool enable)
+@@ -461,7 +869,7 @@ static int alps_passthrough_mode(struct psmouse *psmouse, bool enable)
  	return 0;
  }
  
@@ -524,7 +552,7 @@ index 14d1f64..43949d4 100644
  {
  	struct ps2dev *ps2dev = &psmouse->ps2dev;
  
-@@ -540,13 +928,13 @@ static int alps_poll(struct psmouse *psmouse)
+@@ -540,13 +948,13 @@ static int alps_poll(struct psmouse *psmouse)
  		return -1;
  
  	if (priv->i->flags & ALPS_PASS)
@@ -540,7 +568,7 @@ index 14d1f64..43949d4 100644
  
  	if (poll_failed || (buf[0] & priv->i->mask0) != priv->i->byte0)
  		goto out;
-@@ -567,13 +955,13 @@ out:
+@@ -567,13 +975,13 @@ out:
  	return ret;
  }
  
@@ -556,7 +584,7 @@ index 14d1f64..43949d4 100644
  		return -1;
  	}
  
-@@ -582,13 +970,13 @@ static int alps_hw_init(struct psmouse *psmouse)
+@@ -582,13 +990,13 @@ static int alps_hw_init(struct psmouse *psmouse)
  		return -1;
  	}
  
@@ -572,7 +600,7 @@ index 14d1f64..43949d4 100644
  		return -1;
  	}
  
-@@ -601,6 +989,320 @@ static int alps_hw_init(struct psmouse *psmouse)
+@@ -601,6 +1009,295 @@ static int alps_hw_init(struct psmouse *psmouse)
  	return 0;
  }
  
@@ -615,22 +643,12 @@ index 14d1f64..43949d4 100644
 +	return 0;
 +}
 +
-+/*
-+ * Trackstick E7 reports for models affected by trackstick button
-+ * reporting quirk
-+ */
-+static const unsigned char trackstick_quirk_sigs[][3] = {
-+	{ 0x42, 0x02, 0x14 },
-+	{ 0x32, 0x01, 0x28 },
-+};
-+
 +static int alps_hw_init_v3(struct psmouse *psmouse)
 +{
 +	struct alps_data *priv = psmouse->private;
 +	struct ps2dev *ps2dev = &psmouse->ps2dev;
 +	int reg_val;
 +	unsigned char param[4];
-+	int i;
 +
 +	priv->nibble_commands = alps_v3_nibble_commands;
 +	priv->addr_command = PSMOUSE_CMD_RESET_WRAP;
@@ -667,21 +685,6 @@ index 14d1f64..43949d4 100644
 +			pr_debug("alps.c: trackstick E7 report: %2.2x %2.2x %2.2x\n",
 +				 param[0], param[1], param[2]);
 +
-+			/*
-+			 * Most models report trackstick buttons in the
-+			 * touchpad packets, but some report them in the
-+			 * trackstick packets instead. It appears we can
-+			 * detect these using the trackstick E7 report.
-+			 */
-+			for (i = 0; i < ARRAY_SIZE(trackstick_quirk_sigs); i++) {
-+				if (!memcmp(param, trackstick_quirk_sigs[i],
-+					    sizeof(trackstick_quirk_sigs[i]))) {
-+					pr_debug("alps.c: enabling trackstick button quirk\n");
-+					priv->quirks |= ALPS_QUIRK_TRACKSTICK_BUTTONS;
-+					break;
-+				}
-+			}
-+	
 +			/*
 +			 * Not sure what this does, but it is absolutely
 +			 * essential. Without it, the touchpad does not
@@ -893,7 +896,7 @@ index 14d1f64..43949d4 100644
  static int alps_reconnect(struct psmouse *psmouse)
  {
  	const struct alps_model_info *model;
-@@ -641,6 +1343,8 @@ int alps_init(struct psmouse *psmouse)
+@@ -641,6 +1338,8 @@ int alps_init(struct psmouse *psmouse)
  
  	psmouse->private = priv;
  
@@ -902,7 +905,7 @@ index 14d1f64..43949d4 100644
  	model = alps_get_model(psmouse, &version);
  	if (!model)
  		goto init_fail;
-@@ -668,8 +1372,20 @@ int alps_init(struct psmouse *psmouse)
+@@ -668,8 +1367,20 @@ int alps_init(struct psmouse *psmouse)
  		BIT_MASK(BTN_LEFT) | BIT_MASK(BTN_RIGHT);
  
  	dev1->evbit[BIT_WORD(EV_ABS)] |= BIT_MASK(EV_ABS);
@@ -925,7 +928,7 @@ index 14d1f64..43949d4 100644
  	input_set_abs_params(dev1, ABS_PRESSURE, 0, 127, 0, 0);
  
  	if (model->flags & ALPS_WHEEL) {
-@@ -712,7 +1428,7 @@ int alps_init(struct psmouse *psmouse)
+@@ -712,7 +1423,7 @@ int alps_init(struct psmouse *psmouse)
  	psmouse->poll = alps_poll;
  	psmouse->disconnect = alps_disconnect;
  	psmouse->reconnect = alps_reconnect;

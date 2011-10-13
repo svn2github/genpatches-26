@@ -1,17 +1,18 @@
-From 434f3ebdc039b7aa1f6d2d0769f471c0ab9a7c02 Mon Sep 17 00:00:00 2001
+From fe497d37d0548dc51716214b026310a800a0fed8 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:38 -0500
-Subject: [PATCH 6/8] Input: ALPS - Add documentation for protocol versions 3 and 4
+Subject: [PATCH 7/8] Input: ALPS - Add documentation for protocol versions 3 and 4
 
 Also converts from using "old" and "new" to describe the already-known
-protocols to using "version 1" and "version 2."
+protocols to using "version 1" and "version 2" to match the code.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
- Documentation/input/alps.txt |  134 ++++++++++++++++++++++++++++++++++++++---
- drivers/input/mouse/alps.c   |    9 +++
- 2 files changed, 133 insertions(+), 10 deletions(-)
+ Documentation/input/alps.txt |  136 ++++++++++++++++++++++++++++++++++++++----
+ 1 files changed, 125 insertions(+), 11 deletions(-)
 
 diff --git a/Documentation/input/alps.txt b/Documentation/input/alps.txt
-index e88c921..2768ad1 100644
+index e88c921..ac2dd9c 100644
 --- a/Documentation/input/alps.txt
 +++ b/Documentation/input/alps.txt
 @@ -4,12 +4,9 @@ ALPS Touchpad Protocol
@@ -30,7 +31,7 @@ index e88c921..2768ad1 100644
  
  Detection
  ---------
-@@ -22,6 +19,34 @@ If the E6 report is successful, the touchpad model is identified using the "E7
+@@ -22,10 +19,38 @@ If the E6 report is successful, the touchpad model is identified using the "E7
  report" sequence: E8-E7-E7-E7-E9. The response is the model signature and is 
  matched against known models in the alps_model_data_array.
  
@@ -51,7 +52,7 @@ index e88c921..2768ad1 100644
 +To exit command mode, PSMOUSE_CMD_SETSTREAM (EA) is sent to the touchpad.
 +
 +While in command mode, register addresses can be set by first sending a 
-+specific command, either EC for v3 devices or F5 for E4 devices. Then the 
++specific command, either EC for v3 devices or F5 for v4 devices. Then the 
 +address is sent one nibble at a time, where each nibble is encoded as a 
 +command with optional data. This enoding differs slightly between the v3 and 
 +v4 protocols.
@@ -64,6 +65,11 @@ index e88c921..2768ad1 100644
 +
  Packet Format
  -------------
+ 
+-In the following tables, the following notation us used.
++In the following tables, the following notation is used.
+ 
+  CAPITALS = stick, miniscules = touchpad
  
 @@ -41,8 +66,8 @@ PS/2 packet format
  
@@ -140,7 +146,7 @@ index e88c921..2768ad1 100644
 +ALPS Absolute Mode - Protocol Version 4
 +---------------------------------------
 +
-+Protocol version 4 has a 9-byte packet format.
++Protocol version 4 has an 8-byte packet format.
 +
 + byte 0:    1    ?   x1   x0    1    1    1    1
 + byte 1:    0  x10   x9   x8   x7   x6   x5   x4
@@ -180,26 +186,6 @@ index e88c921..2768ad1 100644
 +    well.
 +
 +So far no v4 devices with tracksticks have been encountered.
-diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index 43949d4..f444870 100644
---- a/drivers/input/mouse/alps.c
-+++ b/drivers/input/mouse/alps.c
-@@ -353,6 +353,15 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 	y = ((packet[2] & 0x7f) << 4) | (packet[4] & 0x0f);
- 	z = packet[5] & 0x7f;
- 
-+	/*
-+	 * Sometimes the hardware sends a single packet with z = 0
-+	 * in the middle of a stream. Real releases generate a good
-+	 * number of packets with x, y, and z all zero, so these seem
-+	 * to be flukes. Ignore them.
-+	 */
-+	if (x && y && !z)
-+		return;
-+
- 	if (z >= 64) {
- 		input_report_key(dev, BTN_TOUCH, 1);
- 	} else {
 -- 
 1.7.4.1
 

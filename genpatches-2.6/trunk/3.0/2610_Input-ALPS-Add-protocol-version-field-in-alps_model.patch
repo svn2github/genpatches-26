@@ -1,11 +1,14 @@
-From bd161b52aed9877253b03ebc2fba5a1326c45c8d Mon Sep 17 00:00:00 2001
+From 71d5d26504d55199a8de3fe8f90304bec69d7588 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:38 -0500
 Subject: [PATCH 3/8] Input: ALPS - Add protocol version field in alps_model_info
 
 In preparation for adding support for more ALPS protocol versions,
 add a field for the protocol version to the model info instead of
-using a field in the flags.
+using a field in the flags. OLDPROTO and !OLDPROTO are now called
+version 1 and version 2, repsectively.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
  drivers/input/mouse/alps.c |   47 +++++++++++++++++++++----------------------
  drivers/input/mouse/alps.h |    4 +++

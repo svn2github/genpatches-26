@@ -1,4 +1,4 @@
-From ffe7d2822d760868afc78e9c8239a77e913ed564 Mon Sep 17 00:00:00 2001
+From a34eb0a8a5c5f14c26bb9ff076a0648cffe1423f Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:37 -0500
 Subject: [PATCH 1/8] Input: ALPS - Move protocol information to Documentation
@@ -7,6 +7,8 @@ In preparation for new protocol support, move the protocol
 information currently documented in alps.c to
 Documentation/input/alps.txt, where it can be expanded without
 cluttering up the driver.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
  Documentation/input/alps.txt |   75 ++++++++++++++++++++++++++++++++++++++++++
  drivers/input/mouse/alps.c   |   37 +--------------------

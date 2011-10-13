@@ -1,15 +1,16 @@
-From a4d9b41e00554a492bc74af6c3e0310d7546ea12 Mon Sep 17 00:00:00 2001
+From 38f8cccfb3e7215f4c44b9526974a5f8dc36e438 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Thu, 15 Sep 2011 16:50:09 -0500
-Subject: [PATCH 7/8] Input: ALPS - Add semi-MT support for v3 protocol
+Subject: [PATCH 6/8] Input: ALPS - Add semi-MT support for v3 protocol
 
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
- drivers/input/mouse/alps.c |  214 ++++++++++++++++++++++++++++++++++++++++---
+ drivers/input/mouse/alps.c |  233 ++++++++++++++++++++++++++++++++++++++++----
  drivers/input/mouse/alps.h |    1 +
- 2 files changed, 200 insertions(+), 15 deletions(-)
+ 2 files changed, 215 insertions(+), 19 deletions(-)
 
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index f444870..fae0911 100644
+index 8419c14..8902a11 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
 @@ -17,6 +17,7 @@
@@ -171,7 +172,7 @@ index f444870..fae0911 100644
  static void alps_process_trackstick_packet_v3(struct psmouse *psmouse)
  {
  	struct alps_data *priv = psmouse->private;
-@@ -314,6 +452,9 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -325,16 +463,17 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  	struct input_dev *dev2 = priv->dev2;
  	int x, y, z;
  	int left, right, middle;
@@ -180,9 +181,14 @@ index f444870..fae0911 100644
 +	unsigned int x_bitmap, y_bitmap;
  
  	/*
- 	 * There's no single feature of touchpad position and bitmap
-@@ -322,8 +463,6 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
- 	 * a position packet with bit 6 of packet[4] set.
+-	 * There's no single feature of touchpad position and bitmap
+-	 * packets that can be used to distinguish between them. We
+-	 * rely on the fact that a bitmap packet should always follow
+-	 * a position packet with bit 6 of packet[4] set.
++	 * There's no single feature of touchpad position and bitmap packets
++	 * that can be used to distinguish between them. We rely on the fact
++	 * that a bitmap packet should always follow a position packet with
++	 * bit 6 of packet[4] set.
  	 */
  	if (priv->multi_packet) {
 -		priv->multi_packet = 0;
@@ -190,7 +196,7 @@ index f444870..fae0911 100644
  		/*
  		 * Sometimes a position packet will indicate a multi-packet
  		 * sequence, but then what follows is another position
-@@ -331,18 +470,38 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -342,18 +481,49 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  		 * position packet as usual.
  		 */
  		if (packet[0] & 0x40) {
@@ -223,7 +229,18 @@ index f444870..fae0911 100644
  	}
  
 -	if (!priv->multi_packet && (packet[4] & 0x40))
-+	if (!priv->multi_packet && packet[4] & 0x40) {
++	/*
++	 * Bit 6 of byte 0 is not usually set in position packets. The only
++	 * times it seems to be set is in situations where the data is
++	 * suspect anyway, e.g. a palm resting flat on the touchpad. Given
++	 * this combined with the fact that this bit is useful for filtering
++	 * out misidentified bitmap packets, we reject anything with this
++	 * bit set.
++	 */
++	if (packet[0] & 0x40)
++		return;
++
++	if (!priv->multi_packet && (packet[4] & 0x40)) {
  		priv->multi_packet = 1;
 -	else
 -		priv->multi_packet = 0;
@@ -235,7 +252,7 @@ index f444870..fae0911 100644
  
  	left = packet[3] & 0x01;
  	right = packet[3] & 0x02;
-@@ -362,23 +521,39 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
+@@ -373,23 +543,39 @@ static void alps_process_touchpad_packet_v3(struct psmouse *psmouse)
  	if (x && y && !z)
  		return;
  
@@ -280,7 +297,7 @@ index f444870..fae0911 100644
  	input_sync(dev);
  
  	if (!(priv->quirks & ALPS_QUIRK_TRACKSTICK_BUTTONS)) {
-@@ -1389,9 +1564,18 @@ int alps_init(struct psmouse *psmouse)
+@@ -1375,9 +1561,18 @@ int alps_init(struct psmouse *psmouse)
  		input_set_abs_params(dev1, ABS_Y, 0, 767, 0, 0);
  		break;
  	case ALPS_PROTO_V3:

@@ -1,4 +1,4 @@
-From 32d5e73c517b64db55586dd60edfa635b2121213 Mon Sep 17 00:00:00 2001
+From 01b502f4af1fb4c3f1006a48c97da69ca48e04c7 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:38 -0500
 Subject: [PATCH 4/8] Input: ALPS - Remove assumptions about packet size
@@ -6,6 +6,8 @@ Subject: [PATCH 4/8] Input: ALPS - Remove assumptions about packet size
 In preparation for version 4 protocol support, which has 8-byte
 data packets, remove all hard-coded assumptions about packet size
 and use psmouse->pktsize instead.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
  drivers/input/mouse/alps.c |   27 ++++++++++++++++++---------
  1 files changed, 18 insertions(+), 9 deletions(-)

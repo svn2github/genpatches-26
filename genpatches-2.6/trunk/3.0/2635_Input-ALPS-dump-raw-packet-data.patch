@@ -1,4 +1,4 @@
-From d36756bfc5e83009f3563b1c3f7385cf7383f1b6 Mon Sep 17 00:00:00 2001
+From e7ac8e59a83861434002be34c64bf2614825645e Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:39 -0500
 Subject: [PATCH 8/8] Input: ALPS - dump raw packet data
@@ -8,7 +8,7 @@ Subject: [PATCH 8/8] Input: ALPS - dump raw packet data
  1 files changed, 19 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
-index fae0911..771e93c 100644
+index 8902a11..378e6fa 100644
 --- a/drivers/input/mouse/alps.c
 +++ b/drivers/input/mouse/alps.c
 @@ -15,6 +15,8 @@
@@ -49,7 +49,7 @@ index fae0911..771e93c 100644
  static bool alps_is_valid_first_byte(const struct alps_model_info *model,
  				     unsigned char data)
  {
-@@ -627,6 +642,9 @@ static void alps_process_packet(struct psmouse *psmouse)
+@@ -649,6 +664,9 @@ static void alps_process_packet(struct psmouse *psmouse)
  	struct alps_data *priv = psmouse->private;
  	const struct alps_model_info *model = priv->i;
  

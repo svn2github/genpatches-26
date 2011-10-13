@@ -1,9 +1,11 @@
-From e96c3fffedbaf13c6dfbdccead95fe49f8dce4a4 Mon Sep 17 00:00:00 2001
+From 1dfb199f5b410259f17d1cd3feb0b97fd5508c45 Mon Sep 17 00:00:00 2001
 From: Seth Forshee <seth.forshee@canonical.com>
 Date: Wed, 14 Sep 2011 11:40:38 -0500
 Subject: [PATCH 2/8] Input: psmouse - Add PSMOUSE_CMD_RESET_WRAP
 
 Add this command in preparation for new ALPS protocol support.
+
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
  drivers/input/mouse/psmouse.h |    1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
