@@ -12,6 +12,9 @@ use URI::Escape;
 use Cwd;
 use gentoo_sources_web;
 
+# print out arguments for easier debugging
+print "makesite.pl called with arguments: @ARGV \n";
+
 make_index_page();
 make_about_page();
 make_faq_page();
