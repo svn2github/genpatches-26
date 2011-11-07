@@ -43,6 +43,10 @@ Patch:  1700_i386-bigsmp-early-lapicid-override.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=379867
 Desc:   Eliminate false warnings regarding logical APIC ID mismatches for i386/bigsmp
 
+Patch:  2100_md-raid10-hot-spare-activation-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=389737
+Desc:   Fix issue in md/raid10 when activating a hot-spare
+
 Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad - Move protocol information to Documentation
