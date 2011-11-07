@@ -1,0 +1,21 @@
+--- a/arch/x86/kernel/apic/probe_32.c
++++ b/arch/x86/kernel/apic/probe_32.c
+@@ -203,7 +203,18 @@  void __init default_setup_apic_routing(v
+ 	if (!cmdline_apic && apic == &apic_default) {
+ 		struct apic *bigsmp = generic_bigsmp_probe();
+ 		if (bigsmp) {
++			unsigned int cpu;
++
+ 			apic = bigsmp;
++			for_each_possible_cpu(cpu) {
++				if (early_per_cpu(x86_cpu_to_logical_apicid,
++						  cpu) == BAD_APICID)
++					continue;
++				early_per_cpu(x86_cpu_to_logical_apicid,
++					      cpu) =
++					bigsmp->x86_32_early_logical_apicid
++						(cpu);
++			}
+ 			printk(KERN_INFO "Overriding APIC driver with %s\n",
+ 			       apic->name);
+ 		}
