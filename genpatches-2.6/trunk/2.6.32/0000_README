@@ -223,10 +223,6 @@ Patch:  1045_2.6.32.46.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.46
 
-Patch:  2000_fix-broken-backport-for-ipv6-tunnels.patch
-From:   https://bugs.gentoo.org/show_bug.cgi?id=380609
-Desc:   Fix broken backport for IPv6 tunnels
-
 Patch:  2900_disable-wunused-but-set-var-gcc-4-6-0.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=366579
 Desc:   Disable -Wunused-but-set-variable for gcc 4.6.0. Thanks to Stratos Psomadakis
