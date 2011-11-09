@@ -47,6 +47,10 @@ Patch:  2100_md-raid10-hot-spare-activation-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=389737
 Desc:   Fix issue in md/raid10 when activating a hot-spare
 
+Patch:  2400_pci-enable-msi-failure-fix.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=389215
+Desc:   Continue the init process after pci_enable_msi failure
+
 Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad - Move protocol information to Documentation
