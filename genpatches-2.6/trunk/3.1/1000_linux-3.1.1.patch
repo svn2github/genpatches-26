@@ -140,6 +140,18 @@ index 6185d05..e608038 100644
  L:	linux-wireless@vger.kernel.org
  L:	ath9k-devel@lists.ath9k.org
  W:	http://wireless.kernel.org/en/users/Drivers/ath9k
+diff --git a/Makefile b/Makefile
+index 07bc925..7e8e124 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERSION = 3
+ PATCHLEVEL = 1
+-SUBLEVEL = 0
++SUBLEVEL = 1
+ EXTRAVERSION =
+ NAME = "Divemaster Edition"
+ 
 diff --git a/arch/arm/mach-exynos4/platsmp.c b/arch/arm/mach-exynos4/platsmp.c
 index df6ef1b..0c90896 100644
 --- a/arch/arm/mach-exynos4/platsmp.c
