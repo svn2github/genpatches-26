@@ -231,13 +231,9 @@ Patch:  1047_2.6.32.48.patch
 From:   http://www.kernel.org
 Desc:   Linux 2.6.32.48
 
-Patch:  2900_disable-wunused-but-set-var-gcc-4-6-0.patch
-From:   https://bugs.gentoo.org/show_bug.cgi?id=366579
-Desc:   Disable -Wunused-but-set-variable for gcc 4.6.0. Thanks to Stratos Psomadakis
-
-Patch:  2901_kbuild-fix-passing-wno-options-to-gcc-4.4.patch
-From:   https://patchwork.kernel.org/patch/1010172/
-Desc:   Fix passing -Wno options to gcc-4.4
+Patch:  1048_2.6.32.49.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.49
 
 Patch:	4200_fbcondecor-0.9.6.patch
 From:	http://dev.gentoo.org/~spock
