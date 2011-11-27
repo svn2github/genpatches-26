@@ -1,0 +1,244 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:  1000_linux-2.6.32.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.1
+
+Patch:  1001_linux-2.6.32.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.2
+
+Patch:  1002_linux-2.6.32.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.3
+
+Patch:  1003_linux-2.6.32.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.4
+
+Patch:  1004_linux-2.6.32.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.5
+
+Patch:  1005_linux-2.6.32.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.6
+
+Patch:  1006_linux-2.6.32.7.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.7
+
+Patch:  1007_linux-2.6.32.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.8
+
+Patch:  1008_linux-2.6.32.9.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.9
+
+Patch:  1009_linux-2.6.32.10.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.10
+
+Patch:  1010_2.6.32.11.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.11
+
+Patch:  1011_2.6.32.12.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.12
+
+Patch:  1012_2.6.32.13.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.13
+
+Patch:  1013_2.6.32.14.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.14
+
+Patch:  1014_linux-2.6.32.15.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.15
+
+Patch:  1015_linux-2.6.32.16.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.16
+
+Patch:  1016_linux-2.6.32.17.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.17
+
+Patch:  1017_linux-2.6.32.18.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.18
+
+Patch:  1018_linux-2.6.32.19.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.19
+
+Patch:  1019_linux-2.6.32.20.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.20
+
+Patch:  1020_linux-2.6.32.21.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.21
+
+Patch:  1021_linux-2.6.32.22.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.22
+
+Patch:  1022_linux-2.6.32.23.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.23
+
+Patch:  1023_linux-2.6.32.24.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.24
+
+Patch:  1024_linux-2.6.32.25.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.25
+
+Patch:  1025_linux-2.6.32.26.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.26
+
+Patch:  1026_linux-2.6.32.27.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.27
+
+Patch:  1027_linux-2.6.32.28.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.28
+
+Patch:  1028_linux-2.6.32.29.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.29
+
+Patch:  1029_linux-2.6.32.30.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.30
+
+Patch:  1030_2.6.32.31.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.31
+
+Patch:  1031_2.6.32.32.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.32
+
+Patch:  1032_2.6.32.33.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.33
+
+Patch:  1033_2.6.32.34.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.34
+
+Patch:  1034_2.6.32.35.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.35
+
+Patch:  1035_2.6.32.36.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.36
+
+Patch:  1036_2.6.32.37.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.37
+
+Patch:  1037_2.6.32.38.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.38
+
+Patch:  1038_2.6.32.39.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.39
+
+Patch:  1039_2.6.32.40.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.40
+
+Patch:  1040_2.6.32.41.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.41
+
+Patch:  1041_2.6.32.42.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.42
+
+Patch:  1042_2.6.32.43.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.43
+
+Patch:  1043_2.6.32.44.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.44
+
+Patch:  1044_2.6.32.45.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.45
+
+Patch:  1045_2.6.32.46.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.46
+
+Patch:  1046_2.6.32.47.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.47
+
+Patch:  1047_2.6.32.48.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.48
+
+Patch:  1048_2.6.32.49.patch
+From:   http://www.kernel.org
+Desc:   Linux 2.6.32.49
+
+Patch:	4200_fbcondecor-0.9.6.patch
+From:	http://dev.gentoo.org/~spock
+Desc:	Bootsplash successor by Michal Januszewski
+
+Patch:	4400_alpha-sysctl-uac.patch
+From:	Tavis Ormandy <taviso@gentoo.org> and http://bugs.gentoo.org/show_bug.cgi?id=217323
+Desc:	Enable control of the unaligned access control policy from sysctl
