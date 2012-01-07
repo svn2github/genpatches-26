@@ -99,6 +99,10 @@ Patch:  1014_linux-3.0.15.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.15
 
+Patch:  1014_linux-3.0.16.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.16
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
