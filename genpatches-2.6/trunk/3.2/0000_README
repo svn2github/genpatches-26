@@ -43,6 +43,10 @@ Patch:  1000_linux-3.2.1.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.2.1
 
+Patch:  2100_proc-mem-handling-fix.patch
+From:   http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git
+Desc:   Clean up and fix /proc/<pid>/mem handling, prevent local privilege escalation
+
 Patch:  2600_Input-ALPS-synaptics-touchpad.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad Patchset
