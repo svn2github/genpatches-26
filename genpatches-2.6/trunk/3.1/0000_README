@@ -79,6 +79,10 @@ Patch:  1009_linux-3.1.10.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.1.10
 
+Patch:  2100_proc-mem-handling-fix.patch
+From:   http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git
+Desc:   Clean up and fix /proc/<pid>/mem handling, prevent local privilege escalation
+
 Patch:  2400_pci-enable-msi-failure-fix.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=389215
 Desc:   Continue the init process after pci_enable_msi failure
