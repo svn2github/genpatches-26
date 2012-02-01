@@ -49,7 +49,7 @@ Desc:   Linux 3.2.2
 
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
-Desc:   ALPS Touchpad Patchset
+Desc:   Zero copy for infiniband psm userspace driver
 
 Patch:  2600_Input-ALPS-synaptics-touchpad.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
