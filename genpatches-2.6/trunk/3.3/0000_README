@@ -34,7 +34,8 @@ FEATURES
 4100-4200	storage
 4200-4300	graphics
 4300-4400	filesystem
-4400-4500	other
+4400-4500   security enhancement
+4500-4600   other
 
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
