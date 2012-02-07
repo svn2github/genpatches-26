@@ -107,13 +107,21 @@ Patch:  1016_linux-3.0.17.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.17
 
+Patch:  1017_linux-3.0.18.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.18
+
+Patch:  1018_linux-3.0.19.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.19
+
+Patch:  1019_linux-3.0.20.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.20
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
-
-Patch:  2100_proc-mem-handling-fix.patch
-From:   http://git.kernel.org/?p=linux/kernel/git/stable/stable-queue.git
-Desc:   Clean up and fix /proc/<pid>/mem handling, prevent local privilege escalation
 
 Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
