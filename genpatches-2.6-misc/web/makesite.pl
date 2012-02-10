@@ -11,6 +11,7 @@ use File::Copy;
 use URI::Escape;
 use Cwd;
 use gentoo_sources_web;
+use Sort::Versions;
 
 # print out arguments for easier debugging
 print "makesite.pl called with arguments: @ARGV \n";
@@ -206,9 +207,10 @@ sub make_release_pages {
 	foreach (@out) {
 		chomp;
 		chop;
-		next if $_ !~ /^2\.6\./;
+		#next if $_ !~ /^2\.6\./;
+		next if $_ !~ /^\d\.\d/;
 		if (!release_is_generated($_)) {
-			print ">> Generatating release pages for $_\n";
+			print ">> Generating release pages for $_\n";
 			@patches = _get_patch_list($_);
 			generate_patchlist($_, @patches);
 			generate_info($_, @patches);
@@ -227,6 +229,11 @@ sub make_release_pages {
 }
 
 sub mysort {
+    return (versioncmp($a, $b));
+}
+
+sub mysort_old {
+
 	$a =~ m/^\d\.\d\.(\d+)-(\d+)-info\.htm$/;
 	$mya = $2;
 	$b =~ m/^\d\.\d\.(\d+)-(\d+)-info\.htm$/;
@@ -235,6 +242,8 @@ sub mysort {
 }
 
 sub make_releases_index {
+    print "make_releases_index called\n";
+
 	my (%kernels, $info, @infopages, $kernel);
 	local (*DIR, *FILE, *INDEX);
 	opendir(DIR, $webscript_path.'/generated');
@@ -244,11 +253,19 @@ sub make_releases_index {
 		$kernels{$1} = 1;
 	}
 
+	foreach $info (@infopages) {
+		$info =~ m/^(\d\.\d+)-\d+-info\.htm$/;
+		$kernels{$1} = 1;
+	}
+
 	open(INDEX, '> '.$webscript_path.'/output/releases.htm');
 	html_header(INDEX, 'genpatches Releases');
 	print INDEX '<h1>genpatches Releases</h1>';
-	
+
 	foreach $kernel (sort keys %kernels) {
+        if ($kernel == "") {
+            next;
+        }
 		print INDEX '<p><a href="releases-'.$kernel.'.htm">genpatches releases for Linux '.$kernel.'</a></p>';
 		open(FILE, '> '.$webscript_path.'/output/releases-'.$kernel.'.htm');
 		html_header(FILE, "$kernel Releases");
@@ -293,31 +310,33 @@ sub generate_patchlist {
 
 sub generate_info {
 	my ($tag, @patches) = @_;
-	my (@commits, $ver, $rel, $have_history, $oldtag, @log_lines);
+	my (@commits, $ver, $rel, $have_history, $oldtag, @log_lines, $tag_save);
 	my ($lastrev);
 	local *INFO;
+
+    $tag_save = $tag;
 	$tag =~ m/(2\.6\.\d+)-(\d+)/;
 	$ver = $1;
 	$rel = $2;
 	$have_history = 0;
 
 	# Try and find previous release
-	if ($rel > 1) {
-		$oldtag = $ver.'-'.($rel-1);
-		$cmd = 'svn log -q --stop-on-copy '.$subversion_root.'/tags/'.$oldtag;
-		@log_lines = `$cmd`;
-		$lastrev = 0;
-		foreach (@log_lines) {
-			next if $_ !~ /^r(\d+) \|/;
-			$lastrev = $1;
-			last;
-		}
-	}
+    $lastrev = get_last_revision($tag, $ver, $rel);
+
+    if (!$lastrev) {
+    	$tag_save =~ m/(3\.\d+)-(\d+)/;
+	    $ver = $1;
+	    $rel = $2;
+        $lastrev = get_last_revision($tag, $ver, $rel);
+    }
 
 	if ($lastrev) {
 		@commits = _parse_log($tag, $lastrev);
 		$have_history = @commits;
 	}
+    else {
+        print "no revision found for tag: $tag\n";
+    }
 	
 	open (INFO, '> '.$webscript_path.'/generated/'.$tag.'-info.htm');
 	print INFO '<h2>Release '.$tag.'</h2>';
@@ -347,3 +366,26 @@ sub process_static_content {
 	copy($webscript_path.'/content/.htaccess', $output_path);
 }
 
+
+# get the last revision 
+sub get_last_revision {
+    my ($tag, $ver, $rel) = @_;
+
+	my ($have_history, $oldtag, @log_lines,$lastrev);
+   	$have_history = 0;
+
+   	# Try and find previous release
+  	if ($rel > 1) {
+   		$oldtag = $ver.'-'.($rel-1);
+   		$cmd = 'svn log -q --stop-on-copy '.$subversion_root.'/tags/'.$oldtag;
+   		@log_lines = `$cmd`;
+   		$lastrev = 0;
+   		foreach (@log_lines) {
+   			next if $_ !~ /^r(\d+) \|/;
+   			$lastrev = $1;
+    		last;
+    	}
+    }
+
+    return $lastrev;
+}
