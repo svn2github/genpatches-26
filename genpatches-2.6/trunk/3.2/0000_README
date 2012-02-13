@@ -60,6 +60,10 @@ Patch:  1004_linux-3.2.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.2.5
 
+Patch:  1005_linux-3.2.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.2.6
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
