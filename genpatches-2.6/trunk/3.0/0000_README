@@ -131,6 +131,14 @@ Patch:  1022_linux-3.0.23.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.23
 
+Patch:  1024_linux-3.0.25.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.25
+
+Patch:  1025_linux-3.0.26.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.26
+
 Patch:  1023_linux-3.0.24.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.24
