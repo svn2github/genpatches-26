@@ -139,9 +139,17 @@ Patch:  1025_linux-3.0.26.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.26
 
-Patch:  1023_linux-3.0.24.patch
+Patch:  1026_linux-3.0.27.patch
 From:   http://www.kernel.org
-Desc:   Linux 3.0.24
+Desc:   Linux 3.0.27
+
+Patch:  1027_linux-3.0.28.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.28
+
+Patch:  1028_linux-3.0.29.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.29
 
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
