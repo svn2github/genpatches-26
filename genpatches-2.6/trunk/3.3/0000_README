@@ -56,10 +56,6 @@ Patch:  1003_linux-3.3.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.3.4
 
-Patch:  1800_nohz-load-acct-fix.patch
-From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=patch;h=c308b56b5398779cd3da0f62ab26b0453494c3d4;hp=8e3fabfde445a872c8aec2296846badf24d7c8b4
-Desc:   no-hz load account fix
-
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
