@@ -68,6 +68,10 @@ Patch:  1006_linux-3.3.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.3.7
 
+Patch: 	1700_tsunami-modpost-include-fix.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=415033
+Desc:   Patch to include module.h to fix modpost on Tsunami
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
