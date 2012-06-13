@@ -1,0 +1,24 @@
+--- a/drivers/net/wireless/iwlwifi/iwl-prph.h	2012-06-13 12:19:47.987369000 -0400
++++ b/drivers/net/wireless/iwlwifi/iwl-prph.h	2012-06-13 12:20:24.841723797 -0400
+@@ -224,6 +224,7 @@
+ #define SCD_TXFACT		(SCD_BASE + 0x10)
+ #define SCD_ACTIVE		(SCD_BASE + 0x14)
+ #define SCD_QUEUECHAIN_SEL	(SCD_BASE + 0xe8)
++#define SCD_CHAINEXT_EN        (SCD_BASE + 0x244)
+ #define SCD_AGGR_SEL		(SCD_BASE + 0x248)
+ #define SCD_INTERRUPT_MASK	(SCD_BASE + 0x108)
+ 
+--- a/drivers/net/wireless/iwlwifi/iwl-trans-pcie.c	2012-06-13 12:20:51.069976599 -0400
++++ b/drivers/net/wireless/iwlwifi/iwl-trans-pcie.c	2012-06-13 12:22:11.345751843 -0400
+@@ -1128,6 +1128,11 @@ static void iwl_tx_start(struct iwl_tran
+ 	iwl_write_prph(trans, SCD_DRAM_BASE_ADDR,
+ 		       trans_pcie->scd_bc_tbls.dma >> 10);
+ 
++	/* The chain extension of the SCD doesn't work well. This feature is
++	 * enabled by default by the HW, so we need to disable it manually.
++	 */
++	iwl_write_prph(trans, SCD_CHAINEXT_EN, 0);
++
+ 	/* Enable DMA channel */
+ 	for (chan = 0; chan < FH_TCSR_CHNL_NUM ; chan++)
+ 		iwl_write_direct32(trans, FH_TCSR_CHNL_TX_CONFIG_REG(chan),

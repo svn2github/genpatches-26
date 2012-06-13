@@ -55,6 +55,14 @@ Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
 
+Patch:  2405_iwlwifi-SCD-key-removal.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=417103
+Desc:   Disable the buggy chain extension feature in HW
+
+Patch:  2410_iwlwifi-disable-chain-ext-feat.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=417103
+Desc:   Don't mess up the SCD when removing a key
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
