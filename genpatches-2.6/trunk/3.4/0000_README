@@ -47,6 +47,10 @@ Patch:  1001_linux-3.4.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.2
 
+Patch:  1900_cifs-double-delim-check.patch
+From:   http://bugzillafiles.novell.org/attachment.cgi?id=494407
+Desc:   Patch to properly parse cifs mount options
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
