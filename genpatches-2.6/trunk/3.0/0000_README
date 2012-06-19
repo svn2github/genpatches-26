@@ -167,6 +167,14 @@ Patch:  1032_linux-3.0.33.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.33
 
+Patch:  1033_linux-3.0.34.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.34
+
+Patch:  1034_linux-3.0.35.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.35
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
