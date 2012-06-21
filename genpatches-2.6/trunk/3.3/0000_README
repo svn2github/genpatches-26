@@ -80,6 +80,10 @@ Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
 
+Patch:  2405_bnx-load-correct-fw-ver.patch
+From:   Kerin Millar <kerframil@gmail.com> https://bugs.gentoo.org/show_bug.cgi?id=411899
+Desc:   bnx2: Can't load firmware file "bnx2/bnx2-mips-09-6.2.1b.fw"
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy

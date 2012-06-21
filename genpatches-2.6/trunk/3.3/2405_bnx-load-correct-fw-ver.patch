@@ -1,0 +1,11 @@
+--- a/drivers/net/ethernet/broadcom/bnx2.c	2012-06-21 19:25:23.659013603 -0400
++++ b/drivers/net/ethernet/broadcom/bnx2.c	2012-06-21 19:26:21.359595626 -0400
+@@ -61,7 +61,7 @@
+ #define DRV_MODULE_RELDATE	"Dec 18, 2011"
+ #define FW_MIPS_FILE_06		"bnx2/bnx2-mips-06-6.2.3.fw"
+ #define FW_RV2P_FILE_06		"bnx2/bnx2-rv2p-06-6.0.15.fw"
+-#define FW_MIPS_FILE_09		"bnx2/bnx2-mips-09-6.2.1b.fw"
++#define FW_MIPS_FILE_09		"bnx2/bnx2-mips-09-6.2.1a.fw"
+ #define FW_RV2P_FILE_09_Ax	"bnx2/bnx2-rv2p-09ax-6.0.17.fw"
+ #define FW_RV2P_FILE_09		"bnx2/bnx2-rv2p-09-6.0.17.fw"
+ 
