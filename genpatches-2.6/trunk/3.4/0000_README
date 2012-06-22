@@ -51,6 +51,10 @@ Patch:  1002_linux-3.4.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.3
 
+Patch:  1003_linux-3.4.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.4
+
 Patch:  1900_cifs-double-delim-check.patch
 From:   http://bugzillafiles.novell.org/attachment.cgi?id=494407
 Desc:   Patch to properly parse cifs mount options
