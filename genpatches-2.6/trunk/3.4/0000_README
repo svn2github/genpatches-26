@@ -55,13 +55,13 @@ Patch:  1003_linux-3.4.4.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.4
 
+Patch:  1004_linux-3.4.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.5
+
 Patch:  1700_correct-bnx2-firware-ver-mips.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=424609
 Desc:   Correct firmware version for bnx2 on mips
-
-Patch:  1900_cifs-double-delim-check.patch
-From:   http://bugzillafiles.novell.org/attachment.cgi?id=494407
-Desc:   Patch to properly parse cifs mount options
 
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
