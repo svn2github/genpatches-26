@@ -179,6 +179,18 @@ Patch:  1035_linux-3.0.36.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.36
 
+Patch:  1036_linux-3.0.37.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.37
+
+Patch:  1037_linux-3.0.38.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.38
+
+Patch:  1038_linux-3.0.39.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.39
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
