@@ -67,9 +67,13 @@ Patch:  1006_linux-3.4.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.7
 
-Patch:  1006_linux-3.4.8.patch
+Patch:  1007_linux-3.4.8.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.8
+
+Patch:  1008_linux-3.4.9.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.9
 
 Patch:  1700_correct-bnx2-firware-ver-mips.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=424609
