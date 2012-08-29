@@ -87,6 +87,10 @@ Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
 
+Patch:  2405_lpfs-build-warnings-debugfs-fix.patch
+From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commitdiff_plain;h=0829a19a6142af09eb4f9509cd1d3666270e87bd
+Desc:   Fix build warnings for lpfc when debugfs is not defined. Bug #432604
+
 Patch:  2700_dual-channel-mode-vbios-check.patch
 Desc:   Check VBIOS value for determining LVDS dual channel mode
 
