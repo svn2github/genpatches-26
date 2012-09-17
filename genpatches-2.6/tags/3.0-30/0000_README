@@ -1,0 +1,252 @@
+README
+--------------------------------------------------------------------------
+This patchset is to be the 2.6 series of gentoo-sources.
+It is designed for cross-compatibility, fixes and stability, with performance
+and additional features/driver support being a second.
+
+Unless otherwise stated and marked as such, this kernel should be suitable for
+all environments.
+
+
+Patchset Numbering Scheme
+--------------------------------------------------------------------------
+
+FIXES
+1000-1400	linux-stable
+1400-1500	linux-stable queue
+1500-1700	security
+1700-1800	architecture-related
+1800-1900	mm/scheduling/misc
+1900-2000	filesystems
+2000-2100	networking core
+2100-2200	storage core
+2200-2300	power management (ACPI, APM)
+2300-2400	bus (USB, IEEE1394, PCI, PCMCIA, ...)
+2400-2500	network drivers
+2500-2600	storage drivers
+2600-2700	input
+2700-2900	media (graphics, sound, tv)
+2900-3000	other
+3000-4000	reserved
+
+FEATURES
+4000-4100	network
+4100-4200	storage
+4200-4300	graphics
+4300-4400	filesystem
+4400-4500	other
+
+Individual Patch Descriptions:
+--------------------------------------------------------------------------
+
+Patch:  1000_linux-3.0.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.1
+
+Patch:  1001_linux-3.0.2.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.2
+
+Patch:  1002_linux-3.0.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.3
+
+Patch:  1003_linux-3.0.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.4
+
+Patch:  1004_linux-3.0.5.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.5
+
+Patch:  1005_linux-3.0.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.6
+
+Patch:  1006_linux-3.0.7.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.7
+
+Patch:  1007_linux-3.0.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.8
+
+Patch:  1008_linux-3.0.9.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.9
+
+Patch:  1009_linux-3.0.10.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.10
+
+Patch:  1010_linux-3.0.11.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.11
+
+Patch:  1011_linux-3.0.12.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.12
+
+Patch:  1012_linux-3.0.13.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.13
+
+Patch:  1013_linux-3.0.14.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.14
+
+Patch:  1014_linux-3.0.15.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.15
+
+Patch:  1015_linux-3.0.16.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.16
+
+Patch:  1016_linux-3.0.17.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.17
+
+Patch:  1017_linux-3.0.18.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.18
+
+Patch:  1018_linux-3.0.19.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.19
+
+Patch:  1019_linux-3.0.20.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.20
+
+Patch:  1020_linux-3.0.21.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.21
+
+Patch:  1021_linux-3.0.22.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.22
+
+Patch:  1022_linux-3.0.23.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.23
+
+Patch:  1024_linux-3.0.25.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.25
+
+Patch:  1025_linux-3.0.26.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.26
+
+Patch:  1026_linux-3.0.27.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.27
+
+Patch:  1027_linux-3.0.28.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.28
+
+Patch:  1028_linux-3.0.29.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.29
+
+Patch:  1029_linux-3.0.30.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.30
+
+Patch:  1030_linux-3.0.31.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.31
+
+Patch:  1031_linux-3.0.32.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.32
+
+Patch:  1032_linux-3.0.33.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.33
+
+Patch:  1033_linux-3.0.34.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.34
+
+Patch:  1034_linux-3.0.35.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.35
+
+Patch:  1035_linux-3.0.36.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.36
+
+Patch:  1036_linux-3.0.37.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.37
+
+Patch:  1037_linux-3.0.38.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.38
+
+Patch:  1038_linux-3.0.39.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.39
+
+Patch:  1039_linux-3.0.40.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.40
+
+Patch:  1040_linux-3.0.41.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.41
+
+Patch:  1041_linux-3.0.42.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.42
+
+Patch:  1042_linux-3.0.43.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.43
+
+Patch:  1800_fix-zcache-build.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
+Desc:   Fix zcache build error
+
+Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Move protocol information to Documentation
+
+Patch:  2605_Input-psmouse-Add-PSMOUSE_CMD_RESET_WRAP.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add PSMOUSE_CMD_RESET_WRAP 
+
+Patch:  2610_Input-ALPS-Add-protocol-version-field-in-alps_model.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add protocol version field in alps_model_info
+
+Patch:  2615_Input-ALPS-Remove-assumptions-about-packet-size.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Remove assumptions about packet size
+
+Patch:  2620_Input-ALPS-Add-support-for-protocol-versions-3-and-4.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add support for protocol versions 3 and 4
+
+Patch:  2625_Input-ALPS-Add-documentation-for-protocol-versions-3.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add documentation for protocol versions 3 and 4
+
+Patch:  2630_Input-ALPS-Add-semi-MT-support-for-v3-protocol.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - Add semi-MT support for v3 protocol
+
+Patch:  2635_Input-ALPS-dump-raw-packet-data.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
+Desc:   ALPS Touchpad - dump raw packet data
+
+Patch:  2900_change-dvb-firmware-url.patch
+From:   http://bugs.gentoo.org/show_bug.cgi?id=383819
+Desc:   Change firmware download url, thanks to Markos Chandras
+
+Patch:  4200_fbcondecor-0.9.6.patch
+From:   http://dev.gentoo.org/~spock
+Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
