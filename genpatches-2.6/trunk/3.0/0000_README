@@ -207,6 +207,14 @@ Patch:  1042_linux-3.0.43.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.43
 
+Patch:  1043_linux-3.0.44.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.44
+
+Patch:  1044_linux-3.0.45.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.45
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
