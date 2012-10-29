@@ -219,13 +219,21 @@ Patch:  1045_linux-3.0.46.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.46
 
+Patch:  1046_linux-3.0.47.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.47
+
+Patch:  1047_linux-3.0.48.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.48
+
+Patch:  1048_linux-3.0.49.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.49
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
-
-Patch:  2500_5906-device-DMA-frag-workaround.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=434992
-Desc:   5906 device short DMA fragment workaround
 
 Patch:  2600_Input-ALPS-Move-protocol-information-to-Documentation.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
