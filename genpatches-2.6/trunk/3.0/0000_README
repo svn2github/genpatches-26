@@ -291,10 +291,6 @@ Patch:  2635_Input-ALPS-dump-raw-packet-data.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad - dump raw packet data
 
-Patch:  2900_change-dvb-firmware-url.patch
-From:   http://bugs.gentoo.org/show_bug.cgi?id=383819
-Desc:   Change firmware download url, thanks to Markos Chandras
-
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
