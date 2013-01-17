@@ -47,6 +47,15 @@ Patch:  1001_linux-3.7.2.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.7.2
 
+Patch:  1002_linux-3.7.3.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.7.3
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
+
+Patch:  4200_fbcondecor-0.9.6.patch
+From:   http://dev.gentoo.org/~spock
+Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
+
