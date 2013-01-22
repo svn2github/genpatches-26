@@ -51,6 +51,10 @@ Patch:  1002_linux-3.7.3.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.7.3
 
+Patch:  1003_linux-3.7.4.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.7.4
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
