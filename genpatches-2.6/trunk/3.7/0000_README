@@ -63,6 +63,10 @@ Patch:  1005_linux-3.7.6.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.7.6
 
+Patch:  1700_enable-thinkpad-micled.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
+Desc:   Enable mic mute led in thinkpads
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
