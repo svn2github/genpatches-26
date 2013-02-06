@@ -277,7 +277,9 @@ sub _get_genpatches_kernels {
 			my $ver = $1;
 			my $var = $2;
 			my $ebuild = $pkg.'-'.$ver;
-			$ver =~ m/^(2\.6\.\d+)/;
+            
+			#$ver =~ m/^(2\.6\.\d+)/;
+            my ($major,$minor) = split(/\./, $ver);
 			my $orig_ver = $1;
 
 			if ($var =~ /^K_WANT_GENPATCHES="(.*)"$/) {
@@ -286,7 +288,8 @@ sub _get_genpatches_kernels {
 				$gp_kernels{$ebuild}{'wanted'} = $1;
 			}
 			if ($var =~ /^K_GENPATCHES_VER="(\d+)"$/) {
-				$gp_kernels{$ebuild}{'gprev'} = $orig_ver .'-'. $1;
+				#$gp_kernels{$ebuild}{'gprev'} = $orig_ver .'-'. $1;
+				$gp_kernels{$ebuild}{'gprev'} = $major . '.' . $minor .'-'. $1;
 			}
 		}
 	}
