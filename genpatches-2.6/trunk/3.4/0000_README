@@ -179,9 +179,6 @@ Patch:  2405_lpfs-build-warnings-debugfs-fix.patch
 From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commitdiff_plain;h=0829a19a6142af09eb4f9509cd1d3666270e87bd
 Desc:   Fix build warnings for lpfc when debugfs is not defined. Bug #432604
 
-Patch:  2700_dual-channel-mode-vbios-check.patch
-Desc:   Check VBIOS value for determining LVDS dual channel mode
-
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
