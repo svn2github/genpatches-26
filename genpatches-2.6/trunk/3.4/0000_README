@@ -135,6 +135,38 @@ Patch:  1023_linux-3.4.24.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.24
 
+Patch:  1024_linux-3.4.25.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.25
+
+Patch:  1025_linux-3.4.26.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.26
+
+Patch:  1026_linux-3.4.27.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.27
+
+Patch:  1027_linux-3.4.28.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.28
+
+Patch:  1028_linux-3.4.29.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.29
+
+Patch:  1029_linux-3.4.30.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.30
+
+Patch:  1030_linux-3.4.31.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.31
+
+Patch:  1031_linux-3.4.32.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.32
+
 Patch:  1700_correct-bnx2-firware-ver-mips.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=424609
 Desc:   Correct firmware version for bnx2 on mips
