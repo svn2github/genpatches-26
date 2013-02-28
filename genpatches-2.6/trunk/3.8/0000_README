@@ -39,6 +39,10 @@ FEATURES
 
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
+Patch:  1000_linux-3.8.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.8.1
+
 Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
