@@ -75,6 +75,10 @@ Patch:  1008_linux-3.7.9.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.7.9
 
+Patch:  1009_linux-3.7.10.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.7.10
+
 Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
