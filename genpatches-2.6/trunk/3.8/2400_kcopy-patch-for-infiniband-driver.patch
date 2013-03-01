@@ -35,12 +35,12 @@ diff --git a/drivers/char/Makefile b/drivers/char/Makefile
 index 0dc5d7c..be519d6 100644
 --- a/drivers/char/Makefile
 +++ b/drivers/char/Makefile
-@@ -64,3 +64,5 @@ obj-$(CONFIG_JS_RTC)      += js-rtc.o
+@@ -62,3 +62,5 @@
  js-rtc-y = rtc.o
- 
- obj-$(CONFIG_TILE_SROM)        += tile-srom.o
+
+ obj-$(CONFIG_TILE_SROM)		+= tile-srom.o
 +
-+obj-$(CONFIG_KCOPY)        += kcopy/
++obj-$(CONFIG_KCOPY)		+= kcopy/
 diff --git a/drivers/char/kcopy/Kconfig b/drivers/char/kcopy/Kconfig
 new file mode 100644
 index 0000000..453ae52
