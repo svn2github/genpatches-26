@@ -1,0 +1,64 @@
+From e7ac8e59a83861434002be34c64bf2614825645e Mon Sep 17 00:00:00 2001
+From: Seth Forshee <seth.forshee@canonical.com>
+Date: Wed, 14 Sep 2011 11:40:39 -0500
+Subject: [PATCH 8/8] Input: ALPS - dump raw packet data
+
+---
+ drivers/input/mouse/alps.c |   20 +++++++++++++++++++-
+ 1 files changed, 19 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/input/mouse/alps.c b/drivers/input/mouse/alps.c
+index 8902a11..378e6fa 100644
+--- a/drivers/input/mouse/alps.c
++++ b/drivers/input/mouse/alps.c
+@@ -15,6 +15,8 @@
+  * the Free Software Foundation.
+  */
+ 
++#define DEBUG
++
+ #include <linux/slab.h>
+ #include <linux/input.h>
+ #include <linux/input/mt.h>
+@@ -24,7 +26,7 @@
+ #include "psmouse.h"
+ #include "alps.h"
+ 
+-#undef DEBUG
++/* #undef DEBUG */
+ #ifdef DEBUG
+ #define dbg(format, arg...) printk(KERN_INFO "alps.c: " format "\n", ## arg)
+ #else
+@@ -129,6 +131,19 @@ static const struct alps_model_info alps_model_data[] = {
+ 
+ /* Packet formats are described in Documentation/input/alps.txt */
+ 
++static int alps_dump_packets = 0;
++module_param(alps_dump_packets, int, 0644);
++
++static void alps_packet_dump(unsigned char *packet, int size)
++{
++	int i;
++
++	printk("ALPS data ");
++	for (i = 0; i < size; i++)
++		printk("%02hhx ", packet[i]);
++	printk("\n");
++}
++
+ static bool alps_is_valid_first_byte(const struct alps_model_info *model,
+ 				     unsigned char data)
+ {
+@@ -649,6 +664,9 @@ static void alps_process_packet(struct psmouse *psmouse)
+ 	struct alps_data *priv = psmouse->private;
+ 	const struct alps_model_info *model = priv->i;
+ 
++	if (alps_dump_packets)
++		alps_packet_dump(psmouse->packet, psmouse->pktcnt);
++
+ 	switch (model->proto_version) {
+ 	case ALPS_PROTO_V1:
+ 	case ALPS_PROTO_V2:
+-- 
+1.7.4.1
+
