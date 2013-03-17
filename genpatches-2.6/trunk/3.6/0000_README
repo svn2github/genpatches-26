@@ -87,6 +87,10 @@ Patch:	1500_sock-diag-out-of-bounds.patch
 From:	http://git.kernel.org/?p=linux/kernel/git/stable/linux-stable.git;a=commit;h=314561f4fe77ffad1b560a10cdfb3b6fdc731a74
 Desc:	(CVE-2013-1763) sock_diag: Fix out-of-bounds access to sock_diag_handlers[]
 
+Patch:  1800_memcg-OOM-revert-ZFS-deadlock.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=462066
+Desc:   Revert memcg patches that prevent OOM with too many dirty pages.
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver

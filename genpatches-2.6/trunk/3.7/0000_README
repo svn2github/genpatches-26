@@ -83,6 +83,22 @@ Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
 
+Patch:  1800_memcg-OOM-revert-ZFS-deadlock.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=462066
+Desc:   Revert memcg patches that prevent OOM with too many dirty pages.
+
+Patch:  1900_unbreak-automounter-hppa.patch
+From:   http://thread.gmane.org/gmane.linux.ports.parisc/4767
+Desc:   Unbreak automounter support on 64-bit kernel with 32-bit userspace.
+
+Patch:  2300_fix-warm-port-reset.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/patch/?id=2373f5aef636cde0cdb552ee0cf7a15c99d43283
+Desc:   USB: Rip out recursive call on warm port reset.
+
+Patch:  2300_revert-ASS-PSS-polling-timeout-removal.patch
+From:   http://article.gmane.org/gmane.linux.kernel.stable/43158
+Desc:   "269ef9f USB: EHCI: remove ASS/PSS polling timeout" disconnects USB for some Gentoo users, therefore we revert it.
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
