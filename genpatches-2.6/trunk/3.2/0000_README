@@ -204,6 +204,10 @@ Patch:  1040_linux-3.2.41.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.2.41
 
+Patch:  1041_linux-3.2.42.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.2.42
+
 Patch:  2300_per-pci-device-msi-irq-listing.patch
 From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=da8d1c8ba4dcb16d60be54b233deca9a7cac98dc
 Desc:   Add a per-pci-device subdirectory in sysfs
