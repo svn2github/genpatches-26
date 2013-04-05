@@ -59,6 +59,10 @@ Patch:  1004_linux-3.8.5.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.8.5
 
+Patch:  1005_linux-3.8.6.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.8.6
+
 Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
@@ -70,6 +74,10 @@ Desc:   Revert memcg patches that prevent OOM with too many dirty pages.
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
+
+Patch:  2700_ThinkPad-30-brightness-control-fix.patch
+From:   Seth Forshee <seth.forshee@canonical.com>
+Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads
 
 Patch:  2900_dev-root-proc-mount-fix.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=438380
