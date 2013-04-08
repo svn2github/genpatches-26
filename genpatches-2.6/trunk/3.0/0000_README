@@ -319,6 +319,10 @@ Patch:  1070_linux-3.0.71.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.71
 
+Patch:  1071_linux-3.0.72.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.72
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
@@ -354,6 +358,10 @@ Desc:   ALPS Touchpad - Add semi-MT support for v3 protocol
 Patch:  2635_Input-ALPS-dump-raw-packet-data.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad - dump raw packet data
+
+Patch:  2700_ThinkPad-30-brightness-control-fix.patch
+From:   Seth Forshee <seth.forshee@canonical.com>
+Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads
 
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
