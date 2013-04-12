@@ -73,16 +73,16 @@ read
 
 svn copy ${REMOTE_TRUNK}/${BRANCH} ${REMOTE_TAGS}/${newfullver} -m "${newfullver} release"
 
-file_base="/tmp/${TARBALL_BASENAME}-$newfullver.base.tar.bz2"
-file_extras="/tmp/${TARBALL_BASENAME}-$newfullver.extras.tar.bz2"
+file_base="/tmp/${TARBALL_BASENAME}-$newfullver.base.tar.xz"
+file_extras="/tmp/${TARBALL_BASENAME}-$newfullver.extras.tar.xz"
 dir="${BRANCH}"
 cd ${LOCAL_PATCHES_TRUNK}
 
 if [[ "${WE_WANT}" == "base extras" ]] ; then
-	[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvjf ${file_base} ${dir}/[012]*
-	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+	[ -n "$(find ${dir}/[012]* 2>/dev/null)" ] && tar -cvJf ${file_base} ${dir}/[012]*
+	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvJf ${file_extras} ${dir}/[34]*
 elif [[ "${WE_WANT}" == "extras" ]] ; then
-	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvjf ${file_extras} ${dir}/[34]*
+	[ -n "$(find ${dir}/[34]* 2>/dev/null)" ] &&  tar -cvJf ${file_extras} ${dir}/[34]*
 fi
 
 scp /tmp/${TARBALL_BASENAME}-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
