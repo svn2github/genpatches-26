@@ -331,6 +331,10 @@ Patch:  1073_linux-3.0.74.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.74
 
+Patch:  1074_linux-3.0.75.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.75
+
 Patch:  1800_fix-zcache-build.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=376325
 Desc:   Fix zcache build error
