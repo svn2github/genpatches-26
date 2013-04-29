@@ -39,6 +39,26 @@ FEATURES
 
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
+Patch:  1700_enable-thinkpad-micled.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
+Desc:   Enable mic mute led in thinkpads
+
+Patch:  1800_memcg-OOM-revert-ZFS-deadlock.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=462066
+Desc:   Revert memcg patches that prevent OOM with too many dirty pages.
+
+Patch:  2400_kcopy-patch-for-infiniband-driver.patch
+From:   Alexey Shvetsov <alexxy@gentoo.org>
+Desc:   Zero copy for infiniband psm userspace driver
+
+Patch:  2700_ThinkPad-30-brightness-control-fix.patch
+From:   Seth Forshee <seth.forshee@canonical.com>
+Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads
+
+Patch:  2900_dev-root-proc-mount-fix.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=438380
+Desc:   Ensure that /dev/root doesn't appear in /proc/mounts when bootint without an initramfs.
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
