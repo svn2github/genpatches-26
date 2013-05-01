@@ -207,6 +207,10 @@ Patch:  1041_linux-3.4.42.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.42
 
+Patch:  1042_linux-3.4.43.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.43
+
 Patch:  1700_correct-bnx2-firware-ver-mips.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=424609
 Desc:   Correct firmware version for bnx2 on mips
