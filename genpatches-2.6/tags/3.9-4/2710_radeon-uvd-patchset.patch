@@ -1,0 +1,3497 @@
+diff -urN a/drivers/gpu/drm/radeon/Makefile b/drivers/gpu/drm/radeon/Makefile
+--- a/drivers/gpu/drm/radeon/Makefile	2013-05-09 22:13:14.640517917 +0200
++++ b/drivers/gpu/drm/radeon/Makefile	2013-05-09 22:14:57.167175503 +0200
+@@ -76,7 +76,7 @@
+ 	evergreen.o evergreen_cs.o evergreen_blit_shaders.o evergreen_blit_kms.o \
+ 	evergreen_hdmi.o radeon_trace_points.o ni.o cayman_blit_shaders.o \
+ 	atombios_encoders.o radeon_semaphore.o radeon_sa.o atombios_i2c.o si.o \
+-	si_blit_shaders.o radeon_prime.o
++	si_blit_shaders.o radeon_prime.o radeon_uvd.o
+ 
+ radeon-$(CONFIG_COMPAT) += radeon_ioc32.o
+ radeon-$(CONFIG_VGA_SWITCHEROO) += radeon_atpx_handler.o
+diff -urN a/drivers/gpu/drm/radeon/atombios.h b/drivers/gpu/drm/radeon/atombios.h
+--- a/drivers/gpu/drm/radeon/atombios.h	2013-05-09 22:13:14.640517917 +0200
++++ b/drivers/gpu/drm/radeon/atombios.h	2013-05-09 22:14:57.227175498 +0200
+@@ -458,6 +458,7 @@
+   union
+   {
+     ATOM_COMPUTE_CLOCK_FREQ  ulClock;         //Input Parameter
++    ULONG ulClockParams;                      //ULONG access for BE
+     ATOM_S_MPLL_FB_DIVIDER   ulFbDiv;         //Output Parameter
+   };
+   UCHAR   ucRefDiv;                           //Output Parameter      
+@@ -490,6 +491,7 @@
+   union
+   {
+     ATOM_COMPUTE_CLOCK_FREQ  ulClock;         //Input Parameter
++    ULONG ulClockParams;                      //ULONG access for BE
+     ATOM_S_MPLL_FB_DIVIDER   ulFbDiv;         //Output Parameter
+   };
+   UCHAR   ucRefDiv;                           //Output Parameter      
+diff -urN a/drivers/gpu/drm/radeon/evergreen.c b/drivers/gpu/drm/radeon/evergreen.c
+--- a/drivers/gpu/drm/radeon/evergreen.c	2013-05-09 22:13:14.640517917 +0200
++++ b/drivers/gpu/drm/radeon/evergreen.c	2013-05-09 22:14:57.217175499 +0200
+@@ -84,6 +84,223 @@
+ 	}
+ }
+ 
++static int sumo_set_uvd_clock(struct radeon_device *rdev, u32 clock,
++			      u32 cntl_reg, u32 status_reg)
++{
++	int r, i;
++	struct atom_clock_dividers dividers;
++
++        r = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
++					   clock, false, &dividers);
++	if (r)
++		return r;
++
++	WREG32_P(cntl_reg, dividers.post_div, ~(DCLK_DIR_CNTL_EN|DCLK_DIVIDER_MASK));
++
++	for (i = 0; i < 100; i++) {
++		if (RREG32(status_reg) & DCLK_STATUS)
++			break;
++		mdelay(10);
++	}
++	if (i == 100)
++		return -ETIMEDOUT;
++
++	return 0;
++}
++
++int sumo_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
++{
++	int r = 0;
++	u32 cg_scratch = RREG32(CG_SCRATCH1);
++
++	r = sumo_set_uvd_clock(rdev, vclk, CG_VCLK_CNTL, CG_VCLK_STATUS);
++	if (r)
++		goto done;
++	cg_scratch &= 0xffff0000;
++	cg_scratch |= vclk / 100; /* Mhz */
++
++	r = sumo_set_uvd_clock(rdev, dclk, CG_DCLK_CNTL, CG_DCLK_STATUS);
++	if (r)
++		goto done;
++	cg_scratch &= 0x0000ffff;
++	cg_scratch |= (dclk / 100) << 16; /* Mhz */
++
++done:
++	WREG32(CG_SCRATCH1, cg_scratch);
++
++	return r;
++}
++
++static int evergreen_uvd_calc_post_div(unsigned target_freq,
++				       unsigned vco_freq,
++				       unsigned *div)
++{
++	/* target larger than vco frequency ? */
++	if (vco_freq < target_freq)
++		return -1; /* forget it */
++
++	/* Fclk = Fvco / PDIV */
++	*div = vco_freq / target_freq;
++
++	/* we alway need a frequency less than or equal the target */
++	if ((vco_freq / *div) > target_freq)
++		*div += 1;
++
++	/* dividers above 5 must be even */
++	if (*div > 5 && *div % 2)
++		*div += 1;
++
++	/* out of range ? */
++	if (*div >= 128)
++		return -1; /* forget it */
++
++	return vco_freq / *div;
++}
++
++static int evergreen_uvd_send_upll_ctlreq(struct radeon_device *rdev)
++{
++	unsigned i;
++
++	/* assert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_CTLREQ_MASK, ~UPLL_CTLREQ_MASK);
++
++	/* wait for CTLACK and CTLACK2 to get asserted */
++	for (i = 0; i < 100; ++i) {
++		uint32_t mask = UPLL_CTLACK_MASK | UPLL_CTLACK2_MASK;
++		if ((RREG32(CG_UPLL_FUNC_CNTL) & mask) == mask)
++			break;
++		mdelay(10);
++	}
++	if (i == 100)
++		return -ETIMEDOUT;
++
++	/* deassert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_CTLREQ_MASK);
++
++	return 0;
++}
++
++int evergreen_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
++{
++	/* start off with something large */
++	int optimal_diff_score = 0x7FFFFFF;
++	unsigned optimal_fb_div = 0, optimal_vclk_div = 0;
++	unsigned optimal_dclk_div = 0, optimal_vco_freq = 0;
++	unsigned vco_freq;
++	int r;
++
++	/* bypass vclk and dclk with bclk */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		VCLK_SRC_SEL(1) | DCLK_SRC_SEL(1),
++		~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	/* put PLL in bypass mode */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_BYPASS_EN_MASK, ~UPLL_BYPASS_EN_MASK);
++
++	if (!vclk || !dclk) {
++		/* keep the Bypass mode, put PLL to sleep */
++		WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_SLEEP_MASK, ~UPLL_SLEEP_MASK);
++		return 0;
++	}
++
++	/* loop through vco from low to high */
++	for (vco_freq = 125000; vco_freq <= 250000; vco_freq += 100) {
++		unsigned fb_div = vco_freq / rdev->clock.spll.reference_freq * 16384;
++		int calc_clk, diff_score, diff_vclk, diff_dclk;
++		unsigned vclk_div, dclk_div;
++
++		/* fb div out of range ? */
++		if (fb_div > 0x03FFFFFF)
++			break; /* it can oly get worse */
++
++		/* calc vclk with current vco freq. */
++		calc_clk = evergreen_uvd_calc_post_div(vclk, vco_freq, &vclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_vclk = vclk - calc_clk;
++
++		/* calc dclk with current vco freq. */
++		calc_clk = evergreen_uvd_calc_post_div(dclk, vco_freq, &dclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_dclk = dclk - calc_clk;
++
++		/* determine if this vco setting is better than current optimal settings */
++		diff_score = abs(diff_vclk) + abs(diff_dclk);
++		if (diff_score < optimal_diff_score) {
++			optimal_fb_div = fb_div;
++			optimal_vclk_div = vclk_div;
++			optimal_dclk_div = dclk_div;
++			optimal_vco_freq = vco_freq;
++			optimal_diff_score = diff_score;
++			if (optimal_diff_score == 0)
++				break; /* it can't get better than this */
++		}
++	}
++
++	/* set VCO_MODE to 1 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_VCO_MODE_MASK, ~UPLL_VCO_MODE_MASK);
++
++	/* toggle UPLL_SLEEP to 1 then back to 0 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_SLEEP_MASK, ~UPLL_SLEEP_MASK);
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_SLEEP_MASK);
++
++	/* deassert UPLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_RESET_MASK);
++
++	mdelay(1);
++
++	r = evergreen_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* assert UPLL_RESET again */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_RESET_MASK, ~UPLL_RESET_MASK);
++
++	/* disable spread spectrum. */
++	WREG32_P(CG_UPLL_SPREAD_SPECTRUM, 0, ~SSEN_MASK);
++
++	/* set feedback divider */
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, UPLL_FB_DIV(optimal_fb_div), ~UPLL_FB_DIV_MASK);
++
++	/* set ref divider to 0 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_REF_DIV_MASK);
++
++	if (optimal_vco_freq < 187500)
++		WREG32_P(CG_UPLL_FUNC_CNTL_4, 0, ~UPLL_SPARE_ISPARE9);
++	else
++		WREG32_P(CG_UPLL_FUNC_CNTL_4, UPLL_SPARE_ISPARE9, ~UPLL_SPARE_ISPARE9);
++
++	/* set PDIV_A and PDIV_B */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		UPLL_PDIV_A(optimal_vclk_div) | UPLL_PDIV_B(optimal_dclk_div),
++		~(UPLL_PDIV_A_MASK | UPLL_PDIV_B_MASK));
++
++	/* give the PLL some time to settle */
++	mdelay(15);
++
++	/* deassert PLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_RESET_MASK);
++
++	mdelay(15);
++
++	/* switch from bypass mode to normal mode */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_BYPASS_EN_MASK);
++
++	r = evergreen_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* switch VCLK and DCLK selection */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		VCLK_SRC_SEL(2) | DCLK_SRC_SEL(2),
++		~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	mdelay(100);
++
++	return 0;
++}
++
+ void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
+ {
+ 	u16 ctl, v;
+@@ -2058,6 +2275,9 @@
+ 	WREG32(DMIF_ADDR_CONFIG, gb_addr_config);
+ 	WREG32(HDP_ADDR_CONFIG, gb_addr_config);
+ 	WREG32(DMA_TILING_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DB_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DBW_ADDR_CONFIG, gb_addr_config);
+ 
+ 	if ((rdev->config.evergreen.max_backends == 1) &&
+ 	    (rdev->flags & RADEON_IS_IGP)) {
+@@ -3360,6 +3580,9 @@
+ 				DRM_ERROR("Unhandled interrupt: %d %d\n", src_id, src_data);
+ 				break;
+ 			}
++		case 124: /* UVD */
++			DRM_DEBUG("IH: UVD int: 0x%08x\n", src_data);
++			radeon_fence_process(rdev, R600_RING_TYPE_UVD_INDEX);
+ 			break;
+ 		case 146:
+ 		case 147:
+@@ -3571,7 +3794,7 @@
+ 
+ static int evergreen_startup(struct radeon_device *rdev)
+ {
+-	struct radeon_ring *ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
++	struct radeon_ring *ring;
+ 	int r;
+ 
+ 	/* enable pcie gen2 link */
+@@ -3638,6 +3861,17 @@
+ 		return r;
+ 	}
+ 
++	r = rv770_uvd_resume(rdev);
++	if (!r) {
++		r = radeon_fence_driver_start_ring(rdev,
++						   R600_RING_TYPE_UVD_INDEX);
++		if (r)
++			dev_err(rdev->dev, "UVD fences init error (%d).\n", r);
++	}
++
++	if (r)
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size = 0;
++
+ 	/* Enable IRQ */
+ 	r = r600_irq_init(rdev);
+ 	if (r) {
+@@ -3647,6 +3881,7 @@
+ 	}
+ 	evergreen_irq_set(rdev);
+ 
++	ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
+ 	r = radeon_ring_init(rdev, ring, ring->ring_size, RADEON_WB_CP_RPTR_OFFSET,
+ 			     R600_CP_RB_RPTR, R600_CP_RB_WPTR,
+ 			     0, 0xfffff, RADEON_CP_PACKET2);
+@@ -3670,6 +3905,19 @@
+ 	if (r)
+ 		return r;
+ 
++	ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++	if (ring->ring_size) {
++		r = radeon_ring_init(rdev, ring, ring->ring_size,
++				     R600_WB_UVD_RPTR_OFFSET,
++				     UVD_RBC_RB_RPTR, UVD_RBC_RB_WPTR,
++				     0, 0xfffff, RADEON_CP_PACKET2);
++		if (!r)
++			r = r600_uvd_init(rdev);
++
++		if (r)
++			DRM_ERROR("radeon: error initializing UVD (%d).\n", r);
++	}
++
+ 	r = radeon_ib_pool_init(rdev);
+ 	if (r) {
+ 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
+@@ -3716,8 +3964,10 @@
+ int evergreen_suspend(struct radeon_device *rdev)
+ {
+ 	r600_audio_fini(rdev);
++	radeon_uvd_suspend(rdev);
+ 	r700_cp_stop(rdev);
+ 	r600_dma_stop(rdev);
++	r600_uvd_rbc_stop(rdev);
+ 	evergreen_irq_suspend(rdev);
+ 	radeon_wb_disable(rdev);
+ 	evergreen_pcie_gart_disable(rdev);
+@@ -3797,6 +4047,13 @@
+ 	rdev->ring[R600_RING_TYPE_DMA_INDEX].ring_obj = NULL;
+ 	r600_ring_init(rdev, &rdev->ring[R600_RING_TYPE_DMA_INDEX], 64 * 1024);
+ 
++	r = radeon_uvd_init(rdev);
++	if (!r) {
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_obj = NULL;
++		r600_ring_init(rdev, &rdev->ring[R600_RING_TYPE_UVD_INDEX],
++			       4096);
++	}
++
+ 	rdev->ih.ring_obj = NULL;
+ 	r600_ih_ring_init(rdev, 64 * 1024);
+ 
+@@ -3843,6 +4100,7 @@
+ 	radeon_ib_pool_fini(rdev);
+ 	radeon_irq_kms_fini(rdev);
+ 	evergreen_pcie_gart_fini(rdev);
++	radeon_uvd_fini(rdev);
+ 	r600_vram_scratch_fini(rdev);
+ 	radeon_gem_fini(rdev);
+ 	radeon_fence_driver_fini(rdev);
+diff -urN a/drivers/gpu/drm/radeon/evergreend.h b/drivers/gpu/drm/radeon/evergreend.h
+--- a/drivers/gpu/drm/radeon/evergreend.h	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/evergreend.h	2013-05-09 22:14:57.210508833 +0200
+@@ -53,6 +53,43 @@
+ #define RCU_IND_INDEX           			0x100
+ #define RCU_IND_DATA            			0x104
+ 
++/* discrete uvd clocks */
++#define CG_UPLL_FUNC_CNTL				0x718
++#	define UPLL_RESET_MASK				0x00000001
++#	define UPLL_SLEEP_MASK				0x00000002
++#	define UPLL_BYPASS_EN_MASK			0x00000004
++#	define UPLL_CTLREQ_MASK				0x00000008
++#	define UPLL_REF_DIV_MASK			0x001F0000
++#	define UPLL_VCO_MODE_MASK			0x00000200
++#	define UPLL_CTLACK_MASK				0x40000000
++#	define UPLL_CTLACK2_MASK			0x80000000
++#define CG_UPLL_FUNC_CNTL_2				0x71c
++#	define UPLL_PDIV_A(x)				((x) << 0)
++#	define UPLL_PDIV_A_MASK				0x0000007F
++#	define UPLL_PDIV_B(x)				((x) << 8)
++#	define UPLL_PDIV_B_MASK				0x00007F00
++#	define VCLK_SRC_SEL(x)				((x) << 20)
++#	define VCLK_SRC_SEL_MASK			0x01F00000
++#	define DCLK_SRC_SEL(x)				((x) << 25)
++#	define DCLK_SRC_SEL_MASK			0x3E000000
++#define CG_UPLL_FUNC_CNTL_3				0x720
++#	define UPLL_FB_DIV(x)				((x) << 0)
++#	define UPLL_FB_DIV_MASK				0x01FFFFFF
++#define CG_UPLL_FUNC_CNTL_4				0x854
++#	define UPLL_SPARE_ISPARE9			0x00020000
++#define CG_UPLL_SPREAD_SPECTRUM				0x79c
++#	define SSEN_MASK				0x00000001
++
++/* fusion uvd clocks */
++#define CG_DCLK_CNTL                                    0x610
++#       define DCLK_DIVIDER_MASK                        0x7f
++#       define DCLK_DIR_CNTL_EN                         (1 << 8)
++#define CG_DCLK_STATUS                                  0x614
++#       define DCLK_STATUS                              (1 << 0)
++#define CG_VCLK_CNTL                                    0x618
++#define CG_VCLK_STATUS                                  0x61c
++#define	CG_SCRATCH1					0x820
++
+ #define GRBM_GFX_INDEX          			0x802C
+ #define		INSTANCE_INDEX(x)			((x) << 0)
+ #define		SE_INDEX(x)     			((x) << 16)
+@@ -992,6 +1029,16 @@
+ #       define TARGET_LINK_SPEED_MASK                     (0xf << 0)
+ #       define SELECTABLE_DEEMPHASIS                      (1 << 6)
+ 
++
++/*
++ * UVD
++ */
++#define UVD_UDEC_ADDR_CONFIG				0xef4c
++#define UVD_UDEC_DB_ADDR_CONFIG				0xef50
++#define UVD_UDEC_DBW_ADDR_CONFIG			0xef54
++#define UVD_RBC_RB_RPTR					0xf690
++#define UVD_RBC_RB_WPTR					0xf694
++
+ /*
+  * PM4
+  */
+diff -urN a/drivers/gpu/drm/radeon/ni.c b/drivers/gpu/drm/radeon/ni.c
+--- a/drivers/gpu/drm/radeon/ni.c	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/ni.c	2013-05-09 22:14:57.210508833 +0200
+@@ -624,6 +624,9 @@
+ 	WREG32(HDP_ADDR_CONFIG, gb_addr_config);
+ 	WREG32(DMA_TILING_CONFIG + DMA0_REGISTER_OFFSET, gb_addr_config);
+ 	WREG32(DMA_TILING_CONFIG + DMA1_REGISTER_OFFSET, gb_addr_config);
++	WREG32(UVD_UDEC_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DB_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DBW_ADDR_CONFIG, gb_addr_config);
+ 
+ 	if ((rdev->config.cayman.max_backends_per_se == 1) &&
+ 	    (rdev->flags & RADEON_IS_IGP)) {
+@@ -931,6 +934,23 @@
+ 	radeon_ring_write(ring, 10); /* poll interval */
+ }
+ 
++void cayman_uvd_semaphore_emit(struct radeon_device *rdev,
++			       struct radeon_ring *ring,
++			       struct radeon_semaphore *semaphore,
++			       bool emit_wait)
++{
++	uint64_t addr = semaphore->gpu_addr;
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_ADDR_LOW, 0));
++	radeon_ring_write(ring, (addr >> 3) & 0x000FFFFF);
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_ADDR_HIGH, 0));
++	radeon_ring_write(ring, (addr >> 23) & 0x000FFFFF);
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_CMD, 0));
++	radeon_ring_write(ring, 0x80 | (emit_wait ? 1 : 0));
++}
++
+ static void cayman_cp_enable(struct radeon_device *rdev, bool enable)
+ {
+ 	if (enable)
+@@ -1682,6 +1702,16 @@
+ 		return r;
+ 	}
+ 
++	r = rv770_uvd_resume(rdev);
++	if (!r) {
++		r = radeon_fence_driver_start_ring(rdev,
++						   R600_RING_TYPE_UVD_INDEX);
++		if (r)
++			dev_err(rdev->dev, "UVD fences init error (%d).\n", r);
++	}
++	if (r)
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size = 0;
++
+ 	r = radeon_fence_driver_start_ring(rdev, CAYMAN_RING_TYPE_CP1_INDEX);
+ 	if (r) {
+ 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
+@@ -1748,6 +1778,18 @@
+ 	if (r)
+ 		return r;
+ 
++	ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++	if (ring->ring_size) {
++		r = radeon_ring_init(rdev, ring, ring->ring_size,
++				     R600_WB_UVD_RPTR_OFFSET,
++				     UVD_RBC_RB_RPTR, UVD_RBC_RB_WPTR,
++				     0, 0xfffff, RADEON_CP_PACKET2);
++		if (!r)
++			r = r600_uvd_init(rdev);
++		if (r)
++			DRM_ERROR("radeon: failed initializing UVD (%d).\n", r);
++	}
++
+ 	r = radeon_ib_pool_init(rdev);
+ 	if (r) {
+ 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
+@@ -1794,6 +1836,8 @@
+ 	radeon_vm_manager_fini(rdev);
+ 	cayman_cp_enable(rdev, false);
+ 	cayman_dma_stop(rdev);
++	r600_uvd_rbc_stop(rdev);
++	radeon_uvd_suspend(rdev);
+ 	evergreen_irq_suspend(rdev);
+ 	radeon_wb_disable(rdev);
+ 	cayman_pcie_gart_disable(rdev);
+@@ -1868,6 +1912,13 @@
+ 	ring->ring_obj = NULL;
+ 	r600_ring_init(rdev, ring, 64 * 1024);
+ 
++	r = radeon_uvd_init(rdev);
++	if (!r) {
++		ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++		ring->ring_obj = NULL;
++		r600_ring_init(rdev, ring, 4096);
++	}
++
+ 	rdev->ih.ring_obj = NULL;
+ 	r600_ih_ring_init(rdev, 64 * 1024);
+ 
+@@ -1919,6 +1970,7 @@
+ 	radeon_vm_manager_fini(rdev);
+ 	radeon_ib_pool_fini(rdev);
+ 	radeon_irq_kms_fini(rdev);
++	radeon_uvd_fini(rdev);
+ 	cayman_pcie_gart_fini(rdev);
+ 	r600_vram_scratch_fini(rdev);
+ 	radeon_gem_fini(rdev);
+diff -urN a/drivers/gpu/drm/radeon/nid.h b/drivers/gpu/drm/radeon/nid.h
+--- a/drivers/gpu/drm/radeon/nid.h	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/nid.h	2013-05-09 22:14:57.210508833 +0200
+@@ -486,6 +486,18 @@
+ #       define CACHE_FLUSH_AND_INV_EVENT                        (0x16 << 0)
+ 
+ /*
++ * UVD
++ */
++#define UVD_SEMA_ADDR_LOW				0xEF00
++#define UVD_SEMA_ADDR_HIGH				0xEF04
++#define UVD_SEMA_CMD					0xEF08
++#define UVD_UDEC_ADDR_CONFIG				0xEF4C
++#define UVD_UDEC_DB_ADDR_CONFIG				0xEF50
++#define UVD_UDEC_DBW_ADDR_CONFIG			0xEF54
++#define UVD_RBC_RB_RPTR					0xF690
++#define UVD_RBC_RB_WPTR					0xF694
++
++/*
+  * PM4
+  */
+ #define PACKET0(reg, n)	((RADEON_PACKET_TYPE0 << 30) |			\
+diff -urN a/drivers/gpu/drm/radeon/r600.c b/drivers/gpu/drm/radeon/r600.c
+--- a/drivers/gpu/drm/radeon/r600.c	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/r600.c	2013-05-09 22:14:57.230508831 +0200
+@@ -2552,6 +2552,193 @@
+ }
+ 
+ /*
++ * UVD
++ */
++int r600_uvd_rbc_start(struct radeon_device *rdev)
++{
++	struct radeon_ring *ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++	uint64_t rptr_addr;
++	uint32_t rb_bufsz, tmp;
++	int r;
++
++	rptr_addr = rdev->wb.gpu_addr + R600_WB_UVD_RPTR_OFFSET;
++
++	if (upper_32_bits(rptr_addr) != upper_32_bits(ring->gpu_addr)) {
++		DRM_ERROR("UVD ring and rptr not in the same 4GB segment!\n");
++		return -EINVAL;
++	}
++
++	/* force RBC into idle state */
++	WREG32(UVD_RBC_RB_CNTL, 0x11010101);
++
++	/* Set the write pointer delay */
++	WREG32(UVD_RBC_RB_WPTR_CNTL, 0);
++
++	/* set the wb address */
++	WREG32(UVD_RBC_RB_RPTR_ADDR, rptr_addr >> 2);
++
++	/* programm the 4GB memory segment for rptr and ring buffer */
++	WREG32(UVD_LMI_EXT40_ADDR, upper_32_bits(rptr_addr) |
++				   (0x7 << 16) | (0x1 << 31));
++
++	/* Initialize the ring buffer's read and write pointers */
++	WREG32(UVD_RBC_RB_RPTR, 0x0);
++
++	ring->wptr = ring->rptr = RREG32(UVD_RBC_RB_RPTR);
++	WREG32(UVD_RBC_RB_WPTR, ring->wptr);
++
++	/* set the ring address */
++	WREG32(UVD_RBC_RB_BASE, ring->gpu_addr);
++
++	/* Set ring buffer size */
++	rb_bufsz = drm_order(ring->ring_size);
++	rb_bufsz = (0x1 << 8) | rb_bufsz;
++	WREG32(UVD_RBC_RB_CNTL, rb_bufsz);
++
++	ring->ready = true;
++	r = radeon_ring_test(rdev, R600_RING_TYPE_UVD_INDEX, ring);
++	if (r) {
++		ring->ready = false;
++		return r;
++	}
++
++	r = radeon_ring_lock(rdev, ring, 10);
++	if (r) {
++		DRM_ERROR("radeon: ring failed to lock UVD ring (%d).\n", r);
++		return r;
++	}
++
++	tmp = PACKET0(UVD_SEMA_WAIT_FAULT_TIMEOUT_CNTL, 0);
++	radeon_ring_write(ring, tmp);
++	radeon_ring_write(ring, 0xFFFFF);
++
++	tmp = PACKET0(UVD_SEMA_WAIT_INCOMPLETE_TIMEOUT_CNTL, 0);
++	radeon_ring_write(ring, tmp);
++	radeon_ring_write(ring, 0xFFFFF);
++
++	tmp = PACKET0(UVD_SEMA_SIGNAL_INCOMPLETE_TIMEOUT_CNTL, 0);
++	radeon_ring_write(ring, tmp);
++	radeon_ring_write(ring, 0xFFFFF);
++
++	/* Clear timeout status bits */
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_TIMEOUT_STATUS, 0));
++	radeon_ring_write(ring, 0x8);
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_CNTL, 0));
++	radeon_ring_write(ring, 3);
++
++	radeon_ring_unlock_commit(rdev, ring);
++
++	return 0;
++}
++
++void r600_uvd_rbc_stop(struct radeon_device *rdev)
++{
++	struct radeon_ring *ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++
++	/* force RBC into idle state */
++	WREG32(UVD_RBC_RB_CNTL, 0x11010101);
++	ring->ready = false;
++}
++
++int r600_uvd_init(struct radeon_device *rdev)
++{
++	int i, j, r;
++
++	/* raise clocks while booting up the VCPU */
++	radeon_set_uvd_clocks(rdev, 53300, 40000);
++
++	/* disable clock gating */
++	WREG32(UVD_CGC_GATE, 0);
++
++	/* disable interupt */
++	WREG32_P(UVD_MASTINT_EN, 0, ~(1 << 1));
++
++	/* put LMI, VCPU, RBC etc... into reset */
++	WREG32(UVD_SOFT_RESET, LMI_SOFT_RESET | VCPU_SOFT_RESET |
++	       LBSI_SOFT_RESET | RBC_SOFT_RESET | CSM_SOFT_RESET |
++	       CXW_SOFT_RESET | TAP_SOFT_RESET | LMI_UMC_SOFT_RESET);
++	mdelay(5);
++
++	/* take UVD block out of reset */
++	WREG32_P(SRBM_SOFT_RESET, 0, ~SOFT_RESET_UVD);
++	mdelay(5);
++
++	/* initialize UVD memory controller */
++	WREG32(UVD_LMI_CTRL, 0x40 | (1 << 8) | (1 << 13) |
++			     (1 << 21) | (1 << 9) | (1 << 20));
++
++	/* disable byte swapping */
++	WREG32(UVD_LMI_SWAP_CNTL, 0);
++	WREG32(UVD_MP_SWAP_CNTL, 0);
++
++	WREG32(UVD_MPC_SET_MUXA0, 0x40c2040);
++	WREG32(UVD_MPC_SET_MUXA1, 0x0);
++	WREG32(UVD_MPC_SET_MUXB0, 0x40c2040);
++	WREG32(UVD_MPC_SET_MUXB1, 0x0);
++	WREG32(UVD_MPC_SET_ALU, 0);
++	WREG32(UVD_MPC_SET_MUX, 0x88);
++
++	/* Stall UMC */
++	WREG32_P(UVD_LMI_CTRL2, 1 << 8, ~(1 << 8));
++	WREG32_P(UVD_RB_ARB_CTRL, 1 << 3, ~(1 << 3));
++
++	/* take all subblocks out of reset, except VCPU */
++	WREG32(UVD_SOFT_RESET, VCPU_SOFT_RESET);
++	mdelay(5);
++
++	/* enable VCPU clock */
++	WREG32(UVD_VCPU_CNTL,  1 << 9);
++
++	/* enable UMC */
++	WREG32_P(UVD_LMI_CTRL2, 0, ~(1 << 8));
++
++	/* boot up the VCPU */
++	WREG32(UVD_SOFT_RESET, 0);
++	mdelay(10);
++
++	WREG32_P(UVD_RB_ARB_CTRL, 0, ~(1 << 3));
++
++	for (i = 0; i < 10; ++i) {
++		uint32_t status;
++		for (j = 0; j < 100; ++j) {
++			status = RREG32(UVD_STATUS);
++			if (status & 2)
++				break;
++			mdelay(10);
++		}
++		r = 0;
++		if (status & 2)
++			break;
++
++		DRM_ERROR("UVD not responding, trying to reset the VCPU!!!\n");
++		WREG32_P(UVD_SOFT_RESET, VCPU_SOFT_RESET, ~VCPU_SOFT_RESET);
++		mdelay(10);
++		WREG32_P(UVD_SOFT_RESET, 0, ~VCPU_SOFT_RESET);
++		mdelay(10);
++		r = -1;
++	}
++
++	if (r) {
++		DRM_ERROR("UVD not responding, giving up!!!\n");
++		radeon_set_uvd_clocks(rdev, 0, 0);
++		return r;
++	}
++
++	/* enable interupt */
++	WREG32_P(UVD_MASTINT_EN, 3<<1, ~(3 << 1));
++
++	r = r600_uvd_rbc_start(rdev);
++	if (!r)
++		DRM_INFO("UVD initialized successfully.\n");
++
++	/* lower clocks again */
++	radeon_set_uvd_clocks(rdev, 0, 0);
++
++	return r;
++}
++
++/*
+  * GPU scratch registers helpers function.
+  */
+ void r600_scratch_init(struct radeon_device *rdev)
+@@ -2660,6 +2847,40 @@
+ 	return r;
+ }
+ 
++int r600_uvd_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
++{
++	uint32_t tmp = 0;
++	unsigned i;
++	int r;
++
++	WREG32(UVD_CONTEXT_ID, 0xCAFEDEAD);
++	r = radeon_ring_lock(rdev, ring, 3);
++	if (r) {
++		DRM_ERROR("radeon: cp failed to lock ring %d (%d).\n",
++			  ring->idx, r);
++		return r;
++	}
++	radeon_ring_write(ring, PACKET0(UVD_CONTEXT_ID, 0));
++	radeon_ring_write(ring, 0xDEADBEEF);
++	radeon_ring_unlock_commit(rdev, ring);
++	for (i = 0; i < rdev->usec_timeout; i++) {
++		tmp = RREG32(UVD_CONTEXT_ID);
++		if (tmp == 0xDEADBEEF)
++			break;
++		DRM_UDELAY(1);
++	}
++
++	if (i < rdev->usec_timeout) {
++		DRM_INFO("ring test on %d succeeded in %d usecs\n",
++			 ring->idx, i);
++	} else {
++		DRM_ERROR("radeon: ring %d test failed (0x%08X)\n",
++			  ring->idx, tmp);
++		r = -EINVAL;
++	}
++	return r;
++}
++
+ /*
+  * CP fences/semaphores
+  */
+@@ -2711,6 +2932,30 @@
+ 	}
+ }
+ 
++void r600_uvd_fence_emit(struct radeon_device *rdev,
++			 struct radeon_fence *fence)
++{
++	struct radeon_ring *ring = &rdev->ring[fence->ring];
++	uint32_t addr = rdev->fence_drv[fence->ring].gpu_addr;
++
++	radeon_ring_write(ring, PACKET0(UVD_CONTEXT_ID, 0));
++	radeon_ring_write(ring, fence->seq);
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA0, 0));
++	radeon_ring_write(ring, addr & 0xffffffff);
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA1, 0));
++	radeon_ring_write(ring, upper_32_bits(addr) & 0xff);
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_CMD, 0));
++	radeon_ring_write(ring, 0);
++
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA0, 0));
++	radeon_ring_write(ring, 0);
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA1, 0));
++	radeon_ring_write(ring, 0);
++	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_CMD, 0));
++	radeon_ring_write(ring, 2);
++	return;
++}
++
+ void r600_semaphore_ring_emit(struct radeon_device *rdev,
+ 			      struct radeon_ring *ring,
+ 			      struct radeon_semaphore *semaphore,
+@@ -2780,6 +3025,23 @@
+ 	radeon_ring_write(ring, upper_32_bits(addr) & 0xff);
+ }
+ 
++void r600_uvd_semaphore_emit(struct radeon_device *rdev,
++			     struct radeon_ring *ring,
++			     struct radeon_semaphore *semaphore,
++			     bool emit_wait)
++{
++	uint64_t addr = semaphore->gpu_addr;
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_ADDR_LOW, 0));
++	radeon_ring_write(ring, (addr >> 3) & 0x000FFFFF);
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_ADDR_HIGH, 0));
++	radeon_ring_write(ring, (addr >> 23) & 0x000FFFFF);
++
++	radeon_ring_write(ring, PACKET0(UVD_SEMA_CMD, 0));
++	radeon_ring_write(ring, emit_wait ? 1 : 0);
++}
++
+ int r600_copy_blit(struct radeon_device *rdev,
+ 		   uint64_t src_offset,
+ 		   uint64_t dst_offset,
+@@ -3183,6 +3445,16 @@
+ 	radeon_ring_write(ring, ib->length_dw);
+ }
+ 
++void r600_uvd_ib_execute(struct radeon_device *rdev, struct radeon_ib *ib)
++{
++	struct radeon_ring *ring = &rdev->ring[ib->ring];
++
++	radeon_ring_write(ring, PACKET0(UVD_RBC_IB_BASE, 0));
++	radeon_ring_write(ring, ib->gpu_addr);
++	radeon_ring_write(ring, PACKET0(UVD_RBC_IB_SIZE, 0));
++	radeon_ring_write(ring, ib->length_dw);
++}
++
+ int r600_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
+ {
+ 	struct radeon_ib ib;
+@@ -3300,6 +3572,41 @@
+ 	return r;
+ }
+ 
++int r600_uvd_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
++{
++	struct radeon_fence *fence = NULL;
++	int r;
++
++	r = radeon_set_uvd_clocks(rdev, 53300, 40000);
++	if (r) {
++		DRM_ERROR("radeon: failed to raise UVD clocks (%d).\n", r);
++		return r;
++	}
++
++	r = radeon_uvd_get_create_msg(rdev, ring->idx, 1, NULL);
++	if (r) {
++		DRM_ERROR("radeon: failed to get create msg (%d).\n", r);
++		goto error;
++	}
++
++	r = radeon_uvd_get_destroy_msg(rdev, ring->idx, 1, &fence);
++	if (r) {
++		DRM_ERROR("radeon: failed to get destroy ib (%d).\n", r);
++		goto error;
++	}
++
++	r = radeon_fence_wait(fence, false);
++	if (r) {
++		DRM_ERROR("radeon: fence wait failed (%d).\n", r);
++		goto error;
++	}
++	DRM_INFO("ib test on ring %d succeeded\n",  ring->idx);
++error:
++	radeon_fence_unref(&fence);
++	radeon_set_uvd_clocks(rdev, 0, 0);
++	return r;
++}
++
+ /**
+  * r600_dma_ring_ib_execute - Schedule an IB on the DMA engine
+  *
+diff -urN a/drivers/gpu/drm/radeon/r600d.h b/drivers/gpu/drm/radeon/r600d.h
+--- a/drivers/gpu/drm/radeon/r600d.h	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/r600d.h	2013-05-09 22:14:57.173842169 +0200
+@@ -691,6 +691,7 @@
+ #define SRBM_SOFT_RESET                                   0xe60
+ #       define SOFT_RESET_DMA                             (1 << 12)
+ #       define SOFT_RESET_RLC                             (1 << 13)
++#       define SOFT_RESET_UVD                             (1 << 18)
+ #       define RV770_SOFT_RESET_DMA                       (1 << 20)
+ 
+ #define CP_INT_CNTL                                       0xc124
+@@ -1143,6 +1144,66 @@
+ #       define AFMT_AZ_AUDIO_ENABLE_CHG_ACK  (1 << 30)
+ 
+ /*
++ * UVD
++ */
++#define UVD_SEMA_ADDR_LOW				0xef00
++#define UVD_SEMA_ADDR_HIGH				0xef04
++#define UVD_SEMA_CMD					0xef08
++
++#define UVD_GPCOM_VCPU_CMD				0xef0c
++#define UVD_GPCOM_VCPU_DATA0				0xef10
++#define UVD_GPCOM_VCPU_DATA1				0xef14
++#define UVD_ENGINE_CNTL					0xef18
++
++#define UVD_SEMA_CNTL					0xf400
++#define UVD_RB_ARB_CTRL					0xf480
++
++#define UVD_LMI_EXT40_ADDR				0xf498
++#define UVD_CGC_GATE					0xf4a8
++#define UVD_LMI_CTRL2					0xf4f4
++#define UVD_MASTINT_EN					0xf500
++#define UVD_LMI_ADDR_EXT				0xf594
++#define UVD_LMI_CTRL					0xf598
++#define UVD_LMI_SWAP_CNTL				0xf5b4
++#define UVD_MP_SWAP_CNTL				0xf5bC
++#define UVD_MPC_CNTL					0xf5dC
++#define UVD_MPC_SET_MUXA0				0xf5e4
++#define UVD_MPC_SET_MUXA1				0xf5e8
++#define UVD_MPC_SET_MUXB0				0xf5eC
++#define UVD_MPC_SET_MUXB1				0xf5f0
++#define UVD_MPC_SET_MUX					0xf5f4
++#define UVD_MPC_SET_ALU					0xf5f8
++
++#define UVD_VCPU_CNTL					0xf660
++#define UVD_SOFT_RESET					0xf680
++#define		RBC_SOFT_RESET					(1<<0)
++#define		LBSI_SOFT_RESET					(1<<1)
++#define		LMI_SOFT_RESET					(1<<2)
++#define		VCPU_SOFT_RESET					(1<<3)
++#define		CSM_SOFT_RESET					(1<<5)
++#define		CXW_SOFT_RESET					(1<<6)
++#define		TAP_SOFT_RESET					(1<<7)
++#define		LMI_UMC_SOFT_RESET				(1<<13)
++#define UVD_RBC_IB_BASE					0xf684
++#define UVD_RBC_IB_SIZE					0xf688
++#define UVD_RBC_RB_BASE					0xf68c
++#define UVD_RBC_RB_RPTR					0xf690
++#define UVD_RBC_RB_WPTR					0xf694
++#define UVD_RBC_RB_WPTR_CNTL				0xf698
++
++#define UVD_STATUS					0xf6bc
++
++#define UVD_SEMA_TIMEOUT_STATUS				0xf6c0
++#define UVD_SEMA_WAIT_INCOMPLETE_TIMEOUT_CNTL		0xf6c4
++#define UVD_SEMA_WAIT_FAULT_TIMEOUT_CNTL		0xf6c8
++#define UVD_SEMA_SIGNAL_INCOMPLETE_TIMEOUT_CNTL		0xf6cc
++
++#define UVD_RBC_RB_CNTL					0xf6a4
++#define UVD_RBC_RB_RPTR_ADDR				0xf6a8
++
++#define UVD_CONTEXT_ID					0xf6f4
++
++/*
+  * PM4
+  */
+ #define PACKET0(reg, n)	((RADEON_PACKET_TYPE0 << 30) |			\
+diff -urN a/drivers/gpu/drm/radeon/radeon.h b/drivers/gpu/drm/radeon/radeon.h
+--- a/drivers/gpu/drm/radeon/radeon.h	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/radeon.h	2013-05-09 22:14:57.220508832 +0200
+@@ -95,6 +95,7 @@
+ extern int radeon_pcie_gen2;
+ extern int radeon_msi;
+ extern int radeon_lockup_timeout;
++extern int radeon_fastfb;
+ 
+ /*
+  * Copy from radeon_drv.h so we don't have to include both and have conflicting
+@@ -109,24 +110,27 @@
+ #define RADEON_BIOS_NUM_SCRATCH			8
+ 
+ /* max number of rings */
+-#define RADEON_NUM_RINGS			5
++#define RADEON_NUM_RINGS			6
+ 
+ /* fence seq are set to this number when signaled */
+ #define RADEON_FENCE_SIGNALED_SEQ		0LL
+ 
+ /* internal ring indices */
+ /* r1xx+ has gfx CP ring */
+-#define RADEON_RING_TYPE_GFX_INDEX		0
++#define RADEON_RING_TYPE_GFX_INDEX	0
+ 
+ /* cayman has 2 compute CP rings */
+-#define CAYMAN_RING_TYPE_CP1_INDEX		1
+-#define CAYMAN_RING_TYPE_CP2_INDEX		2
++#define CAYMAN_RING_TYPE_CP1_INDEX	1
++#define CAYMAN_RING_TYPE_CP2_INDEX	2
+ 
+ /* R600+ has an async dma ring */
+ #define R600_RING_TYPE_DMA_INDEX		3
+ /* cayman add a second async dma ring */
+ #define CAYMAN_RING_TYPE_DMA1_INDEX		4
+ 
++/* R600+ */
++#define R600_RING_TYPE_UVD_INDEX	5
++
+ /* hardcode those limit for now */
+ #define RADEON_VA_IB_OFFSET			(1 << 20)
+ #define RADEON_VA_RESERVED_SIZE			(8 << 20)
+@@ -202,6 +206,11 @@
+ void radeon_pm_resume(struct radeon_device *rdev);
+ void radeon_combios_get_power_modes(struct radeon_device *rdev);
+ void radeon_atombios_get_power_modes(struct radeon_device *rdev);
++int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
++				   u8 clock_type,
++				   u32 clock,
++				   bool strobe_mode,
++				   struct atom_clock_dividers *dividers);
+ void radeon_atom_set_voltage(struct radeon_device *rdev, u16 voltage_level, u8 voltage_type);
+ void rs690_pm_info(struct radeon_device *rdev);
+ extern int rv6xx_get_temp(struct radeon_device *rdev);
+@@ -357,8 +366,9 @@
+ 	struct ttm_validate_buffer tv;
+ 	struct radeon_bo	*bo;
+ 	uint64_t		gpu_offset;
+-	unsigned		rdomain;
+-	unsigned		wdomain;
++	bool			written;
++	unsigned		domain;
++	unsigned		alt_domain;
+ 	u32			tiling_flags;
+ };
+ 
+@@ -918,6 +928,7 @@
+ #define R600_WB_DMA_RPTR_OFFSET   1792
+ #define R600_WB_IH_WPTR_OFFSET   2048
+ #define CAYMAN_WB_DMA1_RPTR_OFFSET   2304
++#define R600_WB_UVD_RPTR_OFFSET  2560
+ #define R600_WB_EVENT_OFFSET     3072
+ 
+ /**
+@@ -1118,6 +1129,35 @@
+ int radeon_pm_get_type_index(struct radeon_device *rdev,
+ 			     enum radeon_pm_state_type ps_type,
+ 			     int instance);
++/*
++ * UVD
++ */
++#define RADEON_MAX_UVD_HANDLES	10
++#define RADEON_UVD_STACK_SIZE	(1024*1024)
++#define RADEON_UVD_HEAP_SIZE	(1024*1024)
++
++struct radeon_uvd {
++	struct radeon_bo	*vcpu_bo;
++	void			*cpu_addr;
++	uint64_t		gpu_addr;
++	atomic_t		handles[RADEON_MAX_UVD_HANDLES];
++	struct drm_file		*filp[RADEON_MAX_UVD_HANDLES];
++	struct delayed_work	idle_work;
++};
++
++int radeon_uvd_init(struct radeon_device *rdev);
++void radeon_uvd_fini(struct radeon_device *rdev);
++int radeon_uvd_suspend(struct radeon_device *rdev);
++int radeon_uvd_resume(struct radeon_device *rdev);
++int radeon_uvd_get_create_msg(struct radeon_device *rdev, int ring,
++			      uint32_t handle, struct radeon_fence **fence);
++int radeon_uvd_get_destroy_msg(struct radeon_device *rdev, int ring,
++			       uint32_t handle, struct radeon_fence **fence);
++void radeon_uvd_force_into_uvd_segment(struct radeon_bo *rbo);
++void radeon_uvd_free_handles(struct radeon_device *rdev,
++			     struct drm_file *filp);
++int radeon_uvd_cs_parse(struct radeon_cs_parser *parser);
++void radeon_uvd_note_usage(struct radeon_device *rdev);
+ 
+ struct r600_audio {
+ 	int			channels;
+@@ -1281,6 +1321,7 @@
+ 		int (*get_pcie_lanes)(struct radeon_device *rdev);
+ 		void (*set_pcie_lanes)(struct radeon_device *rdev, int lanes);
+ 		void (*set_clock_gating)(struct radeon_device *rdev, int enable);
++		int (*set_uvd_clocks)(struct radeon_device *rdev, u32 vclk, u32 dclk);
+ 	} pm;
+ 	/* pageflipping */
+ 	struct {
+@@ -1608,6 +1649,7 @@
+ 	struct radeon_asic		*asic;
+ 	struct radeon_gem		gem;
+ 	struct radeon_pm		pm;
++	struct radeon_uvd		uvd;
+ 	uint32_t			bios_scratch[RADEON_BIOS_NUM_SCRATCH];
+ 	struct radeon_wb		wb;
+ 	struct radeon_dummy_page	dummy_page;
+@@ -1615,12 +1657,14 @@
+ 	bool				suspend;
+ 	bool				need_dma32;
+ 	bool				accel_working;
++	bool				fastfb_working; /* IGP feature*/
+ 	struct radeon_surface_reg surface_regs[RADEON_GEM_MAX_SURFACES];
+ 	const struct firmware *me_fw;	/* all family ME firmware */
+ 	const struct firmware *pfp_fw;	/* r6/700 PFP firmware */
+ 	const struct firmware *rlc_fw;	/* r6/700 RLC firmware */
+ 	const struct firmware *mc_fw;	/* NI MC firmware */
+ 	const struct firmware *ce_fw;	/* SI CE firmware */
++	const struct firmware *uvd_fw;	/* UVD firmware */
+ 	struct r600_blit r600_blit;
+ 	struct r600_vram_scratch vram_scratch;
+ 	int msi_enabled; /* msi enabled */
+@@ -1845,6 +1889,7 @@
+ #define radeon_get_pcie_lanes(rdev) (rdev)->asic->pm.get_pcie_lanes((rdev))
+ #define radeon_set_pcie_lanes(rdev, l) (rdev)->asic->pm.set_pcie_lanes((rdev), (l))
+ #define radeon_set_clock_gating(rdev, e) (rdev)->asic->pm.set_clock_gating((rdev), (e))
++#define radeon_set_uvd_clocks(rdev, v, d) (rdev)->asic->pm.set_uvd_clocks((rdev), (v), (d))
+ #define radeon_set_surface_reg(rdev, r, f, p, o, s) ((rdev)->asic->surface.set_reg((rdev), (r), (f), (p), (o), (s)))
+ #define radeon_clear_surface_reg(rdev, r) ((rdev)->asic->surface.clear_reg((rdev), (r)))
+ #define radeon_bandwidth_update(rdev) (rdev)->asic->display.bandwidth_update((rdev))
+diff -urN a/drivers/gpu/drm/radeon/radeon_asic.c b/drivers/gpu/drm/radeon/radeon_asic.c
+--- a/drivers/gpu/drm/radeon/radeon_asic.c	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/radeon_asic.c	2013-05-09 22:14:57.203842167 +0200
+@@ -1130,6 +1130,15 @@
+ 			.ring_test = &r600_dma_ring_test,
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &r600_dma_is_lockup,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &r600_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1174,6 +1183,7 @@
+ 		.get_pcie_lanes = &r600_get_pcie_lanes,
+ 		.set_pcie_lanes = &r600_set_pcie_lanes,
+ 		.set_clock_gating = &radeon_atom_set_clock_gating,
++		.set_uvd_clocks = &rv770_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &rs600_pre_page_flip,
+@@ -1216,6 +1226,15 @@
+ 			.ring_test = &r600_dma_ring_test,
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &evergreen_dma_is_lockup,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &r600_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1260,6 +1279,7 @@
+ 		.get_pcie_lanes = &r600_get_pcie_lanes,
+ 		.set_pcie_lanes = &r600_set_pcie_lanes,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &evergreen_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+@@ -1302,6 +1322,15 @@
+ 			.ring_test = &r600_dma_ring_test,
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &evergreen_dma_is_lockup,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &r600_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1346,6 +1375,7 @@
+ 		.get_pcie_lanes = NULL,
+ 		.set_pcie_lanes = NULL,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &sumo_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+@@ -1388,6 +1418,15 @@
+ 			.ring_test = &r600_dma_ring_test,
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &evergreen_dma_is_lockup,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &r600_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1432,6 +1471,7 @@
+ 		.get_pcie_lanes = NULL,
+ 		.set_pcie_lanes = NULL,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &evergreen_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+@@ -1517,6 +1557,15 @@
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &cayman_dma_is_lockup,
+ 			.vm_flush = &cayman_dma_vm_flush,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &cayman_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1561,6 +1610,7 @@
+ 		.get_pcie_lanes = NULL,
+ 		.set_pcie_lanes = NULL,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &evergreen_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+@@ -1646,6 +1696,15 @@
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &cayman_dma_is_lockup,
+ 			.vm_flush = &cayman_dma_vm_flush,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &cayman_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1690,6 +1749,7 @@
+ 		.get_pcie_lanes = NULL,
+ 		.set_pcie_lanes = NULL,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &sumo_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+@@ -1775,6 +1835,15 @@
+ 			.ib_test = &r600_dma_ib_test,
+ 			.is_lockup = &si_dma_is_lockup,
+ 			.vm_flush = &si_dma_vm_flush,
++		},
++		[R600_RING_TYPE_UVD_INDEX] = {
++			.ib_execute = &r600_uvd_ib_execute,
++			.emit_fence = &r600_uvd_fence_emit,
++			.emit_semaphore = &cayman_uvd_semaphore_emit,
++			.cs_parse = &radeon_uvd_cs_parse,
++			.ring_test = &r600_uvd_ring_test,
++			.ib_test = &r600_uvd_ib_test,
++			.is_lockup = &radeon_ring_test_lockup,
+ 		}
+ 	},
+ 	.irq = {
+@@ -1819,6 +1888,7 @@
+ 		.get_pcie_lanes = NULL,
+ 		.set_pcie_lanes = NULL,
+ 		.set_clock_gating = NULL,
++		.set_uvd_clocks = &si_set_uvd_clocks,
+ 	},
+ 	.pflip = {
+ 		.pre_page_flip = &evergreen_pre_page_flip,
+diff -urN a/drivers/gpu/drm/radeon/radeon_asic.h b/drivers/gpu/drm/radeon/radeon_asic.h
+--- a/drivers/gpu/drm/radeon/radeon_asic.h	2013-05-09 22:13:14.643851250 +0200
++++ b/drivers/gpu/drm/radeon/radeon_asic.h	2013-05-09 22:14:57.203842167 +0200
+@@ -330,6 +330,7 @@
+ void r600_ring_ib_execute(struct radeon_device *rdev, struct radeon_ib *ib);
+ int r600_ring_test(struct radeon_device *rdev, struct radeon_ring *cp);
+ int r600_dma_ring_test(struct radeon_device *rdev, struct radeon_ring *cp);
++int r600_uvd_ring_test(struct radeon_device *rdev, struct radeon_ring *ring);
+ int r600_copy_blit(struct radeon_device *rdev,
+ 		   uint64_t src_offset, uint64_t dst_offset,
+ 		   unsigned num_gpu_pages, struct radeon_fence **fence);
+@@ -392,6 +393,19 @@
+ u32 r600_get_xclk(struct radeon_device *rdev);
+ uint64_t r600_get_gpu_clock_counter(struct radeon_device *rdev);
+ 
++/* uvd */
++int r600_uvd_init(struct radeon_device *rdev);
++int r600_uvd_rbc_start(struct radeon_device *rdev);
++void r600_uvd_rbc_stop(struct radeon_device *rdev);
++int r600_uvd_ib_test(struct radeon_device *rdev, struct radeon_ring *ring);
++void r600_uvd_fence_emit(struct radeon_device *rdev,
++			 struct radeon_fence *fence);
++void r600_uvd_semaphore_emit(struct radeon_device *rdev,
++			     struct radeon_ring *ring,
++			     struct radeon_semaphore *semaphore,
++			     bool emit_wait);
++void r600_uvd_ib_execute(struct radeon_device *rdev, struct radeon_ib *ib);
++
+ /*
+  * rv770,rv730,rv710,rv740
+  */
+@@ -409,6 +423,8 @@
+ 		  unsigned num_gpu_pages,
+ 		   struct radeon_fence **fence);
+ u32 rv770_get_xclk(struct radeon_device *rdev);
++int rv770_uvd_resume(struct radeon_device *rdev);
++int rv770_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk);
+ 
+ /*
+  * evergreen
+@@ -444,6 +460,8 @@
+ extern void evergreen_pm_finish(struct radeon_device *rdev);
+ extern void sumo_pm_init_profile(struct radeon_device *rdev);
+ extern void btc_pm_init_profile(struct radeon_device *rdev);
++int sumo_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk);
++int evergreen_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk);
+ extern void evergreen_pre_page_flip(struct radeon_device *rdev, int crtc);
+ extern u32 evergreen_page_flip(struct radeon_device *rdev, int crtc, u64 crtc_base);
+ extern void evergreen_post_page_flip(struct radeon_device *rdev, int crtc);
+@@ -465,6 +483,10 @@
+  */
+ void cayman_fence_ring_emit(struct radeon_device *rdev,
+ 			    struct radeon_fence *fence);
++void cayman_uvd_semaphore_emit(struct radeon_device *rdev,
++			       struct radeon_ring *ring,
++			       struct radeon_semaphore *semaphore,
++			       bool emit_wait);
+ void cayman_pcie_gart_tlb_flush(struct radeon_device *rdev);
+ int cayman_init(struct radeon_device *rdev);
+ void cayman_fini(struct radeon_device *rdev);
+@@ -524,5 +546,6 @@
+ void si_dma_vm_flush(struct radeon_device *rdev, int ridx, struct radeon_vm *vm);
+ u32 si_get_xclk(struct radeon_device *rdev);
+ uint64_t si_get_gpu_clock_counter(struct radeon_device *rdev);
++int si_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk);
+ 
+ #endif
+diff -urN a/drivers/gpu/drm/radeon/radeon_atombios.c b/drivers/gpu/drm/radeon/radeon_atombios.c
+--- a/drivers/gpu/drm/radeon/radeon_atombios.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_atombios.c	2013-05-09 22:14:57.230508831 +0200
+@@ -2654,6 +2654,111 @@
+ 		rdev->pm.current_vddc = 0;
+ }
+ 
++union get_clock_dividers {
++	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS v1;
++	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V2 v2;
++	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V3 v3;
++	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V4 v4;
++	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V5 v5;
++};
++
++int radeon_atom_get_clock_dividers(struct radeon_device *rdev,
++				   u8 clock_type,
++				   u32 clock,
++				   bool strobe_mode,
++				   struct atom_clock_dividers *dividers)
++{
++	union get_clock_dividers args;
++	int index = GetIndexIntoMasterTable(COMMAND, ComputeMemoryEnginePLL);
++	u8 frev, crev;
++
++	memset(&args, 0, sizeof(args));
++	memset(dividers, 0, sizeof(struct atom_clock_dividers));
++
++	if (!atom_parse_cmd_header(rdev->mode_info.atom_context, index, &frev, &crev))
++		return -EINVAL;
++
++	switch (crev) {
++	case 1:
++		/* r4xx, r5xx */
++		args.v1.ucAction = clock_type;
++		args.v1.ulClock = cpu_to_le32(clock);	/* 10 khz */
++
++		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
++
++		dividers->post_div = args.v1.ucPostDiv;
++		dividers->fb_div = args.v1.ucFbDiv;
++		dividers->enable_post_div = true;
++		break;
++	case 2:
++	case 3:
++		/* r6xx, r7xx, evergreen, ni */
++		if (rdev->family <= CHIP_RV770) {
++			args.v2.ucAction = clock_type;
++			args.v2.ulClock = cpu_to_le32(clock);	/* 10 khz */
++
++			atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
++
++			dividers->post_div = args.v2.ucPostDiv;
++			dividers->fb_div = le16_to_cpu(args.v2.usFbDiv);
++			dividers->ref_div = args.v2.ucAction;
++			if (rdev->family == CHIP_RV770) {
++				dividers->enable_post_div = (le32_to_cpu(args.v2.ulClock) & (1 << 24)) ?
++					true : false;
++				dividers->vco_mode = (le32_to_cpu(args.v2.ulClock) & (1 << 25)) ? 1 : 0;
++			} else
++				dividers->enable_post_div = (dividers->fb_div & 1) ? true : false;
++		} else {
++			if (clock_type == COMPUTE_ENGINE_PLL_PARAM) {
++				args.v3.ulClockParams = cpu_to_le32((clock_type << 24) | clock);
++
++				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
++
++				dividers->post_div = args.v3.ucPostDiv;
++				dividers->enable_post_div = (args.v3.ucCntlFlag &
++							     ATOM_PLL_CNTL_FLAG_PLL_POST_DIV_EN) ? true : false;
++				dividers->enable_dithen = (args.v3.ucCntlFlag &
++							   ATOM_PLL_CNTL_FLAG_FRACTION_DISABLE) ? false : true;
++				dividers->fb_div = le16_to_cpu(args.v3.ulFbDiv.usFbDiv);
++				dividers->frac_fb_div = le16_to_cpu(args.v3.ulFbDiv.usFbDivFrac);
++				dividers->ref_div = args.v3.ucRefDiv;
++				dividers->vco_mode = (args.v3.ucCntlFlag &
++						      ATOM_PLL_CNTL_FLAG_MPLL_VCO_MODE) ? 1 : 0;
++			} else {
++				args.v5.ulClockParams = cpu_to_le32((clock_type << 24) | clock);
++				if (strobe_mode)
++					args.v5.ucInputFlag = ATOM_PLL_INPUT_FLAG_PLL_STROBE_MODE_EN;
++
++				atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
++
++				dividers->post_div = args.v5.ucPostDiv;
++				dividers->enable_post_div = (args.v5.ucCntlFlag &
++							     ATOM_PLL_CNTL_FLAG_PLL_POST_DIV_EN) ? true : false;
++				dividers->enable_dithen = (args.v5.ucCntlFlag &
++							   ATOM_PLL_CNTL_FLAG_FRACTION_DISABLE) ? false : true;
++				dividers->whole_fb_div = le16_to_cpu(args.v5.ulFbDiv.usFbDiv);
++				dividers->frac_fb_div = le16_to_cpu(args.v5.ulFbDiv.usFbDivFrac);
++				dividers->ref_div = args.v5.ucRefDiv;
++				dividers->vco_mode = (args.v5.ucCntlFlag &
++						      ATOM_PLL_CNTL_FLAG_MPLL_VCO_MODE) ? 1 : 0;
++			}
++		}
++		break;
++	case 4:
++		/* fusion */
++		args.v4.ulClock = cpu_to_le32(clock);	/* 10 khz */
++
++		atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
++
++		dividers->post_div = args.v4.ucPostDiv;
++		dividers->real_clock = le32_to_cpu(args.v4.ulClock);
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
+ void radeon_atom_set_clock_gating(struct radeon_device *rdev, int enable)
+ {
+ 	DYNAMIC_CLOCK_GATING_PS_ALLOCATION args;
+diff -urN a/drivers/gpu/drm/radeon/radeon_cs.c b/drivers/gpu/drm/radeon/radeon_cs.c
+--- a/drivers/gpu/drm/radeon/radeon_cs.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_cs.c	2013-05-09 22:14:57.223842165 +0200
+@@ -63,30 +63,50 @@
+ 				break;
+ 			}
+ 		}
+-		if (!duplicate) {
+-			p->relocs[i].gobj = drm_gem_object_lookup(ddev,
+-								  p->filp,
+-								  r->handle);
+-			if (p->relocs[i].gobj == NULL) {
+-				DRM_ERROR("gem object lookup failed 0x%x\n",
+-					  r->handle);
+-				return -ENOENT;
+-			}
+-			p->relocs_ptr[i] = &p->relocs[i];
+-			p->relocs[i].robj = gem_to_radeon_bo(p->relocs[i].gobj);
+-			p->relocs[i].lobj.bo = p->relocs[i].robj;
+-			p->relocs[i].lobj.wdomain = r->write_domain;
+-			p->relocs[i].lobj.rdomain = r->read_domains;
+-			p->relocs[i].lobj.tv.bo = &p->relocs[i].robj->tbo;
+-			p->relocs[i].handle = r->handle;
+-			p->relocs[i].flags = r->flags;
+-			radeon_bo_list_add_object(&p->relocs[i].lobj,
+-						  &p->validated);
+-
+-		} else
++		if (duplicate) {
+ 			p->relocs[i].handle = 0;
++			continue;
++		}
++
++		p->relocs[i].gobj = drm_gem_object_lookup(ddev, p->filp,
++							  r->handle);
++		if (p->relocs[i].gobj == NULL) {
++			DRM_ERROR("gem object lookup failed 0x%x\n",
++				  r->handle);
++			return -ENOENT;
++		}
++		p->relocs_ptr[i] = &p->relocs[i];
++		p->relocs[i].robj = gem_to_radeon_bo(p->relocs[i].gobj);
++		p->relocs[i].lobj.bo = p->relocs[i].robj;
++		p->relocs[i].lobj.written = !!r->write_domain;
++
++		/* the first reloc of an UVD job is the
++		   msg and that must be in VRAM */
++		if (p->ring == R600_RING_TYPE_UVD_INDEX && i == 0) {
++			/* TODO: is this still needed for NI+ ? */
++			p->relocs[i].lobj.domain =
++				RADEON_GEM_DOMAIN_VRAM;
++
++			p->relocs[i].lobj.alt_domain =
++				RADEON_GEM_DOMAIN_VRAM;
++
++		} else {
++			uint32_t domain = r->write_domain ?
++				r->write_domain : r->read_domains;
++
++			p->relocs[i].lobj.domain = domain;
++			if (domain == RADEON_GEM_DOMAIN_VRAM)
++				domain |= RADEON_GEM_DOMAIN_GTT;
++			p->relocs[i].lobj.alt_domain = domain;
++		}
++
++		p->relocs[i].lobj.tv.bo = &p->relocs[i].robj->tbo;
++		p->relocs[i].handle = r->handle;
++
++		radeon_bo_list_add_object(&p->relocs[i].lobj,
++					  &p->validated);
+ 	}
+-	return radeon_bo_list_validate(&p->validated);
++	return radeon_bo_list_validate(&p->validated, p->ring);
+ }
+ 
+ static int radeon_cs_get_ring(struct radeon_cs_parser *p, u32 ring, s32 priority)
+@@ -121,6 +141,9 @@
+ 			return -EINVAL;
+ 		}
+ 		break;
++	case RADEON_CS_RING_UVD:
++		p->ring = R600_RING_TYPE_UVD_INDEX;
++		break;
+ 	}
+ 	return 0;
+ }
+@@ -241,15 +264,15 @@
+ 			return -EINVAL;
+ 		}
+ 
+-		/* we only support VM on SI+ */
+-		if ((p->rdev->family >= CHIP_TAHITI) &&
+-		    ((p->cs_flags & RADEON_CS_USE_VM) == 0)) {
+-			DRM_ERROR("VM required on SI+!\n");
++		if (radeon_cs_get_ring(p, ring, priority))
+ 			return -EINVAL;
+-		}
+ 
+-		if (radeon_cs_get_ring(p, ring, priority))
++		/* we only support VM on some SI+ rings */
++		if ((p->rdev->asic->ring[p->ring].cs_parse == NULL) &&
++		   ((p->cs_flags & RADEON_CS_USE_VM) == 0)) {
++			DRM_ERROR("Ring %d requires VM!\n", p->ring);
+ 			return -EINVAL;
++		}
+ 	}
+ 
+ 	/* deal with non-vm */
+@@ -526,6 +549,10 @@
+ 		r = radeon_cs_handle_lockup(rdev, r);
+ 		return r;
+ 	}
++
++	if (parser.ring == R600_RING_TYPE_UVD_INDEX)
++		radeon_uvd_note_usage(rdev);
++
+ 	r = radeon_cs_ib_chunk(rdev, &parser);
+ 	if (r) {
+ 		goto out;
+diff -urN a/drivers/gpu/drm/radeon/radeon_drv.c b/drivers/gpu/drm/radeon/radeon_drv.c
+--- a/drivers/gpu/drm/radeon/radeon_drv.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_drv.c	2013-05-09 22:14:57.210508833 +0200
+@@ -71,9 +71,11 @@
+  *   2.28.0 - r600-eg: Add MEM_WRITE packet support
+  *   2.29.0 - R500 FP16 color clear registers
+  *   2.30.0 - fix for FMASK texturing
++ *   2.31.0 - Add fastfb support for rs690
++ *   2.32.0 - new info request for rings working
+  */
+ #define KMS_DRIVER_MAJOR	2
+-#define KMS_DRIVER_MINOR	30
++#define KMS_DRIVER_MINOR	32
+ #define KMS_DRIVER_PATCHLEVEL	0
+ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags);
+ int radeon_driver_unload_kms(struct drm_device *dev);
+@@ -160,6 +162,7 @@
+ int radeon_pcie_gen2 = -1;
+ int radeon_msi = -1;
+ int radeon_lockup_timeout = 10000;
++int radeon_fastfb = 0;
+ 
+ MODULE_PARM_DESC(no_wb, "Disable AGP writeback for scratch registers");
+ module_param_named(no_wb, radeon_no_wb, int, 0444);
+@@ -212,6 +215,9 @@
+ MODULE_PARM_DESC(lockup_timeout, "GPU lockup timeout in ms (defaul 10000 = 10 seconds, 0 = disable)");
+ module_param_named(lockup_timeout, radeon_lockup_timeout, int, 0444);
+ 
++MODULE_PARM_DESC(fastfb, "Direct FB access for IGP chips (0 = disable, 1 = enable)");
++module_param_named(fastfb, radeon_fastfb, int, 0444);
++
+ static struct pci_device_id pciidlist[] = {
+ 	radeon_PCI_IDS
+ };
+diff -urN a/drivers/gpu/drm/radeon/radeon_fence.c b/drivers/gpu/drm/radeon/radeon_fence.c
+--- a/drivers/gpu/drm/radeon/radeon_fence.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_fence.c	2013-05-09 22:14:57.213842166 +0200
+@@ -31,9 +31,9 @@
+ #include <linux/seq_file.h>
+ #include <linux/atomic.h>
+ #include <linux/wait.h>
+-#include <linux/list.h>
+ #include <linux/kref.h>
+ #include <linux/slab.h>
++#include <linux/firmware.h>
+ #include <drm/drmP.h>
+ #include "radeon_reg.h"
+ #include "radeon.h"
+@@ -767,8 +767,20 @@
+ 
+ 	radeon_scratch_free(rdev, rdev->fence_drv[ring].scratch_reg);
+ 	if (rdev->wb.use_event || !radeon_ring_supports_scratch_reg(rdev, &rdev->ring[ring])) {
+-		rdev->fence_drv[ring].scratch_reg = 0;
+-		index = R600_WB_EVENT_OFFSET + ring * 4;
++		if (ring != R600_RING_TYPE_UVD_INDEX) {
++			rdev->fence_drv[ring].scratch_reg = 0;
++			index = R600_WB_EVENT_OFFSET + ring * 4;
++			rdev->fence_drv[ring].cpu_addr = &rdev->wb.wb[index/4];
++			rdev->fence_drv[ring].gpu_addr = rdev->wb.gpu_addr +
++							 index;
++
++		} else {
++			/* put fence directly behind firmware */
++			index = ALIGN(rdev->uvd_fw->size, 8);
++			rdev->fence_drv[ring].cpu_addr = rdev->uvd.cpu_addr + index;
++			rdev->fence_drv[ring].gpu_addr = rdev->uvd.gpu_addr + index;
++		}
++
+ 	} else {
+ 		r = radeon_scratch_get(rdev, &rdev->fence_drv[ring].scratch_reg);
+ 		if (r) {
+@@ -778,9 +790,9 @@
+ 		index = RADEON_WB_SCRATCH_OFFSET +
+ 			rdev->fence_drv[ring].scratch_reg -
+ 			rdev->scratch.reg_base;
++		rdev->fence_drv[ring].cpu_addr = &rdev->wb.wb[index/4];
++		rdev->fence_drv[ring].gpu_addr = rdev->wb.gpu_addr + index;
+ 	}
+-	rdev->fence_drv[ring].cpu_addr = &rdev->wb.wb[index/4];
+-	rdev->fence_drv[ring].gpu_addr = rdev->wb.gpu_addr + index;
+ 	radeon_fence_write(rdev, atomic64_read(&rdev->fence_drv[ring].last_seq), ring);
+ 	rdev->fence_drv[ring].initialized = true;
+ 	dev_info(rdev->dev, "fence driver on ring %d use gpu addr 0x%016llx and cpu addr 0x%p\n",
+diff -urN a/drivers/gpu/drm/radeon/radeon_kms.c b/drivers/gpu/drm/radeon/radeon_kms.c
+--- a/drivers/gpu/drm/radeon/radeon_kms.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_kms.c	2013-05-09 22:14:57.210508833 +0200
+@@ -376,6 +376,26 @@
+ 		else
+ 			return -EINVAL;
+ 		break;
++	case RADEON_INFO_FASTFB_WORKING:
++		value = rdev->fastfb_working;
++		break;
++	case RADEON_INFO_RING_WORKING:
++		switch (value) {
++		case RADEON_CS_RING_GFX:
++		case RADEON_CS_RING_COMPUTE:
++			value = rdev->ring[RADEON_RING_TYPE_GFX_INDEX].ready;
++			break;
++		case RADEON_CS_RING_DMA:
++			value = rdev->ring[R600_RING_TYPE_DMA_INDEX].ready;
++			value |= rdev->ring[CAYMAN_RING_TYPE_DMA1_INDEX].ready;
++			break;
++		case RADEON_CS_RING_UVD:
++			value = rdev->ring[R600_RING_TYPE_UVD_INDEX].ready;
++			break;
++		default:
++			return -EINVAL;
++		}
++		break;
+ 	default:
+ 		DRM_DEBUG_KMS("Invalid request %d\n", info->request);
+ 		return -EINVAL;
+@@ -513,6 +533,7 @@
+ 		rdev->hyperz_filp = NULL;
+ 	if (rdev->cmask_filp == file_priv)
+ 		rdev->cmask_filp = NULL;
++	radeon_uvd_free_handles(rdev, file_priv);
+ }
+ 
+ /*
+diff -urN a/drivers/gpu/drm/radeon/radeon_mode.h b/drivers/gpu/drm/radeon/radeon_mode.h
+--- a/drivers/gpu/drm/radeon/radeon_mode.h	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_mode.h	2013-05-09 22:14:57.183842168 +0200
+@@ -492,6 +492,29 @@
+ #define ENCODER_MODE_IS_DP(em) (((em) == ATOM_ENCODER_MODE_DP) || \
+ 				((em) == ATOM_ENCODER_MODE_DP_MST))
+ 
++struct atom_clock_dividers {
++	u32 post_div;
++	union {
++		struct {
++#ifdef __BIG_ENDIAN
++			u32 reserved : 6;
++			u32 whole_fb_div : 12;
++			u32 frac_fb_div : 14;
++#else
++			u32 frac_fb_div : 14;
++			u32 whole_fb_div : 12;
++			u32 reserved : 6;
++#endif
++		};
++		u32 fb_div;
++	};
++	u32 ref_div;
++	bool enable_post_div;
++	bool enable_dithen;
++	u32 vco_mode;
++	u32 real_clock;
++};
++
+ extern enum radeon_tv_std
+ radeon_combios_get_tv_info(struct radeon_device *rdev);
+ extern enum radeon_tv_std
+diff -urN a/drivers/gpu/drm/radeon/radeon_object.c b/drivers/gpu/drm/radeon/radeon_object.c
+--- a/drivers/gpu/drm/radeon/radeon_object.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_object.c	2013-05-09 22:14:57.180508835 +0200
+@@ -321,8 +321,10 @@
+ int radeon_bo_init(struct radeon_device *rdev)
+ {
+ 	/* Add an MTRR for the VRAM */
+-	rdev->mc.vram_mtrr = mtrr_add(rdev->mc.aper_base, rdev->mc.aper_size,
++	if (!rdev->fastfb_working) {
++		rdev->mc.vram_mtrr = mtrr_add(rdev->mc.aper_base, rdev->mc.aper_size,
+ 			MTRR_TYPE_WRCOMB, 1);
++	}
+ 	DRM_INFO("Detected VRAM RAM=%lluM, BAR=%lluM\n",
+ 		rdev->mc.mc_vram_size >> 20,
+ 		(unsigned long long)rdev->mc.aper_size >> 20);
+@@ -339,14 +341,14 @@
+ void radeon_bo_list_add_object(struct radeon_bo_list *lobj,
+ 				struct list_head *head)
+ {
+-	if (lobj->wdomain) {
++	if (lobj->written) {
+ 		list_add(&lobj->tv.head, head);
+ 	} else {
+ 		list_add_tail(&lobj->tv.head, head);
+ 	}
+ }
+ 
+-int radeon_bo_list_validate(struct list_head *head)
++int radeon_bo_list_validate(struct list_head *head, int ring)
+ {
+ 	struct radeon_bo_list *lobj;
+ 	struct radeon_bo *bo;
+@@ -360,15 +362,17 @@
+ 	list_for_each_entry(lobj, head, tv.head) {
+ 		bo = lobj->bo;
+ 		if (!bo->pin_count) {
+-			domain = lobj->wdomain ? lobj->wdomain : lobj->rdomain;
++			domain = lobj->domain;
+ 			
+ 		retry:
+ 			radeon_ttm_placement_from_domain(bo, domain);
++			if (ring == R600_RING_TYPE_UVD_INDEX)
++				radeon_uvd_force_into_uvd_segment(bo);
+ 			r = ttm_bo_validate(&bo->tbo, &bo->placement,
+ 						true, false);
+ 			if (unlikely(r)) {
+-				if (r != -ERESTARTSYS && domain == RADEON_GEM_DOMAIN_VRAM) {
+-					domain |= RADEON_GEM_DOMAIN_GTT;
++				if (r != -ERESTARTSYS && domain != lobj->alt_domain) {
++					domain = lobj->alt_domain;
+ 					goto retry;
+ 				}
+ 				return r;
+diff -urN a/drivers/gpu/drm/radeon/radeon_object.h b/drivers/gpu/drm/radeon/radeon_object.h
+--- a/drivers/gpu/drm/radeon/radeon_object.h	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_object.h	2013-05-09 22:14:57.180508835 +0200
+@@ -128,7 +128,7 @@
+ extern void radeon_bo_fini(struct radeon_device *rdev);
+ extern void radeon_bo_list_add_object(struct radeon_bo_list *lobj,
+ 				struct list_head *head);
+-extern int radeon_bo_list_validate(struct list_head *head);
++extern int radeon_bo_list_validate(struct list_head *head, int ring);
+ extern int radeon_bo_fbdev_mmap(struct radeon_bo *bo,
+ 				struct vm_area_struct *vma);
+ extern int radeon_bo_set_tiling_flags(struct radeon_bo *bo,
+diff -urN a/drivers/gpu/drm/radeon/radeon_ring.c b/drivers/gpu/drm/radeon/radeon_ring.c
+--- a/drivers/gpu/drm/radeon/radeon_ring.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_ring.c	2013-05-09 22:14:57.180508835 +0200
+@@ -368,7 +368,7 @@
+ {
+ 	u32 rptr;
+ 
+-	if (rdev->wb.enabled)
++	if (rdev->wb.enabled && ring != &rdev->ring[R600_RING_TYPE_UVD_INDEX])
+ 		rptr = le32_to_cpu(rdev->wb.wb[ring->rptr_offs/4]);
+ 	else
+ 		rptr = RREG32(ring->rptr_reg);
+@@ -821,18 +821,20 @@
+ 	return 0;
+ }
+ 
+-static int radeon_ring_type_gfx_index = RADEON_RING_TYPE_GFX_INDEX;
+-static int cayman_ring_type_cp1_index = CAYMAN_RING_TYPE_CP1_INDEX;
+-static int cayman_ring_type_cp2_index = CAYMAN_RING_TYPE_CP2_INDEX;
+-static int radeon_ring_type_dma1_index = R600_RING_TYPE_DMA_INDEX;
+-static int radeon_ring_type_dma2_index = CAYMAN_RING_TYPE_DMA1_INDEX;
++static int radeon_gfx_index = RADEON_RING_TYPE_GFX_INDEX;
++static int cayman_cp1_index = CAYMAN_RING_TYPE_CP1_INDEX;
++static int cayman_cp2_index = CAYMAN_RING_TYPE_CP2_INDEX;
++static int radeon_dma1_index = R600_RING_TYPE_DMA_INDEX;
++static int radeon_dma2_index = CAYMAN_RING_TYPE_DMA1_INDEX;
++static int r600_uvd_index = R600_RING_TYPE_UVD_INDEX;
+ 
+ static struct drm_info_list radeon_debugfs_ring_info_list[] = {
+-	{"radeon_ring_gfx", radeon_debugfs_ring_info, 0, &radeon_ring_type_gfx_index},
+-	{"radeon_ring_cp1", radeon_debugfs_ring_info, 0, &cayman_ring_type_cp1_index},
+-	{"radeon_ring_cp2", radeon_debugfs_ring_info, 0, &cayman_ring_type_cp2_index},
+-	{"radeon_ring_dma1", radeon_debugfs_ring_info, 0, &radeon_ring_type_dma1_index},
+-	{"radeon_ring_dma2", radeon_debugfs_ring_info, 0, &radeon_ring_type_dma2_index},
++	{"radeon_ring_gfx", radeon_debugfs_ring_info, 0, &radeon_gfx_index},
++	{"radeon_ring_cp1", radeon_debugfs_ring_info, 0, &cayman_cp1_index},
++	{"radeon_ring_cp2", radeon_debugfs_ring_info, 0, &cayman_cp2_index},
++	{"radeon_ring_dma1", radeon_debugfs_ring_info, 0, &radeon_dma1_index},
++	{"radeon_ring_dma2", radeon_debugfs_ring_info, 0, &radeon_dma2_index},
++	{"radeon_ring_uvd", radeon_debugfs_ring_info, 0, &r600_uvd_index},
+ };
+ 
+ static int radeon_debugfs_sa_info(struct seq_file *m, void *data)
+diff -urN a/drivers/gpu/drm/radeon/radeon_test.c b/drivers/gpu/drm/radeon/radeon_test.c
+--- a/drivers/gpu/drm/radeon/radeon_test.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/radeon_test.c	2013-05-09 22:14:57.180508835 +0200
+@@ -252,6 +252,36 @@
+ 		radeon_do_test_moves(rdev, RADEON_TEST_COPY_BLIT);
+ }
+ 
++static int radeon_test_create_and_emit_fence(struct radeon_device *rdev,
++					     struct radeon_ring *ring,
++					     struct radeon_fence **fence)
++{
++	int r;
++
++	if (ring->idx == R600_RING_TYPE_UVD_INDEX) {
++		r = radeon_uvd_get_create_msg(rdev, ring->idx, 1, NULL);
++		if (r) {
++			DRM_ERROR("Failed to get dummy create msg\n");
++			return r;
++		}
++
++		r = radeon_uvd_get_destroy_msg(rdev, ring->idx, 1, fence);
++		if (r) {
++			DRM_ERROR("Failed to get dummy destroy msg\n");
++			return r;
++		}
++	} else {
++		r = radeon_ring_lock(rdev, ring, 64);
++		if (r) {
++			DRM_ERROR("Failed to lock ring A %d\n", ring->idx);
++			return r;
++		}
++		radeon_fence_emit(rdev, fence, ring->idx);
++		radeon_ring_unlock_commit(rdev, ring);
++	}
++	return 0;
++}
++
+ void radeon_test_ring_sync(struct radeon_device *rdev,
+ 			   struct radeon_ring *ringA,
+ 			   struct radeon_ring *ringB)
+@@ -272,21 +302,24 @@
+ 		goto out_cleanup;
+ 	}
+ 	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+-	r = radeon_fence_emit(rdev, &fence1, ringA->idx);
+-	if (r) {
+-		DRM_ERROR("Failed to emit fence 1\n");
+-		radeon_ring_unlock_undo(rdev, ringA);
++	radeon_ring_unlock_commit(rdev, ringA);
++
++	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence1);
++	if (r)
+ 		goto out_cleanup;
+-	}
+-	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+-	r = radeon_fence_emit(rdev, &fence2, ringA->idx);
++
++	r = radeon_ring_lock(rdev, ringA, 64);
+ 	if (r) {
+-		DRM_ERROR("Failed to emit fence 2\n");
+-		radeon_ring_unlock_undo(rdev, ringA);
++		DRM_ERROR("Failed to lock ring A %d\n", ringA->idx);
+ 		goto out_cleanup;
+ 	}
++	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+ 	radeon_ring_unlock_commit(rdev, ringA);
+ 
++	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence2);
++	if (r)
++		goto out_cleanup;
++
+ 	mdelay(1000);
+ 
+ 	if (radeon_fence_signaled(fence1)) {
+@@ -364,27 +397,22 @@
+ 		goto out_cleanup;
+ 	}
+ 	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+-	r = radeon_fence_emit(rdev, &fenceA, ringA->idx);
+-	if (r) {
+-		DRM_ERROR("Failed to emit sync fence 1\n");
+-		radeon_ring_unlock_undo(rdev, ringA);
+-		goto out_cleanup;
+-	}
+ 	radeon_ring_unlock_commit(rdev, ringA);
+ 
++	r = radeon_test_create_and_emit_fence(rdev, ringA, &fenceA);
++	if (r)
++		goto out_cleanup;
++
+ 	r = radeon_ring_lock(rdev, ringB, 64);
+ 	if (r) {
+ 		DRM_ERROR("Failed to lock ring B %d\n", ringB->idx);
+ 		goto out_cleanup;
+ 	}
+ 	radeon_semaphore_emit_wait(rdev, ringB->idx, semaphore);
+-	r = radeon_fence_emit(rdev, &fenceB, ringB->idx);
+-	if (r) {
+-		DRM_ERROR("Failed to create sync fence 2\n");
+-		radeon_ring_unlock_undo(rdev, ringB);
+-		goto out_cleanup;
+-	}
+ 	radeon_ring_unlock_commit(rdev, ringB);
++	r = radeon_test_create_and_emit_fence(rdev, ringB, &fenceB);
++	if (r)
++		goto out_cleanup;
+ 
+ 	mdelay(1000);
+ 
+@@ -393,7 +421,7 @@
+ 		goto out_cleanup;
+ 	}
+ 	if (radeon_fence_signaled(fenceB)) {
+-		DRM_ERROR("Fence A signaled without waiting for semaphore.\n");
++		DRM_ERROR("Fence B signaled without waiting for semaphore.\n");
+ 		goto out_cleanup;
+ 	}
+ 
+diff -urN a/drivers/gpu/drm/radeon/rs690.c b/drivers/gpu/drm/radeon/rs690.c
+--- a/drivers/gpu/drm/radeon/rs690.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/rs690.c	2013-05-09 22:14:57.163842170 +0200
+@@ -148,6 +148,8 @@
+ static void rs690_mc_init(struct radeon_device *rdev)
+ {
+ 	u64 base;
++	uint32_t h_addr, l_addr;
++	unsigned long long k8_addr;
+ 
+ 	rs400_gart_adjust_size(rdev);
+ 	rdev->mc.vram_is_ddr = true;
+@@ -160,6 +162,27 @@
+ 	base = RREG32_MC(R_000100_MCCFG_FB_LOCATION);
+ 	base = G_000100_MC_FB_START(base) << 16;
+ 	rdev->mc.igp_sideport_enabled = radeon_atombios_sideport_present(rdev);
++
++	/* Use K8 direct mapping for fast fb access. */ 
++	rdev->fastfb_working = false;
++	h_addr = G_00005F_K8_ADDR_EXT(RREG32_MC(R_00005F_MC_MISC_UMA_CNTL));
++	l_addr = RREG32_MC(R_00001E_K8_FB_LOCATION);
++	k8_addr = ((unsigned long long)h_addr) << 32 | l_addr;
++#if defined(CONFIG_X86_32) && !defined(CONFIG_X86_PAE)
++	if (k8_addr + rdev->mc.visible_vram_size < 0x100000000ULL)	
++#endif
++	{
++		/* FastFB shall be used with UMA memory. Here it is simply disabled when sideport 
++		 * memory is present.
++		 */
++		if (rdev->mc.igp_sideport_enabled == false && radeon_fastfb == 1) {
++			DRM_INFO("Direct mapping: aper base at 0x%llx, replaced by direct mapping base 0x%llx.\n", 
++					(unsigned long long)rdev->mc.aper_base, k8_addr);
++			rdev->mc.aper_base = (resource_size_t)k8_addr;
++			rdev->fastfb_working = true;
++		}
++	}  
++
+ 	rs690_pm_info(rdev);
+ 	radeon_vram_location(rdev, &rdev->mc, base);
+ 	rdev->mc.gtt_base_align = rdev->mc.gtt_size - 1;
+diff -urN a/drivers/gpu/drm/radeon/rs690d.h b/drivers/gpu/drm/radeon/rs690d.h
+--- a/drivers/gpu/drm/radeon/rs690d.h	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/rs690d.h	2013-05-09 22:14:57.163842170 +0200
+@@ -29,6 +29,9 @@
+ #define __RS690D_H__
+ 
+ /* Registers */
++#define R_00001E_K8_FB_LOCATION                      0x00001E
++#define R_00005F_MC_MISC_UMA_CNTL                    0x00005F
++#define   G_00005F_K8_ADDR_EXT(x)                      (((x) >> 0) & 0xFF)
+ #define R_000078_MC_INDEX                            0x000078
+ #define   S_000078_MC_IND_ADDR(x)                      (((x) & 0x1FF) << 0)
+ #define   G_000078_MC_IND_ADDR(x)                      (((x) >> 0) & 0x1FF)
+diff -urN a/drivers/gpu/drm/radeon/rv770.c b/drivers/gpu/drm/radeon/rv770.c
+--- a/drivers/gpu/drm/radeon/rv770.c	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/rv770.c	2013-05-09 22:14:57.217175499 +0200
+@@ -42,6 +42,168 @@
+ static void rv770_gpu_init(struct radeon_device *rdev);
+ void rv770_fini(struct radeon_device *rdev);
+ static void rv770_pcie_gen2_enable(struct radeon_device *rdev);
++int evergreen_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk);
++
++static int rv770_uvd_calc_post_div(unsigned target_freq,
++				   unsigned vco_freq,
++				   unsigned *div)
++{
++	/* Fclk = Fvco / PDIV */
++	*div = vco_freq / target_freq;
++
++	/* we alway need a frequency less than or equal the target */
++	if ((vco_freq / *div) > target_freq)
++		*div += 1;
++
++	/* out of range ? */
++	if (*div > 30)
++		return -1; /* forget it */
++
++	*div -= 1;
++	return vco_freq / (*div + 1);
++}
++
++static int rv770_uvd_send_upll_ctlreq(struct radeon_device *rdev)
++{
++	unsigned i;
++
++	/* assert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_CTLREQ_MASK, ~UPLL_CTLREQ_MASK);
++
++	/* wait for CTLACK and CTLACK2 to get asserted */
++	for (i = 0; i < 100; ++i) {
++		uint32_t mask = UPLL_CTLACK_MASK | UPLL_CTLACK2_MASK;
++		if ((RREG32(CG_UPLL_FUNC_CNTL) & mask) == mask)
++			break;
++		mdelay(10);
++	}
++	if (i == 100)
++		return -ETIMEDOUT;
++
++	/* deassert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_CTLREQ_MASK);
++
++	return 0;
++}
++
++int rv770_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
++{
++	/* start off with something large */
++	int optimal_diff_score = 0x7FFFFFF;
++	unsigned optimal_fb_div = 0, optimal_vclk_div = 0;
++	unsigned optimal_dclk_div = 0, optimal_vco_freq = 0;
++	unsigned vco_freq, vco_min = 50000, vco_max = 160000;
++	unsigned ref_freq = rdev->clock.spll.reference_freq;
++	int r;
++
++	/* RV740 uses evergreen uvd clk programming */
++	if (rdev->family == CHIP_RV740)
++		return evergreen_set_uvd_clocks(rdev, vclk, dclk);
++
++	/* bypass vclk and dclk with bclk */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		 VCLK_SRC_SEL(1) | DCLK_SRC_SEL(1),
++		 ~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	if (!vclk || !dclk) {
++		/* keep the Bypass mode, put PLL to sleep */
++		WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_SLEEP_MASK, ~UPLL_SLEEP_MASK);
++		return 0;
++	}
++
++	/* loop through vco from low to high */
++	vco_min = max(max(vco_min, vclk), dclk);
++	for (vco_freq = vco_min; vco_freq <= vco_max; vco_freq += 500) {
++		uint64_t fb_div = (uint64_t)vco_freq * 43663;
++		int calc_clk, diff_score, diff_vclk, diff_dclk;
++		unsigned vclk_div, dclk_div;
++
++		do_div(fb_div, ref_freq);
++		fb_div |= 1;
++
++		/* fb div out of range ? */
++		if (fb_div > 0x03FFFFFF)
++			break; /* it can oly get worse */
++
++		/* calc vclk with current vco freq. */
++		calc_clk = rv770_uvd_calc_post_div(vclk, vco_freq, &vclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_vclk = vclk - calc_clk;
++
++		/* calc dclk with current vco freq. */
++		calc_clk = rv770_uvd_calc_post_div(dclk, vco_freq, &dclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_dclk = dclk - calc_clk;
++
++		/* determine if this vco setting is better than current optimal settings */
++		diff_score = abs(diff_vclk) + abs(diff_dclk);
++		if (diff_score < optimal_diff_score) {
++			optimal_fb_div = fb_div;
++			optimal_vclk_div = vclk_div;
++			optimal_dclk_div = dclk_div;
++			optimal_vco_freq = vco_freq;
++			optimal_diff_score = diff_score;
++			if (optimal_diff_score == 0)
++				break; /* it can't get better than this */
++		}
++	}
++
++	/* set UPLL_FB_DIV to 0x50000 */
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, UPLL_FB_DIV(0x50000), ~UPLL_FB_DIV_MASK);
++
++	/* deassert UPLL_RESET and UPLL_SLEEP */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~(UPLL_RESET_MASK | UPLL_SLEEP_MASK));
++
++	/* assert BYPASS EN and FB_DIV[0] <- ??? why? */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_BYPASS_EN_MASK, ~UPLL_BYPASS_EN_MASK);
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, UPLL_FB_DIV(1), ~UPLL_FB_DIV(1));
++
++	r = rv770_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* assert PLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_RESET_MASK, ~UPLL_RESET_MASK);
++
++	/* set the required FB_DIV, REF_DIV, Post divder values */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_REF_DIV(1), ~UPLL_REF_DIV_MASK);
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		 UPLL_SW_HILEN(optimal_vclk_div >> 1) |
++		 UPLL_SW_LOLEN((optimal_vclk_div >> 1) + (optimal_vclk_div & 1)) |
++		 UPLL_SW_HILEN2(optimal_dclk_div >> 1) |
++		 UPLL_SW_LOLEN2((optimal_dclk_div >> 1) + (optimal_dclk_div & 1)),
++		 ~UPLL_SW_MASK);
++
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, UPLL_FB_DIV(optimal_fb_div),
++		 ~UPLL_FB_DIV_MASK);
++
++	/* give the PLL some time to settle */
++	mdelay(15);
++
++	/* deassert PLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_RESET_MASK);
++
++	mdelay(15);
++
++	/* deassert BYPASS EN and FB_DIV[0] <- ??? why? */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_BYPASS_EN_MASK);
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, 0, ~UPLL_FB_DIV(1));
++
++	r = rv770_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* switch VCLK and DCLK selection */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		 VCLK_SRC_SEL(2) | DCLK_SRC_SEL(2),
++		 ~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	mdelay(100);
++
++	return 0;
++}
+ 
+ #define PCIE_BUS_CLK                10000
+ #define TCLK                        (PCIE_BUS_CLK / 10)
+@@ -68,6 +230,105 @@
+ 	return reference_clock;
+ }
+ 
++int rv770_uvd_resume(struct radeon_device *rdev)
++{
++	uint64_t addr;
++	uint32_t chip_id, size;
++	int r;
++
++	r = radeon_uvd_resume(rdev);
++	if (r)
++		return r;
++
++	/* programm the VCPU memory controller bits 0-27 */
++	addr = rdev->uvd.gpu_addr >> 3;
++	size = RADEON_GPU_PAGE_ALIGN(rdev->uvd_fw->size + 4) >> 3;
++	WREG32(UVD_VCPU_CACHE_OFFSET0, addr);
++	WREG32(UVD_VCPU_CACHE_SIZE0, size);
++
++	addr += size;
++	size = RADEON_UVD_STACK_SIZE >> 3;
++	WREG32(UVD_VCPU_CACHE_OFFSET1, addr);
++	WREG32(UVD_VCPU_CACHE_SIZE1, size);
++
++	addr += size;
++	size = RADEON_UVD_HEAP_SIZE >> 3;
++	WREG32(UVD_VCPU_CACHE_OFFSET2, addr);
++	WREG32(UVD_VCPU_CACHE_SIZE2, size);
++
++	/* bits 28-31 */
++	addr = (rdev->uvd.gpu_addr >> 28) & 0xF;
++	WREG32(UVD_LMI_ADDR_EXT, (addr << 12) | (addr << 0));
++
++	/* bits 32-39 */
++	addr = (rdev->uvd.gpu_addr >> 32) & 0xFF;
++	WREG32(UVD_LMI_EXT40_ADDR, addr | (0x9 << 16) | (0x1 << 31));
++
++	/* tell firmware which hardware it is running on */
++	switch (rdev->family) {
++	default:
++		return -EINVAL;
++	case CHIP_RV710:
++		chip_id = 0x01000005;
++		break;
++	case CHIP_RV730:
++		chip_id = 0x01000006;
++		break;
++	case CHIP_RV740:
++		chip_id = 0x01000007;
++		break;
++	case CHIP_CYPRESS:
++	case CHIP_HEMLOCK:
++		chip_id = 0x01000008;
++		break;
++	case CHIP_JUNIPER:
++		chip_id = 0x01000009;
++		break;
++	case CHIP_REDWOOD:
++		chip_id = 0x0100000a;
++		break;
++	case CHIP_CEDAR:
++		chip_id = 0x0100000b;
++		break;
++	case CHIP_SUMO:
++		chip_id = 0x0100000c;
++		break;
++	case CHIP_SUMO2:
++		chip_id = 0x0100000d;
++		break;
++	case CHIP_PALM:
++		chip_id = 0x0100000e;
++		break;
++	case CHIP_CAYMAN:
++		chip_id = 0x0100000f;
++		break;
++	case CHIP_BARTS:
++		chip_id = 0x01000010;
++		break;
++	case CHIP_TURKS:
++		chip_id = 0x01000011;
++		break;
++	case CHIP_CAICOS:
++		chip_id = 0x01000012;
++		break;
++	case CHIP_TAHITI:
++		chip_id = 0x01000014;
++		break;
++	case CHIP_VERDE:
++		chip_id = 0x01000015;
++		break;
++	case CHIP_PITCAIRN:
++		chip_id = 0x01000016;
++		break;
++	case CHIP_ARUBA:
++		chip_id = 0x01000017;
++		break;
++	}
++	WREG32(UVD_VCPU_CHIP_ID, chip_id);
++
++	return 0;
++}
++
+ u32 rv770_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
+ {
+ 	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
+@@ -611,6 +872,11 @@
+ 	WREG32(HDP_TILING_CONFIG, (gb_tiling_config & 0xffff));
+ 	WREG32(DMA_TILING_CONFIG, (gb_tiling_config & 0xffff));
+ 	WREG32(DMA_TILING_CONFIG2, (gb_tiling_config & 0xffff));
++	if (rdev->family == CHIP_RV730) {
++		WREG32(UVD_UDEC_DB_TILING_CONFIG, (gb_tiling_config & 0xffff));
++		WREG32(UVD_UDEC_DBW_TILING_CONFIG, (gb_tiling_config & 0xffff));
++		WREG32(UVD_UDEC_TILING_CONFIG, (gb_tiling_config & 0xffff));
++	}
+ 
+ 	WREG32(CGTS_SYS_TCC_DISABLE, 0);
+ 	WREG32(CGTS_TCC_DISABLE, 0);
+@@ -1040,6 +1306,17 @@
+ 		return r;
+ 	}
+ 
++	r = rv770_uvd_resume(rdev);
++	if (!r) {
++		r = radeon_fence_driver_start_ring(rdev,
++						   R600_RING_TYPE_UVD_INDEX);
++		if (r)
++			dev_err(rdev->dev, "UVD fences init error (%d).\n", r);
++	}
++
++	if (r)
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size = 0;
++
+ 	/* Enable IRQ */
+ 	r = r600_irq_init(rdev);
+ 	if (r) {
+@@ -1074,6 +1351,19 @@
+ 	if (r)
+ 		return r;
+ 
++	ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++	if (ring->ring_size) {
++		r = radeon_ring_init(rdev, ring, ring->ring_size,
++				     R600_WB_UVD_RPTR_OFFSET,
++				     UVD_RBC_RB_RPTR, UVD_RBC_RB_WPTR,
++				     0, 0xfffff, RADEON_CP_PACKET2);
++		if (!r)
++			r = r600_uvd_init(rdev);
++
++		if (r)
++			DRM_ERROR("radeon: failed initializing UVD (%d).\n", r);
++	}
++
+ 	r = radeon_ib_pool_init(rdev);
+ 	if (r) {
+ 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
+@@ -1115,6 +1405,7 @@
+ int rv770_suspend(struct radeon_device *rdev)
+ {
+ 	r600_audio_fini(rdev);
++	radeon_uvd_suspend(rdev);
+ 	r700_cp_stop(rdev);
+ 	r600_dma_stop(rdev);
+ 	r600_irq_suspend(rdev);
+@@ -1190,6 +1481,13 @@
+ 	rdev->ring[R600_RING_TYPE_DMA_INDEX].ring_obj = NULL;
+ 	r600_ring_init(rdev, &rdev->ring[R600_RING_TYPE_DMA_INDEX], 64 * 1024);
+ 
++	r = radeon_uvd_init(rdev);
++	if (!r) {
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_obj = NULL;
++		r600_ring_init(rdev, &rdev->ring[R600_RING_TYPE_UVD_INDEX],
++			       4096);
++	}
++
+ 	rdev->ih.ring_obj = NULL;
+ 	r600_ih_ring_init(rdev, 64 * 1024);
+ 
+@@ -1224,6 +1522,7 @@
+ 	radeon_ib_pool_fini(rdev);
+ 	radeon_irq_kms_fini(rdev);
+ 	rv770_pcie_gart_fini(rdev);
++	radeon_uvd_fini(rdev);
+ 	r600_vram_scratch_fini(rdev);
+ 	radeon_gem_fini(rdev);
+ 	radeon_fence_driver_fini(rdev);
+diff -urN a/drivers/gpu/drm/radeon/rv770d.h b/drivers/gpu/drm/radeon/rv770d.h
+--- a/drivers/gpu/drm/radeon/rv770d.h	2013-05-09 22:13:14.647184583 +0200
++++ b/drivers/gpu/drm/radeon/rv770d.h	2013-05-09 22:14:57.210508833 +0200
+@@ -38,6 +38,30 @@
+ #define R7XX_MAX_PIPES             8
+ #define R7XX_MAX_PIPES_MASK        0xff
+ 
++/* discrete uvd clocks */
++#define CG_UPLL_FUNC_CNTL				0x718
++#	define UPLL_RESET_MASK				0x00000001
++#	define UPLL_SLEEP_MASK				0x00000002
++#	define UPLL_BYPASS_EN_MASK			0x00000004
++#	define UPLL_CTLREQ_MASK				0x00000008
++#	define UPLL_REF_DIV(x)				((x) << 16)
++#	define UPLL_REF_DIV_MASK			0x001F0000
++#	define UPLL_CTLACK_MASK				0x40000000
++#	define UPLL_CTLACK2_MASK			0x80000000
++#define CG_UPLL_FUNC_CNTL_2				0x71c
++#	define UPLL_SW_HILEN(x)				((x) << 0)
++#	define UPLL_SW_LOLEN(x)				((x) << 4)
++#	define UPLL_SW_HILEN2(x)			((x) << 8)
++#	define UPLL_SW_LOLEN2(x)			((x) << 12)
++#	define UPLL_SW_MASK				0x0000FFFF
++#	define VCLK_SRC_SEL(x)				((x) << 20)
++#	define VCLK_SRC_SEL_MASK			0x01F00000
++#	define DCLK_SRC_SEL(x)				((x) << 25)
++#	define DCLK_SRC_SEL_MASK			0x3E000000
++#define CG_UPLL_FUNC_CNTL_3				0x720
++#	define UPLL_FB_DIV(x)				((x) << 0)
++#	define UPLL_FB_DIV_MASK				0x01FFFFFF
++
+ /* Registers */
+ #define	CB_COLOR0_BASE					0x28040
+ #define	CB_COLOR1_BASE					0x28044
+@@ -112,6 +136,11 @@
+ #define DMA_TILING_CONFIG                               0x3ec8
+ #define DMA_TILING_CONFIG2                              0xd0b8
+ 
++/* RV730 only */
++#define UVD_UDEC_TILING_CONFIG                          0xef40
++#define UVD_UDEC_DB_TILING_CONFIG                       0xef44
++#define UVD_UDEC_DBW_TILING_CONFIG                      0xef48
++
+ #define	GC_USER_SHADER_PIPE_CONFIG			0x8954
+ #define		INACTIVE_QD_PIPES(x)				((x) << 8)
+ #define		INACTIVE_QD_PIPES_MASK				0x0000FF00
+@@ -671,4 +700,18 @@
+ #       define TARGET_LINK_SPEED_MASK                     (0xf << 0)
+ #       define SELECTABLE_DEEMPHASIS                      (1 << 6)
+ 
++/* UVD */
++#define UVD_LMI_EXT40_ADDR				0xf498
++#define UVD_VCPU_CHIP_ID				0xf4d4
++#define UVD_VCPU_CACHE_OFFSET0				0xf4d8
++#define UVD_VCPU_CACHE_SIZE0				0xf4dc
++#define UVD_VCPU_CACHE_OFFSET1				0xf4e0
++#define UVD_VCPU_CACHE_SIZE1				0xf4e4
++#define UVD_VCPU_CACHE_OFFSET2				0xf4e8
++#define UVD_VCPU_CACHE_SIZE2				0xf4ec
++#define UVD_LMI_ADDR_EXT				0xf594
++
++#define UVD_RBC_RB_RPTR					0xf690
++#define UVD_RBC_RB_WPTR					0xf694
++
+ #endif
+diff -urN a/drivers/gpu/drm/radeon/si.c b/drivers/gpu/drm/radeon/si.c
+--- a/drivers/gpu/drm/radeon/si.c	2013-05-09 22:13:14.650517916 +0200
++++ b/drivers/gpu/drm/radeon/si.c	2013-05-09 22:14:57.220508832 +0200
+@@ -1768,6 +1768,9 @@
+ 	WREG32(HDP_ADDR_CONFIG, gb_addr_config);
+ 	WREG32(DMA_TILING_CONFIG + DMA0_REGISTER_OFFSET, gb_addr_config);
+ 	WREG32(DMA_TILING_CONFIG + DMA1_REGISTER_OFFSET, gb_addr_config);
++	WREG32(UVD_UDEC_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DB_ADDR_CONFIG, gb_addr_config);
++	WREG32(UVD_UDEC_DBW_ADDR_CONFIG, gb_addr_config);
+ 
+ 	si_tiling_mode_table_init(rdev);
+ 
+@@ -4372,6 +4375,16 @@
+ 		return r;
+ 	}
+ 
++	r = rv770_uvd_resume(rdev);
++	if (!r) {
++		r = radeon_fence_driver_start_ring(rdev,
++						   R600_RING_TYPE_UVD_INDEX);
++		if (r)
++			dev_err(rdev->dev, "UVD fences init error (%d).\n", r);
++	}
++	if (r)
++		rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_size = 0;
++
+ 	/* Enable IRQ */
+ 	r = si_irq_init(rdev);
+ 	if (r) {
+@@ -4429,6 +4442,18 @@
+ 	if (r)
+ 		return r;
+ 
++	ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++	if (ring->ring_size) {
++		r = radeon_ring_init(rdev, ring, ring->ring_size,
++				     R600_WB_UVD_RPTR_OFFSET,
++				     UVD_RBC_RB_RPTR, UVD_RBC_RB_WPTR,
++				     0, 0xfffff, RADEON_CP_PACKET2);
++		if (!r)
++			r = r600_uvd_init(rdev);
++		if (r)
++			DRM_ERROR("radeon: failed initializing UVD (%d).\n", r);
++	}
++
+ 	r = radeon_ib_pool_init(rdev);
+ 	if (r) {
+ 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
+@@ -4472,6 +4497,8 @@
+ 	radeon_vm_manager_fini(rdev);
+ 	si_cp_enable(rdev, false);
+ 	cayman_dma_stop(rdev);
++	r600_uvd_rbc_stop(rdev);
++	radeon_uvd_suspend(rdev);
+ 	si_irq_suspend(rdev);
+ 	radeon_wb_disable(rdev);
+ 	si_pcie_gart_disable(rdev);
+@@ -4557,6 +4584,13 @@
+ 	ring->ring_obj = NULL;
+ 	r600_ring_init(rdev, ring, 64 * 1024);
+ 
++	r = radeon_uvd_init(rdev);
++	if (!r) {
++		ring = &rdev->ring[R600_RING_TYPE_UVD_INDEX];
++		ring->ring_obj = NULL;
++		r600_ring_init(rdev, ring, 4096);
++	}
++
+ 	rdev->ih.ring_obj = NULL;
+ 	r600_ih_ring_init(rdev, 64 * 1024);
+ 
+@@ -4605,6 +4639,7 @@
+ 	radeon_vm_manager_fini(rdev);
+ 	radeon_ib_pool_fini(rdev);
+ 	radeon_irq_kms_fini(rdev);
++	radeon_uvd_fini(rdev);
+ 	si_pcie_gart_fini(rdev);
+ 	r600_vram_scratch_fini(rdev);
+ 	radeon_gem_fini(rdev);
+@@ -4634,3 +4669,176 @@
+ 	mutex_unlock(&rdev->gpu_clock_mutex);
+ 	return clock;
+ }
++
++static int si_uvd_calc_post_div(unsigned target_freq,
++				unsigned vco_freq,
++				unsigned *div)
++{
++	/* target larger than vco frequency ? */
++	if (vco_freq < target_freq)
++		return -1; /* forget it */
++
++	/* Fclk = Fvco / PDIV */
++	*div = vco_freq / target_freq;
++
++	/* we alway need a frequency less than or equal the target */
++	if ((vco_freq / *div) > target_freq)
++		*div += 1;
++
++	/* dividers above 5 must be even */
++	if (*div > 5 && *div % 2)
++		*div += 1;
++
++	/* out of range ? */
++	if (*div >= 128)
++		return -1; /* forget it */
++
++	return vco_freq / *div;
++}
++
++static int si_uvd_send_upll_ctlreq(struct radeon_device *rdev)
++{
++	unsigned i;
++
++	/* assert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_CTLREQ_MASK, ~UPLL_CTLREQ_MASK);
++
++	/* wait for CTLACK and CTLACK2 to get asserted */
++	for (i = 0; i < 100; ++i) {
++		uint32_t mask = UPLL_CTLACK_MASK | UPLL_CTLACK2_MASK;
++		if ((RREG32(CG_UPLL_FUNC_CNTL) & mask) == mask)
++			break;
++		mdelay(10);
++	}
++	if (i == 100)
++		return -ETIMEDOUT;
++
++	/* deassert UPLL_CTLREQ */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_CTLREQ_MASK);
++
++	return 0;
++}
++
++int si_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
++{
++	/* start off with something large */
++	int optimal_diff_score = 0x7FFFFFF;
++	unsigned optimal_fb_div = 0, optimal_vclk_div = 0;
++	unsigned optimal_dclk_div = 0, optimal_vco_freq = 0;
++	unsigned vco_freq;
++	int r;
++
++	/* bypass vclk and dclk with bclk */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		VCLK_SRC_SEL(1) | DCLK_SRC_SEL(1),
++		~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	/* put PLL in bypass mode */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_BYPASS_EN_MASK, ~UPLL_BYPASS_EN_MASK);
++
++	if (!vclk || !dclk) {
++		/* keep the Bypass mode, put PLL to sleep */
++		WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_SLEEP_MASK, ~UPLL_SLEEP_MASK);
++		return 0;
++	}
++
++	/* loop through vco from low to high */
++	for (vco_freq = 125000; vco_freq <= 250000; vco_freq += 100) {
++		unsigned fb_div = vco_freq / rdev->clock.spll.reference_freq * 16384;
++		int calc_clk, diff_score, diff_vclk, diff_dclk;
++		unsigned vclk_div, dclk_div;
++
++		/* fb div out of range ? */
++		if (fb_div > 0x03FFFFFF)
++			break; /* it can oly get worse */
++
++		/* calc vclk with current vco freq. */
++		calc_clk = si_uvd_calc_post_div(vclk, vco_freq, &vclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_vclk = vclk - calc_clk;
++
++		/* calc dclk with current vco freq. */
++		calc_clk = si_uvd_calc_post_div(dclk, vco_freq, &dclk_div);
++		if (calc_clk == -1)
++			break; /* vco is too big, it has to stop. */
++		diff_dclk = dclk - calc_clk;
++
++		/* determine if this vco setting is better than current optimal settings */
++		diff_score = abs(diff_vclk) + abs(diff_dclk);
++		if (diff_score < optimal_diff_score) {
++			optimal_fb_div = fb_div;
++			optimal_vclk_div = vclk_div;
++			optimal_dclk_div = dclk_div;
++			optimal_vco_freq = vco_freq;
++			optimal_diff_score = diff_score;
++			if (optimal_diff_score == 0)
++				break; /* it can't get better than this */
++		}
++	}
++
++	/* set RESET_ANTI_MUX to 0 */
++	WREG32_P(CG_UPLL_FUNC_CNTL_5, 0, ~RESET_ANTI_MUX_MASK);
++
++	/* set VCO_MODE to 1 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_VCO_MODE_MASK, ~UPLL_VCO_MODE_MASK);
++
++	/* toggle UPLL_SLEEP to 1 then back to 0 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_SLEEP_MASK, ~UPLL_SLEEP_MASK);
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_SLEEP_MASK);
++
++	/* deassert UPLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_RESET_MASK);
++
++	mdelay(1);
++
++	r = si_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* assert UPLL_RESET again */
++	WREG32_P(CG_UPLL_FUNC_CNTL, UPLL_RESET_MASK, ~UPLL_RESET_MASK);
++
++	/* disable spread spectrum. */
++	WREG32_P(CG_UPLL_SPREAD_SPECTRUM, 0, ~SSEN_MASK);
++
++	/* set feedback divider */
++	WREG32_P(CG_UPLL_FUNC_CNTL_3, UPLL_FB_DIV(optimal_fb_div), ~UPLL_FB_DIV_MASK);
++
++	/* set ref divider to 0 */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_REF_DIV_MASK);
++
++	if (optimal_vco_freq < 187500)
++		WREG32_P(CG_UPLL_FUNC_CNTL_4, 0, ~UPLL_SPARE_ISPARE9);
++	else
++		WREG32_P(CG_UPLL_FUNC_CNTL_4, UPLL_SPARE_ISPARE9, ~UPLL_SPARE_ISPARE9);
++
++	/* set PDIV_A and PDIV_B */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		UPLL_PDIV_A(optimal_vclk_div) | UPLL_PDIV_B(optimal_dclk_div),
++		~(UPLL_PDIV_A_MASK | UPLL_PDIV_B_MASK));
++
++	/* give the PLL some time to settle */
++	mdelay(15);
++
++	/* deassert PLL_RESET */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_RESET_MASK);
++
++	mdelay(15);
++
++	/* switch from bypass mode to normal mode */
++	WREG32_P(CG_UPLL_FUNC_CNTL, 0, ~UPLL_BYPASS_EN_MASK);
++
++	r = si_uvd_send_upll_ctlreq(rdev);
++	if (r)
++		return r;
++
++	/* switch VCLK and DCLK selection */
++	WREG32_P(CG_UPLL_FUNC_CNTL_2,
++		VCLK_SRC_SEL(2) | DCLK_SRC_SEL(2),
++		~(VCLK_SRC_SEL_MASK | DCLK_SRC_SEL_MASK));
++
++	mdelay(100);
++
++	return 0;
++}
+diff -urN a/drivers/gpu/drm/radeon/sid.h b/drivers/gpu/drm/radeon/sid.h
+--- a/drivers/gpu/drm/radeon/sid.h	2013-05-09 22:13:14.650517916 +0200
++++ b/drivers/gpu/drm/radeon/sid.h	2013-05-09 22:14:57.210508833 +0200
+@@ -29,6 +29,35 @@
+ #define TAHITI_GB_ADDR_CONFIG_GOLDEN        0x12011003
+ #define VERDE_GB_ADDR_CONFIG_GOLDEN         0x12010002
+ 
++/* discrete uvd clocks */
++#define	CG_UPLL_FUNC_CNTL				0x634
++#	define UPLL_RESET_MASK				0x00000001
++#	define UPLL_SLEEP_MASK				0x00000002
++#	define UPLL_BYPASS_EN_MASK			0x00000004
++#	define UPLL_CTLREQ_MASK				0x00000008
++#	define UPLL_VCO_MODE_MASK			0x00000600
++#	define UPLL_REF_DIV_MASK			0x001F0000
++#	define UPLL_CTLACK_MASK				0x40000000
++#	define UPLL_CTLACK2_MASK			0x80000000
++#define	CG_UPLL_FUNC_CNTL_2				0x638
++#	define UPLL_PDIV_A(x)				((x) << 0)
++#	define UPLL_PDIV_A_MASK				0x0000007F
++#	define UPLL_PDIV_B(x)				((x) << 8)
++#	define UPLL_PDIV_B_MASK				0x00007F00
++#	define VCLK_SRC_SEL(x)				((x) << 20)
++#	define VCLK_SRC_SEL_MASK			0x01F00000
++#	define DCLK_SRC_SEL(x)				((x) << 25)
++#	define DCLK_SRC_SEL_MASK			0x3E000000
++#define	CG_UPLL_FUNC_CNTL_3				0x63C
++#	define UPLL_FB_DIV(x)				((x) << 0)
++#	define UPLL_FB_DIV_MASK				0x01FFFFFF
++#define	CG_UPLL_FUNC_CNTL_4                             0x644
++#	define UPLL_SPARE_ISPARE9			0x00020000
++#define	CG_UPLL_FUNC_CNTL_5				0x648
++#	define RESET_ANTI_MUX_MASK			0x00000200
++#define	CG_UPLL_SPREAD_SPECTRUM				0x650
++#	define SSEN_MASK				0x00000001
++
+ #define	CG_MULT_THERMAL_STATUS					0x714
+ #define		ASIC_MAX_TEMP(x)				((x) << 0)
+ #define		ASIC_MAX_TEMP_MASK				0x000001ff
+@@ -798,6 +827,15 @@
+ #       define THREAD_TRACE_FINISH                      (55 << 0)
+ 
+ /*
++ * UVD
++ */
++#define UVD_UDEC_ADDR_CONFIG				0xEF4C
++#define UVD_UDEC_DB_ADDR_CONFIG				0xEF50
++#define UVD_UDEC_DBW_ADDR_CONFIG			0xEF54
++#define UVD_RBC_RB_RPTR					0xF690
++#define UVD_RBC_RB_WPTR					0xF694
++
++/*
+  * PM4
+  */
+ #define PACKET0(reg, n)	((RADEON_PACKET_TYPE0 << 30) |			\
+diff -urN a/include/uapi/drm/radeon_drm.h b/include/uapi/drm/radeon_drm.h
+--- a/include/uapi/drm/radeon_drm.h	2013-05-09 22:13:14.680517913 +0200
++++ b/include/uapi/drm/radeon_drm.h	2013-05-09 22:14:57.210508833 +0200
+@@ -918,6 +918,7 @@
+ #define RADEON_CS_RING_GFX          0
+ #define RADEON_CS_RING_COMPUTE      1
+ #define RADEON_CS_RING_DMA          2
++#define RADEON_CS_RING_UVD          3
+ /* The third dword of RADEON_CHUNK_ID_FLAGS is a sint32 that sets the priority */
+ /* 0 = normal, + = higher priority, - = lower priority */
+ 
+@@ -972,6 +973,11 @@
+ #define RADEON_INFO_MAX_SE		0x12
+ /* max SH per SE */
+ #define RADEON_INFO_MAX_SH_PER_SE	0x13
++/* fast fb access is enabled */
++#define RADEON_INFO_FASTFB_WORKING	0x14
++/* query if a RADEON_CS_RING_* submission is supported */
++#define RADEON_INFO_RING_WORKING	0x15
++
+ 
+ struct drm_radeon_info {
+ 	uint32_t		request;
+diff -urN /dev/null b/include/uapi/drm/radeon_uvd.c
+--- /dev/null 2013-05-09 19:51:08.911273005 +0200
++++ b/drivers/gpu/drm/radeon/radeon_uvd.c 2013-05-10 01:45:56.542720982 +0200
+@@ -0,0 +1,694 @@
++/*
++ * Copyright 2011 Advanced Micro Devices, Inc.
++ * All Rights Reserved.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the
++ * "Software"), to deal in the Software without restriction, including
++ * without limitation the rights to use, copy, modify, merge, publish,
++ * distribute, sub license, and/or sell copies of the Software, and to
++ * permit persons to whom the Software is furnished to do so, subject to
++ * the following conditions:
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
++ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
++ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
++ * USE OR OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * The above copyright notice and this permission notice (including the
++ * next paragraph) shall be included in all copies or substantial portions
++ * of the Software.
++ *
++ */
++/*
++ * Authors:
++ *    Christian König <deathsimple@vodafone.de>
++ */
++
++#include <linux/firmware.h>
++#include <linux/module.h>
++#include <drm/drmP.h>
++#include <drm/drm.h>
++
++#include "radeon.h"
++#include "r600d.h"
++
++/* 1 second timeout */
++#define UVD_IDLE_TIMEOUT_MS  1000
++
++/* Firmware Names */
++#define FIRMWARE_RV710   "radeon/RV710_uvd.bin"
++#define FIRMWARE_CYPRESS "radeon/CYPRESS_uvd.bin"
++#define FIRMWARE_SUMO    "radeon/SUMO_uvd.bin"
++#define FIRMWARE_TAHITI    "radeon/TAHITI_uvd.bin"
++
++MODULE_FIRMWARE(FIRMWARE_RV710);
++MODULE_FIRMWARE(FIRMWARE_CYPRESS);
++MODULE_FIRMWARE(FIRMWARE_SUMO);
++MODULE_FIRMWARE(FIRMWARE_TAHITI);
++
++static void radeon_uvd_idle_work_handler(struct work_struct *work);
++
++int radeon_uvd_init(struct radeon_device *rdev)
++{
++ struct platform_device *pdev;
++ unsigned long bo_size;
++ const char *fw_name;
++ int i, r;
++
++ INIT_DELAYED_WORK(&rdev->uvd.idle_work, radeon_uvd_idle_work_handler);
++
++ pdev = platform_device_register_simple("radeon_uvd", 0, NULL, 0);
++ r = IS_ERR(pdev);
++ if (r) {
++   dev_err(rdev->dev, "radeon_uvd: Failed to register firmware\n");
++   return -EINVAL;
++ }
++
++ switch (rdev->family) {
++ case CHIP_RV710:
++ case CHIP_RV730:
++ case CHIP_RV740:
++   fw_name = FIRMWARE_RV710;
++   break;
++
++ case CHIP_CYPRESS:
++ case CHIP_HEMLOCK:
++ case CHIP_JUNIPER:
++ case CHIP_REDWOOD:
++ case CHIP_CEDAR:
++   fw_name = FIRMWARE_CYPRESS;
++   break;
++
++ case CHIP_SUMO:
++ case CHIP_SUMO2:
++ case CHIP_PALM:
++ case CHIP_CAYMAN:
++ case CHIP_BARTS:
++ case CHIP_TURKS:
++ case CHIP_CAICOS:
++   fw_name = FIRMWARE_SUMO;
++   break;
++
++ case CHIP_TAHITI:
++ case CHIP_VERDE:
++ case CHIP_PITCAIRN:
++ case CHIP_ARUBA:
++   fw_name = FIRMWARE_TAHITI;
++   break;
++
++ default:
++   return -EINVAL;
++ }
++
++ r = request_firmware(&rdev->uvd_fw, fw_name, &pdev->dev);
++ if (r) {
++   dev_err(rdev->dev, "radeon_uvd: Can't load firmware \"%s\"\n",
++     fw_name);
++   platform_device_unregister(pdev);
++   return r;
++ }
++
++ platform_device_unregister(pdev);
++
++ bo_size = RADEON_GPU_PAGE_ALIGN(rdev->uvd_fw->size + 8) +
++     RADEON_UVD_STACK_SIZE + RADEON_UVD_HEAP_SIZE;
++ r = radeon_bo_create(rdev, bo_size, PAGE_SIZE, true,
++          RADEON_GEM_DOMAIN_VRAM, NULL, &rdev->uvd.vcpu_bo);
++ if (r) {
++   dev_err(rdev->dev, "(%d) failed to allocate UVD bo\n", r);
++   return r;
++ }
++
++ r = radeon_uvd_resume(rdev);
++ if (r)
++   return r;
++
++ memset(rdev->uvd.cpu_addr, 0, bo_size);
++ memcpy(rdev->uvd.cpu_addr, rdev->uvd_fw->data, rdev->uvd_fw->size);
++
++ r = radeon_uvd_suspend(rdev);
++ if (r)
++   return r;
++
++ for (i = 0; i < RADEON_MAX_UVD_HANDLES; ++i) {
++   atomic_set(&rdev->uvd.handles[i], 0);
++   rdev->uvd.filp[i] = NULL;
++ }
++
++ return 0;
++}
++
++void radeon_uvd_fini(struct radeon_device *rdev)
++{
++ radeon_uvd_suspend(rdev);
++ radeon_bo_unref(&rdev->uvd.vcpu_bo);
++}
++
++int radeon_uvd_suspend(struct radeon_device *rdev)
++{
++ int r;
++
++ if (rdev->uvd.vcpu_bo == NULL)
++   return 0;
++
++ r = radeon_bo_reserve(rdev->uvd.vcpu_bo, false);
++ if (!r) {
++   radeon_bo_kunmap(rdev->uvd.vcpu_bo);
++   radeon_bo_unpin(rdev->uvd.vcpu_bo);
++   radeon_bo_unreserve(rdev->uvd.vcpu_bo);
++ }
++ return r;
++}
++
++int radeon_uvd_resume(struct radeon_device *rdev)
++{
++ int r;
++
++ if (rdev->uvd.vcpu_bo == NULL)
++   return -EINVAL;
++
++ r = radeon_bo_reserve(rdev->uvd.vcpu_bo, false);
++ if (r) {
++   radeon_bo_unref(&rdev->uvd.vcpu_bo);
++   dev_err(rdev->dev, "(%d) failed to reserve UVD bo\n", r);
++   return r;
++ }
++
++ r = radeon_bo_pin(rdev->uvd.vcpu_bo, RADEON_GEM_DOMAIN_VRAM,
++       &rdev->uvd.gpu_addr);
++ if (r) {
++   radeon_bo_unreserve(rdev->uvd.vcpu_bo);
++   radeon_bo_unref(&rdev->uvd.vcpu_bo);
++   dev_err(rdev->dev, "(%d) UVD bo pin failed\n", r);
++   return r;
++ }
++
++ r = radeon_bo_kmap(rdev->uvd.vcpu_bo, &rdev->uvd.cpu_addr);
++ if (r) {
++   dev_err(rdev->dev, "(%d) UVD map failed\n", r);
++   return r;
++ }
++
++ radeon_bo_unreserve(rdev->uvd.vcpu_bo);
++
++ return 0;
++}
++
++void radeon_uvd_force_into_uvd_segment(struct radeon_bo *rbo)
++{
++ rbo->placement.fpfn = 0 >> PAGE_SHIFT;
++ rbo->placement.lpfn = (256 * 1024 * 1024) >> PAGE_SHIFT;
++}
++
++void radeon_uvd_free_handles(struct radeon_device *rdev, struct drm_file *filp)
++{
++ int i, r;
++ for (i = 0; i < RADEON_MAX_UVD_HANDLES; ++i) {
++   if (rdev->uvd.filp[i] == filp) {
++     uint32_t handle = atomic_read(&rdev->uvd.handles[i]);
++     struct radeon_fence *fence;
++
++     r = radeon_uvd_get_destroy_msg(rdev,
++       R600_RING_TYPE_UVD_INDEX, handle, &fence);
++     if (r) {
++       DRM_ERROR("Error destroying UVD (%d)!\n", r);
++       continue;
++     }
++
++     radeon_fence_wait(fence, false);
++     radeon_fence_unref(&fence);
++
++     rdev->uvd.filp[i] = NULL;
++     atomic_set(&rdev->uvd.handles[i], 0);
++   }
++ }
++}
++
++static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
++{
++ unsigned stream_type = msg[4];
++ unsigned width = msg[6];
++ unsigned height = msg[7];
++ unsigned dpb_size = msg[9];
++ unsigned pitch = msg[28];
++
++ unsigned width_in_mb = width / 16;
++ unsigned height_in_mb = ALIGN(height / 16, 2);
++
++ unsigned image_size, tmp, min_dpb_size;
++
++ image_size = width * height;
++ image_size += image_size / 2;
++ image_size = ALIGN(image_size, 1024);
++
++ switch (stream_type) {
++ case 0: /* H264 */
++
++   /* reference picture buffer */
++   min_dpb_size = image_size * 17;
++
++   /* macroblock context buffer */
++   min_dpb_size += width_in_mb * height_in_mb * 17 * 192;
++
++   /* IT surface buffer */
++   min_dpb_size += width_in_mb * height_in_mb * 32;
++   break;
++
++ case 1: /* VC1 */
++
++   /* reference picture buffer */
++   min_dpb_size = image_size * 3;
++
++   /* CONTEXT_BUFFER */
++   min_dpb_size += width_in_mb * height_in_mb * 128;
++
++   /* IT surface buffer */
++   min_dpb_size += width_in_mb * 64;
++
++   /* DB surface buffer */
++   min_dpb_size += width_in_mb * 128;
++
++   /* BP */
++   tmp = max(width_in_mb, height_in_mb);
++   min_dpb_size += ALIGN(tmp * 7 * 16, 64);
++   break;
++
++ case 3: /* MPEG2 */
++
++   /* reference picture buffer */
++   min_dpb_size = image_size * 3;
++   break;
++
++ case 4: /* MPEG4 */
++
++   /* reference picture buffer */
++   min_dpb_size = image_size * 3;
++
++   /* CM */
++   min_dpb_size += width_in_mb * height_in_mb * 64;
++
++   /* IT surface buffer */
++   min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
++   break;
++
++ default:
++   DRM_ERROR("UVD codec not handled %d!\n", stream_type);
++   return -EINVAL;
++ }
++
++ if (width > pitch) {
++   DRM_ERROR("Invalid UVD decoding target pitch!\n");
++   return -EINVAL;
++ }
++
++ if (dpb_size < min_dpb_size) {
++   DRM_ERROR("Invalid dpb_size in UVD message (%d / %d)!\n",
++       dpb_size, min_dpb_size);
++   return -EINVAL;
++ }
++
++ buf_sizes[0x1] = dpb_size;
++ buf_sizes[0x2] = image_size;
++ return 0;
++}
++
++static int radeon_uvd_cs_msg(struct radeon_cs_parser *p, struct radeon_bo *bo,
++          unsigned offset, unsigned buf_sizes[])
++{
++ int32_t *msg, msg_type, handle;
++ void *ptr;
++
++ int i, r;
++
++ if (offset & 0x3F) {
++   DRM_ERROR("UVD messages must be 64 byte aligned!\n");
++   return -EINVAL;
++ }
++
++ r = radeon_bo_kmap(bo, &ptr);
++ if (r)
++   return r;
++
++ msg = ptr + offset;
++
++ msg_type = msg[1];
++ handle = msg[2];
++
++ if (handle == 0) {
++   DRM_ERROR("Invalid UVD handle!\n");
++   return -EINVAL;
++ }
++
++ if (msg_type == 1) {
++   /* it's a decode msg, calc buffer sizes */
++   r = radeon_uvd_cs_msg_decode(msg, buf_sizes);
++   radeon_bo_kunmap(bo);
++   if (r)
++     return r;
++
++ } else if (msg_type == 2) {
++   /* it's a destroy msg, free the handle */
++   for (i = 0; i < RADEON_MAX_UVD_HANDLES; ++i)
++     atomic_cmpxchg(&p->rdev->uvd.handles[i], handle, 0);
++   radeon_bo_kunmap(bo);
++   return 0;
++ } else {
++   /* it's a create msg, no special handling needed */
++   radeon_bo_kunmap(bo);
++ }
++
++ /* create or decode, validate the handle */
++ for (i = 0; i < RADEON_MAX_UVD_HANDLES; ++i) {
++   if (atomic_read(&p->rdev->uvd.handles[i]) == handle)
++     return 0;
++ }
++
++ /* handle not found try to alloc a new one */
++ for (i = 0; i < RADEON_MAX_UVD_HANDLES; ++i) {
++   if (!atomic_cmpxchg(&p->rdev->uvd.handles[i], 0, handle)) {
++     p->rdev->uvd.filp[i] = p->filp;
++     return 0;
++   }
++ }
++
++ DRM_ERROR("No more free UVD handles!\n");
++ return -EINVAL;
++}
++
++static int radeon_uvd_cs_reloc(struct radeon_cs_parser *p,
++            int data0, int data1,
++            unsigned buf_sizes[])
++{
++ struct radeon_cs_chunk *relocs_chunk;
++ struct radeon_cs_reloc *reloc;
++ unsigned idx, cmd, offset;
++ uint64_t start, end;
++ int r;
++
++ relocs_chunk = &p->chunks[p->chunk_relocs_idx];
++ offset = radeon_get_ib_value(p, data0);
++ idx = radeon_get_ib_value(p, data1);
++ if (idx >= relocs_chunk->length_dw) {
++   DRM_ERROR("Relocs at %d after relocations chunk end %d !\n",
++       idx, relocs_chunk->length_dw);
++   return -EINVAL;
++ }
++
++ reloc = p->relocs_ptr[(idx / 4)];
++ start = reloc->lobj.gpu_offset;
++ end = start + radeon_bo_size(reloc->robj);
++ start += offset;
++
++ p->ib.ptr[data0] = start & 0xFFFFFFFF;
++ p->ib.ptr[data1] = start >> 32;
++
++ cmd = radeon_get_ib_value(p, p->idx) >> 1;
++
++ if (cmd < 0x4) {
++   if ((end - start) < buf_sizes[cmd]) {
++     DRM_ERROR("buffer to small (%d / %d)!\n",
++         (unsigned)(end - start), buf_sizes[cmd]);
++     return -EINVAL;
++   }
++
++ } else if (cmd != 0x100) {
++   DRM_ERROR("invalid UVD command %X!\n", cmd);
++   return -EINVAL;
++ }
++
++ if ((start >> 28) != (end >> 28)) {
++   DRM_ERROR("reloc %LX-%LX crossing 256MB boundary!\n",
++       start, end);
++   return -EINVAL;
++ }
++
++ /* TODO: is this still necessary on NI+ ? */
++ if ((cmd == 0 || cmd == 0x3) &&
++     (start >> 28) != (p->rdev->uvd.gpu_addr >> 28)) {
++   DRM_ERROR("msg/fb buffer %LX-%LX out of 256MB segment!\n",
++       start, end);
++   return -EINVAL;
++ }
++
++ if (cmd == 0) {
++   r = radeon_uvd_cs_msg(p, reloc->robj, offset, buf_sizes);
++   if (r)
++     return r;
++ }
++
++ return 0;
++}
++
++static int radeon_uvd_cs_reg(struct radeon_cs_parser *p,
++          struct radeon_cs_packet *pkt,
++          int *data0, int *data1,
++          unsigned buf_sizes[])
++{
++ int i, r;
++
++ p->idx++;
++ for (i = 0; i <= pkt->count; ++i) {
++   switch (pkt->reg + i*4) {
++   case UVD_GPCOM_VCPU_DATA0:
++     *data0 = p->idx;
++     break;
++   case UVD_GPCOM_VCPU_DATA1:
++     *data1 = p->idx;
++     break;
++   case UVD_GPCOM_VCPU_CMD:
++     r = radeon_uvd_cs_reloc(p, *data0, *data1, buf_sizes);
++     if (r)
++       return r;
++     break;
++   case UVD_ENGINE_CNTL:
++     break;
++   default:
++     DRM_ERROR("Invalid reg 0x%X!\n",
++         pkt->reg + i*4);
++     return -EINVAL;
++   }
++   p->idx++;
++ }
++ return 0;
++}
++
++int radeon_uvd_cs_parse(struct radeon_cs_parser *p)
++{
++ struct radeon_cs_packet pkt;
++ int r, data0 = 0, data1 = 0;
++
++ /* minimum buffer sizes */
++ unsigned buf_sizes[] = {
++   [0x00000000]  = 2048,
++   [0x00000001]  = 32 * 1024 * 1024,
++   [0x00000002]  = 2048 * 1152 * 3,
++   [0x00000003]  = 2048,
++ };
++
++ if (p->chunks[p->chunk_ib_idx].length_dw % 16) {
++   DRM_ERROR("UVD IB length (%d) not 16 dwords aligned!\n",
++       p->chunks[p->chunk_ib_idx].length_dw);
++   return -EINVAL;
++ }
++
++ if (p->chunk_relocs_idx == -1) {
++   DRM_ERROR("No relocation chunk !\n");
++   return -EINVAL;
++ }
++
++
++ do {
++   r = radeon_cs_packet_parse(p, &pkt, p->idx);
++   if (r)
++     return r;
++   switch (pkt.type) {
++   case RADEON_PACKET_TYPE0:
++     r = radeon_uvd_cs_reg(p, &pkt, &data0,
++               &data1, buf_sizes);
++     if (r)
++       return r;
++     break;
++   case RADEON_PACKET_TYPE2:
++     p->idx += pkt.count + 2;
++     break;
++   default:
++     DRM_ERROR("Unknown packet type %d !\n", pkt.type);
++     return -EINVAL;
++   }
++ } while (p->idx < p->chunks[p->chunk_ib_idx].length_dw);
++ return 0;
++}
++
++static int radeon_uvd_send_msg(struct radeon_device *rdev,
++            int ring, struct radeon_bo *bo,
++            struct radeon_fence **fence)
++{
++ struct ttm_validate_buffer tv;
++ struct list_head head;
++ struct radeon_ib ib;
++ uint64_t addr;
++ int i, r;
++
++ memset(&tv, 0, sizeof(tv));
++ tv.bo = &bo->tbo;
++
++ INIT_LIST_HEAD(&head);
++ list_add(&tv.head, &head);
++
++ r = ttm_eu_reserve_buffers(&head);
++ if (r)
++   return r;
++
++ radeon_ttm_placement_from_domain(bo, RADEON_GEM_DOMAIN_VRAM);
++ radeon_uvd_force_into_uvd_segment(bo);
++
++ r = ttm_bo_validate(&bo->tbo, &bo->placement, true, false);
++ if (r) {
++   ttm_eu_backoff_reservation(&head);
++   return r;
++ }
++
++ r = radeon_ib_get(rdev, ring, &ib, NULL, 16);
++ if (r) {
++   ttm_eu_backoff_reservation(&head);
++   return r;
++ }
++
++ addr = radeon_bo_gpu_offset(bo);
++ ib.ptr[0] = PACKET0(UVD_GPCOM_VCPU_DATA0, 0);
++ ib.ptr[1] = addr;
++ ib.ptr[2] = PACKET0(UVD_GPCOM_VCPU_DATA1, 0);
++ ib.ptr[3] = addr >> 32;
++ ib.ptr[4] = PACKET0(UVD_GPCOM_VCPU_CMD, 0);
++ ib.ptr[5] = 0;
++ for (i = 6; i < 16; ++i)
++   ib.ptr[i] = PACKET2(0);
++ ib.length_dw = 16;
++
++ r = radeon_ib_schedule(rdev, &ib, NULL);
++ if (r) {
++   ttm_eu_backoff_reservation(&head);
++   return r;
++ }
++ ttm_eu_fence_buffer_objects(&head, ib.fence);
++
++ if (fence)
++   *fence = radeon_fence_ref(ib.fence);
++
++ radeon_ib_free(rdev, &ib);
++ radeon_bo_unref(&bo);
++ return 0;
++}
++
++/* multiple fence commands without any stream commands in between can
++   crash the vcpu so just try to emmit a dummy create/destroy msg to
++   avoid this */
++int radeon_uvd_get_create_msg(struct radeon_device *rdev, int ring,
++           uint32_t handle, struct radeon_fence **fence)
++{
++ struct radeon_bo *bo;
++ uint32_t *msg;
++ int r, i;
++
++ r = radeon_bo_create(rdev, 1024, PAGE_SIZE, true,
++          RADEON_GEM_DOMAIN_VRAM, NULL, &bo);
++ if (r)
++   return r;
++
++ r = radeon_bo_reserve(bo, false);
++ if (r) {
++   radeon_bo_unref(&bo);
++   return r;
++ }
++
++ r = radeon_bo_kmap(bo, (void **)&msg);
++ if (r) {
++   radeon_bo_unreserve(bo);
++   radeon_bo_unref(&bo);
++   return r;
++ }
++
++ /* stitch together an UVD create msg */
++ msg[0] = 0x00000de4;
++ msg[1] = 0x00000000;
++ msg[2] = handle;
++ msg[3] = 0x00000000;
++ msg[4] = 0x00000000;
++ msg[5] = 0x00000000;
++ msg[6] = 0x00000000;
++ msg[7] = 0x00000780;
++ msg[8] = 0x00000440;
++ msg[9] = 0x00000000;
++ msg[10] = 0x01b37000;
++ for (i = 11; i < 1024; ++i)
++   msg[i] = 0x0;
++
++ radeon_bo_kunmap(bo);
++ radeon_bo_unreserve(bo);
++
++ return radeon_uvd_send_msg(rdev, ring, bo, fence);
++}
++
++int radeon_uvd_get_destroy_msg(struct radeon_device *rdev, int ring,
++            uint32_t handle, struct radeon_fence **fence)
++{
++ struct radeon_bo *bo;
++ uint32_t *msg;
++ int r, i;
++
++ r = radeon_bo_create(rdev, 1024, PAGE_SIZE, true,
++          RADEON_GEM_DOMAIN_VRAM, NULL, &bo);
++ if (r)
++   return r;
++
++ r = radeon_bo_reserve(bo, false);
++ if (r) {
++   radeon_bo_unref(&bo);
++   return r;
++ }
++
++ r = radeon_bo_kmap(bo, (void **)&msg);
++ if (r) {
++   radeon_bo_unreserve(bo);
++   radeon_bo_unref(&bo);
++   return r;
++ }
++
++ /* stitch together an UVD destroy msg */
++ msg[0] = 0x00000de4;
++ msg[1] = 0x00000002;
++ msg[2] = handle;
++ msg[3] = 0x00000000;
++ for (i = 4; i < 1024; ++i)
++   msg[i] = 0x0;
++
++ radeon_bo_kunmap(bo);
++ radeon_bo_unreserve(bo);
++
++ return radeon_uvd_send_msg(rdev, ring, bo, fence);
++}
++
++static void radeon_uvd_idle_work_handler(struct work_struct *work)
++{
++ struct radeon_device *rdev =
++   container_of(work, struct radeon_device, uvd.idle_work.work);
++
++ if (radeon_fence_count_emitted(rdev, R600_RING_TYPE_UVD_INDEX) == 0)
++   radeon_set_uvd_clocks(rdev, 0, 0);
++ else
++   schedule_delayed_work(&rdev->uvd.idle_work,
++             msecs_to_jiffies(UVD_IDLE_TIMEOUT_MS));
++}
++
++void radeon_uvd_note_usage(struct radeon_device *rdev)
++{
++ bool set_clocks = !cancel_delayed_work_sync(&rdev->uvd.idle_work);
++ set_clocks &= schedule_delayed_work(&rdev->uvd.idle_work,
++             msecs_to_jiffies(UVD_IDLE_TIMEOUT_MS));
++ if (set_clocks)
++   radeon_set_uvd_clocks(rdev, 53300, 40000);
++}
