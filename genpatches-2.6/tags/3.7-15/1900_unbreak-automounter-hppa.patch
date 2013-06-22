@@ -1,0 +1,13 @@
+diff --git a/include/uapi/linux/auto_fs.h b/include/uapi/linux/auto_fs.h
+index 77cdba9..d551754 100644
+--- a/include/uapi/linux/auto_fs.h
++++ b/include/uapi/linux/auto_fs.h
+@@ -43,7 +43,7 @@
+  */
+
+ #if defined(__sparc__) || defined(__mips__) || defined(__x86_64__) \
+- || defined(__powerpc__) || defined(__s390__)
++ || defined(__powerpc__) || defined(__s390__) || defined(__hppa__)
+ typedef unsigned int autofs_wqt_t;
+ #else
+ typedef unsigned long autofs_wqt_t;
