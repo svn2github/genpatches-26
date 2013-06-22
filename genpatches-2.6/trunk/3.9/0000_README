@@ -87,11 +87,11 @@ Patch:  1801_block-cgroups-kconfig-build-bits-for-BFQ-v6r2-3.9.patch
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 1 for 3.9: Build, cgroups and kconfig bits
 
-Patch:  1802_block-introduce-the-BFQ-v6r2-I-O-sched-for-3.9.patch           
+Patch:  1802_block-introduce-the-BFQ-v6r2-I-O-sched-for-3.9.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 2 for 3.9: BFQ Scheduler
 
-Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.9.0.patch
+Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.9.0.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 3 for 3.9: Early Queue Merge (EQM)
 

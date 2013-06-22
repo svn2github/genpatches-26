@@ -79,6 +79,10 @@ Patch:  1009_linux-3.7.10.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.7.10
 
+Patch:  1600_CVE-2013-2094-perf_swevent_enabled-OOB-access.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?h=linux-3.8.y&id=ff91fd5bc105f29a34755a6dd6d547c877b7d027
+Desc:   Commit "perf: Treat attr.config as u64 in perf_swevent_init()" applied as a resolution for Gentoo bug #469854, CVE-2013-2094.
+
 Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
