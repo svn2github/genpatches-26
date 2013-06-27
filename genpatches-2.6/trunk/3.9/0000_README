@@ -67,9 +67,9 @@ Patch:  1006_linux-3.9.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.9.7
 
-Patch:  1400_Portage-TTY-transient-pty-write-EIO.patch
-From:   https://git.kernel.org/cgit/linux/kernel/git/gregkh/tty.git/commit/?h=tty-linus&id=7c61c3d8f44d5d822f758754287af644307b4af9
-Desc:   Commit "tty: Fix transient pty write() EIO" applied as a temporary resolution for Gentoo bug #459674.
+Patch:  1007_linux-3.9.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.9.8
 
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
