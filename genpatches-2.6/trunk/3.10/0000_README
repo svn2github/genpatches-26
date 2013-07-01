@@ -63,6 +63,10 @@ Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.9.0.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 3 for 3.9: Early Queue Merge (EQM)
 
+Patch:  1804_block-bfq-remove-cgroups.patch
+From:   Tom Wijsman <TomWij@gentoo.org>, discovered by Justin Lecher <jlec@gentoo.org>.
+Desc:   Remove BFQ cgroups which compilation broke with 3.10, we need to await its author to fix it.
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
