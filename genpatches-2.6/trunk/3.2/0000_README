@@ -240,6 +240,10 @@ Patch:  1510_af_key-fix-info-leaks-in-notify-messages.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a5cc68f3d63306d0d288f31edfc2ae6ef8ecd887
 Desc:   af_key: fix info leaks in notify messages
 
+Patch:  1511_ipv6-ip6_sk_dst_check-must-not-assume-ipv6-dst.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a963a37d384d71ad43b3e9e79d68d42fbe0901f3
+Desc:   ipv6: ip6_sk_dst_check() must not assume ipv6 dst
+
 Patch:  2300_per-pci-device-msi-irq-listing.patch
 From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=da8d1c8ba4dcb16d60be54b233deca9a7cac98dc
 Desc:   Add a per-pci-device subdirectory in sysfs
