@@ -51,21 +51,17 @@ Patch:  1800_memcg-OOM-revert-ZFS-deadlock.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=462066
 Desc:   Revert memcg patches that prevent OOM with too many dirty pages.
 
-Patch:  1801_block-cgroups-kconfig-build-bits-for-BFQ-v6r2-3.9.patch        
+Patch:  1801_block-cgroups-kconfig-build-bits-for-BFQ-v6r2-3.10.patch        
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v6r2 patch 1 for 3.9: Build, cgroups and kconfig bits
+Desc:   BFQ v6r2 patch 1 for 3.10: Build, cgroups and kconfig bits
 
-Patch:  1802_block-introduce-the-BFQ-v6r2-I-O-sched-for-3.9.patch1
+Patch:  1802_block-introduce-the-BFQ-v6r2-I-O-sched-for-3.10.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v6r2 patch 2 for 3.9: BFQ Scheduler
+Desc:   BFQ v6r2 patch 2 for 3.10: BFQ Scheduler
 
-Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.9.0.patch1
+Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.10.0.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v6r2 patch 3 for 3.9: Early Queue Merge (EQM)
-
-Patch:  1804_block-bfq-remove-cgroups.patch
-From:   Tom Wijsman <TomWij@gentoo.org>, discovered by Justin Lecher <jlec@gentoo.org>.
-Desc:   Remove BFQ cgroups which compilation broke with 3.10, we need to await its author to fix it.
+Desc:   BFQ v6r2 patch 3 for 3.10: Early Queue Merge (EQM)
 
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>

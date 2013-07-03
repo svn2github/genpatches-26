@@ -1,9 +1,9 @@
-From c85fc6e997b49039c6580a7257b9773777656d8a Mon Sep 17 00:00:00 2001
+From 2e949c3d4d8ba2af46dcedc80707ebba277d759f Mon Sep 17 00:00:00 2001
 From: Arianna Avanzini <avanzini.arianna@gmail.com>
 Date: Thu, 9 May 2013 19:10:02 +0200
-Subject: [PATCH 2/3] block: introduce the BFQ-v6r2 I/O sched for 3.9
+Subject: [PATCH 2/3] block: introduce the BFQ-v6r2 I/O sched for 3.10
 
-Add the BFQ-v6r2 I/O scheduler to 3.9.
+Add the BFQ-v6r2 I/O scheduler to 3.10.
 The general structure is borrowed from CFQ, as much code. A (bfq_)queue
 is associated to each task doing I/O on a device, and each time a
 scheduling decision has to be made a queue is selected and served until
@@ -52,12 +52,13 @@ it expires.
 Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
 Signed-off-by: Arianna Avanzini <avanzini.arianna@gmail.com>
 ---
- block/bfq-cgroup.c  |  868 +++++++++++++++
- block/bfq-ioc.c     |   36 +
- block/bfq-iosched.c | 3070 +++++++++++++++++++++++++++++++++++++++++++++++++++
- block/bfq-sched.c   | 1072 ++++++++++++++++++
- block/bfq.h         |  603 ++++++++++
- 5 files changed, 5649 insertions(+)
+ block/bfq-cgroup.c            |  881 ++++++++++++
+ block/bfq-ioc.c               |   36 +
+ block/bfq-iosched.c           | 3070 +++++++++++++++++++++++++++++++++++++++++
+ block/bfq-sched.c             | 1072 ++++++++++++++
+ block/bfq.h                   |  603 ++++++++
+ include/linux/cgroup_subsys.h |    2 +-
+ 6 files changed, 5663 insertions(+), 1 deletion(-)
  create mode 100644 block/bfq-cgroup.c
  create mode 100644 block/bfq-ioc.c
  create mode 100644 block/bfq-iosched.c
@@ -66,10 +67,10 @@ Signed-off-by: Arianna Avanzini <avanzini.arianna@gmail.com>
 
 diff --git a/block/bfq-cgroup.c b/block/bfq-cgroup.c
 new file mode 100644
-index 0000000..2c569cc
+index 0000000..6d57239
 --- /dev/null
 +++ b/block/bfq-cgroup.c
-@@ -0,0 +1,868 @@
+@@ -0,0 +1,881 @@
 +/*
 + * BFQ: CGROUPS support.
 + *
@@ -85,6 +86,14 @@ index 0000000..2c569cc
 + */
 +
 +#ifdef CONFIG_CGROUP_BFQIO
++
++static DEFINE_MUTEX(bfqio_mutex);
++
++static bool bfqio_is_removed(struct cgroup *cgroup)
++{
++	return test_bit(CGRP_REMOVED, &cgroup->flags);
++}
++
 +static struct bfqio_cgroup bfqio_root_cgroup = {
 +	.weight = BFQ_DEFAULT_GRP_WEIGHT,
 +	.ioprio = BFQ_DEFAULT_GRP_IOPRIO,
@@ -690,18 +699,19 @@ index 0000000..2c569cc
 +				       struct cftype *cftype)		\
 +{									\
 +	struct bfqio_cgroup *bgrp;					\
-+	u64 ret;							\
++	u64 ret = -ENODEV;						\
 +									\
-+	if (!cgroup_lock_live_group(cgroup))				\
-+		return -ENODEV;						\
++	mutex_lock(&bfqio_mutex);					\
++	if (bfqio_is_removed(cgroup))					\
++		goto out_unlock;					\
 +									\
 +	bgrp = cgroup_to_bfqio(cgroup);					\
 +	spin_lock_irq(&bgrp->lock);					\
 +	ret = bgrp->__VAR;						\
 +	spin_unlock_irq(&bgrp->lock);					\
 +									\
-+	cgroup_unlock();						\
-+									\
++out_unlock:								\
++	mutex_unlock(&bfqio_mutex);					\
 +	return ret;							\
 +}
 +
@@ -717,12 +727,16 @@ index 0000000..2c569cc
 +{									\
 +	struct bfqio_cgroup *bgrp;					\
 +	struct bfq_group *bfqg;						\
++	int ret = -EINVAL;						\
 +									\
 +	if (val < (__MIN) || val > (__MAX))				\
-+		return -EINVAL;						\
++		return ret;						\
 +									\
-+	if (!cgroup_lock_live_group(cgroup))				\
-+		return -ENODEV;						\
++	ret = -ENODEV;							\
++	mutex_lock(&bfqio_mutex);					\
++	if (bfqio_is_removed(cgroup))					\
++		goto out_unlock;					\
++	ret = 0;							\
 +									\
 +	bgrp = cgroup_to_bfqio(cgroup);					\
 +									\
@@ -743,9 +757,9 @@ index 0000000..2c569cc
 +	}								\
 +	spin_unlock_irq(&bgrp->lock);					\
 +									\
-+	cgroup_unlock();						\
-+									\
-+	return 0;							\
++out_unlock:								\
++	mutex_unlock(&bfqio_mutex);					\
++	return ret;							\
 +}
 +
 +STORE_FUNCTION(weight, BFQ_MIN_WEIGHT, BFQ_MAX_WEIGHT);
@@ -5136,12 +5150,12 @@ index 0000000..03f8061
 +}
 diff --git a/block/bfq.h b/block/bfq.h
 new file mode 100644
-index 0000000..b4e9ab0
+index 0000000..48ecde9
 --- /dev/null
 +++ b/block/bfq.h
 @@ -0,0 +1,603 @@
 +/*
-+ * BFQ-v6r2 for 3.9.0: data structures and common functions prototypes.
++ * BFQ-v6r2 for 3.10.0: data structures and common functions prototypes.
 + *
 + * Based on ideas and code from CFQ:
 + * Copyright (C) 2003 Jens Axboe <axboe@kernel.dk>
@@ -5743,6 +5757,19 @@ index 0000000..b4e9ab0
 +static void bfq_put_async_queues(struct bfq_data *bfqd, struct bfq_group *bfqg);
 +static void bfq_exit_bfqq(struct bfq_data *bfqd, struct bfq_queue *bfqq);
 +#endif
+diff --git a/include/linux/cgroup_subsys.h b/include/linux/cgroup_subsys.h
+index ffa1d1f..e5e6b0d 100644
+--- a/include/linux/cgroup_subsys.h
++++ b/include/linux/cgroup_subsys.h
+@@ -85,7 +85,7 @@ SUBSYS(bcache)
+ 
+ /* */
+ 
+-#ifdef CONFIG_CGROUP_BFQIO
++#if IS_SUBSYS_ENABLED(CONFIG_CGROUP_BFQIO)
+ SUBSYS(bfqio)
+ #endif
+ 
 -- 
 1.8.1.4
 
