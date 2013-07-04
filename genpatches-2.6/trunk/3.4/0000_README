@@ -259,6 +259,10 @@ Patch:  1511_ipv6-ip6_sk_dst_check-must-not-assume-ipv6-dst.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a963a37d384d71ad43b3e9e79d68d42fbe0901f3
 Desc:   ipv6: ip6_sk_dst_check() must not assume ipv6 dst
 
+Patch:  1512_af_key-initialize-satype-in-key_notify_policy_flush.patch
+From:   https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=85dfb745ee40232876663ae206cba35f24ab2a40
+Desc:   af_key: initialize satype in key_notify_policy_flush()
+
 Patch:  1700_correct-bnx2-firware-ver-mips.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=424609
 Desc:   Correct firmware version for bnx2 on mips

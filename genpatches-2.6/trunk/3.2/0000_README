@@ -244,6 +244,10 @@ Patch:  1511_ipv6-ip6_sk_dst_check-must-not-assume-ipv6-dst.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=a963a37d384d71ad43b3e9e79d68d42fbe0901f3
 Desc:   ipv6: ip6_sk_dst_check() must not assume ipv6 dst
 
+Patch:  1512_af_key-initialize-satype-in-key_notify_policy_flush.patch
+From:   https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=85dfb745ee40232876663ae206cba35f24ab2a40
+Desc:   af_key: initialize satype in key_notify_policy_flush()
+
 Patch:  2300_per-pci-device-msi-irq-listing.patch
 From:   http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=da8d1c8ba4dcb16d60be54b233deca9a7cac98dc
 Desc:   Add a per-pci-device subdirectory in sysfs
