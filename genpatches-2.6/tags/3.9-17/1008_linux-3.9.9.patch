@@ -1,0 +1,1147 @@
+diff --git a/Makefile b/Makefile
+index b013cbe..9591325 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERSION = 3
+ PATCHLEVEL = 9
+-SUBLEVEL = 8
++SUBLEVEL = 9
+ EXTRAVERSION =
+ NAME = Black Squirrel Wakeup Call
+ 
+diff --git a/arch/arm/include/asm/cacheflush.h b/arch/arm/include/asm/cacheflush.h
+index e1489c5..738fcba 100644
+--- a/arch/arm/include/asm/cacheflush.h
++++ b/arch/arm/include/asm/cacheflush.h
+@@ -320,9 +320,7 @@ static inline void flush_anon_page(struct vm_area_struct *vma,
+ }
+ 
+ #define ARCH_HAS_FLUSH_KERNEL_DCACHE_PAGE
+-static inline void flush_kernel_dcache_page(struct page *page)
+-{
+-}
++extern void flush_kernel_dcache_page(struct page *);
+ 
+ #define flush_dcache_mmap_lock(mapping) \
+ 	spin_lock_irq(&(mapping)->tree_lock)
+diff --git a/arch/arm/mm/flush.c b/arch/arm/mm/flush.c
+index 1c8f7f5..b5ae9fd 100644
+--- a/arch/arm/mm/flush.c
++++ b/arch/arm/mm/flush.c
+@@ -298,6 +298,39 @@ void flush_dcache_page(struct page *page)
+ EXPORT_SYMBOL(flush_dcache_page);
+ 
+ /*
++ * Ensure cache coherency for the kernel mapping of this page. We can
++ * assume that the page is pinned via kmap.
++ *
++ * If the page only exists in the page cache and there are no user
++ * space mappings, this is a no-op since the page was already marked
++ * dirty at creation.  Otherwise, we need to flush the dirty kernel
++ * cache lines directly.
++ */
++void flush_kernel_dcache_page(struct page *page)
++{
++	if (cache_is_vivt() || cache_is_vipt_aliasing()) {
++		struct address_space *mapping;
++
++		mapping = page_mapping(page);
++
++		if (!mapping || mapping_mapped(mapping)) {
++			void *addr;
++
++			addr = page_address(page);
++			/*
++			 * kmap_atomic() doesn't set the page virtual
++			 * address for highmem pages, and
++			 * kunmap_atomic() takes care of cache
++			 * flushing already.
++			 */
++			if (!IS_ENABLED(CONFIG_HIGHMEM) || addr)
++				__cpuc_flush_dcache_area(addr, PAGE_SIZE);
++		}
++	}
++}
++EXPORT_SYMBOL(flush_kernel_dcache_page);
++
++/*
+  * Flush an anonymous page so that users of get_user_pages()
+  * can safely access the data.  The expected sequence is:
+  *
+diff --git a/arch/arm/mm/nommu.c b/arch/arm/mm/nommu.c
+index d51225f..eb5293a 100644
+--- a/arch/arm/mm/nommu.c
++++ b/arch/arm/mm/nommu.c
+@@ -57,6 +57,12 @@ void flush_dcache_page(struct page *page)
+ }
+ EXPORT_SYMBOL(flush_dcache_page);
+ 
++void flush_kernel_dcache_page(struct page *page)
++{
++	__cpuc_flush_dcache_area(page_address(page), PAGE_SIZE);
++}
++EXPORT_SYMBOL(flush_kernel_dcache_page);
++
+ void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
+ 		       unsigned long uaddr, void *dst, const void *src,
+ 		       unsigned long len)
+diff --git a/arch/powerpc/platforms/pseries/eeh_pe.c b/arch/powerpc/platforms/pseries/eeh_pe.c
+index fe43d1a..9d4a9e8 100644
+--- a/arch/powerpc/platforms/pseries/eeh_pe.c
++++ b/arch/powerpc/platforms/pseries/eeh_pe.c
+@@ -639,7 +639,8 @@ struct pci_bus *eeh_pe_bus_get(struct eeh_pe *pe)
+ 
+ 	if (pe->type & EEH_PE_PHB) {
+ 		bus = pe->phb->bus;
+-	} else if (pe->type & EEH_PE_BUS) {
++	} else if (pe->type & EEH_PE_BUS ||
++		   pe->type & EEH_PE_DEVICE) {
+ 		edev = list_first_entry(&pe->edevs, struct eeh_dev, list);
+ 		pdev = eeh_dev_to_pci_dev(edev);
+ 		if (pdev)
+diff --git a/arch/s390/kernel/ipl.c b/arch/s390/kernel/ipl.c
+index d8a6a38..feb719d 100644
+--- a/arch/s390/kernel/ipl.c
++++ b/arch/s390/kernel/ipl.c
+@@ -754,9 +754,9 @@ static struct bin_attribute sys_reipl_fcp_scp_data_attr = {
+ 	.write = reipl_fcp_scpdata_write,
+ };
+ 
+-DEFINE_IPL_ATTR_RW(reipl_fcp, wwpn, "0x%016llx\n", "%016llx\n",
++DEFINE_IPL_ATTR_RW(reipl_fcp, wwpn, "0x%016llx\n", "%llx\n",
+ 		   reipl_block_fcp->ipl_info.fcp.wwpn);
+-DEFINE_IPL_ATTR_RW(reipl_fcp, lun, "0x%016llx\n", "%016llx\n",
++DEFINE_IPL_ATTR_RW(reipl_fcp, lun, "0x%016llx\n", "%llx\n",
+ 		   reipl_block_fcp->ipl_info.fcp.lun);
+ DEFINE_IPL_ATTR_RW(reipl_fcp, bootprog, "%lld\n", "%lld\n",
+ 		   reipl_block_fcp->ipl_info.fcp.bootprog);
+@@ -1323,9 +1323,9 @@ static struct shutdown_action __refdata reipl_action = {
+ 
+ /* FCP dump device attributes */
+ 
+-DEFINE_IPL_ATTR_RW(dump_fcp, wwpn, "0x%016llx\n", "%016llx\n",
++DEFINE_IPL_ATTR_RW(dump_fcp, wwpn, "0x%016llx\n", "%llx\n",
+ 		   dump_block_fcp->ipl_info.fcp.wwpn);
+-DEFINE_IPL_ATTR_RW(dump_fcp, lun, "0x%016llx\n", "%016llx\n",
++DEFINE_IPL_ATTR_RW(dump_fcp, lun, "0x%016llx\n", "%llx\n",
+ 		   dump_block_fcp->ipl_info.fcp.lun);
+ DEFINE_IPL_ATTR_RW(dump_fcp, bootprog, "%lld\n", "%lld\n",
+ 		   dump_block_fcp->ipl_info.fcp.bootprog);
+diff --git a/arch/s390/kernel/irq.c b/arch/s390/kernel/irq.c
+index 1630f43..1d95be9 100644
+--- a/arch/s390/kernel/irq.c
++++ b/arch/s390/kernel/irq.c
+@@ -313,3 +313,69 @@ void measurement_alert_subclass_unregister(void)
+ 	spin_unlock(&ma_subclass_lock);
+ }
+ EXPORT_SYMBOL(measurement_alert_subclass_unregister);
++
++#ifdef CONFIG_SMP
++void synchronize_irq(unsigned int irq)
++{
++	/*
++	 * Not needed, the handler is protected by a lock and IRQs that occur
++	 * after the handler is deleted are just NOPs.
++	 */
++}
++EXPORT_SYMBOL_GPL(synchronize_irq);
++#endif
++
++#ifndef CONFIG_PCI
++
++/* Only PCI devices have dynamically-defined IRQ handlers */
++
++int request_irq(unsigned int irq, irq_handler_t handler,
++		unsigned long irqflags, const char *devname, void *dev_id)
++{
++	return -EINVAL;
++}
++EXPORT_SYMBOL_GPL(request_irq);
++
++void free_irq(unsigned int irq, void *dev_id)
++{
++	WARN_ON(1);
++}
++EXPORT_SYMBOL_GPL(free_irq);
++
++void enable_irq(unsigned int irq)
++{
++	WARN_ON(1);
++}
++EXPORT_SYMBOL_GPL(enable_irq);
++
++void disable_irq(unsigned int irq)
++{
++	WARN_ON(1);
++}
++EXPORT_SYMBOL_GPL(disable_irq);
++
++#endif /* !CONFIG_PCI */
++
++void disable_irq_nosync(unsigned int irq)
++{
++	disable_irq(irq);
++}
++EXPORT_SYMBOL_GPL(disable_irq_nosync);
++
++unsigned long probe_irq_on(void)
++{
++	return 0;
++}
++EXPORT_SYMBOL_GPL(probe_irq_on);
++
++int probe_irq_off(unsigned long val)
++{
++	return 0;
++}
++EXPORT_SYMBOL_GPL(probe_irq_off);
++
++unsigned int probe_irq_mask(unsigned long val)
++{
++	return val;
++}
++EXPORT_SYMBOL_GPL(probe_irq_mask);
+diff --git a/arch/s390/pci/pci.c b/arch/s390/pci/pci.c
+index 27b4c17..4fd5b5a 100644
+--- a/arch/s390/pci/pci.c
++++ b/arch/s390/pci/pci.c
+@@ -306,15 +306,6 @@ static int zpci_cfg_store(struct zpci_dev *zdev, int offset, u32 val, u8 len)
+ 	return rc;
+ }
+ 
+-void synchronize_irq(unsigned int irq)
+-{
+-	/*
+-	 * Not needed, the handler is protected by a lock and IRQs that occur
+-	 * after the handler is deleted are just NOPs.
+-	 */
+-}
+-EXPORT_SYMBOL_GPL(synchronize_irq);
+-
+ void enable_irq(unsigned int irq)
+ {
+ 	struct msi_desc *msi = irq_get_msi_desc(irq);
+@@ -331,30 +322,6 @@ void disable_irq(unsigned int irq)
+ }
+ EXPORT_SYMBOL_GPL(disable_irq);
+ 
+-void disable_irq_nosync(unsigned int irq)
+-{
+-	disable_irq(irq);
+-}
+-EXPORT_SYMBOL_GPL(disable_irq_nosync);
+-
+-unsigned long probe_irq_on(void)
+-{
+-	return 0;
+-}
+-EXPORT_SYMBOL_GPL(probe_irq_on);
+-
+-int probe_irq_off(unsigned long val)
+-{
+-	return 0;
+-}
+-EXPORT_SYMBOL_GPL(probe_irq_off);
+-
+-unsigned int probe_irq_mask(unsigned long val)
+-{
+-	return val;
+-}
+-EXPORT_SYMBOL_GPL(probe_irq_mask);
+-
+ void pcibios_fixup_bus(struct pci_bus *bus)
+ {
+ }
+diff --git a/arch/x86/include/asm/irq_remapping.h b/arch/x86/include/asm/irq_remapping.h
+index 95fd352..b00bf09 100644
+--- a/arch/x86/include/asm/irq_remapping.h
++++ b/arch/x86/include/asm/irq_remapping.h
+@@ -23,11 +23,13 @@
+ #define __X86_IRQ_REMAPPING_H
+ 
+ #include <asm/io_apic.h>
++#include <linux/irq.h>
+ 
+ #ifdef CONFIG_IRQ_REMAP
+ 
+ extern void setup_irq_remapping_ops(void);
+ extern int irq_remapping_supported(void);
++extern void set_irq_remapping_broken(void);
+ extern int irq_remapping_prepare(void);
+ extern int irq_remapping_enable(void);
+ extern void irq_remapping_disable(void);
+@@ -54,6 +56,7 @@ void irq_remap_modify_chip_defaults(struct irq_chip *chip);
+ 
+ static inline void setup_irq_remapping_ops(void) { }
+ static inline int irq_remapping_supported(void) { return 0; }
++static inline void set_irq_remapping_broken(void) { }
+ static inline int irq_remapping_prepare(void) { return -ENODEV; }
+ static inline int irq_remapping_enable(void) { return -ENODEV; }
+ static inline void irq_remapping_disable(void) { }
+diff --git a/arch/x86/kernel/early-quirks.c b/arch/x86/kernel/early-quirks.c
+index 3755ef4..94ab6b9 100644
+--- a/arch/x86/kernel/early-quirks.c
++++ b/arch/x86/kernel/early-quirks.c
+@@ -18,6 +18,7 @@
+ #include <asm/apic.h>
+ #include <asm/iommu.h>
+ #include <asm/gart.h>
++#include <asm/irq_remapping.h>
+ 
+ static void __init fix_hypertransport_config(int num, int slot, int func)
+ {
+@@ -192,6 +193,21 @@ static void __init ati_bugs_contd(int num, int slot, int func)
+ }
+ #endif
+ 
++static void __init intel_remapping_check(int num, int slot, int func)
++{
++	u8 revision;
++
++	revision = read_pci_config_byte(num, slot, func, PCI_REVISION_ID);
++
++	/*
++	 * Revision 0x13 of this chipset supports irq remapping
++	 * but has an erratum that breaks its behavior, flag it as such
++	 */
++	if (revision == 0x13)
++		set_irq_remapping_broken();
++
++}
++
+ #define QFLAG_APPLY_ONCE 	0x1
+ #define QFLAG_APPLIED		0x2
+ #define QFLAG_DONE		(QFLAG_APPLY_ONCE|QFLAG_APPLIED)
+@@ -221,6 +237,10 @@ static struct chipset early_qrk[] __initdata = {
+ 	  PCI_CLASS_SERIAL_SMBUS, PCI_ANY_ID, 0, ati_bugs },
+ 	{ PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS,
+ 	  PCI_CLASS_SERIAL_SMBUS, PCI_ANY_ID, 0, ati_bugs_contd },
++	{ PCI_VENDOR_ID_INTEL, 0x3403, PCI_CLASS_BRIDGE_HOST,
++	  PCI_BASE_CLASS_BRIDGE, 0, intel_remapping_check },
++	{ PCI_VENDOR_ID_INTEL, 0x3406, PCI_CLASS_BRIDGE_HOST,
++	  PCI_BASE_CLASS_BRIDGE, 0, intel_remapping_check },
+ 	{}
+ };
+ 
+diff --git a/crypto/algboss.c b/crypto/algboss.c
+index 769219b..76fc0b2 100644
+--- a/crypto/algboss.c
++++ b/crypto/algboss.c
+@@ -45,10 +45,9 @@ struct cryptomgr_param {
+ 		} nu32;
+ 	} attrs[CRYPTO_MAX_ATTRS];
+ 
+-	char larval[CRYPTO_MAX_ALG_NAME];
+ 	char template[CRYPTO_MAX_ALG_NAME];
+ 
+-	struct completion *completion;
++	struct crypto_larval *larval;
+ 
+ 	u32 otype;
+ 	u32 omask;
+@@ -87,7 +86,8 @@ static int cryptomgr_probe(void *data)
+ 	crypto_tmpl_put(tmpl);
+ 
+ out:
+-	complete_all(param->completion);
++	complete_all(&param->larval->completion);
++	crypto_alg_put(&param->larval->alg);
+ 	kfree(param);
+ 	module_put_and_exit(0);
+ }
+@@ -187,18 +187,19 @@ static int cryptomgr_schedule_probe(struct crypto_larval *larval)
+ 	param->otype = larval->alg.cra_flags;
+ 	param->omask = larval->mask;
+ 
+-	memcpy(param->larval, larval->alg.cra_name, CRYPTO_MAX_ALG_NAME);
+-
+-	param->completion = &larval->completion;
++	crypto_alg_get(&larval->alg);
++	param->larval = larval;
+ 
+ 	thread = kthread_run(cryptomgr_probe, param, "cryptomgr_probe");
+ 	if (IS_ERR(thread))
+-		goto err_free_param;
++		goto err_put_larval;
+ 
+ 	wait_for_completion_interruptible(&larval->completion);
+ 
+ 	return NOTIFY_STOP;
+ 
++err_put_larval:
++	crypto_alg_put(&larval->alg);
+ err_free_param:
+ 	kfree(param);
+ err_put_module:
+diff --git a/crypto/api.c b/crypto/api.c
+index 033a714..3b61803 100644
+--- a/crypto/api.c
++++ b/crypto/api.c
+@@ -34,12 +34,6 @@ EXPORT_SYMBOL_GPL(crypto_alg_sem);
+ BLOCKING_NOTIFIER_HEAD(crypto_chain);
+ EXPORT_SYMBOL_GPL(crypto_chain);
+ 
+-static inline struct crypto_alg *crypto_alg_get(struct crypto_alg *alg)
+-{
+-	atomic_inc(&alg->cra_refcnt);
+-	return alg;
+-}
+-
+ struct crypto_alg *crypto_mod_get(struct crypto_alg *alg)
+ {
+ 	return try_module_get(alg->cra_module) ? crypto_alg_get(alg) : NULL;
+diff --git a/crypto/internal.h b/crypto/internal.h
+index 9ebedae..bd39bfc 100644
+--- a/crypto/internal.h
++++ b/crypto/internal.h
+@@ -103,6 +103,12 @@ int crypto_register_notifier(struct notifier_block *nb);
+ int crypto_unregister_notifier(struct notifier_block *nb);
+ int crypto_probing_notify(unsigned long val, void *v);
+ 
++static inline struct crypto_alg *crypto_alg_get(struct crypto_alg *alg)
++{
++	atomic_inc(&alg->cra_refcnt);
++	return alg;
++}
++
+ static inline void crypto_alg_put(struct crypto_alg *alg)
+ {
+ 	if (atomic_dec_and_test(&alg->cra_refcnt) && alg->cra_destroy)
+diff --git a/drivers/ata/libata-acpi.c b/drivers/ata/libata-acpi.c
+index 3badf18..3ce078c 100644
+--- a/drivers/ata/libata-acpi.c
++++ b/drivers/ata/libata-acpi.c
+@@ -157,8 +157,10 @@ static void ata_acpi_handle_hotplug(struct ata_port *ap, struct ata_device *dev,
+ 
+ 	spin_unlock_irqrestore(ap->lock, flags);
+ 
+-	if (wait)
++	if (wait) {
+ 		ata_port_wait_eh(ap);
++		flush_work(&ap->hotplug_task.work);
++	}
+ }
+ 
+ static void ata_acpi_dev_notify_dock(acpi_handle handle, u32 event, void *data)
+@@ -215,6 +217,38 @@ static const struct acpi_dock_ops ata_acpi_ap_dock_ops = {
+ 	.uevent = ata_acpi_ap_uevent,
+ };
+ 
++void ata_acpi_hotplug_init(struct ata_host *host)
++{
++	int i;
++
++	for (i = 0; i < host->n_ports; i++) {
++		struct ata_port *ap = host->ports[i];
++		acpi_handle handle;
++		struct ata_device *dev;
++
++		if (!ap)
++			continue;
++
++		handle = ata_ap_acpi_handle(ap);
++		if (handle) {
++			/* we might be on a docking station */
++			register_hotplug_dock_device(handle,
++						     &ata_acpi_ap_dock_ops, ap);
++		}
++
++		ata_for_each_dev(dev, &ap->link, ALL) {
++			handle = ata_dev_acpi_handle(dev);
++			if (!handle)
++				continue;
++
++			/* we might be on a docking station */
++			register_hotplug_dock_device(handle,
++						     &ata_acpi_dev_dock_ops,
++						     dev);
++		}
++	}
++}
++
+ /**
+  * ata_acpi_dissociate - dissociate ATA host from ACPI objects
+  * @host: target ATA host
+diff --git a/drivers/ata/libata-core.c b/drivers/ata/libata-core.c
+index cf15aee..8038ee3 100644
+--- a/drivers/ata/libata-core.c
++++ b/drivers/ata/libata-core.c
+@@ -6148,6 +6148,8 @@ int ata_host_register(struct ata_host *host, struct scsi_host_template *sht)
+ 	if (rc)
+ 		goto err_tadd;
+ 
++	ata_acpi_hotplug_init(host);
++
+ 	/* set cable, sata_spd_limit and report */
+ 	for (i = 0; i < host->n_ports; i++) {
+ 		struct ata_port *ap = host->ports[i];
+diff --git a/drivers/ata/libata.h b/drivers/ata/libata.h
+index c949dd3..577d902b 100644
+--- a/drivers/ata/libata.h
++++ b/drivers/ata/libata.h
+@@ -122,6 +122,7 @@ extern int ata_acpi_register(void);
+ extern void ata_acpi_unregister(void);
+ extern void ata_acpi_bind(struct ata_device *dev);
+ extern void ata_acpi_unbind(struct ata_device *dev);
++extern void ata_acpi_hotplug_init(struct ata_host *host);
+ #else
+ static inline void ata_acpi_dissociate(struct ata_host *host) { }
+ static inline int ata_acpi_on_suspend(struct ata_port *ap) { return 0; }
+@@ -134,6 +135,7 @@ static inline int ata_acpi_register(void) { return 0; }
+ static inline void ata_acpi_unregister(void) { }
+ static inline void ata_acpi_bind(struct ata_device *dev) { }
+ static inline void ata_acpi_unbind(struct ata_device *dev) { }
++static inline void ata_acpi_hotplug_init(struct ata_host *host) {}
+ #endif
+ 
+ /* libata-scsi.c */
+diff --git a/drivers/iommu/intel_irq_remapping.c b/drivers/iommu/intel_irq_remapping.c
+index f3b8f23..5b19b2d 100644
+--- a/drivers/iommu/intel_irq_remapping.c
++++ b/drivers/iommu/intel_irq_remapping.c
+@@ -524,6 +524,16 @@ static int __init intel_irq_remapping_supported(void)
+ 
+ 	if (disable_irq_remap)
+ 		return 0;
++	if (irq_remap_broken) {
++		WARN_TAINT(1, TAINT_FIRMWARE_WORKAROUND,
++			   "This system BIOS has enabled interrupt remapping\n"
++			   "on a chipset that contains an erratum making that\n"
++			   "feature unstable.  To maintain system stability\n"
++			   "interrupt remapping is being disabled.  Please\n"
++			   "contact your BIOS vendor for an update\n");
++		disable_irq_remap = 1;
++		return 0;
++	}
+ 
+ 	if (!dmar_ir_support())
+ 		return 0;
+diff --git a/drivers/iommu/irq_remapping.c b/drivers/iommu/irq_remapping.c
+index 7c11ff3..dcfea4e 100644
+--- a/drivers/iommu/irq_remapping.c
++++ b/drivers/iommu/irq_remapping.c
+@@ -18,6 +18,7 @@
+ int irq_remapping_enabled;
+ 
+ int disable_irq_remap;
++int irq_remap_broken;
+ int disable_sourceid_checking;
+ int no_x2apic_optout;
+ 
+@@ -210,6 +211,11 @@ void __init setup_irq_remapping_ops(void)
+ #endif
+ }
+ 
++void set_irq_remapping_broken(void)
++{
++	irq_remap_broken = 1;
++}
++
+ int irq_remapping_supported(void)
+ {
+ 	if (disable_irq_remap)
+diff --git a/drivers/iommu/irq_remapping.h b/drivers/iommu/irq_remapping.h
+index ecb6376..90c4dae 100644
+--- a/drivers/iommu/irq_remapping.h
++++ b/drivers/iommu/irq_remapping.h
+@@ -32,6 +32,7 @@ struct pci_dev;
+ struct msi_msg;
+ 
+ extern int disable_irq_remap;
++extern int irq_remap_broken;
+ extern int disable_sourceid_checking;
+ extern int no_x2apic_optout;
+ extern int irq_remapping_enabled;
+@@ -89,6 +90,7 @@ extern struct irq_remap_ops amd_iommu_irq_ops;
+ 
+ #define irq_remapping_enabled 0
+ #define disable_irq_remap     1
++#define irq_remap_broken      0
+ 
+ #endif /* CONFIG_IRQ_REMAP */
+ 
+diff --git a/drivers/net/can/usb/usb_8dev.c b/drivers/net/can/usb/usb_8dev.c
+index 6e15ef0..cbd388e 100644
+--- a/drivers/net/can/usb/usb_8dev.c
++++ b/drivers/net/can/usb/usb_8dev.c
+@@ -977,7 +977,7 @@ static int usb_8dev_probe(struct usb_interface *intf,
+ 	err = usb_8dev_cmd_version(priv, &version);
+ 	if (err) {
+ 		netdev_err(netdev, "can't get firmware version\n");
+-		goto cleanup_cmd_msg_buffer;
++		goto cleanup_unregister_candev;
+ 	} else {
+ 		netdev_info(netdev,
+ 			 "firmware: %d.%d, hardware: %d.%d\n",
+@@ -989,6 +989,9 @@ static int usb_8dev_probe(struct usb_interface *intf,
+ 
+ 	return 0;
+ 
++cleanup_unregister_candev:
++	unregister_netdev(priv->netdev);
++
+ cleanup_cmd_msg_buffer:
+ 	kfree(priv->cmd_msg_buffer);
+ 
+diff --git a/drivers/net/wan/dlci.c b/drivers/net/wan/dlci.c
+index 147614e..6a8a382 100644
+--- a/drivers/net/wan/dlci.c
++++ b/drivers/net/wan/dlci.c
+@@ -384,21 +384,37 @@ static int dlci_del(struct dlci_add *dlci)
+ 	struct frad_local	*flp;
+ 	struct net_device	*master, *slave;
+ 	int			err;
++	bool			found = false;
++
++	rtnl_lock();
+ 
+ 	/* validate slave device */
+ 	master = __dev_get_by_name(&init_net, dlci->devname);
+-	if (!master)
+-		return -ENODEV;
++	if (!master) {
++		err = -ENODEV;
++		goto out;
++	}
++
++	list_for_each_entry(dlp, &dlci_devs, list) {
++		if (dlp->master == master) {
++			found = true;
++			break;
++		}
++	}
++	if (!found) {
++		err = -ENODEV;
++		goto out;
++	}
+ 
+ 	if (netif_running(master)) {
+-		return -EBUSY;
++		err = -EBUSY;
++		goto out;
+ 	}
+ 
+ 	dlp = netdev_priv(master);
+ 	slave = dlp->slave;
+ 	flp = netdev_priv(slave);
+ 
+-	rtnl_lock();
+ 	err = (*flp->deassoc)(slave, master);
+ 	if (!err) {
+ 		list_del(&dlp->list);
+@@ -407,8 +423,8 @@ static int dlci_del(struct dlci_add *dlci)
+ 
+ 		dev_put(slave);
+ 	}
++out:
+ 	rtnl_unlock();
+-
+ 	return err;
+ }
+ 
+diff --git a/drivers/net/wireless/ath/ath9k/htc_drv_main.c b/drivers/net/wireless/ath/ath9k/htc_drv_main.c
+index a8016d7..305bed8 100644
+--- a/drivers/net/wireless/ath/ath9k/htc_drv_main.c
++++ b/drivers/net/wireless/ath/ath9k/htc_drv_main.c
+@@ -1174,7 +1174,7 @@ static int ath9k_htc_config(struct ieee80211_hw *hw, u32 changed)
+ 		mutex_lock(&priv->htc_pm_lock);
+ 
+ 		priv->ps_idle = !!(conf->flags & IEEE80211_CONF_IDLE);
+-		if (priv->ps_idle)
++		if (!priv->ps_idle)
+ 			chip_reset = true;
+ 
+ 		mutex_unlock(&priv->htc_pm_lock);
+diff --git a/drivers/net/wireless/iwlwifi/dvm/rxon.c b/drivers/net/wireless/iwlwifi/dvm/rxon.c
+index a82b6b3..5c36c21 100644
+--- a/drivers/net/wireless/iwlwifi/dvm/rxon.c
++++ b/drivers/net/wireless/iwlwifi/dvm/rxon.c
+@@ -1377,7 +1377,7 @@ static void iwlagn_chain_noise_reset(struct iwl_priv *priv)
+ 	struct iwl_chain_noise_data *data = &priv->chain_noise_data;
+ 	int ret;
+ 
+-	if (!(priv->calib_disabled & IWL_CHAIN_NOISE_CALIB_DISABLED))
++	if (priv->calib_disabled & IWL_CHAIN_NOISE_CALIB_DISABLED)
+ 		return;
+ 
+ 	if ((data->state == IWL_CHAIN_NOISE_ALIVE) &&
+diff --git a/drivers/net/wireless/rt2x00/rt2800lib.c b/drivers/net/wireless/rt2x00/rt2800lib.c
+index 92849e5..d420c53 100644
+--- a/drivers/net/wireless/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/rt2x00/rt2800lib.c
+@@ -2634,19 +2634,26 @@ static void rt2800_config_txpower(struct rt2x00_dev *rt2x00dev,
+ 	 * TODO: we do not use +6 dBm option to do not increase power beyond
+ 	 * regulatory limit, however this could be utilized for devices with
+ 	 * CAPABILITY_POWER_LIMIT.
++	 *
++	 * TODO: add different temperature compensation code for RT3290 & RT5390
++	 * to allow to use BBP_R1 for those chips.
+ 	 */
+-	rt2800_bbp_read(rt2x00dev, 1, &r1);
+-	if (delta <= -12) {
+-		power_ctrl = 2;
+-		delta += 12;
+-	} else if (delta <= -6) {
+-		power_ctrl = 1;
+-		delta += 6;
+-	} else {
+-		power_ctrl = 0;
++	if (!rt2x00_rt(rt2x00dev, RT3290) &&
++	    !rt2x00_rt(rt2x00dev, RT5390)) {
++		rt2800_bbp_read(rt2x00dev, 1, &r1);
++		if (delta <= -12) {
++			power_ctrl = 2;
++			delta += 12;
++		} else if (delta <= -6) {
++			power_ctrl = 1;
++			delta += 6;
++		} else {
++			power_ctrl = 0;
++		}
++		rt2x00_set_field8(&r1, BBP1_TX_POWER_CTRL, power_ctrl);
++		rt2800_bbp_write(rt2x00dev, 1, r1);
+ 	}
+-	rt2x00_set_field8(&r1, BBP1_TX_POWER_CTRL, power_ctrl);
+-	rt2800_bbp_write(rt2x00dev, 1, r1);
++
+ 	offset = TX_PWR_CFG_0;
+ 
+ 	for (i = 0; i < EEPROM_TXPOWER_BYRATE_SIZE; i += 2) {
+diff --git a/drivers/of/base.c b/drivers/of/base.c
+index 321d3ef..e77e719 100644
+--- a/drivers/of/base.c
++++ b/drivers/of/base.c
+@@ -1166,11 +1166,11 @@ static int __of_parse_phandle_with_args(const struct device_node *np,
+ 				out_args->args_count = count;
+ 				for (i = 0; i < count; i++)
+ 					out_args->args[i] = be32_to_cpup(list++);
++			} else {
++				of_node_put(node);
+ 			}
+ 
+ 			/* Found it! return success */
+-			if (node)
+-				of_node_put(node);
+ 			return 0;
+ 		}
+ 
+diff --git a/fs/exec.c b/fs/exec.c
+index 6d56ff2..0d5c76f 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1136,13 +1136,6 @@ void setup_new_exec(struct linux_binprm * bprm)
+ 			set_dumpable(current->mm, suid_dumpable);
+ 	}
+ 
+-	/*
+-	 * Flush performance counters when crossing a
+-	 * security domain:
+-	 */
+-	if (!get_dumpable(current->mm))
+-		perf_event_exit_task(current);
+-
+ 	/* An exec changes our domain. We are no longer part of the thread
+ 	   group */
+ 
+@@ -1206,6 +1199,15 @@ void install_exec_creds(struct linux_binprm *bprm)
+ 
+ 	commit_creds(bprm->cred);
+ 	bprm->cred = NULL;
++
++	/*
++	 * Disable monitoring for regular users
++	 * when executing setuid binaries. Must
++	 * wait until new credentials are committed
++	 * by commit_creds() above
++	 */
++	if (get_dumpable(current->mm) != SUID_DUMP_USER)
++		perf_event_exit_task(current);
+ 	/*
+ 	 * cred_guard_mutex must be held at least to this point to prevent
+ 	 * ptrace_attach() from altering our determination of the task's
+diff --git a/fs/ubifs/dir.c b/fs/ubifs/dir.c
+index de08c92f..605af51 100644
+--- a/fs/ubifs/dir.c
++++ b/fs/ubifs/dir.c
+@@ -349,31 +349,50 @@ static unsigned int vfs_dent_type(uint8_t type)
+ static int ubifs_readdir(struct file *file, void *dirent, filldir_t filldir)
+ {
+ 	int err, over = 0;
++	loff_t pos = file->f_pos;
+ 	struct qstr nm;
+ 	union ubifs_key key;
+ 	struct ubifs_dent_node *dent;
+ 	struct inode *dir = file_inode(file);
+ 	struct ubifs_info *c = dir->i_sb->s_fs_info;
+ 
+-	dbg_gen("dir ino %lu, f_pos %#llx", dir->i_ino, file->f_pos);
++	dbg_gen("dir ino %lu, f_pos %#llx", dir->i_ino, pos);
+ 
+-	if (file->f_pos > UBIFS_S_KEY_HASH_MASK || file->f_pos == 2)
++	if (pos > UBIFS_S_KEY_HASH_MASK || pos == 2)
+ 		/*
+ 		 * The directory was seek'ed to a senseless position or there
+ 		 * are no more entries.
+ 		 */
+ 		return 0;
+ 
++	if (file->f_version == 0) {
++		/*
++		 * The file was seek'ed, which means that @file->private_data
++		 * is now invalid. This may also be just the first
++		 * 'ubifs_readdir()' invocation, in which case
++		 * @file->private_data is NULL, and the below code is
++		 * basically a no-op.
++		 */
++		kfree(file->private_data);
++		file->private_data = NULL;
++	}
++
++	/*
++	 * 'generic_file_llseek()' unconditionally sets @file->f_version to
++	 * zero, and we use this for detecting whether the file was seek'ed.
++	 */
++	file->f_version = 1;
++
+ 	/* File positions 0 and 1 correspond to "." and ".." */
+-	if (file->f_pos == 0) {
++	if (pos == 0) {
+ 		ubifs_assert(!file->private_data);
+ 		over = filldir(dirent, ".", 1, 0, dir->i_ino, DT_DIR);
+ 		if (over)
+ 			return 0;
+-		file->f_pos = 1;
++		file->f_pos = pos = 1;
+ 	}
+ 
+-	if (file->f_pos == 1) {
++	if (pos == 1) {
+ 		ubifs_assert(!file->private_data);
+ 		over = filldir(dirent, "..", 2, 1,
+ 			       parent_ino(file->f_path.dentry), DT_DIR);
+@@ -389,7 +408,7 @@ static int ubifs_readdir(struct file *file, void *dirent, filldir_t filldir)
+ 			goto out;
+ 		}
+ 
+-		file->f_pos = key_hash_flash(c, &dent->key);
++		file->f_pos = pos = key_hash_flash(c, &dent->key);
+ 		file->private_data = dent;
+ 	}
+ 
+@@ -397,17 +416,16 @@ static int ubifs_readdir(struct file *file, void *dirent, filldir_t filldir)
+ 	if (!dent) {
+ 		/*
+ 		 * The directory was seek'ed to and is now readdir'ed.
+-		 * Find the entry corresponding to @file->f_pos or the
+-		 * closest one.
++		 * Find the entry corresponding to @pos or the closest one.
+ 		 */
+-		dent_key_init_hash(c, &key, dir->i_ino, file->f_pos);
++		dent_key_init_hash(c, &key, dir->i_ino, pos);
+ 		nm.name = NULL;
+ 		dent = ubifs_tnc_next_ent(c, &key, &nm);
+ 		if (IS_ERR(dent)) {
+ 			err = PTR_ERR(dent);
+ 			goto out;
+ 		}
+-		file->f_pos = key_hash_flash(c, &dent->key);
++		file->f_pos = pos = key_hash_flash(c, &dent->key);
+ 		file->private_data = dent;
+ 	}
+ 
+@@ -419,7 +437,7 @@ static int ubifs_readdir(struct file *file, void *dirent, filldir_t filldir)
+ 			     ubifs_inode(dir)->creat_sqnum);
+ 
+ 		nm.len = le16_to_cpu(dent->nlen);
+-		over = filldir(dirent, dent->name, nm.len, file->f_pos,
++		over = filldir(dirent, dent->name, nm.len, pos,
+ 			       le64_to_cpu(dent->inum),
+ 			       vfs_dent_type(dent->type));
+ 		if (over)
+@@ -435,9 +453,17 @@ static int ubifs_readdir(struct file *file, void *dirent, filldir_t filldir)
+ 		}
+ 
+ 		kfree(file->private_data);
+-		file->f_pos = key_hash_flash(c, &dent->key);
++		file->f_pos = pos = key_hash_flash(c, &dent->key);
+ 		file->private_data = dent;
+ 		cond_resched();
++
++		if (file->f_version == 0)
++			/*
++			 * The file was seek'ed meanwhile, lets return and start
++			 * reading direntries from the new position on the next
++			 * invocation.
++			 */
++			return 0;
+ 	}
+ 
+ out:
+@@ -448,15 +474,13 @@ out:
+ 
+ 	kfree(file->private_data);
+ 	file->private_data = NULL;
++	/* 2 is a special value indicating that there are no more direntries */
+ 	file->f_pos = 2;
+ 	return 0;
+ }
+ 
+-/* If a directory is seeked, we have to free saved readdir() state */
+ static loff_t ubifs_dir_llseek(struct file *file, loff_t offset, int whence)
+ {
+-	kfree(file->private_data);
+-	file->private_data = NULL;
+ 	return generic_file_llseek(file, offset, whence);
+ }
+ 
+diff --git a/kernel/events/hw_breakpoint.c b/kernel/events/hw_breakpoint.c
+index a64f8ae..20185ea 100644
+--- a/kernel/events/hw_breakpoint.c
++++ b/kernel/events/hw_breakpoint.c
+@@ -120,7 +120,7 @@ static int task_bp_pinned(int cpu, struct perf_event *bp, enum bp_type_idx type)
+ 	list_for_each_entry(iter, &bp_task_head, hw.bp_list) {
+ 		if (iter->hw.bp_target == tsk &&
+ 		    find_slot_idx(iter) == type &&
+-		    cpu == iter->cpu)
++		    (iter->cpu < 0 || cpu == iter->cpu))
+ 			count += hw_breakpoint_weight(iter);
+ 	}
+ 
+@@ -149,7 +149,7 @@ fetch_bp_busy_slots(struct bp_busy_slots *slots, struct perf_event *bp,
+ 		return;
+ 	}
+ 
+-	for_each_online_cpu(cpu) {
++	for_each_possible_cpu(cpu) {
+ 		unsigned int nr;
+ 
+ 		nr = per_cpu(nr_cpu_bp_pinned[type], cpu);
+@@ -235,7 +235,7 @@ toggle_bp_slot(struct perf_event *bp, bool enable, enum bp_type_idx type,
+ 	if (cpu >= 0) {
+ 		toggle_bp_task_slot(bp, cpu, enable, type, weight);
+ 	} else {
+-		for_each_online_cpu(cpu)
++		for_each_possible_cpu(cpu)
+ 			toggle_bp_task_slot(bp, cpu, enable, type, weight);
+ 	}
+ 
+diff --git a/net/bluetooth/l2cap_core.c b/net/bluetooth/l2cap_core.c
+index c5f9cd6..04b32e1 100644
+--- a/net/bluetooth/l2cap_core.c
++++ b/net/bluetooth/l2cap_core.c
+@@ -2743,6 +2743,9 @@ static struct sk_buff *l2cap_build_cmd(struct l2cap_conn *conn, u8 code,
+ 	BT_DBG("conn %p, code 0x%2.2x, ident 0x%2.2x, len %u",
+ 	       conn, code, ident, dlen);
+ 
++	if (conn->mtu < L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE)
++		return NULL;
++
+ 	len = L2CAP_HDR_SIZE + L2CAP_CMD_HDR_SIZE + dlen;
+ 	count = min_t(unsigned int, conn->mtu, len);
+ 
+@@ -4221,7 +4224,7 @@ static inline int l2cap_information_rsp(struct l2cap_conn *conn,
+ 	struct l2cap_info_rsp *rsp = (struct l2cap_info_rsp *) data;
+ 	u16 type, result;
+ 
+-	if (cmd_len != sizeof(*rsp))
++	if (cmd_len < sizeof(*rsp))
+ 		return -EPROTO;
+ 
+ 	type   = __le16_to_cpu(rsp->type);
+diff --git a/net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c b/net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c
+index 2b6c226..a560ae0 100644
+--- a/net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c
++++ b/net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c
+@@ -204,7 +204,7 @@ static unsigned int __ipv6_conntrack_in(struct net *net,
+ 		if (ct != NULL && !nf_ct_is_untracked(ct)) {
+ 			help = nfct_help(ct);
+ 			if ((help && help->helper) || !nf_ct_is_confirmed(ct)) {
+-				nf_conntrack_get_reasm(skb);
++				nf_conntrack_get_reasm(reasm);
+ 				NF_HOOK_THRESH(NFPROTO_IPV6, hooknum, reasm,
+ 					       (struct net_device *)in,
+ 					       (struct net_device *)out,
+diff --git a/net/mac80211/ieee80211_i.h b/net/mac80211/ieee80211_i.h
+index 5672533..4e74cd6 100644
+--- a/net/mac80211/ieee80211_i.h
++++ b/net/mac80211/ieee80211_i.h
+@@ -1520,9 +1520,9 @@ static inline void ieee80211_tx_skb(struct ieee80211_sub_if_data *sdata,
+ 	ieee80211_tx_skb_tid(sdata, skb, 7);
+ }
+ 
+-void ieee802_11_parse_elems(u8 *start, size_t len,
++void ieee802_11_parse_elems(const u8 *start, size_t len,
+ 			    struct ieee802_11_elems *elems);
+-u32 ieee802_11_parse_elems_crc(u8 *start, size_t len,
++u32 ieee802_11_parse_elems_crc(const u8 *start, size_t len,
+ 			       struct ieee802_11_elems *elems,
+ 			       u64 filter, u32 crc);
+ u32 ieee80211_mandatory_rates(struct ieee80211_local *local,
+diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
+index 0a60f40..9726603 100644
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -2422,8 +2422,11 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+ 	u16 capab_info, aid;
+ 	struct ieee802_11_elems elems;
+ 	struct ieee80211_bss_conf *bss_conf = &sdata->vif.bss_conf;
++	const struct cfg80211_bss_ies *bss_ies = NULL;
++	struct ieee80211_mgd_assoc_data *assoc_data = ifmgd->assoc_data;
+ 	u32 changed = 0;
+ 	int err;
++	bool ret;
+ 
+ 	/* AssocResp and ReassocResp have identical structure */
+ 
+@@ -2455,21 +2458,86 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+ 	ifmgd->aid = aid;
+ 
+ 	/*
++	 * Some APs are erroneously not including some information in their
++	 * (re)association response frames. Try to recover by using the data
++	 * from the beacon or probe response. This seems to afflict mobile
++	 * 2G/3G/4G wifi routers, reported models include the "Onda PN51T",
++	 * "Vodafone PocketWiFi 2", "ZTE MF60" and a similar T-Mobile device.
++	 */
++	if ((assoc_data->wmm && !elems.wmm_param) ||
++	    (!(ifmgd->flags & IEEE80211_STA_DISABLE_HT) &&
++	     (!elems.ht_cap_elem || !elems.ht_operation)) ||
++	    (!(ifmgd->flags & IEEE80211_STA_DISABLE_VHT) &&
++	     (!elems.vht_cap_elem || !elems.vht_operation))) {
++		const struct cfg80211_bss_ies *ies;
++		struct ieee802_11_elems bss_elems;
++
++		rcu_read_lock();
++		ies = rcu_dereference(cbss->ies);
++		if (ies)
++			bss_ies = kmemdup(ies, sizeof(*ies) + ies->len,
++					  GFP_ATOMIC);
++		rcu_read_unlock();
++		if (!bss_ies)
++			return false;
++
++		ieee802_11_parse_elems(bss_ies->data, bss_ies->len,
++				       &bss_elems);
++		if (assoc_data->wmm &&
++		    !elems.wmm_param && bss_elems.wmm_param) {
++			elems.wmm_param = bss_elems.wmm_param;
++			sdata_info(sdata,
++				   "AP bug: WMM param missing from AssocResp\n");
++		}
++
++		/*
++		 * Also check if we requested HT/VHT, otherwise the AP doesn't
++		 * have to include the IEs in the (re)association response.
++		 */
++		if (!elems.ht_cap_elem && bss_elems.ht_cap_elem &&
++		    !(ifmgd->flags & IEEE80211_STA_DISABLE_HT)) {
++			elems.ht_cap_elem = bss_elems.ht_cap_elem;
++			sdata_info(sdata,
++				   "AP bug: HT capability missing from AssocResp\n");
++		}
++		if (!elems.ht_operation && bss_elems.ht_operation &&
++		    !(ifmgd->flags & IEEE80211_STA_DISABLE_HT)) {
++			elems.ht_operation = bss_elems.ht_operation;
++			sdata_info(sdata,
++				   "AP bug: HT operation missing from AssocResp\n");
++		}
++		if (!elems.vht_cap_elem && bss_elems.vht_cap_elem &&
++		    !(ifmgd->flags & IEEE80211_STA_DISABLE_VHT)) {
++			elems.vht_cap_elem = bss_elems.vht_cap_elem;
++			sdata_info(sdata,
++				   "AP bug: VHT capa missing from AssocResp\n");
++		}
++		if (!elems.vht_operation && bss_elems.vht_operation &&
++		    !(ifmgd->flags & IEEE80211_STA_DISABLE_VHT)) {
++			elems.vht_operation = bss_elems.vht_operation;
++			sdata_info(sdata,
++				   "AP bug: VHT operation missing from AssocResp\n");
++		}
++	}
++
++	/*
+ 	 * We previously checked these in the beacon/probe response, so
+ 	 * they should be present here. This is just a safety net.
+ 	 */
+ 	if (!(ifmgd->flags & IEEE80211_STA_DISABLE_HT) &&
+ 	    (!elems.wmm_param || !elems.ht_cap_elem || !elems.ht_operation)) {
+ 		sdata_info(sdata,
+-			   "HT AP is missing WMM params or HT capability/operation in AssocResp\n");
+-		return false;
++			   "HT AP is missing WMM params or HT capability/operation\n");
++		ret = false;
++		goto out;
+ 	}
+ 
+ 	if (!(ifmgd->flags & IEEE80211_STA_DISABLE_VHT) &&
+ 	    (!elems.vht_cap_elem || !elems.vht_operation)) {
+ 		sdata_info(sdata,
+-			   "VHT AP is missing VHT capability/operation in AssocResp\n");
+-		return false;
++			   "VHT AP is missing VHT capability/operation\n");
++		ret = false;
++		goto out;
+ 	}
+ 
+ 	mutex_lock(&sdata->local->sta_mtx);
+@@ -2480,7 +2548,8 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+ 	sta = sta_info_get(sdata, cbss->bssid);
+ 	if (WARN_ON(!sta)) {
+ 		mutex_unlock(&sdata->local->sta_mtx);
+-		return false;
++		ret = false;
++		goto out;
+ 	}
+ 
+ 	sband = local->hw.wiphy->bands[ieee80211_get_sdata_band(sdata)];
+@@ -2533,7 +2602,8 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+ 			   sta->sta.addr);
+ 		WARN_ON(__sta_info_destroy(sta));
+ 		mutex_unlock(&sdata->local->sta_mtx);
+-		return false;
++		ret = false;
++		goto out;
+ 	}
+ 
+ 	mutex_unlock(&sdata->local->sta_mtx);
+@@ -2573,7 +2643,10 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
+ 	ieee80211_sta_rx_notify(sdata, (struct ieee80211_hdr *)mgmt);
+ 	ieee80211_sta_reset_beacon_monitor(sdata);
+ 
+-	return true;
++	ret = true;
++ out:
++	kfree(bss_ies);
++	return ret;
+ }
+ 
+ static enum rx_mgmt_action __must_check
+diff --git a/net/mac80211/util.c b/net/mac80211/util.c
+index 0f38f43..1f4b908 100644
+--- a/net/mac80211/util.c
++++ b/net/mac80211/util.c
+@@ -626,12 +626,12 @@ void ieee80211_queue_delayed_work(struct ieee80211_hw *hw,
+ }
+ EXPORT_SYMBOL(ieee80211_queue_delayed_work);
+ 
+-u32 ieee802_11_parse_elems_crc(u8 *start, size_t len,
++u32 ieee802_11_parse_elems_crc(const u8 *start, size_t len,
+ 			       struct ieee802_11_elems *elems,
+ 			       u64 filter, u32 crc)
+ {
+ 	size_t left = len;
+-	u8 *pos = start;
++	const u8 *pos = start;
+ 	bool calc_crc = filter != 0;
+ 	DECLARE_BITMAP(seen_elems, 256);
+ 
+@@ -877,7 +877,7 @@ u32 ieee802_11_parse_elems_crc(u8 *start, size_t len,
+ 	return crc;
+ }
+ 
+-void ieee802_11_parse_elems(u8 *start, size_t len,
++void ieee802_11_parse_elems(const u8 *start, size_t len,
+ 			    struct ieee802_11_elems *elems)
+ {
+ 	ieee802_11_parse_elems_crc(start, len, elems, 0, 0);
