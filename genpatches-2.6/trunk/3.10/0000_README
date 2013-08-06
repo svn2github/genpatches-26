@@ -83,6 +83,10 @@ Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.10.0.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 3 for 3.10: Early Queue Merge (EQM)
 
+Patch:  2300_USB-mount-extd-inq-cmd-fix.patch
+From:   https://bugs.gentoo.org/show_bug.cgi?id=478698
+Desc:   USB Mount fix: Don't attempt to send extended INQUIRY command if skip_vpd_pages is set
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
