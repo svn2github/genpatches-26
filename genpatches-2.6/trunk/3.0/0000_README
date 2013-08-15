@@ -447,6 +447,10 @@ Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
 
+Patch:  4500_nouveau-video-output-control-Kconfig.patch
+From:   Tom Wijsman <TomWij@gentoo.org
+Desc:   Make DRM_NOUVEU select VIDEO_OUTPUT_CONTROL, fixes bug #475748.
+
 Patch:  4567_distro-Gentoo-Kconfig.patch
 From:   Tom Wijsman <TomWij@gentoo.org
 Desc:   Add Gentoo Linux support config settings and defaults.
