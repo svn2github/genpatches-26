@@ -9,7 +9,7 @@
  source "arch/$SRCARCH/Kconfig"
 --- /dev/null
 +++ b/distro/Kconfig
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,101 @@
 +menu "Gentoo Linux"
 +
 +config GENTOO_LINUX
@@ -90,10 +90,6 @@
 +	select SIGNALFD
 +	select SYSFS
 +	select TIMERFD
-+
-+	depends on !IDE
-+	depends on !SYSFS_DEPRECATED
-+	depends on !SYSFS_DEPRECATED_V2
 +
 +	select ANON_INODES
 +	select BLOCK
