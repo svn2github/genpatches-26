@@ -106,3 +106,7 @@ Desc:   Ensure that /dev/root doesn't appear in /proc/mounts when bootint withou
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
+
+Patch:  4567_distro-Gentoo-Kconfig.patch
+From:   Tom Wijsman <TomWij@gentoo.org
+Desc:   Add Gentoo Linux support config settings and defaults.
