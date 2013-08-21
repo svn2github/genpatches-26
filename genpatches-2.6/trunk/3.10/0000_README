@@ -99,6 +99,10 @@ Patch:  1803_block-bfq-add-Early-Queue-Merge-EQM-to-BFQ-v6r2-for-3.10.0.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v6r2 patch 3 for 3.10: Early Queue Merge (EQM)
 
+Patch:  1804_block-Switch-from-BFQ-v6r2-for-3.10.0-to-BFQ-v6r2-fo.patch
+From:   https://groups.google.com/forum/#!topic/bfq-iosched/f4Lg5INzQ-k
+Desc:   BFQ v6r2 patch 4 for 3.10: Switch to 3.10.8-rc1.
+
 Patch:  2400_kcopy-patch-for-infiniband-driver.patch
 From:   Alexey Shvetsov <alexxy@gentoo.org>
 Desc:   Zero copy for infiniband psm userspace driver
