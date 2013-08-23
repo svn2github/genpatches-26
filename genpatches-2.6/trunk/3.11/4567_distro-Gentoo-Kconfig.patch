@@ -9,13 +9,21 @@
  source "arch/$SRCARCH/Kconfig"
 --- /dev/null
 +++ b/distro/Kconfig
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,109 @@
 +menu "Gentoo Linux"
 +
 +config GENTOO_LINUX
 +	bool "Gentoo Linux support"
 +
 +	default y
++
++	help
++		In order to boot Gentoo Linux a minimal set of config settings needs to
++		be enabled in the kernel; to avoid the users from having to enable them
++		manually as part of a Gentoo Linux installation or a new clean config,
++		we enable these config settings by default for convenience.
++
++		See the settings that become available for more details and fine-tuning.
 +
 +config GENTOO_LINUX_UDEV
 +	bool "Linux dynamic and persistent device naming (userspace devfs) support"
@@ -43,7 +51,7 @@
 +		Some of these are critical files that need to be available early in the
 +		boot process; if not available, it causes sysfs and udev to malfunction.
 +
-+		To ensure Gentoo Linux boots, it is best to leave this option enabled;
++		To ensure Gentoo Linux boots, it is best to leave this setting enabled;
 +		if you run a custom setup, you could consider whether to disable this. 
 +
 +menu "Support for init systems, system and service managers"
@@ -68,7 +76,7 @@
 +		This particular setting enables all the known requirements for OpenRC,
 +		runit and similar script based systems and managers.
 +
-+		If you are unsure about this, it is best to leave this option enabled.
++		If you are unsure about this, it is best to leave this setting enabled.
 +
 +config GENTOO_LINUX_INIT_SYSTEMD
 +	bool "systemd"
