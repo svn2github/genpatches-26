@@ -39,7 +39,7 @@ REMOTE_TAGS="${REMOTE_BASE}/genpatches-2.6/tags"
 
 TARBALL_BASENAME="genpatches"
 KERNEL_NAME="genpatches"
-WE_WANT="base extras"
+WE_WANT="base extras experimental"
 
 DO_WEBSITE="yes"
 DO_EMAIL_ANNOUNCEMENT="yes"

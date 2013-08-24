@@ -292,8 +292,10 @@ sub generate_patchlist {
 	print PATCHLIST '<h1>'.$tag.' Patch List</h1>';
 	print PATCHLIST '<p>Patches 0000-2999 are available in ';
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.base.tar.bz2">genpatches-'.$tag.'.base.tar.bz2</a>';
-	print PATCHLIST '<br />Patches 3000+ are available in ';
+	print PATCHLIST '<br />Patches 3000-4999 are available in ';
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar.bz2">genpatches-'.$tag.'.extras.tar.bz2</a></p>';
+	print PATCHLIST '<br />Patches 5000-5099 are available in ';
+	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.experimental.tar.bz2">genpatches-'.$tag.'.experimental.tar.bz2</a></p>';
 	print PATCHLIST '<table id="patchlist">';
 	print PATCHLIST '<tr><th>Patch</th><th>From</th><th>Description</th></tr>';
 	foreach $patch (@patches) {
@@ -344,6 +346,7 @@ sub generate_info {
 	print INFO 'Split-out patch tarballs: ';
 	print INFO '<a href="tarballs/genpatches-'.$tag.'.base.tar.bz2">base</a>, ';
 	print INFO '<a href="tarballs/genpatches-'.$tag.'.extras.tar.bz2">extras</a></p>';
+	print INFO '<a href="tarballs/genpatches-'.$tag.'.experimental.tar.bz2">experimental</a></p>';
 	
 	if ($lastrev && $have_history) {
 		print INFO '<h3>Changes since '.$oldtag.'</h3>';
