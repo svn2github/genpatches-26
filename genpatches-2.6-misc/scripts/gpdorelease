@@ -88,7 +88,7 @@ if [[ "${WE_WANT}" == *"extras"* ]] ; then
 fi
 
 if [[ "${WE_WANT}" == *"experimental"* ]] ; then
-	[ -n "$(find ${dir}/50* 2>/dev/null)" ] && tar -cvJf ${file_experimental} ${dir}/[34]*
+	[ -n "$(find ${dir}/50* 2>/dev/null)" ] && tar -cvJf ${file_experimental} ${dir}/50*
 fi
 
 scp /tmp/${TARBALL_BASENAME}-$newfullver.* ${USERNAME}@dev.gentoo.org:/space/distfiles-local
