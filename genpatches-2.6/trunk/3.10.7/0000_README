@@ -67,6 +67,10 @@ Patch:  1006_linux-3.10.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.10.7
 
+Patch:  1500_CVE-2013-4300-net-Check-the-correct-namespace-when-spoofing-pid-ov.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=d661684cf6820331feae71146c35da83d794467e
+Desc:   CVE-2013-4300: PID Spoofing Privilege Escalation Vulnerability
+
 Patch:  1500_task-mmu_fix-buffer-overflow-in-add_page_map.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=f30d87b004dcb4b260dcb2667d5ef6998f4aac1f
 Desc:   fs/proc/task_mmu.c: fix buffer overflow in add_page_map() reported by stintel on IRC, backported from 3.10.8.
