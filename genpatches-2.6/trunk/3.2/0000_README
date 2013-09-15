@@ -264,6 +264,10 @@ Patch:  2600_Input-ALPS-synaptics-touchpad.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad Patchset
 
+Patch:  2700_drm-i915-resurrect-panel-lid-handling.patch
+From:   Daniel Vetter <daniel.vetter@ffwll.ch>
+Desc:   drm/i915: resurrect panel lid handling
+
 Patch:  2700_ThinkPad-30-brightness-control-fix.patch
 From:   Seth Forshee <seth.forshee@canonical.com>
 Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads

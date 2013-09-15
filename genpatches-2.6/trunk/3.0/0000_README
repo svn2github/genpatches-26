@@ -415,6 +415,10 @@ Patch:  1094_linux-3.0.95.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.0.95
 
+Patch:  1095_linux-3.0.96.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.0.96
+
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
 Desc:   Support for namespace user.pax.* on tmpfs.
@@ -458,6 +462,11 @@ Desc:   ALPS Touchpad - Add semi-MT support for v3 protocol
 Patch:  2635_Input-ALPS-dump-raw-packet-data.patch
 From:   http://bugs.gentoo.org/show_bug.cgi?id=318567
 Desc:   ALPS Touchpad - dump raw packet data
+
+Patch:  2700_drm-i915-resurrect-panel-lid-handling.patch
+From:   Tom Wijsman <TomWij@gentoo.org>
+Desc:   Backported "drm/i915: resurrect panel lid handling"
+        by Daniel Vetter <daniel.vetter@ffwll.ch>
 
 Patch:  2700_ThinkPad-30-brightness-control-fix.patch
 From:   Seth Forshee <seth.forshee@canonical.com>
