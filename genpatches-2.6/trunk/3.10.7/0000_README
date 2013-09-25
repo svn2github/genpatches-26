@@ -67,9 +67,57 @@ Patch:  1006_linux-3.10.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.10.7
 
+Patch:  1500_CVE-2013-2888-HID-validate-HID-report-id-size.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-validate-hid-report-id-size.patch
+Desc:   CVE-2013-2888: HID: validate HID report id size
+
+Patch:  1500_CVE-2013-2889-HID-zeroplus-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/patch/?id=78214e81a1bf43740ce89bb5efda78eac2f8ef83
+Desc:   CVE-2013-2889: HID: zeroplus: validate output report details
+
+Patch:  1500_CVE-2013-2891-HID-steelseries-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/patch/?id=41df7f6d43723deb7364340b44bc5d94bf717456
+Desc:   CVE-2013-2891: HID: steelseries: validate output report details
+
+Patch:  1500_CVE-2013-2892-HID-pantherlord-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-pantherlord-validate-output-report-details.patch
+Desc:   CVE-2013-2892: HID: pantherlord: validate output report details
+
+Patch:  1500_CVE-2013-2894-HID-lenovo-tpkbd-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/patch/?id=0a9cd0a80ac559357c6a90d26c55270ed752aa26
+Desc:   CVE-2013-2894: HID: lenovo-tpkbd: validate output report details
+
+Patch:  1500_CVE-2013-2895-HID-logitech-dj-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/patch/?id=297502abb32e225fb23801fcdb0e4f6f8e17099a
+Desc:   CVE-2013-2895: HID: logitech-dj: validate output report details
+
+Patch:  1500_CVE-2013-2896-HID-ntrig-validate-feature-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-ntrig-validate-feature-report-details.patch
+Desc:   CVE-2013-2896: HID: ntrig: validate feature report details
+
+Patch:  1500_CVE-2013-2897-HID-multitouch-validate-indexes-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/patch/?id=8821f5dc187bdf16cfb32ef5aa8c3035273fa79a
+Desc:   CVE-2013-2897: HID: multitouch: validate indexes details
+
+Patch:  1500_CVE-2013-2898-HID-sensor-hub-validate-feature-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-sensor-hub-validate-feature-report-details.patch
+Desc:   CVE-2013-2898: HID: sensor-hub: validate feature report details
+
+Patch:  1500_CVE-2013-2899-HID-picolcd_core-validate-output-report-details.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-picolcd_core-validate-output-report-details.patch
+Desc:   CVE-2013-2899: HID: picolcd_core: validate output report details
+
 Patch:  1500_CVE-2013-4300-net-Check-the-correct-namespace-when-spoofing-pid-ov.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=d661684cf6820331feae71146c35da83d794467e
 Desc:   CVE-2013-4300: PID Spoofing Privilege Escalation Vulnerability
+
+Patch:  1500_HID-check-for-NULL-field-when-setting-values.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/plain/queue-3.10/hid-check-for-null-field-when-setting-values.patch
+Desc:   Additional patch for CVE-2013-2888 - CVE-2013-2899: HID: check for NULL field when setting values
+
+Patch:  1500_HID-provide-a-helper-for-validating-hid-reports.patch
+From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/patch/?id=331415ff16a12147d57d5c953f3a961b7ede348b
+Desc:   Helper for CVE-2013-2888 - CVE-2013-2899: HID: provide a helper for validating hid reports
 
 Patch:  1500_task-mmu_fix-buffer-overflow-in-add_page_map.patch
 From:   http://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?id=f30d87b004dcb4b260dcb2667d5ef6998f4aac1f
