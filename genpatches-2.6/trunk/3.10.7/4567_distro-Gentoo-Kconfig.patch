@@ -82,9 +82,9 @@
 +	select CGROUPS
 +	select EPOLL
 +	select FANOTIFY
++	select FHANDLE
 +	select HOTPLUG
 +	select INOTIFY_USER
-+	select IPV6
 +	select NET
 +	select PROC_FS
 +	select SIGNALFD
