@@ -86,6 +86,10 @@ Patch:  2900_dev-root-proc-mount-fix.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=438380
 Desc:   Ensure that /dev/root doesn't appear in /proc/mounts when bootint without an initramfs.
 
+Patch:  2900_s2disk-resume-image-fix.patch
+From:   Al Viro <viro <at> ZenIV.linux.org.uk>
+Desc:   Do not lock when UMH is waiting on current thread spawned by linuxrc. (bug #481344)
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
