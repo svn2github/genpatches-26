@@ -90,8 +90,12 @@ Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
 
+Patch:  4500_support-for-pogoplug-e02.patch
+From:   Cristoph Junghans <ottxor@gentoo.org>
+Desc:   Support for Pogoplug e02 (bug #460350), adjusted to be opt-in by TomWij.
+
 Patch:  4567_distro-Gentoo-Kconfig.patch
-From:   Tom Wijsman <TomWij@gentoo.org
+From:   Tom Wijsman <TomWij@gentoo.org>
 Desc:   Add Gentoo Linux support config settings and defaults.
 
 Patch:  5000-BFQ-1-block-cgroups-kconfig-build-bits-for-v6r2-3.11.patch
