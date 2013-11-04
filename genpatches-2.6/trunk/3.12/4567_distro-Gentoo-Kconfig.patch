@@ -9,7 +9,7 @@
  source "arch/$SRCARCH/Kconfig"
 --- /dev/null
 +++ b/distro/Kconfig
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,107 @@
 +menu "Gentoo Linux"
 +
 +config GENTOO_LINUX
@@ -35,7 +35,6 @@
 +	select TMPFS
 +
 +	select MMU
-+	select HOTPLUG
 +	select SHMEM
 +
 +	help
@@ -91,7 +90,6 @@
 +	select EPOLL
 +	select FANOTIFY
 +	select FHANDLE
-+	select HOTPLUG
 +	select INOTIFY_USER
 +	select NET
 +	select PROC_FS

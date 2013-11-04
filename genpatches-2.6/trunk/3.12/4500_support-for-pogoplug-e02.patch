@@ -3,9 +3,9 @@ index 0f2aa61..8c3146b 100644
 --- a/arch/arm/configs/kirkwood_defconfig
 +++ b/arch/arm/configs/kirkwood_defconfig
 @@ -20,6 +20,7 @@ CONFIG_MACH_NET2BIG_V2=y
+ CONFIG_MACH_D2NET_V2=y
+ CONFIG_MACH_NET2BIG_V2=y
  CONFIG_MACH_NET5BIG_V2=y
- CONFIG_MACH_NETSPACE_MAX_V2=y
- CONFIG_MACH_NETSPACE_V2=y
 +CONFIG_MACH_POGO_E02=n
  CONFIG_MACH_OPENRD_BASE=y
  CONFIG_MACH_OPENRD_CLIENT=y
@@ -35,13 +35,13 @@ index ac4cd75..dddbb40 100644
 --- a/arch/arm/mach-kirkwood/Makefile
 +++ b/arch/arm/mach-kirkwood/Makefile
 @@ -2,6 +2,7 @@ obj-y				+= common.o irq.o pcie.o mpp.o
- 
  obj-$(CONFIG_MACH_D2NET_V2)		+= d2net_v2-setup.o lacie_v2-common.o
- obj-$(CONFIG_MACH_DOCKSTAR)		+= dockstar-setup.o
+ obj-$(CONFIG_MACH_NET2BIG_V2)		+= netxbig_v2-setup.o lacie_v2-common.o
+ obj-$(CONFIG_MACH_NET5BIG_V2)		+= netxbig_v2-setup.o lacie_v2-common.o
 +obj-$(CONFIG_MACH_POGO_E02)		+= pogo_e02-setup.o
- obj-$(CONFIG_MACH_ESATA_SHEEVAPLUG)	+= sheevaplug-setup.o
- obj-$(CONFIG_MACH_GURUPLUG)		+= guruplug-setup.o
- obj-$(CONFIG_MACH_INETSPACE_V2)		+= netspace_v2-setup.o lacie_v2-common.o
+ obj-$(CONFIG_MACH_OPENRD)		+= openrd-setup.o
+ obj-$(CONFIG_MACH_RD88F6192_NAS)	+= rd88f6192-nas-setup.o
+ obj-$(CONFIG_MACH_RD88F6281)		+= rd88f6281-setup.o
 diff --git a/arch/arm/mach-kirkwood/pogo_e02-setup.c b/arch/arm/mach-kirkwood/pogo_e02-setup.c
 new file mode 100644
 index 0000000..f57e8f7
