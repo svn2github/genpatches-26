@@ -1,0 +1,1424 @@
+diff --git a/Makefile b/Makefile
+index 06379bd78b64..7feb3ad77387 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERSION = 3
+ PATCHLEVEL = 11
+-SUBLEVEL = 9
++SUBLEVEL = 10
+ EXTRAVERSION =
+ NAME = Linux for Workgroups
+ 
+diff --git a/arch/ia64/include/asm/processor.h b/arch/ia64/include/asm/processor.h
+index e0a899a1a8a6..5a84b3a50741 100644
+--- a/arch/ia64/include/asm/processor.h
++++ b/arch/ia64/include/asm/processor.h
+@@ -319,7 +319,7 @@ struct thread_struct {
+ 	regs->loadrs = 0;									\
+ 	regs->r8 = get_dumpable(current->mm);	/* set "don't zap registers" flag */		\
+ 	regs->r12 = new_sp - 16;	/* allocate 16 byte scratch area */			\
+-	if (unlikely(!get_dumpable(current->mm))) {							\
++	if (unlikely(get_dumpable(current->mm) != SUID_DUMP_USER)) {	\
+ 		/*										\
+ 		 * Zap scratch regs to avoid leaking bits between processes with different	\
+ 		 * uid/privileges.								\
+diff --git a/arch/s390/crypto/aes_s390.c b/arch/s390/crypto/aes_s390.c
+index b4dbade8ca24..2e4b5be31a1b 100644
+--- a/arch/s390/crypto/aes_s390.c
++++ b/arch/s390/crypto/aes_s390.c
+@@ -35,7 +35,6 @@ static u8 *ctrblk;
+ static char keylen_flag;
+ 
+ struct s390_aes_ctx {
+-	u8 iv[AES_BLOCK_SIZE];
+ 	u8 key[AES_MAX_KEY_SIZE];
+ 	long enc;
+ 	long dec;
+@@ -441,30 +440,36 @@ static int cbc_aes_set_key(struct crypto_tfm *tfm, const u8 *in_key,
+ 	return aes_set_key(tfm, in_key, key_len);
+ }
+ 
+-static int cbc_aes_crypt(struct blkcipher_desc *desc, long func, void *param,
++static int cbc_aes_crypt(struct blkcipher_desc *desc, long func,
+ 			 struct blkcipher_walk *walk)
+ {
++	struct s390_aes_ctx *sctx = crypto_blkcipher_ctx(desc->tfm);
+ 	int ret = blkcipher_walk_virt(desc, walk);
+ 	unsigned int nbytes = walk->nbytes;
++	struct {
++		u8 iv[AES_BLOCK_SIZE];
++		u8 key[AES_MAX_KEY_SIZE];
++	} param;
+ 
+ 	if (!nbytes)
+ 		goto out;
+ 
+-	memcpy(param, walk->iv, AES_BLOCK_SIZE);
++	memcpy(param.iv, walk->iv, AES_BLOCK_SIZE);
++	memcpy(param.key, sctx->key, sctx->key_len);
+ 	do {
+ 		/* only use complete blocks */
+ 		unsigned int n = nbytes & ~(AES_BLOCK_SIZE - 1);
+ 		u8 *out = walk->dst.virt.addr;
+ 		u8 *in = walk->src.virt.addr;
+ 
+-		ret = crypt_s390_kmc(func, param, out, in, n);
++		ret = crypt_s390_kmc(func, &param, out, in, n);
+ 		if (ret < 0 || ret != n)
+ 			return -EIO;
+ 
+ 		nbytes &= AES_BLOCK_SIZE - 1;
+ 		ret = blkcipher_walk_done(desc, walk, nbytes);
+ 	} while ((nbytes = walk->nbytes));
+-	memcpy(walk->iv, param, AES_BLOCK_SIZE);
++	memcpy(walk->iv, param.iv, AES_BLOCK_SIZE);
+ 
+ out:
+ 	return ret;
+@@ -481,7 +486,7 @@ static int cbc_aes_encrypt(struct blkcipher_desc *desc,
+ 		return fallback_blk_enc(desc, dst, src, nbytes);
+ 
+ 	blkcipher_walk_init(&walk, dst, src, nbytes);
+-	return cbc_aes_crypt(desc, sctx->enc, sctx->iv, &walk);
++	return cbc_aes_crypt(desc, sctx->enc, &walk);
+ }
+ 
+ static int cbc_aes_decrypt(struct blkcipher_desc *desc,
+@@ -495,7 +500,7 @@ static int cbc_aes_decrypt(struct blkcipher_desc *desc,
+ 		return fallback_blk_dec(desc, dst, src, nbytes);
+ 
+ 	blkcipher_walk_init(&walk, dst, src, nbytes);
+-	return cbc_aes_crypt(desc, sctx->dec, sctx->iv, &walk);
++	return cbc_aes_crypt(desc, sctx->dec, &walk);
+ }
+ 
+ static struct crypto_alg cbc_aes_alg = {
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 83369e5a1d27..0b586c0ef7c3 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -391,9 +391,9 @@ static void amd_e400_idle(void)
+ 		 * The switch back from broadcast mode needs to be
+ 		 * called with interrupts disabled.
+ 		 */
+-		 local_irq_disable();
+-		 clockevents_notify(CLOCK_EVT_NOTIFY_BROADCAST_EXIT, &cpu);
+-		 local_irq_enable();
++		local_irq_disable();
++		clockevents_notify(CLOCK_EVT_NOTIFY_BROADCAST_EXIT, &cpu);
++		local_irq_enable();
+ 	} else
+ 		default_idle();
+ }
+diff --git a/crypto/ansi_cprng.c b/crypto/ansi_cprng.c
+index c0bb3778f1ae..666f1962a160 100644
+--- a/crypto/ansi_cprng.c
++++ b/crypto/ansi_cprng.c
+@@ -230,11 +230,11 @@ remainder:
+ 	 */
+ 	if (byte_count < DEFAULT_BLK_SZ) {
+ empty_rbuf:
+-		for (; ctx->rand_data_valid < DEFAULT_BLK_SZ;
+-			ctx->rand_data_valid++) {
++		while (ctx->rand_data_valid < DEFAULT_BLK_SZ) {
+ 			*ptr = ctx->rand_data[ctx->rand_data_valid];
+ 			ptr++;
+ 			byte_count--;
++			ctx->rand_data_valid++;
+ 			if (byte_count == 0)
+ 				goto done;
+ 		}
+diff --git a/drivers/acpi/acpica/exoparg1.c b/drivers/acpi/acpica/exoparg1.c
+index 814b4a3d656a..2cdd41d8ade6 100644
+--- a/drivers/acpi/acpica/exoparg1.c
++++ b/drivers/acpi/acpica/exoparg1.c
+@@ -962,10 +962,17 @@ acpi_status acpi_ex_opcode_1A_0T_1R(struct acpi_walk_state *walk_state)
+ 					 */
+ 					return_desc =
+ 					    *(operand[0]->reference.where);
+-					if (return_desc) {
+-						acpi_ut_add_reference
+-						    (return_desc);
++					if (!return_desc) {
++						/*
++						 * Element is NULL, do not allow the dereference.
++						 * This provides compatibility with other ACPI
++						 * implementations.
++						 */
++						return_ACPI_STATUS
++						    (AE_AML_UNINITIALIZED_ELEMENT);
+ 					}
++
++					acpi_ut_add_reference(return_desc);
+ 					break;
+ 
+ 				default:
+@@ -990,11 +997,40 @@ acpi_status acpi_ex_opcode_1A_0T_1R(struct acpi_walk_state *walk_state)
+ 									 acpi_namespace_node
+ 									 *)
+ 									return_desc);
+-				}
++					if (!return_desc) {
++						break;
++					}
+ 
+-				/* Add another reference to the object! */
++					/*
++					 * June 2013:
++					 * buffer_fields/field_units require additional resolution
++					 */
++					switch (return_desc->common.type) {
++					case ACPI_TYPE_BUFFER_FIELD:
++					case ACPI_TYPE_LOCAL_REGION_FIELD:
++					case ACPI_TYPE_LOCAL_BANK_FIELD:
++					case ACPI_TYPE_LOCAL_INDEX_FIELD:
+ 
+-				acpi_ut_add_reference(return_desc);
++						status =
++						    acpi_ex_read_data_from_field
++						    (walk_state, return_desc,
++						     &temp_desc);
++						if (ACPI_FAILURE(status)) {
++							goto cleanup;
++						}
++
++						return_desc = temp_desc;
++						break;
++
++					default:
++
++						/* Add another reference to the object */
++
++						acpi_ut_add_reference
++						    (return_desc);
++						break;
++					}
++				}
+ 				break;
+ 
+ 			default:
+diff --git a/drivers/acpi/acpica/exstore.c b/drivers/acpi/acpica/exstore.c
+index 2bdba6f7d762..f0b09bf9887d 100644
+--- a/drivers/acpi/acpica/exstore.c
++++ b/drivers/acpi/acpica/exstore.c
+@@ -57,6 +57,11 @@ acpi_ex_store_object_to_index(union acpi_operand_object *val_desc,
+ 			      union acpi_operand_object *dest_desc,
+ 			      struct acpi_walk_state *walk_state);
+ 
++static acpi_status
++acpi_ex_store_direct_to_node(union acpi_operand_object *source_desc,
++			     struct acpi_namespace_node *node,
++			     struct acpi_walk_state *walk_state);
++
+ /*******************************************************************************
+  *
+  * FUNCTION:    acpi_ex_store
+@@ -375,7 +380,11 @@ acpi_ex_store_object_to_index(union acpi_operand_object *source_desc,
+  *              When storing into an object the data is converted to the
+  *              target object type then stored in the object. This means
+  *              that the target object type (for an initialized target) will
+- *              not be changed by a store operation.
++ *              not be changed by a store operation. A copy_object can change
++ *              the target type, however.
++ *
++ *              The implicit_conversion flag is set to NO/FALSE only when
++ *              storing to an arg_x -- as per the rules of the ACPI spec.
+  *
+  *              Assumes parameters are already validated.
+  *
+@@ -399,7 +408,7 @@ acpi_ex_store_object_to_node(union acpi_operand_object *source_desc,
+ 	target_type = acpi_ns_get_type(node);
+ 	target_desc = acpi_ns_get_attached_object(node);
+ 
+-	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Storing %p(%s) into node %p(%s)\n",
++	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Storing %p (%s) to node %p (%s)\n",
+ 			  source_desc,
+ 			  acpi_ut_get_object_type_name(source_desc), node,
+ 			  acpi_ut_get_type_name(target_type)));
+@@ -413,45 +422,30 @@ acpi_ex_store_object_to_node(union acpi_operand_object *source_desc,
+ 		return_ACPI_STATUS(status);
+ 	}
+ 
+-	/* If no implicit conversion, drop into the default case below */
+-
+-	if ((!implicit_conversion) ||
+-	    ((walk_state->opcode == AML_COPY_OP) &&
+-	     (target_type != ACPI_TYPE_LOCAL_REGION_FIELD) &&
+-	     (target_type != ACPI_TYPE_LOCAL_BANK_FIELD) &&
+-	     (target_type != ACPI_TYPE_LOCAL_INDEX_FIELD))) {
+-		/*
+-		 * Force execution of default (no implicit conversion). Note:
+-		 * copy_object does not perform an implicit conversion, as per the ACPI
+-		 * spec -- except in case of region/bank/index fields -- because these
+-		 * objects must retain their original type permanently.
+-		 */
+-		target_type = ACPI_TYPE_ANY;
+-	}
+-
+ 	/* Do the actual store operation */
+ 
+ 	switch (target_type) {
+-	case ACPI_TYPE_BUFFER_FIELD:
+-	case ACPI_TYPE_LOCAL_REGION_FIELD:
+-	case ACPI_TYPE_LOCAL_BANK_FIELD:
+-	case ACPI_TYPE_LOCAL_INDEX_FIELD:
+-
+-		/* For fields, copy the source data to the target field. */
+-
+-		status = acpi_ex_write_data_to_field(source_desc, target_desc,
+-						     &walk_state->result_obj);
+-		break;
+-
+ 	case ACPI_TYPE_INTEGER:
+ 	case ACPI_TYPE_STRING:
+ 	case ACPI_TYPE_BUFFER:
+ 		/*
+-		 * These target types are all of type Integer/String/Buffer, and
+-		 * therefore support implicit conversion before the store.
+-		 *
+-		 * Copy and/or convert the source object to a new target object
++		 * The simple data types all support implicit source operand
++		 * conversion before the store.
+ 		 */
++
++		if ((walk_state->opcode == AML_COPY_OP) || !implicit_conversion) {
++			/*
++			 * However, copy_object and Stores to arg_x do not perform
++			 * an implicit conversion, as per the ACPI specification.
++			 * A direct store is performed instead.
++			 */
++			status = acpi_ex_store_direct_to_node(source_desc, node,
++							      walk_state);
++			break;
++		}
++
++		/* Store with implicit source operand conversion support */
++
+ 		status =
+ 		    acpi_ex_store_object_to_object(source_desc, target_desc,
+ 						   &new_desc, walk_state);
+@@ -465,13 +459,12 @@ acpi_ex_store_object_to_node(union acpi_operand_object *source_desc,
+ 			 * the Name's type to that of the value being stored in it.
+ 			 * source_desc reference count is incremented by attach_object.
+ 			 *
+-			 * Note: This may change the type of the node if an explicit store
+-			 * has been performed such that the node/object type has been
+-			 * changed.
++			 * Note: This may change the type of the node if an explicit
++			 * store has been performed such that the node/object type
++			 * has been changed.
+ 			 */
+-			status =
+-			    acpi_ns_attach_object(node, new_desc,
+-						  new_desc->common.type);
++			status = acpi_ns_attach_object(node, new_desc,
++						       new_desc->common.type);
+ 
+ 			ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
+ 					  "Store %s into %s via Convert/Attach\n",
+@@ -482,38 +475,83 @@ acpi_ex_store_object_to_node(union acpi_operand_object *source_desc,
+ 		}
+ 		break;
+ 
+-	default:
+-
+-		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
+-				  "Storing [%s] (%p) directly into node [%s] (%p)"
+-				  " with no implicit conversion\n",
+-				  acpi_ut_get_object_type_name(source_desc),
+-				  source_desc,
+-				  acpi_ut_get_object_type_name(target_desc),
+-				  node));
++	case ACPI_TYPE_BUFFER_FIELD:
++	case ACPI_TYPE_LOCAL_REGION_FIELD:
++	case ACPI_TYPE_LOCAL_BANK_FIELD:
++	case ACPI_TYPE_LOCAL_INDEX_FIELD:
++		/*
++		 * For all fields, always write the source data to the target
++		 * field. Any required implicit source operand conversion is
++		 * performed in the function below as necessary. Note, field
++		 * objects must retain their original type permanently.
++		 */
++		status = acpi_ex_write_data_to_field(source_desc, target_desc,
++						     &walk_state->result_obj);
++		break;
+ 
++	default:
+ 		/*
+ 		 * No conversions for all other types. Directly store a copy of
+-		 * the source object. NOTE: This is a departure from the ACPI
+-		 * spec, which states "If conversion is impossible, abort the
+-		 * running control method".
++		 * the source object. This is the ACPI spec-defined behavior for
++		 * the copy_object operator.
+ 		 *
+-		 * This code implements "If conversion is impossible, treat the
+-		 * Store operation as a CopyObject".
++		 * NOTE: For the Store operator, this is a departure from the
++		 * ACPI spec, which states "If conversion is impossible, abort
++		 * the running control method". Instead, this code implements
++		 * "If conversion is impossible, treat the Store operation as
++		 * a CopyObject".
+ 		 */
+-		status =
+-		    acpi_ut_copy_iobject_to_iobject(source_desc, &new_desc,
+-						    walk_state);
+-		if (ACPI_FAILURE(status)) {
+-			return_ACPI_STATUS(status);
+-		}
+-
+-		status =
+-		    acpi_ns_attach_object(node, new_desc,
+-					  new_desc->common.type);
+-		acpi_ut_remove_reference(new_desc);
++		status = acpi_ex_store_direct_to_node(source_desc, node,
++						      walk_state);
+ 		break;
+ 	}
+ 
+ 	return_ACPI_STATUS(status);
+ }
++
++/*******************************************************************************
++ *
++ * FUNCTION:    acpi_ex_store_direct_to_node
++ *
++ * PARAMETERS:  source_desc             - Value to be stored
++ *              node                    - Named object to receive the value
++ *              walk_state              - Current walk state
++ *
++ * RETURN:      Status
++ *
++ * DESCRIPTION: "Store" an object directly to a node. This involves a copy
++ *              and an attach.
++ *
++ ******************************************************************************/
++
++static acpi_status
++acpi_ex_store_direct_to_node(union acpi_operand_object *source_desc,
++			     struct acpi_namespace_node *node,
++			     struct acpi_walk_state *walk_state)
++{
++	acpi_status status;
++	union acpi_operand_object *new_desc;
++
++	ACPI_FUNCTION_TRACE(ex_store_direct_to_node);
++
++	ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
++			  "Storing [%s] (%p) directly into node [%s] (%p)"
++			  " with no implicit conversion\n",
++			  acpi_ut_get_object_type_name(source_desc),
++			  source_desc, acpi_ut_get_type_name(node->type),
++			  node));
++
++	/* Copy the source object to a new object */
++
++	status =
++	    acpi_ut_copy_iobject_to_iobject(source_desc, &new_desc, walk_state);
++	if (ACPI_FAILURE(status)) {
++		return_ACPI_STATUS(status);
++	}
++
++	/* Attach the new object to the node */
++
++	status = acpi_ns_attach_object(node, new_desc, new_desc->common.type);
++	acpi_ut_remove_reference(new_desc);
++	return_ACPI_STATUS(status);
++}
+diff --git a/drivers/acpi/ec.c b/drivers/acpi/ec.c
+index 45af90a1ec1b..1ad5a4f9e0c3 100644
+--- a/drivers/acpi/ec.c
++++ b/drivers/acpi/ec.c
+@@ -175,9 +175,10 @@ static void start_transaction(struct acpi_ec *ec)
+ static void advance_transaction(struct acpi_ec *ec, u8 status)
+ {
+ 	unsigned long flags;
+-	struct transaction *t = ec->curr;
++	struct transaction *t;
+ 
+ 	spin_lock_irqsave(&ec->lock, flags);
++	t = ec->curr;
+ 	if (!t)
+ 		goto unlock;
+ 	if (t->wlen > t->wi) {
+diff --git a/drivers/acpi/pci_root.c b/drivers/acpi/pci_root.c
+index a67853e3c419..7dbe92cb7cb8 100644
+--- a/drivers/acpi/pci_root.c
++++ b/drivers/acpi/pci_root.c
+@@ -611,9 +611,12 @@ static void handle_root_bridge_removal(struct acpi_device *device)
+ 	ej_event->device = device;
+ 	ej_event->event = ACPI_NOTIFY_EJECT_REQUEST;
+ 
++	get_device(&device->dev);
+ 	status = acpi_os_hotplug_execute(acpi_bus_hot_remove_device, ej_event);
+-	if (ACPI_FAILURE(status))
++	if (ACPI_FAILURE(status)) {
++		put_device(&device->dev);
+ 		kfree(ej_event);
++	}
+ }
+ 
+ static void _handle_hotplug_event_root(struct work_struct *work)
+diff --git a/drivers/acpi/processor_idle.c b/drivers/acpi/processor_idle.c
+index f98dd00b51a9..c7414a545a4f 100644
+--- a/drivers/acpi/processor_idle.c
++++ b/drivers/acpi/processor_idle.c
+@@ -119,17 +119,10 @@ static struct dmi_system_id processor_power_dmi_table[] = {
+  */
+ static void acpi_safe_halt(void)
+ {
+-	current_thread_info()->status &= ~TS_POLLING;
+-	/*
+-	 * TS_POLLING-cleared state must be visible before we
+-	 * test NEED_RESCHED:
+-	 */
+-	smp_mb();
+-	if (!need_resched()) {
++	if (!tif_need_resched()) {
+ 		safe_halt();
+ 		local_irq_disable();
+ 	}
+-	current_thread_info()->status |= TS_POLLING;
+ }
+ 
+ #ifdef ARCH_APICTIMER_STOPS_ON_C3
+@@ -737,6 +730,11 @@ static int acpi_idle_enter_c1(struct cpuidle_device *dev,
+ 	if (unlikely(!pr))
+ 		return -EINVAL;
+ 
++	if (cx->entry_method == ACPI_CSTATE_FFH) {
++		if (current_set_polling_and_test())
++			return -EINVAL;
++	}
++
+ 	lapic_timer_state_broadcast(pr, cx, 1);
+ 	acpi_idle_do_entry(cx);
+ 
+@@ -790,18 +788,9 @@ static int acpi_idle_enter_simple(struct cpuidle_device *dev,
+ 	if (unlikely(!pr))
+ 		return -EINVAL;
+ 
+-	if (cx->entry_method != ACPI_CSTATE_FFH) {
+-		current_thread_info()->status &= ~TS_POLLING;
+-		/*
+-		 * TS_POLLING-cleared state must be visible before we test
+-		 * NEED_RESCHED:
+-		 */
+-		smp_mb();
+-
+-		if (unlikely(need_resched())) {
+-			current_thread_info()->status |= TS_POLLING;
++	if (cx->entry_method == ACPI_CSTATE_FFH) {
++		if (current_set_polling_and_test())
+ 			return -EINVAL;
+-		}
+ 	}
+ 
+ 	/*
+@@ -819,9 +808,6 @@ static int acpi_idle_enter_simple(struct cpuidle_device *dev,
+ 
+ 	sched_clock_idle_wakeup_event(0);
+ 
+-	if (cx->entry_method != ACPI_CSTATE_FFH)
+-		current_thread_info()->status |= TS_POLLING;
+-
+ 	lapic_timer_state_broadcast(pr, cx, 0);
+ 	return index;
+ }
+@@ -858,18 +844,9 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
+ 		}
+ 	}
+ 
+-	if (cx->entry_method != ACPI_CSTATE_FFH) {
+-		current_thread_info()->status &= ~TS_POLLING;
+-		/*
+-		 * TS_POLLING-cleared state must be visible before we test
+-		 * NEED_RESCHED:
+-		 */
+-		smp_mb();
+-
+-		if (unlikely(need_resched())) {
+-			current_thread_info()->status |= TS_POLLING;
++	if (cx->entry_method == ACPI_CSTATE_FFH) {
++		if (current_set_polling_and_test())
+ 			return -EINVAL;
+-		}
+ 	}
+ 
+ 	acpi_unlazy_tlb(smp_processor_id());
+@@ -915,9 +892,6 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
+ 
+ 	sched_clock_idle_wakeup_event(0);
+ 
+-	if (cx->entry_method != ACPI_CSTATE_FFH)
+-		current_thread_info()->status |= TS_POLLING;
+-
+ 	lapic_timer_state_broadcast(pr, cx, 0);
+ 	return index;
+ }
+diff --git a/drivers/acpi/scan.c b/drivers/acpi/scan.c
+index 8a46c924effd..0ebb955bc03a 100644
+--- a/drivers/acpi/scan.c
++++ b/drivers/acpi/scan.c
+@@ -359,8 +359,6 @@ static void acpi_scan_bus_device_check(acpi_handle handle, u32 ost_source)
+ 			goto out;
+ 		}
+ 	}
+-	acpi_evaluate_hotplug_ost(handle, ost_source,
+-				  ACPI_OST_SC_INSERT_IN_PROGRESS, NULL);
+ 	error = acpi_bus_scan(handle);
+ 	if (error) {
+ 		acpi_handle_warn(handle, "Namespace scan failure\n");
+diff --git a/drivers/acpi/video.c b/drivers/acpi/video.c
+index 3270d3c8ba4e..28e5184b565b 100644
+--- a/drivers/acpi/video.c
++++ b/drivers/acpi/video.c
+@@ -848,7 +848,7 @@ acpi_video_init_brightness(struct acpi_video_device *device)
+ 		for (i = 2; i < br->count; i++)
+ 			if (level_old == br->levels[i])
+ 				break;
+-		if (i == br->count)
++		if (i == br->count || !level)
+ 			level = max_level;
+ 	}
+ 
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 3221a55dddad..58491f1b2799 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -1625,7 +1625,6 @@ static struct usb_driver btusb_driver = {
+ #ifdef CONFIG_PM
+ 	.suspend	= btusb_suspend,
+ 	.resume		= btusb_resume,
+-	.reset_resume	= btusb_resume,
+ #endif
+ 	.id_table	= btusb_table,
+ 	.supports_autosuspend = 1,
+diff --git a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvc1.c b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvc1.c
+index e5be3ee7f172..71b4283f7fad 100644
+--- a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvc1.c
++++ b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvc1.c
+@@ -587,6 +587,7 @@ nvc1_grctx_init_unk58xx[] = {
+ 	{ 0x405870,   4, 0x04, 0x00000001 },
+ 	{ 0x405a00,   2, 0x04, 0x00000000 },
+ 	{ 0x405a18,   1, 0x04, 0x00000000 },
++	{}
+ };
+ 
+ static struct nvc0_graph_init
+@@ -598,6 +599,7 @@ nvc1_grctx_init_rop[] = {
+ 	{ 0x408904,   1, 0x04, 0x62000001 },
+ 	{ 0x408908,   1, 0x04, 0x00c80929 },
+ 	{ 0x408980,   1, 0x04, 0x0000011d },
++	{}
+ };
+ 
+ static struct nvc0_graph_init
+@@ -671,6 +673,7 @@ nvc1_grctx_init_gpc_0[] = {
+ 	{ 0x419000,   1, 0x04, 0x00000780 },
+ 	{ 0x419004,   2, 0x04, 0x00000000 },
+ 	{ 0x419014,   1, 0x04, 0x00000004 },
++	{}
+ };
+ 
+ static struct nvc0_graph_init
+@@ -717,6 +720,7 @@ nvc1_grctx_init_tpc[] = {
+ 	{ 0x419e98,   1, 0x04, 0x00000000 },
+ 	{ 0x419ee0,   1, 0x04, 0x00011110 },
+ 	{ 0x419f30,  11, 0x04, 0x00000000 },
++	{}
+ };
+ 
+ void
+diff --git a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd7.c b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd7.c
+index 438e78410808..c4740d528532 100644
+--- a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd7.c
++++ b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd7.c
+@@ -258,6 +258,7 @@ nvd7_grctx_init_hub[] = {
+ 	nvc0_grctx_init_unk78xx,
+ 	nvc0_grctx_init_unk80xx,
+ 	nvd9_grctx_init_rop,
++	NULL
+ };
+ 
+ struct nvc0_graph_init *
+diff --git a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd9.c b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd9.c
+index 818a4751df46..a1102cbf2fdc 100644
+--- a/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd9.c
++++ b/drivers/gpu/drm/nouveau/core/engine/graph/ctxnvd9.c
+@@ -466,6 +466,7 @@ nvd9_grctx_init_hub[] = {
+ 	nvc0_grctx_init_unk78xx,
+ 	nvc0_grctx_init_unk80xx,
+ 	nvd9_grctx_init_rop,
++	NULL
+ };
+ 
+ struct nvc0_graph_init *
+diff --git a/drivers/hv/channel_mgmt.c b/drivers/hv/channel_mgmt.c
+index 461f47b6691e..6f1b5e6b44a0 100644
+--- a/drivers/hv/channel_mgmt.c
++++ b/drivers/hv/channel_mgmt.c
+@@ -172,7 +172,8 @@ static void vmbus_process_rescind_offer(struct work_struct *work)
+ 	struct vmbus_channel *primary_channel;
+ 	struct vmbus_channel_relid_released msg;
+ 
+-	vmbus_device_unregister(channel->device_obj);
++	if (channel->device_obj)
++		vmbus_device_unregister(channel->device_obj);
+ 	memset(&msg, 0, sizeof(struct vmbus_channel_relid_released));
+ 	msg.child_relid = channel->offermsg.child_relid;
+ 	msg.header.msgtype = CHANNELMSG_RELID_RELEASED;
+@@ -185,7 +186,7 @@ static void vmbus_process_rescind_offer(struct work_struct *work)
+ 	} else {
+ 		primary_channel = channel->primary_channel;
+ 		spin_lock_irqsave(&primary_channel->sc_lock, flags);
+-		list_del(&channel->listentry);
++		list_del(&channel->sc_list);
+ 		spin_unlock_irqrestore(&primary_channel->sc_lock, flags);
+ 	}
+ 	free_channel(channel);
+diff --git a/drivers/idle/intel_idle.c b/drivers/idle/intel_idle.c
+index fa6964d8681a..f116d664b473 100644
+--- a/drivers/idle/intel_idle.c
++++ b/drivers/idle/intel_idle.c
+@@ -359,7 +359,7 @@ static int intel_idle(struct cpuidle_device *dev,
+ 	if (!(lapic_timer_reliable_states & (1 << (cstate))))
+ 		clockevents_notify(CLOCK_EVT_NOTIFY_BROADCAST_ENTER, &cpu);
+ 
+-	if (!need_resched()) {
++	if (!current_set_polling_and_test()) {
+ 
+ 		__monitor((void *)&current_thread_info()->flags, 0, 0);
+ 		smp_mb();
+diff --git a/drivers/net/can/c_can/c_can.c b/drivers/net/can/c_can/c_can.c
+index a668cd491cb3..e3fc07cf2f62 100644
+--- a/drivers/net/can/c_can/c_can.c
++++ b/drivers/net/can/c_can/c_can.c
+@@ -814,9 +814,6 @@ static int c_can_do_rx_poll(struct net_device *dev, int quota)
+ 			msg_ctrl_save = priv->read_reg(priv,
+ 					C_CAN_IFACE(MSGCTRL_REG, 0));
+ 
+-			if (msg_ctrl_save & IF_MCONT_EOB)
+-				return num_rx_pkts;
+-
+ 			if (msg_ctrl_save & IF_MCONT_MSGLST) {
+ 				c_can_handle_lost_msg_obj(dev, 0, msg_obj);
+ 				num_rx_pkts++;
+@@ -824,6 +821,9 @@ static int c_can_do_rx_poll(struct net_device *dev, int quota)
+ 				continue;
+ 			}
+ 
++			if (msg_ctrl_save & IF_MCONT_EOB)
++				return num_rx_pkts;
++
+ 			if (!(msg_ctrl_save & IF_MCONT_NEWDAT))
+ 				continue;
+ 
+diff --git a/drivers/net/can/usb/kvaser_usb.c b/drivers/net/can/usb/kvaser_usb.c
+index 3b9546588240..4b2d5ed62b11 100644
+--- a/drivers/net/can/usb/kvaser_usb.c
++++ b/drivers/net/can/usb/kvaser_usb.c
+@@ -1544,9 +1544,9 @@ static int kvaser_usb_init_one(struct usb_interface *intf,
+ 	return 0;
+ }
+ 
+-static void kvaser_usb_get_endpoints(const struct usb_interface *intf,
+-				     struct usb_endpoint_descriptor **in,
+-				     struct usb_endpoint_descriptor **out)
++static int kvaser_usb_get_endpoints(const struct usb_interface *intf,
++				    struct usb_endpoint_descriptor **in,
++				    struct usb_endpoint_descriptor **out)
+ {
+ 	const struct usb_host_interface *iface_desc;
+ 	struct usb_endpoint_descriptor *endpoint;
+@@ -1557,12 +1557,18 @@ static void kvaser_usb_get_endpoints(const struct usb_interface *intf,
+ 	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
+ 		endpoint = &iface_desc->endpoint[i].desc;
+ 
+-		if (usb_endpoint_is_bulk_in(endpoint))
++		if (!*in && usb_endpoint_is_bulk_in(endpoint))
+ 			*in = endpoint;
+ 
+-		if (usb_endpoint_is_bulk_out(endpoint))
++		if (!*out && usb_endpoint_is_bulk_out(endpoint))
+ 			*out = endpoint;
++
++		/* use first bulk endpoint for in and out */
++		if (*in && *out)
++			return 0;
+ 	}
++
++	return -ENODEV;
+ }
+ 
+ static int kvaser_usb_probe(struct usb_interface *intf,
+@@ -1576,8 +1582,8 @@ static int kvaser_usb_probe(struct usb_interface *intf,
+ 	if (!dev)
+ 		return -ENOMEM;
+ 
+-	kvaser_usb_get_endpoints(intf, &dev->bulk_in, &dev->bulk_out);
+-	if (!dev->bulk_in || !dev->bulk_out) {
++	err = kvaser_usb_get_endpoints(intf, &dev->bulk_in, &dev->bulk_out);
++	if (err) {
+ 		dev_err(&intf->dev, "Cannot get usb endpoint(s)");
+ 		return err;
+ 	}
+diff --git a/drivers/net/ethernet/atheros/alx/main.c b/drivers/net/ethernet/atheros/alx/main.c
+index 027398ebbba6..934057d81f52 100644
+--- a/drivers/net/ethernet/atheros/alx/main.c
++++ b/drivers/net/ethernet/atheros/alx/main.c
+@@ -1394,6 +1394,9 @@ static int alx_resume(struct device *dev)
+ {
+ 	struct pci_dev *pdev = to_pci_dev(dev);
+ 	struct alx_priv *alx = pci_get_drvdata(pdev);
++	struct alx_hw *hw = &alx->hw;
++
++	alx_reset_phy(hw);
+ 
+ 	if (!netif_running(alx->dev))
+ 		return 0;
+diff --git a/drivers/net/wireless/libertas/debugfs.c b/drivers/net/wireless/libertas/debugfs.c
+index 668dd27616a0..cc6a0a586f0b 100644
+--- a/drivers/net/wireless/libertas/debugfs.c
++++ b/drivers/net/wireless/libertas/debugfs.c
+@@ -913,7 +913,10 @@ static ssize_t lbs_debugfs_write(struct file *f, const char __user *buf,
+ 	char *p2;
+ 	struct debug_data *d = f->private_data;
+ 
+-	pdata = kmalloc(cnt, GFP_KERNEL);
++	if (cnt == 0)
++		return 0;
++
++	pdata = kmalloc(cnt + 1, GFP_KERNEL);
+ 	if (pdata == NULL)
+ 		return 0;
+ 
+@@ -922,6 +925,7 @@ static ssize_t lbs_debugfs_write(struct file *f, const char __user *buf,
+ 		kfree(pdata);
+ 		return 0;
+ 	}
++	pdata[cnt] = '\0';
+ 
+ 	p0 = pdata;
+ 	for (i = 0; i < num_of_items; i++) {
+diff --git a/drivers/net/wireless/rt2x00/rt2800lib.c b/drivers/net/wireless/rt2x00/rt2800lib.c
+index 39d8863c7337..b389cba532e2 100644
+--- a/drivers/net/wireless/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/rt2x00/rt2800lib.c
+@@ -3423,10 +3423,13 @@ void rt2800_link_tuner(struct rt2x00_dev *rt2x00dev, struct link_qual *qual,
+ 
+ 	vgc = rt2800_get_default_vgc(rt2x00dev);
+ 
+-	if (rt2x00_rt(rt2x00dev, RT5592) && qual->rssi > -65)
+-		vgc += 0x20;
+-	else if (qual->rssi > -80)
+-		vgc += 0x10;
++	if (rt2x00_rt(rt2x00dev, RT5592)) {
++		if (qual->rssi > -65)
++			vgc += 0x20;
++	} else {
++		if (qual->rssi > -80)
++			vgc += 0x10;
++	}
+ 
+ 	rt2800_set_vgc(rt2x00dev, qual, vgc);
+ }
+diff --git a/drivers/net/wireless/rt2x00/rt2x00dev.c b/drivers/net/wireless/rt2x00/rt2x00dev.c
+index b16521e6bf4a..e418d32882e8 100644
+--- a/drivers/net/wireless/rt2x00/rt2x00dev.c
++++ b/drivers/net/wireless/rt2x00/rt2x00dev.c
+@@ -181,6 +181,7 @@ static void rt2x00lib_autowakeup(struct work_struct *work)
+ static void rt2x00lib_bc_buffer_iter(void *data, u8 *mac,
+ 				     struct ieee80211_vif *vif)
+ {
++	struct ieee80211_tx_control control = {};
+ 	struct rt2x00_dev *rt2x00dev = data;
+ 	struct sk_buff *skb;
+ 
+@@ -195,7 +196,7 @@ static void rt2x00lib_bc_buffer_iter(void *data, u8 *mac,
+ 	 */
+ 	skb = ieee80211_get_buffered_bc(rt2x00dev->hw, vif);
+ 	while (skb) {
+-		rt2x00mac_tx(rt2x00dev->hw, NULL, skb);
++		rt2x00mac_tx(rt2x00dev->hw, &control, skb);
+ 		skb = ieee80211_get_buffered_bc(rt2x00dev->hw, vif);
+ 	}
+ }
+diff --git a/drivers/net/wireless/rt2x00/rt2x00lib.h b/drivers/net/wireless/rt2x00/rt2x00lib.h
+index a0935987fa3a..7f40ab8e1bd8 100644
+--- a/drivers/net/wireless/rt2x00/rt2x00lib.h
++++ b/drivers/net/wireless/rt2x00/rt2x00lib.h
+@@ -146,7 +146,7 @@ void rt2x00queue_remove_l2pad(struct sk_buff *skb, unsigned int header_length);
+  * @local: frame is not from mac80211
+  */
+ int rt2x00queue_write_tx_frame(struct data_queue *queue, struct sk_buff *skb,
+-			       bool local);
++			       struct ieee80211_sta *sta, bool local);
+ 
+ /**
+  * rt2x00queue_update_beacon - Send new beacon from mac80211
+diff --git a/drivers/net/wireless/rt2x00/rt2x00mac.c b/drivers/net/wireless/rt2x00/rt2x00mac.c
+index f883802f3505..f8cff1f0b6b7 100644
+--- a/drivers/net/wireless/rt2x00/rt2x00mac.c
++++ b/drivers/net/wireless/rt2x00/rt2x00mac.c
+@@ -90,7 +90,7 @@ static int rt2x00mac_tx_rts_cts(struct rt2x00_dev *rt2x00dev,
+ 				  frag_skb->data, data_length, tx_info,
+ 				  (struct ieee80211_rts *)(skb->data));
+ 
+-	retval = rt2x00queue_write_tx_frame(queue, skb, true);
++	retval = rt2x00queue_write_tx_frame(queue, skb, NULL, true);
+ 	if (retval) {
+ 		dev_kfree_skb_any(skb);
+ 		rt2x00_warn(rt2x00dev, "Failed to send RTS/CTS frame\n");
+@@ -151,7 +151,7 @@ void rt2x00mac_tx(struct ieee80211_hw *hw,
+ 			goto exit_fail;
+ 	}
+ 
+-	if (unlikely(rt2x00queue_write_tx_frame(queue, skb, false)))
++	if (unlikely(rt2x00queue_write_tx_frame(queue, skb, control->sta, false)))
+ 		goto exit_fail;
+ 
+ 	/*
+@@ -754,6 +754,9 @@ void rt2x00mac_flush(struct ieee80211_hw *hw, u32 queues, bool drop)
+ 	struct rt2x00_dev *rt2x00dev = hw->priv;
+ 	struct data_queue *queue;
+ 
++	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
++		return;
++
+ 	tx_queue_for_each(rt2x00dev, queue)
+ 		rt2x00queue_flush_queue(queue, drop);
+ }
+diff --git a/drivers/net/wireless/rt2x00/rt2x00queue.c b/drivers/net/wireless/rt2x00/rt2x00queue.c
+index aa95c6cf3545..f541c92e4290 100644
+--- a/drivers/net/wireless/rt2x00/rt2x00queue.c
++++ b/drivers/net/wireless/rt2x00/rt2x00queue.c
+@@ -635,7 +635,7 @@ static void rt2x00queue_bar_check(struct queue_entry *entry)
+ }
+ 
+ int rt2x00queue_write_tx_frame(struct data_queue *queue, struct sk_buff *skb,
+-			       bool local)
++			       struct ieee80211_sta *sta, bool local)
+ {
+ 	struct ieee80211_tx_info *tx_info;
+ 	struct queue_entry *entry;
+@@ -649,7 +649,7 @@ int rt2x00queue_write_tx_frame(struct data_queue *queue, struct sk_buff *skb,
+ 	 * after that we are free to use the skb->cb array
+ 	 * for our information.
+ 	 */
+-	rt2x00queue_create_tx_descriptor(queue->rt2x00dev, skb, &txdesc, NULL);
++	rt2x00queue_create_tx_descriptor(queue->rt2x00dev, skb, &txdesc, sta);
+ 
+ 	/*
+ 	 * All information is retrieved from the skb->cb array,
+diff --git a/drivers/pci/access.c b/drivers/pci/access.c
+index 1cc23661f79b..061da8c3ab4b 100644
+--- a/drivers/pci/access.c
++++ b/drivers/pci/access.c
+@@ -484,28 +484,29 @@ static inline bool pcie_cap_has_lnkctl(const struct pci_dev *dev)
+ {
+ 	int type = pci_pcie_type(dev);
+ 
+-	return pcie_cap_version(dev) > 1 ||
++	return type == PCI_EXP_TYPE_ENDPOINT ||
++	       type == PCI_EXP_TYPE_LEG_END ||
+ 	       type == PCI_EXP_TYPE_ROOT_PORT ||
+-	       type == PCI_EXP_TYPE_ENDPOINT ||
+-	       type == PCI_EXP_TYPE_LEG_END;
++	       type == PCI_EXP_TYPE_UPSTREAM ||
++	       type == PCI_EXP_TYPE_DOWNSTREAM ||
++	       type == PCI_EXP_TYPE_PCI_BRIDGE ||
++	       type == PCI_EXP_TYPE_PCIE_BRIDGE;
+ }
+ 
+ static inline bool pcie_cap_has_sltctl(const struct pci_dev *dev)
+ {
+ 	int type = pci_pcie_type(dev);
+ 
+-	return pcie_cap_version(dev) > 1 ||
+-	       type == PCI_EXP_TYPE_ROOT_PORT ||
+-	       (type == PCI_EXP_TYPE_DOWNSTREAM &&
+-		pcie_caps_reg(dev) & PCI_EXP_FLAGS_SLOT);
++	return (type == PCI_EXP_TYPE_ROOT_PORT ||
++		type == PCI_EXP_TYPE_DOWNSTREAM) &&
++	       pcie_caps_reg(dev) & PCI_EXP_FLAGS_SLOT;
+ }
+ 
+ static inline bool pcie_cap_has_rtctl(const struct pci_dev *dev)
+ {
+ 	int type = pci_pcie_type(dev);
+ 
+-	return pcie_cap_version(dev) > 1 ||
+-	       type == PCI_EXP_TYPE_ROOT_PORT ||
++	return type == PCI_EXP_TYPE_ROOT_PORT ||
+ 	       type == PCI_EXP_TYPE_RC_EC;
+ }
+ 
+diff --git a/drivers/platform/x86/thinkpad_acpi.c b/drivers/platform/x86/thinkpad_acpi.c
+index 54d31c0a9840..99eeaf40d641 100644
+--- a/drivers/platform/x86/thinkpad_acpi.c
++++ b/drivers/platform/x86/thinkpad_acpi.c
+@@ -6438,7 +6438,12 @@ static struct ibm_struct brightness_driver_data = {
+ #define TPACPI_ALSA_SHRTNAME "ThinkPad Console Audio Control"
+ #define TPACPI_ALSA_MIXERNAME TPACPI_ALSA_SHRTNAME
+ 
+-static int alsa_index = ~((1 << (SNDRV_CARDS - 3)) - 1); /* last three slots */
++#if SNDRV_CARDS <= 32
++#define DEFAULT_ALSA_IDX		~((1 << (SNDRV_CARDS - 3)) - 1)
++#else
++#define DEFAULT_ALSA_IDX		~((1 << (32 - 3)) - 1)
++#endif
++static int alsa_index = DEFAULT_ALSA_IDX; /* last three slots */
+ static char *alsa_id = "ThinkPadEC";
+ static bool alsa_enable = SNDRV_DEFAULT_ENABLE1;
+ 
+diff --git a/drivers/scsi/aacraid/commctrl.c b/drivers/scsi/aacraid/commctrl.c
+index d85ac1a9d2c0..fbcd48d0bfc3 100644
+--- a/drivers/scsi/aacraid/commctrl.c
++++ b/drivers/scsi/aacraid/commctrl.c
+@@ -511,7 +511,8 @@ static int aac_send_raw_srb(struct aac_dev* dev, void __user * arg)
+ 		goto cleanup;
+ 	}
+ 
+-	if (fibsize > (dev->max_fib_size - sizeof(struct aac_fibhdr))) {
++	if ((fibsize < (sizeof(struct user_aac_srb) - sizeof(struct user_sgentry))) ||
++	    (fibsize > (dev->max_fib_size - sizeof(struct aac_fibhdr)))) {
+ 		rcode = -EINVAL;
+ 		goto cleanup;
+ 	}
+diff --git a/drivers/staging/comedi/comedi_fops.c b/drivers/staging/comedi/comedi_fops.c
+index f4a197b2d1fd..ea85f71eabfb 100644
+--- a/drivers/staging/comedi/comedi_fops.c
++++ b/drivers/staging/comedi/comedi_fops.c
+@@ -543,7 +543,7 @@ void *comedi_alloc_spriv(struct comedi_subdevice *s, size_t size)
+ {
+ 	s->private = kzalloc(size, GFP_KERNEL);
+ 	if (s->private)
+-		comedi_set_subdevice_runflags(s, ~0, SRF_FREE_SPRIV);
++		s->runflags |= SRF_FREE_SPRIV;
+ 	return s->private;
+ }
+ EXPORT_SYMBOL_GPL(comedi_alloc_spriv);
+@@ -1485,7 +1485,8 @@ static int do_cmd_ioctl(struct comedi_device *dev,
+ 	if (async->cmd.flags & TRIG_WAKE_EOS)
+ 		async->cb_mask |= COMEDI_CB_EOS;
+ 
+-	comedi_set_subdevice_runflags(s, ~0, SRF_USER | SRF_RUNNING);
++	comedi_set_subdevice_runflags(s, SRF_USER | SRF_ERROR | SRF_RUNNING,
++				      SRF_USER | SRF_RUNNING);
+ 
+ 	/* set s->busy _after_ setting SRF_RUNNING flag to avoid race with
+ 	 * comedi_read() or comedi_write() */
+diff --git a/drivers/staging/zram/zram_drv.c b/drivers/staging/zram/zram_drv.c
+index 8f54c503ea04..ee6b4356f222 100644
+--- a/drivers/staging/zram/zram_drv.c
++++ b/drivers/staging/zram/zram_drv.c
+@@ -647,6 +647,9 @@ static ssize_t reset_store(struct device *dev,
+ 	zram = dev_to_zram(dev);
+ 	bdev = bdget_disk(zram->disk, 0);
+ 
++	if (!bdev)
++		return -ENOMEM;
++
+ 	/* Do not reset an active device! */
+ 	if (bdev->bd_holders)
+ 		return -EBUSY;
+@@ -659,8 +662,7 @@ static ssize_t reset_store(struct device *dev,
+ 		return -EINVAL;
+ 
+ 	/* Make sure all pending I/O is finished */
+-	if (bdev)
+-		fsync_bdev(bdev);
++	fsync_bdev(bdev);
+ 
+ 	zram_reset_device(zram, true);
+ 	return len;
+diff --git a/drivers/usb/serial/mos7840.c b/drivers/usb/serial/mos7840.c
+index 3bac4693c038..23dc9d1dc99e 100644
+--- a/drivers/usb/serial/mos7840.c
++++ b/drivers/usb/serial/mos7840.c
+@@ -1580,7 +1580,11 @@ static int mos7840_tiocmget(struct tty_struct *tty)
+ 		return -ENODEV;
+ 
+ 	status = mos7840_get_uart_reg(port, MODEM_STATUS_REGISTER, &msr);
++	if (status != 1)
++		return -EIO;
+ 	status = mos7840_get_uart_reg(port, MODEM_CONTROL_REGISTER, &mcr);
++	if (status != 1)
++		return -EIO;
+ 	result = ((mcr & MCR_DTR) ? TIOCM_DTR : 0)
+ 	    | ((mcr & MCR_RTS) ? TIOCM_RTS : 0)
+ 	    | ((mcr & MCR_LOOPBACK) ? TIOCM_LOOP : 0)
+diff --git a/fs/btrfs/relocation.c b/fs/btrfs/relocation.c
+index 4576c03a0912..3702d4503ea1 100644
+--- a/fs/btrfs/relocation.c
++++ b/fs/btrfs/relocation.c
+@@ -4462,6 +4462,7 @@ int btrfs_reloc_clone_csums(struct inode *inode, u64 file_pos, u64 len)
+ 	struct btrfs_root *root = BTRFS_I(inode)->root;
+ 	int ret;
+ 	u64 disk_bytenr;
++	u64 new_bytenr;
+ 	LIST_HEAD(list);
+ 
+ 	ordered = btrfs_lookup_ordered_extent(inode, file_pos);
+@@ -4473,13 +4474,24 @@ int btrfs_reloc_clone_csums(struct inode *inode, u64 file_pos, u64 len)
+ 	if (ret)
+ 		goto out;
+ 
+-	disk_bytenr = ordered->start;
+ 	while (!list_empty(&list)) {
+ 		sums = list_entry(list.next, struct btrfs_ordered_sum, list);
+ 		list_del_init(&sums->list);
+ 
+-		sums->bytenr = disk_bytenr;
+-		disk_bytenr += sums->len;
++		/*
++		 * We need to offset the new_bytenr based on where the csum is.
++		 * We need to do this because we will read in entire prealloc
++		 * extents but we may have written to say the middle of the
++		 * prealloc extent, so we need to make sure the csum goes with
++		 * the right disk offset.
++		 *
++		 * We can do this because the data reloc inode refers strictly
++		 * to the on disk bytes, so we don't have to worry about
++		 * disk_len vs real len like with real inodes since it's all
++		 * disk length.
++		 */
++		new_bytenr = ordered->start + (sums->bytenr - disk_bytenr);
++		sums->bytenr = new_bytenr;
+ 
+ 		btrfs_add_ordered_sum(inode, ordered, sums);
+ 	}
+diff --git a/fs/exec.c b/fs/exec.c
+index fd774c7cb483..e72f6bbbde2e 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1670,6 +1670,12 @@ int __get_dumpable(unsigned long mm_flags)
+ 	return (ret > SUID_DUMP_USER) ? SUID_DUMP_ROOT : ret;
+ }
+ 
++/*
++ * This returns the actual value of the suid_dumpable flag. For things
++ * that are using this for checking for privilege transitions, it must
++ * test against SUID_DUMP_USER rather than treating it as a boolean
++ * value.
++ */
+ int get_dumpable(struct mm_struct *mm)
+ {
+ 	return __get_dumpable(mm->flags);
+diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
+index 70cf138690e9..df97ca4aae52 100644
+--- a/include/linux/binfmts.h
++++ b/include/linux/binfmts.h
+@@ -99,9 +99,6 @@ extern void setup_new_exec(struct linux_binprm * bprm);
+ extern void would_dump(struct linux_binprm *, struct file *);
+ 
+ extern int suid_dumpable;
+-#define SUID_DUMP_DISABLE	0	/* No setuid dumping */
+-#define SUID_DUMP_USER		1	/* Dump as user of process */
+-#define SUID_DUMP_ROOT		2	/* Dump as root */
+ 
+ /* Stack area protections */
+ #define EXSTACK_DEFAULT   0	/* Whatever the arch defaults to */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 078066daffd4..e057ea09c851 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -330,6 +330,10 @@ static inline void arch_pick_mmap_layout(struct mm_struct *mm) {}
+ extern void set_dumpable(struct mm_struct *mm, int value);
+ extern int get_dumpable(struct mm_struct *mm);
+ 
++#define SUID_DUMP_DISABLE	0	/* No setuid dumping */
++#define SUID_DUMP_USER		1	/* Dump as user of process */
++#define SUID_DUMP_ROOT		2	/* Dump as root */
++
+ /* mm flags */
+ /* dumpable bits */
+ #define MMF_DUMPABLE      0  /* core dump is permitted */
+@@ -2473,34 +2477,98 @@ static inline int tsk_is_polling(struct task_struct *p)
+ {
+ 	return task_thread_info(p)->status & TS_POLLING;
+ }
+-static inline void current_set_polling(void)
++static inline void __current_set_polling(void)
+ {
+ 	current_thread_info()->status |= TS_POLLING;
+ }
+ 
+-static inline void current_clr_polling(void)
++static inline bool __must_check current_set_polling_and_test(void)
++{
++	__current_set_polling();
++
++	/*
++	 * Polling state must be visible before we test NEED_RESCHED,
++	 * paired by resched_task()
++	 */
++	smp_mb();
++
++	return unlikely(tif_need_resched());
++}
++
++static inline void __current_clr_polling(void)
+ {
+ 	current_thread_info()->status &= ~TS_POLLING;
+-	smp_mb__after_clear_bit();
++}
++
++static inline bool __must_check current_clr_polling_and_test(void)
++{
++	__current_clr_polling();
++
++	/*
++	 * Polling state must be visible before we test NEED_RESCHED,
++	 * paired by resched_task()
++	 */
++	smp_mb();
++
++	return unlikely(tif_need_resched());
+ }
+ #elif defined(TIF_POLLING_NRFLAG)
+ static inline int tsk_is_polling(struct task_struct *p)
+ {
+ 	return test_tsk_thread_flag(p, TIF_POLLING_NRFLAG);
+ }
+-static inline void current_set_polling(void)
++
++static inline void __current_set_polling(void)
+ {
+ 	set_thread_flag(TIF_POLLING_NRFLAG);
+ }
+ 
+-static inline void current_clr_polling(void)
++static inline bool __must_check current_set_polling_and_test(void)
++{
++	__current_set_polling();
++
++	/*
++	 * Polling state must be visible before we test NEED_RESCHED,
++	 * paired by resched_task()
++	 *
++	 * XXX: assumes set/clear bit are identical barrier wise.
++	 */
++	smp_mb__after_clear_bit();
++
++	return unlikely(tif_need_resched());
++}
++
++static inline void __current_clr_polling(void)
+ {
+ 	clear_thread_flag(TIF_POLLING_NRFLAG);
+ }
++
++static inline bool __must_check current_clr_polling_and_test(void)
++{
++	__current_clr_polling();
++
++	/*
++	 * Polling state must be visible before we test NEED_RESCHED,
++	 * paired by resched_task()
++	 */
++	smp_mb__after_clear_bit();
++
++	return unlikely(tif_need_resched());
++}
++
+ #else
+ static inline int tsk_is_polling(struct task_struct *p) { return 0; }
+-static inline void current_set_polling(void) { }
+-static inline void current_clr_polling(void) { }
++static inline void __current_set_polling(void) { }
++static inline void __current_clr_polling(void) { }
++
++static inline bool __must_check current_set_polling_and_test(void)
++{
++	return unlikely(tif_need_resched());
++}
++static inline bool __must_check current_clr_polling_and_test(void)
++{
++	return unlikely(tif_need_resched());
++}
+ #endif
+ 
+ /*
+diff --git a/include/linux/thread_info.h b/include/linux/thread_info.h
+index e7e04736802f..4ae6f32c8033 100644
+--- a/include/linux/thread_info.h
++++ b/include/linux/thread_info.h
+@@ -107,6 +107,8 @@ static inline int test_ti_thread_flag(struct thread_info *ti, int flag)
+ #define set_need_resched()	set_thread_flag(TIF_NEED_RESCHED)
+ #define clear_need_resched()	clear_thread_flag(TIF_NEED_RESCHED)
+ 
++#define tif_need_resched() test_thread_flag(TIF_NEED_RESCHED)
++
+ #if defined TIF_RESTORE_SIGMASK && !defined HAVE_SET_RESTORE_SIGMASK
+ /*
+  * An arch can define its own version of set_restore_sigmask() to get the
+diff --git a/ipc/shm.c b/ipc/shm.c
+index d69739610fd4..7a51443a51d6 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -208,15 +208,18 @@ static void shm_open(struct vm_area_struct *vma)
+  */
+ static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
+ {
++	struct file *shm_file;
++
++	shm_file = shp->shm_file;
++	shp->shm_file = NULL;
+ 	ns->shm_tot -= (shp->shm_segsz + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 	shm_rmid(ns, shp);
+ 	shm_unlock(shp);
+-	if (!is_file_hugepages(shp->shm_file))
+-		shmem_lock(shp->shm_file, 0, shp->mlock_user);
++	if (!is_file_hugepages(shm_file))
++		shmem_lock(shm_file, 0, shp->mlock_user);
+ 	else if (shp->mlock_user)
+-		user_shm_unlock(file_inode(shp->shm_file)->i_size,
+-						shp->mlock_user);
+-	fput (shp->shm_file);
++		user_shm_unlock(file_inode(shm_file)->i_size, shp->mlock_user);
++	fput(shm_file);
+ 	ipc_rcu_putref(shp, shm_rcu_free);
+ }
+ 
+@@ -974,15 +977,25 @@ SYSCALL_DEFINE3(shmctl, int, shmid, int, cmd, struct shmid_ds __user *, buf)
+ 		ipc_lock_object(&shp->shm_perm);
+ 		if (!ns_capable(ns->user_ns, CAP_IPC_LOCK)) {
+ 			kuid_t euid = current_euid();
+-			err = -EPERM;
+ 			if (!uid_eq(euid, shp->shm_perm.uid) &&
+-			    !uid_eq(euid, shp->shm_perm.cuid))
++			    !uid_eq(euid, shp->shm_perm.cuid)) {
++				err = -EPERM;
+ 				goto out_unlock0;
+-			if (cmd == SHM_LOCK && !rlimit(RLIMIT_MEMLOCK))
++			}
++			if (cmd == SHM_LOCK && !rlimit(RLIMIT_MEMLOCK)) {
++				err = -EPERM;
+ 				goto out_unlock0;
++			}
+ 		}
+ 
+ 		shm_file = shp->shm_file;
++
++		/* check if shm_destroy() is tearing down shp */
++		if (shm_file == NULL) {
++			err = -EIDRM;
++			goto out_unlock0;
++		}
++
+ 		if (is_file_hugepages(shm_file))
+ 			goto out_unlock0;
+ 
+@@ -1101,6 +1114,14 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg, ulong *raddr,
+ 		goto out_unlock;
+ 
+ 	ipc_lock_object(&shp->shm_perm);
++
++	/* check if shm_destroy() is tearing down shp */
++	if (shp->shm_file == NULL) {
++		ipc_unlock_object(&shp->shm_perm);
++		err = -EIDRM;
++		goto out_unlock;
++	}
++
+ 	path = shp->shm_file->f_path;
+ 	path_get(&path);
+ 	shp->shm_nattch++;
+diff --git a/kernel/cpu/idle.c b/kernel/cpu/idle.c
+index e695c0a0bcb5..c261409500e4 100644
+--- a/kernel/cpu/idle.c
++++ b/kernel/cpu/idle.c
+@@ -44,7 +44,7 @@ static inline int cpu_idle_poll(void)
+ 	rcu_idle_enter();
+ 	trace_cpu_idle_rcuidle(0, smp_processor_id());
+ 	local_irq_enable();
+-	while (!need_resched())
++	while (!tif_need_resched())
+ 		cpu_relax();
+ 	trace_cpu_idle_rcuidle(PWR_EVENT_EXIT, smp_processor_id());
+ 	rcu_idle_exit();
+@@ -92,8 +92,7 @@ static void cpu_idle_loop(void)
+ 			if (cpu_idle_force_poll || tick_check_broadcast_expired()) {
+ 				cpu_idle_poll();
+ 			} else {
+-				current_clr_polling();
+-				if (!need_resched()) {
++				if (!current_clr_polling_and_test()) {
+ 					stop_critical_timings();
+ 					rcu_idle_enter();
+ 					arch_cpu_idle();
+@@ -103,7 +102,7 @@ static void cpu_idle_loop(void)
+ 				} else {
+ 					local_irq_enable();
+ 				}
+-				current_set_polling();
++				__current_set_polling();
+ 			}
+ 			arch_cpu_idle_exit();
+ 		}
+@@ -129,7 +128,7 @@ void cpu_startup_entry(enum cpuhp_state state)
+ 	 */
+ 	boot_init_stack_canary();
+ #endif
+-	current_set_polling();
++	__current_set_polling();
+ 	arch_cpu_idle_prepare();
+ 	cpu_idle_loop();
+ }
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index a146ee327f6a..cf021a03019c 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -257,7 +257,8 @@ ok:
+ 	if (task->mm)
+ 		dumpable = get_dumpable(task->mm);
+ 	rcu_read_lock();
+-	if (!dumpable && !ptrace_has_cap(__task_cred(task)->user_ns, mode)) {
++	if (dumpable != SUID_DUMP_USER &&
++	    !ptrace_has_cap(__task_cred(task)->user_ns, mode)) {
+ 		rcu_read_unlock();
+ 		return -EPERM;
+ 	}
+diff --git a/kernel/trace/trace_event_perf.c b/kernel/trace/trace_event_perf.c
+index 80c36bcf66e8..78e27e3b52ac 100644
+--- a/kernel/trace/trace_event_perf.c
++++ b/kernel/trace/trace_event_perf.c
+@@ -26,7 +26,7 @@ static int perf_trace_event_perm(struct ftrace_event_call *tp_event,
+ {
+ 	/* The ftrace function trace is allowed only for root. */
+ 	if (ftrace_event_is_function(tp_event) &&
+-	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
++	    perf_paranoid_tracepoint_raw() && !capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 
+ 	/* No tracing, just counting, so no obvious leak */
+diff --git a/net/sunrpc/clnt.c b/net/sunrpc/clnt.c
+index ecbc4e3d83ad..b5449656a383 100644
+--- a/net/sunrpc/clnt.c
++++ b/net/sunrpc/clnt.c
+@@ -1423,9 +1423,9 @@ call_refreshresult(struct rpc_task *task)
+ 		return;
+ 	case -ETIMEDOUT:
+ 		rpc_delay(task, 3*HZ);
+-	case -EKEYEXPIRED:
+ 	case -EAGAIN:
+ 		status = -EACCES;
++	case -EKEYEXPIRED:
+ 		if (!task->tk_cred_retry)
+ 			break;
+ 		task->tk_cred_retry--;
+diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
+index 399433ad614e..a9c3d3cd1990 100644
+--- a/security/integrity/ima/ima_policy.c
++++ b/security/integrity/ima/ima_policy.c
+@@ -73,7 +73,6 @@ static struct ima_rule_entry default_rules[] = {
+ 	{.action = DONT_MEASURE,.fsmagic = SYSFS_MAGIC,.flags = IMA_FSMAGIC},
+ 	{.action = DONT_MEASURE,.fsmagic = DEBUGFS_MAGIC,.flags = IMA_FSMAGIC},
+ 	{.action = DONT_MEASURE,.fsmagic = TMPFS_MAGIC,.flags = IMA_FSMAGIC},
+-	{.action = DONT_MEASURE,.fsmagic = RAMFS_MAGIC,.flags = IMA_FSMAGIC},
+ 	{.action = DONT_MEASURE,.fsmagic = DEVPTS_SUPER_MAGIC,.flags = IMA_FSMAGIC},
+ 	{.action = DONT_MEASURE,.fsmagic = BINFMTFS_MAGIC,.flags = IMA_FSMAGIC},
+ 	{.action = DONT_MEASURE,.fsmagic = SECURITYFS_MAGIC,.flags = IMA_FSMAGIC},
