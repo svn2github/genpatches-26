@@ -162,6 +162,10 @@ Patch:  2700_ThinkPad-30-brightness-control-fix.patch
 From:   Seth Forshee <seth.forshee@canonical.com>
 Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads
 
+Patch:  2700_intel-no-deref-CPU-transcoder.patch
+From:   Tom Wijsman <TomWij@gentoo.org>
+Desc:   Backported "drm/i915: Don't deref pipe->cpu_transcoder in the hangcheck code."
+
 Patch:  2900_dev-root-proc-mount-fix.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=438380
 Desc:   Ensure that /dev/root doesn't appear in /proc/mounts when bootint without an initramfs.
