@@ -297,6 +297,21 @@ sub _get_genpatches_kernels {
 	return %gp_kernels;
 }
 
+# we recently moved from .bz2 to .xz
+# check the remote file and then return a properly
+# name string (e.g. genpatches-3.10-32.base.tar.xz)
+sub get_tarball_ext {
+    my ($tag) = @_;
+
+    my $filecheck = 'genpatches-'.$tag.'.base.tar.*';
+    my $cmd =  "ssh mpagano\@dev.gentoo.org \"ls ~/public_html/genpatches/tarballs/".$filecheck."\"";
+    $tarball = `$cmd `;
+    my ($ext) = $tarball =~ /(\.[^.]+)$/;
+
+    #print("Found file extension for file $filecheck to be: $ext");
+    return $ext;
+}
+
 
 1;
 

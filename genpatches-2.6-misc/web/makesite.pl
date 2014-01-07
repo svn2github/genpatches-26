@@ -287,15 +287,18 @@ sub generate_patchlist {
 	local *PATCHLIST;
 	my $patch;
 
+	local $ext;
+	$ext = get_tarball_ext($tag);
+
 	open(PATCHLIST, '> '.$webscript_path.'/generated/'.$tag.'-patches.htm');
 	html_header(PATCHLIST, "$tag Patch List");
 	print PATCHLIST '<h1>'.$tag.' Patch List</h1>';
 	print PATCHLIST '<p>Patches 0000-2999 are available in ';
-	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.base.tar.bz2">genpatches-'.$tag.'.base.tar.bz2</a>';
+	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.base.tar'.$ext.'">genpatches-'.$tag.'.base.tar'.$ext.'</a>';
 	print PATCHLIST '<br />Patches 3000-4999 are available in ';
-	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar.bz2">genpatches-'.$tag.'.extras.tar.bz2</a></p>';
+	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar'.$ext.'">genpatches-'.$tag.'.extras.tar'.$ext.'</a></p>';
 	print PATCHLIST '<br />Patches 5000-5099 are available in ';
-	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.experimental.tar.bz2">genpatches-'.$tag.'.experimental.tar.bz2</a></p>';
+	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.experimental.tar'.$ext.'">genpatches-'.$tag.'.experimental.tar'.$ext.'</a></p>';
 	print PATCHLIST '<table id="patchlist">';
 	print PATCHLIST '<tr><th>Patch</th><th>From</th><th>Description</th></tr>';
 	foreach $patch (@patches) {
@@ -315,6 +318,9 @@ sub generate_info {
 	my (@commits, $ver, $rel, $have_history, $oldtag, @log_lines, $tag_save);
 	my ($lastrev);
 	local *INFO;
+    local $ext;
+
+    $ext = get_tarball_ext($tag);
 
     $tag_save = $tag;
 	$tag =~ m/(2\.6\.\d+)-(\d+)/;
@@ -344,9 +350,9 @@ sub generate_info {
 	print INFO '<h2>Release '.$tag.'</h2>';
 	print INFO '<p><a href="patches-'.$tag.'.htm">View entire patch list</a><br />';
 	print INFO 'Split-out patch tarballs: ';
-	print INFO '<a href="tarballs/genpatches-'.$tag.'.base.tar.bz2">base</a>, ';
-	print INFO '<a href="tarballs/genpatches-'.$tag.'.extras.tar.bz2">extras</a></p>';
-	print INFO '<a href="tarballs/genpatches-'.$tag.'.experimental.tar.bz2">experimental</a></p>';
+	print INFO '<a href="tarballs/genpatches-'.$tag.'.base.tar'.$ext.'">base</a>, ';
+	print INFO '<a href="tarballs/genpatches-'.$tag.'.extras.tar'.$ext.'">extras</a></p>';
+	print INFO '<a href="tarballs/genpatches-'.$tag.'.experimental.tar'.$ext.'">experimental</a></p>';
 	
 	if ($lastrev && $have_history) {
 		print INFO '<h3>Changes since '.$oldtag.'</h3>';
