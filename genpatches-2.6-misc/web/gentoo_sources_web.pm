@@ -1,5 +1,7 @@
 # Copyright 2000-2009 Gentoo Foundation; Distributed under the GPL v2
 
+use LWP::Simple;
+
 # Detect which svn server and username to use
 # (broken with >=svn-1.7 due to an extra line added to svn info)
 # $subversion_scheme = `svn info 2>/dev/null | head -n 2 | tail -n 1`;
@@ -40,14 +42,14 @@ sub html_header {
 	print FD '<link rel="stylesheet" href="style.css" />';
 	print FD '</head>';
 	print FD '<body>';
-	print FD '<div class="menu">';
-	print FD '<span class="menu"><a href="index.htm">Home</a></span>';
-	print FD '<span class="menu"><a href="about.htm">About</a></span>';
-	print FD '<span class="menu"><a href="faq.htm">FAQ</a></span>';
-	print FD '<span class="menu"><a href="releases.htm">Releases</a></span>';
-	print FD '<span class="menu"><a href="bugs.htm">Bugs</a></span>';
-	print FD '<span class="menu"><a href="issues.htm">Issues</a></span>';
-	print FD '</div>'
+
+	print FD '<table id="newspaper-a">';
+	print FD '<th><a href="index.htm">Home</a></th>';
+	print FD '<th><a href="about.htm">About</a></th>';
+	print FD '<th><a href="faq.htm">FAQ</a></th>';
+	print FD '<th><a href="releases.htm">Releases</a></th>';
+	print FD '<th><a href="bugs.htm">Bugs</a></th>';
+	print FD '<th><a href="issues.htm">Issues</a></th></table>';
 }
 
 sub html_footer {
@@ -55,7 +57,7 @@ sub html_footer {
 	my $date = `date`;
 	my $user = `whoami`;
 
-	print FD '<hr /><div align="right">Automatically generated: '.$date.' by '.$user.'</div>';
+	print FD '<hr /><div align="right"><h4>Automatically generated: '.$date.' by '.$user.'</h4></div>';
 	print FD '</body>';
 	print FD '</html>';
 }
@@ -298,18 +300,17 @@ sub _get_genpatches_kernels {
 }
 
 # we recently moved from .bz2 to .xz
-# check the remote file and then return a properly
-# name string (e.g. genpatches-3.10-32.base.tar.xz)
+# do a wget since not everyone can do ssh remote 
+# commands in the developer's directory 
+# return the proper extension
 sub get_tarball_ext {
     my ($tag) = @_;
 
-    my $filecheck = 'genpatches-'.$tag.'.base.tar.*';
-    my $cmd =  "ssh mpagano\@dev.gentoo.org \"ls ~/public_html/genpatches/tarballs/".$filecheck."\"";
-    $tarball = `$cmd `;
-    my ($ext) = $tarball =~ /(\.[^.]+)$/;
+    my $filecheck = 'http://dev.gentoo.org/~mpagano/genpatches/tarballs/genpatches-'.$tag.'.base.tar.bz2';
+	my $contents = get($filecheck);
 
-    #print("Found file extension for file $filecheck to be: $ext");
-    return $ext;
+	if ( undef == $contents ) { return ".xz"; } 
+	return ".bz2";
 }
 
 

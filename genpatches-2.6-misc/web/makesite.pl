@@ -181,7 +181,7 @@ sub make_kernels_page {
 	open(FD, '> '.$output_path.'/kernels.htm');
 	html_header *FD;
 	print FD '<h1>Available Kernels</h1>';
-	print FD '<table class="kernels">';
+	print FD '<table id="hor-minimalist-a" class="kernels">';
 	print FD '<tr><th>Kernel</th><th>Version</th><th>Genpatches</th></tr>';
 	foreach $kernel (sort order_kernel (values %kernels)) {
 		print FD '<tr>';
@@ -299,7 +299,7 @@ sub generate_patchlist {
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar'.$ext.'">genpatches-'.$tag.'.extras.tar'.$ext.'</a></p>';
 	print PATCHLIST '<br />Patches 5000-5099 are available in ';
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.experimental.tar'.$ext.'">genpatches-'.$tag.'.experimental.tar'.$ext.'</a></p>';
-	print PATCHLIST '<table id="patchlist">';
+	print PATCHLIST '<table id="hor-minimalist-a">';
 	print PATCHLIST '<tr><th>Patch</th><th>From</th><th>Description</th></tr>';
 	foreach $patch (@patches) {
 		print PATCHLIST '<tr>';
