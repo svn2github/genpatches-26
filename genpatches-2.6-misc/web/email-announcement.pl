@@ -37,6 +37,9 @@ if ($lastrev) {
 	$have_history = @commits;
 }
 
+local $ext;
+$ext = get_tarball_ext($tag);
+
 $email .= "To: Gentoo Kernel List <gentoo-kernel\@lists.gentoo.org>\n";
 $email .= "Subject: [ANNOUNCE] $kernel_name-$tag release\n";
 
@@ -62,9 +65,9 @@ $email .= "-------\n\n";
 $email .= "When the website updates, the complete patch list and split-out patches will be\n";
 $email .= "available here:\n";
 $email .= $website_base."/patches-".$tag.".htm\n";
-$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".base.tar.bz2\n";
-$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".extras.tar.bz2\n";
-$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".experimental.tar.bz2\n";
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".base.tar".$ext."\n";
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".extras.tar".$ext."\n";
+$email .= $website_base."/tarballs/".$kernel_name."-".$tag.".experimental.tar".$ext."\n";
 
 if ($kernel_name == "genpatches") {
 	$email .= "\n\nABOUT GENPATCHES\n";
