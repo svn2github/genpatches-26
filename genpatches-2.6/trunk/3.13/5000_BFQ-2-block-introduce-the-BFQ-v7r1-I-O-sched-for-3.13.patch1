@@ -1,9 +1,9 @@
-From 3747f129106ce58fbad1b8f05cc836a6addd8588 Mon Sep 17 00:00:00 2001
+From be5107dc591f7ae692ca7cceecbba72e4c174c37 Mon Sep 17 00:00:00 2001
 From: Paolo Valente <paolo.valente@unimore.it>
 Date: Thu, 9 May 2013 19:10:02 +0200
-Subject: [PATCH 2/3] block: introduce the BFQ-v7 I/O sched for 3.13
+Subject: [PATCH 2/3] block: introduce the BFQ-v7r1 I/O sched for 3.13
 
-Add the BFQ-v7 I/O scheduler to 3.13.
+Add the BFQ-v7r1 I/O scheduler to 3.13.
 The general structure is borrowed from CFQ, as much of the code for
 handling I/O contexts Over time, several useful features have been
 ported from CFQ as well (details in the changelog in README.BFQ). A
@@ -56,12 +56,12 @@ until it expires.
 Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
 Signed-off-by: Arianna Avanzini <avanzini.arianna@gmail.com>
 ---
- block/bfq-cgroup.c  |  910 ++++++++++++++
+ block/bfq-cgroup.c  |  911 ++++++++++++++
  block/bfq-ioc.c     |   36 +
- block/bfq-iosched.c | 3268 +++++++++++++++++++++++++++++++++++++++++++++++++++
- block/bfq-sched.c   | 1077 +++++++++++++++++
+ block/bfq-iosched.c | 3298 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ block/bfq-sched.c   | 1078 +++++++++++++++++
  block/bfq.h         |  614 ++++++++++
- 5 files changed, 5905 insertions(+)
+ 5 files changed, 5937 insertions(+)
  create mode 100644 block/bfq-cgroup.c
  create mode 100644 block/bfq-ioc.c
  create mode 100644 block/bfq-iosched.c
@@ -70,10 +70,10 @@ Signed-off-by: Arianna Avanzini <avanzini.arianna@gmail.com>
 
 diff --git a/block/bfq-cgroup.c b/block/bfq-cgroup.c
 new file mode 100644
-index 0000000..b889acf
+index 0000000..79a288a
 --- /dev/null
 +++ b/block/bfq-cgroup.c
-@@ -0,0 +1,910 @@
+@@ -0,0 +1,911 @@
 +/*
 + * BFQ: CGROUPS support.
 + *
@@ -532,8 +532,9 @@ index 0000000..b889acf
 +	for (; entity != NULL; entity = bfq_entity_of(rb_first(active)))
 +		bfq_reparent_leaf_entity(bfqd, entity);
 +
-+	if (bfqg->sched_data.active_entity != NULL)
-+		bfq_reparent_leaf_entity(bfqd, bfqg->sched_data.active_entity);
++	if (bfqg->sched_data.in_service_entity != NULL)
++		bfq_reparent_leaf_entity(bfqd,
++			bfqg->sched_data.in_service_entity);
 +
 +	return;
 +}
@@ -590,8 +591,8 @@ index 0000000..b889acf
 +		BUG_ON(!RB_EMPTY_ROOT(&st->active));
 +		BUG_ON(!RB_EMPTY_ROOT(&st->idle));
 +	}
-+	BUG_ON(bfqg->sched_data.next_active != NULL);
-+	BUG_ON(bfqg->sched_data.active_entity != NULL);
++	BUG_ON(bfqg->sched_data.next_in_service != NULL);
++	BUG_ON(bfqg->sched_data.in_service_entity != NULL);
 +
 +	/*
 +	 * We may race with device destruction, take extra care when
@@ -1028,10 +1029,10 @@ index 0000000..7f6b000
 +}
 diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
 new file mode 100644
-index 0000000..7670400
+index 0000000..eb760de
 --- /dev/null
 +++ b/block/bfq-iosched.c
-@@ -0,0 +1,3268 @@
+@@ -0,0 +1,3298 @@
 +/*
 + * BFQ, or Budget Fair Queueing, disk scheduler.
 + *
@@ -1457,7 +1458,7 @@ index 0000000..7670400
 +		return;
 +
 +	BUG_ON(entity->tree != &st->active);
-+	BUG_ON(entity == entity->sched_data->active_entity);
++	BUG_ON(entity == entity->sched_data->in_service_entity);
 +
 +	new_budget = max_t(unsigned long, bfqq->max_budget,
 +			   bfq_serv_to_charge(next_rq, bfqq));
@@ -1534,9 +1535,9 @@ index 0000000..7670400
 +				bfqq->raising_cur_max_time =
 +					bfqd->bfq_raising_rt_max_time;
 +			bfq_log_bfqq(bfqd, bfqq,
-+				     "wrais starting at %llu msec,"
++				     "wrais starting at %lu, "
 +				     "rais_max_time %u",
-+				     bfqq->last_rais_start_finish,
++				     jiffies,
 +				     jiffies_to_msecs(bfqq->
 +					raising_cur_max_time));
 +		} else if (old_raising_coeff > 1) {
@@ -1548,14 +1549,16 @@ index 0000000..7670400
 +				 !soft_rt) {
 +				bfqq->raising_coeff = 1;
 +				bfq_log_bfqq(bfqd, bfqq,
-+					     "wrais ending at %llu msec,"
++					     "wrais ending at %lu, "
 +					     "rais_max_time %u",
-+					     bfqq->last_rais_start_finish,
++					     jiffies,
 +					     jiffies_to_msecs(bfqq->
 +						raising_cur_max_time));
-+			} else if ((bfqq->last_rais_start_finish +
-+				    bfqq->raising_cur_max_time <
-+				    jiffies + bfqd->bfq_raising_rt_max_time) &&
++			} else if (time_before(
++					bfqq->last_rais_start_finish +
++					bfqq->raising_cur_max_time,
++					jiffies +
++					bfqd->bfq_raising_rt_max_time) &&
 +				   soft_rt) {
 +				/*
 +				 *
@@ -1616,8 +1619,8 @@ index 0000000..7670400
 +	} else {
 +		if (bfqd->low_latency && old_raising_coeff == 1 &&
 +			!rq_is_sync(rq) &&
-+			bfqq->last_rais_start_finish +
 +			time_is_before_jiffies(
++				bfqq->last_rais_start_finish +
 +				bfqd->bfq_raising_min_inter_arr_async)) {
 +			bfqq->raising_coeff = bfqd->bfq_raising_coeff;
 +			bfqq->raising_cur_max_time = bfq_wrais_duration(bfqd);
@@ -1625,9 +1628,9 @@ index 0000000..7670400
 +			bfqd->raised_busy_queues++;
 +			entity->ioprio_changed = 1;
 +			bfq_log_bfqq(bfqd, bfqq,
-+				     "non-idle wrais starting at %llu msec,"
++				     "non-idle wrais starting at %lu, "
 +				     "rais_max_time %u",
-+				     bfqq->last_rais_start_finish,
++				     jiffies,
 +				     jiffies_to_msecs(bfqq->
 +					raising_cur_max_time));
 +		}
@@ -1999,8 +2002,8 @@ index 0000000..7670400
 +	if (in_service_bfqq == NULL)
 +		return false;
 +	/*
-+	 * If device is SSD it has no seek penalty, disable idling; but
-+	 * do so only if:
++	 * If the device is non-rotational, and hence has no seek penalty,
++	 * disable idling; but do so only if:
 +	 * - device does not support queuing, otherwise we still have
 +	 *   a problem with sync vs async workloads;
 +	 * - the queue is not weight-raised, to preserve guarantees.
@@ -2482,7 +2485,8 @@ index 0000000..7670400
 + * in this scenario the application stops issuing requests while the CPUs are
 + * busy serving other processes, then restarts, then stops again for a while,
 + * and so on. In addition, if the disk achieves a low enough throughput with
-+ * the request pattern issued by the application, then the above bandwidth
++ * the request pattern issued by the application (e.g., because the request
++ * pattern is random and/or the device is slow), then the above bandwidth
 + * requirement may happen to be met too. To prevent such a greedy application
 + * to be deemed as soft real-time, a further rule is used in the computation
 + * of soft_rt_next_start: soft_rt_next_start must be higher than the current
@@ -2507,13 +2511,23 @@ index 0000000..7670400
 + * particular we add the minimum number of jiffies for which the filter seems
 + * to be quite precise also in embedded systems and KVM/QEMU virtual machines.
 + */
-+static inline u64 bfq_bfqq_softrt_next_start(struct bfq_data *bfqd,
-+					     struct bfq_queue *bfqq)
++static inline unsigned long bfq_bfqq_softrt_next_start(struct bfq_data *bfqd,
++						       struct bfq_queue *bfqq)
 +{
 +	return max(bfqq->last_idle_bklogged +
 +		   HZ * bfqq->service_from_backlogged /
 +		   bfqd->bfq_raising_max_softrt_rate,
-+		   (u64)jiffies + bfqq->bfqd->bfq_slice_idle + 4);
++		   jiffies + bfqq->bfqd->bfq_slice_idle + 4);
++}
++
++/*
++ * Largest-possible time instant such that, for as long as possible, the
++ * current time will be lower than this time instant according to the macro
++ * time_is_before_jiffies().
++ */
++static inline unsigned long bfq_infinity_from_now(unsigned long now)
++{
++	return now + ULONG_MAX / 2;
 +}
 +
 +/**
@@ -2579,33 +2593,46 @@ index 0000000..7670400
 +	if (bfqd->low_latency && bfqq->raising_coeff == 1)
 +		bfqq->last_rais_start_finish = jiffies;
 +
-+	if (bfqd->low_latency && bfqd->bfq_raising_max_softrt_rate > 0) {
-+		if (reason != BFQ_BFQQ_BUDGET_TIMEOUT &&
-+		    reason != BFQ_BFQQ_BUDGET_EXHAUSTED) {
++	if (bfqd->low_latency && bfqd->bfq_raising_max_softrt_rate > 0 &&
++	    RB_EMPTY_ROOT(&bfqq->sort_list)) {
++		/*
++		 * If we get here, then the request pattern is
++		 * isochronous (see the comments to the function
++		 * bfq_bfqq_softrt_next_start()). However, if the
++		 * queue still has in-flight requests, then it is
++		 * better to postpone the computation of next_start
++		 * to the next request completion. In fact, if we
++		 * computed it now, then the application might pass
++		 * the greedy-application filter improperly, because
++		 * the arrival of its next request may  happen to be
++		 * higher than (jiffies + bfqq->bfqd->bfq_slice_idle)
++		 * not because the application is truly soft real-
++		 * time, but just because the application is currently
++		 * waiting for the completion of some request before
++		 * issuing, as quickly as possible, its next request.
++		 */
++		if (bfqq->dispatched > 0) {
 +			/*
-+			 * If we get here, then the request pattern is
-+			 * isochronous (see the comments to the function
-+			 * bfq_bfqq_softrt_next_start()). However, if the
-+			 * queue still has in-flight requests, then it is
-+			 * better to postpone the computation of next_start
-+			 * to the next request completion. In fact, if we
-+			 * computed it now, then the application might pass
-+			 * the greedy-application filter improperly, because
-+			 * the arrival of its next request may  happen to be
-+			 * higher than (jiffies + bfqq->bfqd->bfq_slice_idle)
-+			 * not because the application is truly soft real-
-+			 * time, but just because the application is currently
-+			 * waiting for the completion of some request before
-+			 * issuing, as quickly as possible, its next request.
++			 * The application is still waiting for the
++			 * completion of one or more requests:
++			 * prevent it from possibly being incorrectly
++			 * deemed as soft real-time by setting its
++			 * soft_rt_next_start to infinity. In fact,
++			 * without this assignment, the application
++			 * would be incorrectly deemed as soft
++			 * real-time if:
++			 * 1) it issued a new request before the
++			 *    completion of all its in-flight
++			 *    requests, and
++			 * 2) at that time, its soft_rt_next_start
++			 *    happened to be in the past.
 +			 */
-+			if (bfqq->dispatched > 0) {
-+				bfqq->soft_rt_next_start = -1;
-+				bfq_mark_bfqq_softrt_update(bfqq);
-+			} else
-+				bfqq->soft_rt_next_start =
-+					bfq_bfqq_softrt_next_start(bfqd, bfqq);
++			bfqq->soft_rt_next_start =
++				bfq_infinity_from_now(jiffies);
++			bfq_mark_bfqq_softrt_update(bfqq);
 +		} else
-+			bfqq->soft_rt_next_start = -1; /* infinity */
++			bfqq->soft_rt_next_start =
++				bfq_bfqq_softrt_next_start(bfqd, bfqq);
 +	}
 +
 +	bfq_log_bfqq(bfqd, bfqq,
@@ -2854,11 +2881,11 @@ index 0000000..7670400
 +		 * If too much time has elapsed from the beginning
 +		 * of this weight-raising, stop it.
 +		 */
-+		if (jiffies - bfqq->last_rais_start_finish >
-+			bfqq->raising_cur_max_time) {
++		if (time_is_before_jiffies(bfqq->last_rais_start_finish +
++					   bfqq->raising_cur_max_time)) {
 +			bfqq->last_rais_start_finish = jiffies;
 +			bfq_log_bfqq(bfqd, bfqq,
-+				     "wrais ending at %llu msec,"
++				     "wrais ending at %lu, "
 +				     "rais_max_time %u",
 +				     bfqq->last_rais_start_finish,
 +				     jiffies_to_msecs(bfqq->
@@ -3241,7 +3268,11 @@ index 0000000..7670400
 +
 +	bfqq->raising_coeff = 1;
 +	bfqq->last_rais_start_finish = 0;
-+	bfqq->soft_rt_next_start = -1;
++	/*
++	 * Set to the value for which bfqq will not be deemed as
++	 * soft rt when it becomes backlogged.
++	 */
++	bfqq->soft_rt_next_start = bfq_infinity_from_now(jiffies);
 +}
 +
 +static struct bfq_queue *bfq_find_alloc_queue(struct bfq_data *bfqd,
@@ -4283,7 +4314,7 @@ index 0000000..7670400
 +		return -ENOMEM;
 +
 +	elv_register(&iosched_bfq);
-+	printk(KERN_INFO "BFQ I/O-scheduler version: v7");
++	printk(KERN_INFO "BFQ I/O-scheduler version: v7r1");
 +
 +	return 0;
 +}
@@ -4302,10 +4333,10 @@ index 0000000..7670400
 +MODULE_DESCRIPTION("Budget Fair Queueing IO scheduler");
 diff --git a/block/bfq-sched.c b/block/bfq-sched.c
 new file mode 100644
-index 0000000..30df81c
+index 0000000..999b475
 --- /dev/null
 +++ b/block/bfq-sched.c
-@@ -0,0 +1,1077 @@
+@@ -0,0 +1,1078 @@
 +/*
 + * BFQ: Hierarchical B-WF2Q+ scheduler.
 + *
@@ -4329,32 +4360,32 @@ index 0000000..30df81c
 +						 int extract,
 +						 struct bfq_data *bfqd);
 +
-+static inline void bfq_update_budget(struct bfq_entity *next_active)
++static inline void bfq_update_budget(struct bfq_entity *next_in_service)
 +{
 +	struct bfq_entity *bfqg_entity;
 +	struct bfq_group *bfqg;
 +	struct bfq_sched_data *group_sd;
 +
-+	BUG_ON(next_active == NULL);
++	BUG_ON(next_in_service == NULL);
 +
-+	group_sd = next_active->sched_data;
++	group_sd = next_in_service->sched_data;
 +
 +	bfqg = container_of(group_sd, struct bfq_group, sched_data);
 +	/*
 +	 * bfq_group's my_entity field is not NULL only if the group
 +	 * is not the root group. We must not touch the root entity
-+	 * as it must never become an active entity.
++	 * as it must never become an in-service entity.
 +	 */
 +	bfqg_entity = bfqg->my_entity;
 +	if (bfqg_entity != NULL)
-+		bfqg_entity->budget = next_active->budget;
++		bfqg_entity->budget = next_in_service->budget;
 +}
 +
-+static int bfq_update_next_active(struct bfq_sched_data *sd)
++static int bfq_update_next_in_service(struct bfq_sched_data *sd)
 +{
-+	struct bfq_entity *next_active;
++	struct bfq_entity *next_in_service;
 +
-+	if (sd->active_entity != NULL)
++	if (sd->in_service_entity != NULL)
 +		/* will update/requeue at the end of service */
 +		return 0;
 +
@@ -4365,19 +4396,19 @@ index 0000000..30df81c
 +	 * next from this subtree.  By now we worry more about
 +	 * correctness than about performance...
 +	 */
-+	next_active = bfq_lookup_next_entity(sd, 0, NULL);
-+	sd->next_active = next_active;
++	next_in_service = bfq_lookup_next_entity(sd, 0, NULL);
++	sd->next_in_service = next_in_service;
 +
-+	if (next_active != NULL)
-+		bfq_update_budget(next_active);
++	if (next_in_service != NULL)
++		bfq_update_budget(next_in_service);
 +
 +	return 1;
 +}
 +
-+static inline void bfq_check_next_active(struct bfq_sched_data *sd,
-+					 struct bfq_entity *entity)
++static inline void bfq_check_next_in_service(struct bfq_sched_data *sd,
++					     struct bfq_entity *entity)
 +{
-+	BUG_ON(sd->next_active != entity);
++	BUG_ON(sd->next_in_service != entity);
 +}
 +#else
 +#define for_each_entity(entity)	\
@@ -4386,17 +4417,17 @@ index 0000000..30df81c
 +#define for_each_entity_safe(entity, parent) \
 +	for (parent = NULL; entity != NULL; entity = parent)
 +
-+static inline int bfq_update_next_active(struct bfq_sched_data *sd)
++static inline int bfq_update_next_in_service(struct bfq_sched_data *sd)
 +{
 +	return 0;
 +}
 +
-+static inline void bfq_check_next_active(struct bfq_sched_data *sd,
-+					 struct bfq_entity *entity)
++static inline void bfq_check_next_in_service(struct bfq_sched_data *sd,
++					     struct bfq_entity *entity)
 +{
 +}
 +
-+static inline void bfq_update_budget(struct bfq_entity *next_active)
++static inline void bfq_update_budget(struct bfq_entity *next_in_service)
 +{
 +}
 +#endif
@@ -4948,7 +4979,7 @@ index 0000000..30df81c
 +	struct bfq_sched_data *sd = entity->sched_data;
 +	struct bfq_service_tree *st = bfq_entity_service_tree(entity);
 +
-+	if (entity == sd->active_entity) {
++	if (entity == sd->in_service_entity) {
 +		BUG_ON(entity->tree != NULL);
 +		/*
 +		 * If we are requeueing the current entity we have
@@ -4957,12 +4988,12 @@ index 0000000..30df81c
 +		 */
 +		bfq_calc_finish(entity, entity->service);
 +		entity->start = entity->finish;
-+		sd->active_entity = NULL;
++		sd->in_service_entity = NULL;
 +	} else if (entity->tree == &st->active) {
 +		/*
 +		 * Requeueing an entity due to a change of some
-+		 * next_active entity below it.  We reuse the old
-+		 * start time.
++		 * next_in_service entity below it.  We reuse the
++		 * old start time.
 +		 */
 +		bfq_active_extract(st, entity);
 +	} else if (entity->tree == &st->idle) {
@@ -5006,11 +5037,11 @@ index 0000000..30df81c
 +		__bfq_activate_entity(entity);
 +
 +		sd = entity->sched_data;
-+		if (!bfq_update_next_active(sd))
++		if (!bfq_update_next_in_service(sd))
 +			/*
 +			 * No need to propagate the activation to the
 +			 * upper entities, as they will be updated when
-+			 * the active entity is rescheduled.
++			 * the in-service entity is rescheduled.
 +			 */
 +			break;
 +	}
@@ -5027,24 +5058,24 @@ index 0000000..30df81c
 + * and if the caller did not specify @requeue, put it on the idle tree.
 + *
 + * Return %1 if the caller should update the entity hierarchy, i.e.,
-+ * if the entity was under service or if it was the next_active for
++ * if the entity was under service or if it was the next_in_service for
 + * its sched_data; return %0 otherwise.
 + */
 +static int __bfq_deactivate_entity(struct bfq_entity *entity, int requeue)
 +{
 +	struct bfq_sched_data *sd = entity->sched_data;
 +	struct bfq_service_tree *st = bfq_entity_service_tree(entity);
-+	int was_active = entity == sd->active_entity;
++	int was_in_service = entity == sd->in_service_entity;
 +	int ret = 0;
 +
 +	if (!entity->on_st)
 +		return 0;
 +
-+	BUG_ON(was_active && entity->tree != NULL);
++	BUG_ON(was_in_service && entity->tree != NULL);
 +
-+	if (was_active) {
++	if (was_in_service) {
 +		bfq_calc_finish(entity, entity->service);
-+		sd->active_entity = NULL;
++		sd->in_service_entity = NULL;
 +	} else if (entity->tree == &st->active)
 +		bfq_active_extract(st, entity);
 +	else if (entity->tree == &st->idle)
@@ -5052,16 +5083,16 @@ index 0000000..30df81c
 +	else if (entity->tree != NULL)
 +		BUG();
 +
-+	if (was_active || sd->next_active == entity)
-+		ret = bfq_update_next_active(sd);
++	if (was_in_service || sd->next_in_service == entity)
++		ret = bfq_update_next_in_service(sd);
 +
 +	if (!requeue || !bfq_gt(entity->finish, st->vtime))
 +		bfq_forget_entity(st, entity);
 +	else
 +		bfq_idle_insert(st, entity);
 +
-+	BUG_ON(sd->active_entity == entity);
-+	BUG_ON(sd->next_active == entity);
++	BUG_ON(sd->in_service_entity == entity);
++	BUG_ON(sd->next_in_service == entity);
 +
 +	return ret;
 +}
@@ -5087,7 +5118,7 @@ index 0000000..30df81c
 +			 */
 +			break;
 +
-+		if (sd->next_active != NULL)
++		if (sd->next_in_service != NULL)
 +			/*
 +			 * The parent entity is still backlogged and
 +			 * the budgets on the path towards the root
@@ -5110,7 +5141,7 @@ index 0000000..30df81c
 +		__bfq_activate_entity(entity);
 +
 +		sd = entity->sched_data;
-+		if (!bfq_update_next_active(sd))
++		if (!bfq_update_next_in_service(sd))
 +			break;
 +	}
 +}
@@ -5141,7 +5172,8 @@ index 0000000..30df81c
 +}
 +
 +/**
-+ * bfq_first_active - find the eligible entity with the smallest finish time
++ * bfq_first_active_entity - find the eligible entity with
++ *                           the smallest finish time
 + * @st: the service tree to select from.
 + *
 + * This function searches the first schedulable entity, starting from the
@@ -5190,7 +5222,7 @@ index 0000000..30df81c
 +static struct bfq_entity *__bfq_lookup_next_entity(struct bfq_service_tree *st,
 +						   bool force)
 +{
-+	struct bfq_entity *entity, *new_next_active = NULL;
++	struct bfq_entity *entity, *new_next_in_service = NULL;
 +
 +	if (RB_EMPTY_ROOT(&st->active))
 +		return NULL;
@@ -5201,13 +5233,13 @@ index 0000000..30df81c
 +
 +	/*
 +	 * If the chosen entity does not match with the sched_data's
-+	 * next_active and we are forcedly serving the IDLE priority
++	 * next_in_service and we are forcedly serving the IDLE priority
 +	 * class tree, bubble up budget update.
 +	 */
-+	if (unlikely(force && entity != entity->sched_data->next_active)) {
-+		new_next_active = entity;
-+		for_each_entity(new_next_active)
-+			bfq_update_budget(new_next_active);
++	if (unlikely(force && entity != entity->sched_data->next_in_service)) {
++		new_next_in_service = entity;
++		for_each_entity(new_next_in_service)
++			bfq_update_budget(new_next_in_service);
 +	}
 +
 +	return entity;
@@ -5218,9 +5250,9 @@ index 0000000..30df81c
 + * @sd: the sched_data.
 + * @extract: if true the returned entity will be also extracted from @sd.
 + *
-+ * NOTE: since we cache the next_active entity at each level of the
++ * NOTE: since we cache the next_in_service entity at each level of the
 + * hierarchy, the complexity of the lookup can be decreased with
-+ * absolutely no effort just returning the cached next_active value;
++ * absolutely no effort just returning the cached next_in_service value;
 + * we prefer to do full lookups to test the consistency of * the data
 + * structures.
 + */
@@ -5232,7 +5264,7 @@ index 0000000..30df81c
 +	struct bfq_entity *entity;
 +	int i = 0;
 +
-+	BUG_ON(sd->active_entity != NULL);
++	BUG_ON(sd->in_service_entity != NULL);
 +
 +	if (bfqd != NULL &&
 +	    jiffies - bfqd->bfq_class_idle_last_service > BFQ_CL_IDLE_TIMEOUT) {
@@ -5241,17 +5273,17 @@ index 0000000..30df81c
 +		if (entity != NULL) {
 +			i = BFQ_IOPRIO_CLASSES - 1;
 +			bfqd->bfq_class_idle_last_service = jiffies;
-+			sd->next_active = entity;
++			sd->next_in_service = entity;
 +		}
 +	}
 +	for (; i < BFQ_IOPRIO_CLASSES; i++) {
 +		entity = __bfq_lookup_next_entity(st + i, false);
 +		if (entity != NULL) {
 +			if (extract) {
-+				bfq_check_next_active(sd, entity);
++				bfq_check_next_in_service(sd, entity);
 +				bfq_active_extract(st + i, entity);
-+				sd->active_entity = entity;
-+				sd->next_active = NULL;
++				sd->in_service_entity = entity;
++				sd->next_in_service = NULL;
 +			}
 +			break;
 +		}
@@ -5385,12 +5417,12 @@ index 0000000..30df81c
 +}
 diff --git a/block/bfq.h b/block/bfq.h
 new file mode 100644
-index 0000000..68b28e3
+index 0000000..f9b5881
 --- /dev/null
 +++ b/block/bfq.h
 @@ -0,0 +1,614 @@
 +/*
-+ * BFQ-v7 for 3.13.0: data structures and common functions prototypes.
++ * BFQ-v7r1 for 3.13.0: data structures and common functions prototypes.
 + *
 + * Based on ideas and code from CFQ:
 + * Copyright (C) 2003 Jens Axboe <axboe@kernel.dk>
@@ -5448,15 +5480,15 @@ index 0000000..68b28e3
 +
 +/**
 + * struct bfq_sched_data - multi-class scheduler.
-+ * @active_entity: entity under service.
-+ * @next_active: head-of-the-line entity in the scheduler.
++ * @in_service_entity: entity under service.
++ * @next_in_service: head-of-the-line entity in the scheduler.
 + * @service_tree: array of service trees, one per ioprio_class.
 + *
 + * bfq_sched_data is the basic scheduler queue.  It supports three
 + * ioprio_classes, and can be used either as a toplevel queue or as
 + * an intermediate queue on a hierarchical setup.
-+ * @next_active points to the active entity of the sched_data service
-+ * trees that will be scheduled next.
++ * @next_in_service points to the active entity of the sched_data
++ * service trees that will be scheduled next.
 + *
 + * The supported ioprio_classes are the same as in CFQ, in descending
 + * priority order, IOPRIO_CLASS_RT, IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE.
@@ -5466,8 +5498,8 @@ index 0000000..68b28e3
 + * All the fields are protected by the queue lock of the containing bfqd.
 + */
 +struct bfq_sched_data {
-+	struct bfq_entity *active_entity;
-+	struct bfq_entity *next_active;
++	struct bfq_entity *in_service_entity;
++	struct bfq_entity *next_in_service;
 +	struct bfq_service_tree service_tree[BFQ_IOPRIO_CLASSES];
 +};
 +
@@ -5628,11 +5660,11 @@ index 0000000..68b28e3
 +	pid_t pid;
 +
 +	/* weight-raising fields */
-+	unsigned int raising_cur_max_time;
++	unsigned long raising_cur_max_time;
 +	unsigned long soft_rt_next_start;
-+	u64 last_rais_start_finish;
++	unsigned long last_rais_start_finish;
 +	unsigned int raising_coeff;
-+	u64 last_idle_bklogged;
++	unsigned long last_idle_bklogged;
 +	unsigned long service_from_backlogged;
 +};
 +

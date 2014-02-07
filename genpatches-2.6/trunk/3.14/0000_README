@@ -83,17 +83,17 @@ Patch:  4567_distro-Gentoo-Kconfig.patch
 From:   Tom Wijsman <TomWij@gentoo.org>
 Desc:   Add Gentoo Linux support config settings and defaults.
 
-Patch:  5000_BFQ-1-block-cgroups-kconfig-build-bits-for-v7-3.13.patch
+Patch:  5000_BFQ-1-block-cgroups-kconfig-build-bits-for-v7r1-3.13.patch
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v7 patch 1 for 3.13: Build, cgroups and kconfig bits
+Desc:   BFQ v7r1 patch 1 for 3.13: Build, cgroups and kconfig bits
 
-Patch:  5000_BFQ-2-block-introduce-the-v7-I-O-sched-for-3.13.patch1
+Patch:  5000_BFQ-2-block-introduce-the-v7r1-I-O-sched-for-3.13.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v7 patch 2 for 3.13: BFQ Scheduler
+Desc:   BFQ v7r1 patch 2 for 3.13: BFQ Scheduler
 
-Patch:  5000_BFQ-3-block-add-Early-Queue-Merge-EQM-v7-for-3.13.0.patch
+Patch:  5000_BFQ-3-block-add-Early-Queue-Merge-EQM-v7r1-for-3.13.0.patch
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
-Desc:   BFQ v7 patch 3 for 3.13: Early Queue Merge (EQM)
+Desc:   BFQ v7r1 patch 3 for 3.13: Early Queue Merge (EQM)
 
 Patch:  5000_enable-additional-cpu-optimizations-for-gcc.patch
 From:   https://github.com/graysky2/kernel_gcc_patch/
