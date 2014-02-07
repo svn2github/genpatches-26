@@ -94,3 +94,7 @@ Desc:   BFQ v7 patch 2 for 3.13: BFQ Scheduler
 Patch:  5000_BFQ-3-block-add-Early-Queue-Merge-EQM-v7-for-3.13.0.patch
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v7 patch 3 for 3.13: Early Queue Merge (EQM)
+
+Patch:  5000_enable-additional-cpu-optimizations-for-gcc.patch
+From:   https://github.com/graysky2/kernel_gcc_patch/
+Desc:   Kernel patch enables gcc optimizations for additional CPUs.
