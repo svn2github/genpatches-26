@@ -86,9 +86,13 @@ Patch:  1010_linux-3.12.11.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.12.11
 
-Patch:  1010_linux-3.12.12.patch
+Patch:  1011_linux-3.12.12.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.12.12
+
+Patch:  1012_linux-3.12.13.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.12.13
 
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
