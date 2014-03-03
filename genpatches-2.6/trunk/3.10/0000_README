@@ -226,3 +226,6 @@ Patch:  5000_BFQ-4-block-Switch-from-v6r2-for-3.10.0-v6r2-for-3.10.patch
 From:   https://groups.google.com/forum/#!topic/bfq-iosched/f4Lg5INzQ-k
 Desc:   BFQ v6r2 patch 4 for 3.10: Switch to 3.10.8-rc1.
 
+Patch:  5000_enable-additional-cpu-optimizations-for-gcc.patch
+From:   https://github.com/graysky2/kernel_gcc_patch/
+Desc:   Kernel patch enables gcc optimizations for additional CPUs.
