@@ -77,3 +77,17 @@ Desc:   Support for Pogoplug e02 (bug #460350), adjusted to be opt-in by TomWij.
 Patch:  4567_distro-Gentoo-Kconfig.patch
 From:   Tom Wijsman <TomWij@gentoo.org>
 Desc:   Add Gentoo Linux support config settings and defaults.
+
+
+Patch:  5001_BFQ-1-block-cgroups-kconfig-build-bits-for-v7r2-3.14.patch
+From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
+Desc:   BFQ v7r2 patch 1 for 3.14: Build, cgroups and kconfig bits
+
+Patch:  5002_BFQ-2-block-introduce-the-v7r2-I-O-sched-for-3.14.patch
+From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
+Desc:   BFQ v7r2 patch 2 for 3.14: BFQ Scheduler
+
+Patch:  5003_BFQ-3-block-add-Early-Queue-Merge-EQM-v7r2-for-3.14.0.patch
+From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
+Desc:   BFQ v7r2 patch 3 for 3.14: Early Queue Merge (EQM)
+
