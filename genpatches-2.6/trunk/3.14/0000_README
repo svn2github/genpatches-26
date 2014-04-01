@@ -86,7 +86,7 @@ Patch:  5001_BFQ-1-block-cgroups-kconfig-build-bits-for-v7r2-3.14.patch
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v7r2 patch 1 for 3.14: Build, cgroups and kconfig bits
 
-Patch:  5002_BFQ-2-block-introduce-the-v7r2-I-O-sched-for-3.14.patch
+Patch:  5002_BFQ-2-block-introduce-the-v7r2-I-O-sched-for-3.14.patch1
 From:   http://algo.ing.unimo.it/people/paolo/disk_sched/
 Desc:   BFQ v7r2 patch 2 for 3.14: BFQ Scheduler
 
