@@ -4,8 +4,7 @@ use LWP::Simple;
 
 # Detect which svn server and username to use
 # (broken with >=svn-1.7 due to an extra line added to svn info)
-# $subversion_scheme = `svn info 2>/dev/null | head -n 2 | tail -n 1`;
-$subversion_scheme = `svn info 2>/dev/null | grep "^URL"`;
+$subversion_scheme=`svn info | awk '/^URL: / { print $2 }'`;
 $subversion_uri = $subversion_scheme;
 chomp $subversion_uri;
 $subversion_scheme =~ s|^URL: ([a-z][a-z0-9+-.]*)://.*|\1|s;
@@ -22,7 +21,6 @@ if ($subversion_scheme == "svn+ssh") {
 	$subversion_midpart = 'anonsvn.gentoo.org';
 }
 $subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
-
 $webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
