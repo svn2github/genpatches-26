@@ -202,6 +202,7 @@ sub make_release_pages {
 	local *DIR;
 	print ">> Making release pages\n";
 	$cmd = 'svn ls '.$subversion_root.'/tags';
+    print "cmd is $cmd\n";
 	@out = `$cmd`;
 
 	foreach (@out) {
@@ -296,7 +297,7 @@ sub generate_patchlist {
 	print PATCHLIST '<p>Patches 0000-2999 are available in ';
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.base.tar'.$ext.'">genpatches-'.$tag.'.base.tar'.$ext.'</a>';
 	print PATCHLIST '<br />Patches 3000-4999 are available in ';
-	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar'.$ext.'">genpatches-'.$tag.'.extras.tar'.$ext.'</a></p>';
+	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.extras.tar'.$ext.'">genpatches-'.$tag.'.extras.tar'.$ext.'</a>';
 	print PATCHLIST '<br />Patches 5000-5099 are available in ';
 	print PATCHLIST '<a href="tarballs/genpatches-'.$tag.'.experimental.tar'.$ext.'">genpatches-'.$tag.'.experimental.tar'.$ext.'</a></p>';
 	print PATCHLIST '<table id="hor-minimalist-a">';
