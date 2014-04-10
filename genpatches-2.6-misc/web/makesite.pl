@@ -195,8 +195,6 @@ sub make_kernels_page {
 	print FD '</table>';
 	html_footer *FD;
 	close(FD);
-    exit();
-
 }
 
 sub make_release_pages {
