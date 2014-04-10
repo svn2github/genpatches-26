@@ -191,9 +191,11 @@ sub make_kernels_page {
 		print FD '<td><a href="patches-'.$kernel->{'gprev'}.'.htm">'.$kernel->{'gprev'}.'</a> '.$kernel->{'wanted'}.'</td>';
 		print FD '</tr>';
 	}
+
 	print FD '</table>';
 	html_footer *FD;
 	close(FD);
+    exit();
 
 }
 

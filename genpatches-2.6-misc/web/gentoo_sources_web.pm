@@ -1,16 +1,19 @@
 # Copyright 2000-2009 Gentoo Foundation; Distributed under the GPL v2
 
 use LWP::Simple;
+use Encode;
 
 # Detect which svn server and username to use
 # (broken with >=svn-1.7 due to an extra line added to svn info)
-$subversion_scheme=`svn info | awk '/^URL: / { print $2 }'`;
-$subversion_uri = $subversion_scheme;
+my $subversion_scheme=`svn info | awk '/^URL: / { print $2 }'`;
+my $subversion_uri = $subversion_scheme;
 chomp $subversion_uri;
-$subversion_scheme =~ s|^URL: ([a-z][a-z0-9+-.]*)://.*|\1|s;
+my $subversion_scheme =~ s|^URL: ([a-z][a-z0-9+-.]*)://.*|\1|s;
+my $subversion_midpart="";
+my $cmd="";
 
 if ($subversion_scheme == "svn+ssh") {
-	$trimmed = substr($subversion_uri, 15);
+	my $trimmed = substr($subversion_uri, 15);
 	if ($trimmed =~ m/^([a-zA-Z]+)@/) {
 		$subversion_midpart = "$1\@svn.gentoo.org/var/svnroot";
 	} else {
@@ -20,14 +23,14 @@ if ($subversion_scheme == "svn+ssh") {
 } else {
 	$subversion_midpart = 'anonsvn.gentoo.org';
 }
-$subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
-$webscript_path = &Cwd::cwd();
+my $subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
+my $webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
-$website_base = 'http://dev.gentoo.org/~mpagano/genpatches';
+my $website_base = 'http://dev.gentoo.org/~mpagano/genpatches';
 
-$ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
-@kernels = ('sys-kernel/ck-sources','sys-kernel/gentoo-sources','sys-kernel/hardened-sources','sys-kernel/openvz-sources','sys-kernel/tuxonice-sources','sys-kernel/vserver-sources','sys-kernel/zen-sources');
+my $ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
+my @kernels = ('sys-kernel/ck-sources','sys-kernel/gentoo-sources','sys-kernel/hardened-sources','sys-kernel/openvz-sources','sys-kernel/tuxonice-sources','sys-kernel/vserver-sources','sys-kernel/zen-sources');
 
 sub html_header {
 	local *FD = shift;
@@ -260,37 +263,41 @@ sub release_is_generated {
 		-e $webscript_path.'/generated/'.$tag.'-info.htm';
 }
 
-sub _get_genpatches_kernels {
+sub _get_genpatches_kernels2 {
 	my (%gp_kernels, $kernel);
 
 	foreach $kernel (@kernels) {
 		$kernel =~ m/^([a-z-]+)\/([a-z0-9-]+)$/;
 		my $cat = $1;
 		my $pkg = $2;
+        my @out = ("");
 		$cmd = 'egrep "^(K_GENPATCHES_VER|K_WANT_GENPATCHES)" '.$ebuild_base.'/'.$kernel.'/*.ebuild';
-		my @out = `$cmd`;
+		@out = `$cmd`;
 
 		foreach (@out) {
-			chomp;
+            chomp;
 			my $res = substr($_, length($ebuild_base) + length($kernel) + 2);
-			$res =~ m/^$pkg-([\d\w\.-]+)\.ebuild:(.*)$/;
+            my $test = substr($_, 2);
+            my($ver) = $res =~ /(\d+\.\d+\.\d+)/;
 			my $ver = $1;
-			my $var = $2;
+
 			my $ebuild = $pkg.'-'.$ver;
-            
+
 			#$ver =~ m/^(2\.6\.\d+)/;
             my ($major,$minor) = split(/\./, $ver);
 			my $orig_ver = $1;
 
-			if ($var =~ /^K_WANT_GENPATCHES="(.*)"$/) {
+#            $res =~ (/.*K_WANT_GENPATCHES=(.*)/);
+            if ($res =~ /.*K_WANT_GENPATCHES=(.*)/) {
 				$gp_kernels{$ebuild}{'pkg'} = $pkg;
 				$gp_kernels{$ebuild}{'ver'} = $ver;
 				$gp_kernels{$ebuild}{'wanted'} = $1;
 			}
-			if ($var =~ /^K_GENPATCHES_VER="(\d+)"$/) {
+			if ($res =~ /^K_GENPATCHES_VER="(\d+)"$/) {
 				#$gp_kernels{$ebuild}{'gprev'} = $orig_ver .'-'. $1;
 				$gp_kernels{$ebuild}{'gprev'} = $major . '.' . $minor .'-'. $1;
 			}
+            print "END\n";
 		}
 	}
 
@@ -312,5 +319,41 @@ sub get_tarball_ext {
 }
 
 
-1;
+sub _get_genpatches_kernels {
+    my (%gp_kernels, $kernel);
+
+    foreach $kernel (@kernels) {
+        $kernel =~ m/^([a-z-]+)\/([a-z0-9-]+)$/;
+        my $cat = $1;
+        my $pkg = $2;
+        $cmd = 'egrep --color=never "^(K_GENPATCHES_VER|K_WANT_GENPATCHES)" '.$ebuild_base.'/'.$kernel.'/*.ebuild';
+        my @out = `$cmd`;
+
+        foreach (@out) {
+            chomp;
+            my $res = substr($_, length($ebuild_base) + length($kernel) + 2);
+            $res =~ m/^$pkg-([\d\w\.-]+)\.ebuild:(.*)$/;
+            
+            my $ver = $1;
+            my $var = $2;
+            my $ebuild = $pkg.'-'.$ver;
+
+            #$ver =~ m/^(2\.6\.\d+)/;
+            my ($major,$minor) = split(/\./, $ver);
+            my $orig_ver = $1;
+
+            if ($var =~ /^K_WANT_GENPATCHES="(.*)"$/) {
+                $gp_kernels{$ebuild}{'pkg'} = $pkg;
+                $gp_kernels{$ebuild}{'ver'} = $ver;
+                $gp_kernels{$ebuild}{'wanted'} = $1;
+            }
+            if ($var =~ /^K_GENPATCHES_VER="(\d+)"$/) {
+                #$gp_kernels{$ebuild}{'gprev'} = $orig_ver .'-'. $1;
+                $gp_kernels{$ebuild}{'gprev'} = $major . '.' . $minor .'-'. $1;
+            }
+        }
+    }
+    
+    return %gp_kernels;
+}
 
