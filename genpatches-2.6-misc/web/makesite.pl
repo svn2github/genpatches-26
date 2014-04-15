@@ -202,7 +202,6 @@ sub make_release_pages {
 	local *DIR;
 	print ">> Making release pages\n";
 	$cmd = 'svn ls '.$subversion_root.'/tags';
-    print "cmd is $cmd\n";
 	@out = `$cmd`;
 
 	foreach (@out) {
@@ -227,6 +226,8 @@ sub make_release_pages {
 		$patch =~ m/^(.*)-patches\.htm$/;
 		copy($webscript_path.'/generated/'.$patch, $webscript_path.'/output/patches-'.$1.'.htm');
 	}
+
+print "Done\n";
 }
 
 sub mysort {
@@ -291,6 +292,7 @@ sub generate_patchlist {
 	local $ext;
 	$ext = get_tarball_ext($tag);
 
+    #print "Writing to $webscript_path/generated/$tag-patches.htm";
 	open(PATCHLIST, '> '.$webscript_path.'/generated/'.$tag.'-patches.htm');
 	html_header(PATCHLIST, "$tag Patch List");
 	print PATCHLIST '<h1>'.$tag.' Patch List</h1>';

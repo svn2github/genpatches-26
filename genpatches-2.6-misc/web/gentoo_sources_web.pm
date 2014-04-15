@@ -24,13 +24,13 @@ if ($subversion_scheme == "svn+ssh") {
 	$subversion_midpart = 'anonsvn.gentoo.org';
 }
 $subversion_root = $subversion_scheme.'://'.$subversion_midpart.'/linux-patches/genpatches-2.6';
-my $webscript_path = &Cwd::cwd();
+$webscript_path = &Cwd::cwd();
 $output_path = $webscript_path.'/output';
 
-my $website_base = 'http://dev.gentoo.org/~mpagano/genpatches';
+$website_base = 'http://dev.gentoo.org/~mpagano/genpatches';
 
-my $ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
-my @kernels = ('sys-kernel/ck-sources','sys-kernel/gentoo-sources','sys-kernel/hardened-sources','sys-kernel/openvz-sources','sys-kernel/tuxonice-sources','sys-kernel/vserver-sources','sys-kernel/zen-sources');
+$ebuild_base = '/usr/local/gentoo-x86'; # /usr/portage
+@kernels = ('sys-kernel/ck-sources','sys-kernel/gentoo-sources','sys-kernel/hardened-sources','sys-kernel/openvz-sources','sys-kernel/tuxonice-sources','sys-kernel/vserver-sources','sys-kernel/zen-sources');
 
 sub html_header {
 	local *FD = shift;
@@ -324,6 +324,7 @@ sub _get_genpatches_kernels {
 
     foreach $kernel (@kernels) {
         $kernel =~ m/^([a-z-]+)\/([a-z0-9-]+)$/;
+        print "Got kernel $kernel\n";
         my $cat = $1;
         my $pkg = $2;
         $cmd = 'egrep --color=never "^(K_GENPATCHES_VER|K_WANT_GENPATCHES)" '.$ebuild_base.'/'.$kernel.'/*.ebuild';
