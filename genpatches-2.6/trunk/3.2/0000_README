@@ -260,6 +260,14 @@ Patch:  1054_linux-3.2.55.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.2.55
 
+Patch:  1055_linux-3.2.56.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.2.56
+
+Patch:  1056_linux-3.2.57.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.2.57
+
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
 Desc:   Support for namespace user.pax.* on tmpfs.
