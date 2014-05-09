@@ -110,9 +110,13 @@ Patch:  1016_linux-3.12.17.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.12.17
 
-Patch:  1016_linux-3.12.17.patch
+Patch:  1017_linux-3.12.18.patch
 From:   http://www.kernel.org
-Desc:   Linux 3.12.17
+Desc:   Linux 3.12.18
+
+Patch:  1018_linux-3.12.19.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.12.19
 
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
