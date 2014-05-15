@@ -427,6 +427,10 @@ Patch:  2700_ThinkPad-30-brightness-control-fix.patch
 From:   Seth Forshee <seth.forshee@canonical.com>
 Desc:   ACPI: Disable Windows 8 compatibility for some Lenovo ThinkPads
 
+Patch:  2700_thinkpad-acpi_fix-issuing-duplicated-keyevents-for-brightness.patch
+From:   http://www.spinics.net/lists/ibm-acpi-devel/msg02805.html
+Desc:   thinkpad-acpi: fix issuing duplicated key events for brightness up/down
+
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Alexxy
