@@ -118,6 +118,10 @@ Patch:  1018_linux-3.12.19.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.12.19
 
+Patch:  1500_CVE-2014-0196-n_tty-Fix-n_tty_write-crash-when-echoing-in-raw-mode.patch
+From:   https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=4291086b1f081b869c6d79e5b7441633dc3ace00
+Desc:   n_tty: Fix n_tty_write crash when echoing in raw mode
+
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
 Desc:   Support for namespace user.pax.* on tmpfs.
