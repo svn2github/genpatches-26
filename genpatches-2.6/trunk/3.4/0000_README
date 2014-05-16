@@ -400,7 +400,7 @@ From:   http://www.kernel.org
 Desc:   Linux 3.4.90
 
 Patch:  1500_CVE-2014-0196-n_tty-Fix-n_tty_write-crash-when-echoing-in-raw-mode.patch
-From:   https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=4291086b1f081b869c6d79e5b7441633dc3ace00
+From:   https://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/commit/?id=19f9438d73833ed532c3ba4955f9c981c9af16f2
 Desc:   n_tty: Fix n_tty_write crash when echoing in raw mode
 
 Patch:  1500_XATTR_USER_PREFIX.patch
