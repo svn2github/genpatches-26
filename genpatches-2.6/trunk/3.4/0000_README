@@ -399,9 +399,9 @@ Patch:  1089_linux-3.4.90.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.4.90
 
-Patch:  1500_CVE-2014-0196-n_tty-Fix-n_tty_write-crash-when-echoing-in-raw-mode.patch
-From:   https://git.kernel.org/cgit/linux/kernel/git/stable/stable-queue.git/commit/?id=19f9438d73833ed532c3ba4955f9c981c9af16f2
-Desc:   n_tty: Fix n_tty_write crash when echoing in raw mode
+Patch:  1090_linux-3.4.91.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.4.91
 
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
