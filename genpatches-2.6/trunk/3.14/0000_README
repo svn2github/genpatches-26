@@ -70,6 +70,10 @@ Patch:  1006_linux-3.14.7.patch
 From:   http://www.kernel.org
 Desc:   Linux 3.14.7
 
+Patch:  1007_linux-3.14.8.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.14.8
+
 Patch:  1500_XATTR_USER_PREFIX.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=470644
 Desc:   Support for namespace user.pax.* on tmpfs.
@@ -97,10 +101,6 @@ Desc:   Do not lock when UMH is waiting on current thread spawned by linuxrc. (b
 Patch:  4200_fbcondecor-0.9.6.patch
 From:   http://dev.gentoo.org/~spock
 Desc:   Bootsplash successor by Michal Januszewski ported by Jeremy (bug #452574)
-
-Patch:  4400_fs-userns-change-inode_capable-to-capable_wrt_inode_uidgid.patch
-From:   https://bugs.gentoo.org/show_bug.cgi?id=512980
-Desc:   Change inode_capable to capable_wrt_inode_uidgid, fixes CVE-2014-4014
 
 Patch:  4500_support-for-pogoplug-e02.patch
 From:   Cristoph Junghans <ottxor@gentoo.org>
