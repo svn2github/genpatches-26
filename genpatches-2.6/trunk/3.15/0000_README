@@ -43,6 +43,10 @@ EXPERIMENTAL
 Individual Patch Descriptions:
 --------------------------------------------------------------------------
 
+Patch:  1000_linux-3.15.1.patch
+From:   http://www.kernel.org
+Desc:   Linux 3.15.1
+
 Patch:  1700_enable-thinkpad-micled.patch
 From:   https://bugs.gentoo.org/show_bug.cgi?id=449248
 Desc:   Enable mic mute led in thinkpads
@@ -62,10 +66,6 @@ Desc:   Ensure that /dev/root doesn't appear in /proc/mounts when bootint withou
 Patch:  2900_s2disk-resume-image-fix.patch
 From:   Al Viro <viro <at> ZenIV.linux.org.uk>
 Desc:   Do not lock when UMH is waiting on current thread spawned by linuxrc. (bug #481344)
-
-Patch:  4400_fs-userns-change-inode_capable-to-capable_wrt_inode_uidgid.patch
-From:   https://bugs.gentoo.org/show_bug.cgi?id=512980
-Desc:   Change inode_capable to capable_wrt_inode_uidgid, fixes CVE-2014-4014
 
 Patch:  4500_support-for-pogoplug-e02.patch
 From:   Cristoph Junghans <ottxor@gentoo.org>
